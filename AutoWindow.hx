@@ -160,6 +160,24 @@ class AutoWindow {
                 event.reply("app:clearCache:done");
             });
         });
+        // В AutoWindow.setupIpc():
+
+        IpcMain.on("window:open", function(event:Dynamic, data:Dynamic) {
+            var url : String = data.url;
+            
+            // 👇 Если это суб-вью — НЕ создаём новое окно!
+            // Суб-вью обрабатываются внутри главного окна через GoldenLayout
+            if (url.indexOf("?subView=") != -1) {
+                trace("[AutoWindow] ⚠️ Sub-view request (handled by GoldenLayout): " + url);
+                
+                // Опционально: отправляем событие обратно в renderer для локальной обработки
+                event.sender.send("window:open:subview", { url: url });
+                return;
+            }
+            
+            // Для настоящих новых окон (если они нужны) — создаём как раньше
+            // ... код создания BrowserWindow для диалогов, настроек и т.п. ...
+        });
         // 👇 НОВОЕ: Сборка меню из Renderer
         IpcMain.on("menu:build", function(event, menuData:Dynamic) {
             trace("[AutoWindow] 📥 Received menu data");

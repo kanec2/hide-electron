@@ -1,5 +1,6 @@
 package hide.core;
 
+import hide.modules.WindowManager;
 import js.node.Url;
 import hide.modules.MenuSystem;
 import js.Browser.document;
@@ -13,7 +14,7 @@ class Ide {
     public static var inst(default, null):Ide;
 
     // === Модули (объявляем как var, а не свойства с доступом) ===
-    public var windowManager:Dynamic; // Пока Dynamic, позже типизируем
+    public var windowManager:WindowManager; // Пока Dynamic, позже типизируем
     public var menuSystem:MenuSystem;
     public var fileSystem:Dynamic;
     public var projectManager:Dynamic;
@@ -110,6 +111,7 @@ class Ide {
         
         trace("🚀 Hide IDE initializing...");
         // 1. Создаём модули
+        windowManager = new WindowManager(this);
         menuSystem = new MenuSystem(this);
 
         // 2. Загружаем меню из XML
@@ -166,7 +168,9 @@ class Ide {
 
         // === Database menu ===
         menuSystem.registerCommand("dbView", function() { 
-            open("hide.view.CdbTable", {}); 
+            //open("hide.view.CdbTable", {}); 
+            // Открываем просто app.html без параметров
+            open("app.html", {});  // Или даже "https://example.com" для теста
         });
         menuSystem.registerCommand("dbCustom", function() { 
             trace("⚙️ DB Custom Types"); 
@@ -212,10 +216,65 @@ class Ide {
         // menuSystem = new MenuSystem(this);
         // ...
         
+        // Регистрация реальных Haxe-классов для GoldenLayout
+        // (выполняется после загрузки всех модулей)
+        // Стало (правильно для JS-таргета):
+        #if electron
+        //js.Browser.window.setTimeout(registerGoldenLayoutComponents, 100);
+        #elseif heaps
+        // Если когда-нибудь будете компилировать под нативный Heaps:
+        // hxd.Timer.addTimeListener(0.1, function(_) registerGoldenLayoutComponents());
+        #end
+        registerGoldenLayoutComponents();
         isInitialized = true;
         trace("✅ Hide IDE ready (stub mode).");
         setText('system-version',"✅ Hide IDE ready (stub mode).");
     }
+
+    /**
+     * Регистрация компонентов в GoldenLayout
+     * Вызывается после инициализации UI
+     */
+    function registerGoldenLayoutComponents():Void {
+        var wm = windowManager;
+        
+        // Простая проверка без цикла — если не готово, просто выходим
+        // (GoldenLayout сам вызовет setGoldenLayout, когда будет готов)
+        if (wm == null || wm.goldenLayout == null) {
+            trace("[Ide] ⏳ GoldenLayout not ready yet (will register later)");
+            return;
+        }
+        
+        trace("[Ide] ✅ GoldenLayout connected, registering components...");
+        
+        // Регистрируем компоненты ПРЯМО в goldenLayout
+        // (WindowManager хранит ссылку, так что это работает)
+        wm.goldenLayout.registerComponent("hide.view.CdbTable", function(container:Dynamic, state:Dynamic) {
+            trace("[GL] Creating CdbTable panel");
+            container.getElement().html('<div class="cdb-table">CdbTable placeholder</div>');
+        });
+        
+        wm.goldenLayout.registerComponent("hide.view.FileBrowser", function(container:Dynamic, state:Dynamic) {
+            trace("[GL] Creating FileBrowser panel");
+            container.getElement().html('<div class="file-browser">FileBrowser placeholder</div>');
+        });
+        
+        wm.goldenLayout.registerComponent("hide.view.DomkitStudio", function(container:Dynamic, state:Dynamic) {
+            trace("[GL] Creating DomkitStudio panel");
+            container.getElement().html('<div>DomkitStudio placeholder</div>');
+        });
+        
+        wm.goldenLayout.registerComponent("hide.view.About", function(container:Dynamic, state:Dynamic) {
+            trace("[GL] Creating About panel");
+            container.getElement().html('<div>About Hide IDE</div>');
+        });
+        
+        wm.goldenLayout.registerComponent("hide.view.Gym", function(container:Dynamic, state:Dynamic) {
+            trace("[GL] Creating Gym panel");
+            container.getElement().html('<div>Editor Gym placeholder</div>');
+        });
+    }
+
     static inline function setText(id:String, text:String) {
 		document.getElementById(id).textContent = text;
 	}

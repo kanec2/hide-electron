@@ -26,7 +26,39 @@ class ElectronBackend implements IIdeBackend {
     
     // === Окна ===
     public function openWindow(url:String, options:Dynamic, ?id:String):Void {
-        trace("[ElectronBackend] openWindow: " + url);
+        // Если это суб-вью — отправляем событие внутри renderer, а не в Main
+        if (url.indexOf("?subView=") != -1) {
+            trace("[ElectronBackend] 🪟 Sub-view request, dispatching locally");
+            
+            // Парсим параметры
+            var params = new haxe.ds.StringMap<String>();
+            var query = url.split("?")[1];
+            if (query != null) {
+                for (pair in query.split("&")) {
+                    var parts = pair.split("=");
+                    if (parts.length == 2) {
+                        params.set(parts[0], haxe.Uri.decode(parts[1]));
+                    }
+                }
+            }
+            
+            // Если есть subView — вызываем WindowManager.openSubView напрямую
+            if (params.exists("subView") && window.hide != null && window.hide.Ide != null) {
+                var componentName = params.get("subView");
+                var state = null;
+                if (params.exists("state")) {
+                    try {
+                        state = haxe.Json.parse(haxe.Uri.decode(params.get("state")));
+                    } catch(_) {}
+                }
+                var position = params.get("pos");
+                
+                window.hide.Ide.inst.open(componentName, state, position);
+            }
+            return;
+        }
+        
+        // Для настоящих окон — отправляем в Main Process
         IpcRenderer.send("window:open", { url: url, options: options, id: id });
     }
     public function closeWindow(?id:String):Void { trace("[ElectronBackend] closeWindow"); }
