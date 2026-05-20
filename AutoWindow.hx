@@ -151,7 +151,6 @@ class AutoWindow {
         });
     }
 
-    /** Базовые IPC-обработчики */
     static function setupIpc():Void {
         IpcMain.on("app:quit", function(_) { App.quit(); });
         IpcMain.on("app:reload", function(_) { if (window != null) window.reload(); });
@@ -171,6 +170,30 @@ class AutoWindow {
             trace("[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
         });
 
+        // 👇 НОВОЕ: Открытие дочерних окон (для openSubView из Ide.hx)
+        IpcMain.on("window:open", function(event:Dynamic, data:Dynamic) {
+            var opts:Dynamic = {
+                width: data.options.width != null ? data.options.width : 800,
+                height: data.options.height != null ? data.options.height : 600,
+                title: data.options.title != null ? data.options.title : "Hide",
+                parent: window, // Делаем окно дочерним главного
+                #if mac
+                type: 'panel', // На macOS: нет иконки в доке
+                #end
+                webPreferences: {
+                    nodeIntegration: true,
+                    contextIsolation: false,
+                    enableRemoteModule: true
+                }
+            };
+            
+            var child = new BrowserWindow(opts);
+            child.loadFile(data.url);
+            
+            #if debug
+            child.webContents.openDevTools({ mode: "detach" });
+            #end
+        });
     }
 
     // Рекурсивно добавляет click-обработчики к пунктам меню
