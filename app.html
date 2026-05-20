@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title></title>
+        <style>
+            :root {
+                --color-black: #141419;
+                --color-red: #A84B38;
+                --color-orange: #EA8220;
+                --color-orange-2: #F1471D;
+                --color-yellow: #FBC707;
+                --color-white: #FFFFFF;
+            }
+			@keyframes pulse {
+				from {
+					transform: scale3d(1, 1, 1);
+                    filter: drop-shadow(16px 16px 24px rgba(5,5,5,0.9))
+                }
+				50% {
+					transform: scale3d(1.75, 1.75, 1.75);
+                    filter: drop-shadow(24px 24px 48px rgba(5,5,5,0.7))
+                }
+				100% {
+					transform: scale3d(1, 1, 1);
+                    filter: drop-shadow(16px 16px 24px rgba(5,5,5,0.9))
+                }
+			}
+            * {
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: monospace;
+                background: var(--color-black);
+                color: var(--color-orange-2);
+                width: 100%;
+                height: 100%;
+				overflow: hidden;
+                cursor: default;
+            }
+			a {
+				color: var(--color-orange-2);
+				text-decoration: none;
+			}
+            *::selection {
+                background: var(--color-orange-2);
+                color: var(--color-yellow);
+            }
+			header, main {
+				position: relative;
+                top: 1rem;
+                left: 1rem;
+			}
+            header {
+                text-transform: uppercase;
+            }
+            header h1 {
+				font-family: Helvetica, sans-serif;
+                font-size: 3rem;
+            }
+            main div {
+                position: relative;
+                left: 2px;
+            }
+            img.logo {
+                position: absolute;
+                top: 0; bottom:0; left: 0; right:0;
+                margin: auto;
+				width: 50vmin;
+                pointer-events: none;
+            }
+            img#logo-haxe {
+                opacity: 0;
+				animation-delay: 0.3s;
+				animation-duration: 1.5s;
+			    animation-fill-mode: both;
+				animation-name: pulse;
+                filter: drop-shadow(16px 16px 24px rgba(5,5,5,0.9));
+                z-index: 2;
+            }
+			footer {
+				position: fixed;
+				right: 0;
+				bottom: 0;
+				display: none;
+			}
+        </style>
+        <xml id="mainmenu">
+	        <menu label="Project" class="project">
+                <menu label="Open..." class="open"></menu>
+                <menu label="Recently opened">
+                    <div class="recents">
+                        <menu label="Empty" disabled="disabled"></menu>
+                    </div>
+                <separator></separator>
+                <menu label="Clear Recents" class="clear"></menu>
+                </menu>
+                <separator></separator>
+                <menu label="Renderer">
+                    <div class="renderers">
+                    </div>
+                </menu>
+		    <separator></separator>
+            <menu label="Build Files" class="build-files"></menu>
+            <menu label="Clear profile" class="clear-local"></menu>
+            <menu label="Exit" class="exit"></menu>
+        </menu>
+	<menu label="View" class="view">
+		<menu label="Resources" component="hide.view.FileBrowser" state='{"savedLayout": "SingleTree"}' position="content_left"></menu>
+		<menu label="File Browser" component="hide.view.FileBrowser" state='{}'></menu>
+		<menu label="Domkit Studio" component="hide.view.DomkitStudio" state='{}'></menu>
+		<separator></separator>
+		<menu label="About" component="hide.view.About"></menu>
+		<menu label="Debug" class="debug"></menu>
+		<menu label="Editor Gym" component="hide.view.Gym"></menu>
+	</menu>
+	<menu label="Database" class="database">
+		<menu label="View" class="dbView"></menu>
+		<menu label="Custom Types" class="dbCustom"></menu>
+		<menu label="Formulas">
+			<menu label="Enable" type="checkbox" class="dbFormulasEnable"></menu>
+			<menu label="Edit" class="dbFormulas"></menu>
+		</menu>
+		<menu label="Diff">
+			<menu label="Create" class="dbCreateDiff"></menu>
+			<menu label="Load" class="dbLoadDiff"></menu>
+			<menu label="Close" class="dbCloseDiff"></menu>
+		</menu>
+		<menu label="Export Localized Texts" class="dbExport"></menu>
+		<menu label="Import Localized Texts" class="dbImport"></menu>
+		<menu label="Proofreading Mode" type="checkbox" class="dbProofread"></menu>
+		<menu label="Categories" class="dbCategories">
+			<menu label="Show All" class="dbCatShowAll"></menu>
+			<menu label="Hide All" class="dbCatHideAll"></menu>
+		</menu>
+		<separator></separator>
+		<menu label="Enable Compression" class="dbCompress" type="checkbox"></menu>
+	</menu>
+	<menu label="Layout" class="layout">
+		<div class="content">
+		</div>
+		<separator></separator>
+		<menu label="Keep on close" class="autosave" type="checkbox"></menu>
+		<menu label="Save" class="save"></menu>
+		<menu label="Save As..." class="saveas"></menu>
+		<menu label="Manage" class="manage" disabled="disabled"></menu>
+	</menu>
+	<menu label="Tools" class="tools">
+		<menu label="Analysis" class="analysis">
+			<div class="content">
+			</div>
+			<separator></separator>
+			<menu label="Remote console" class="remoteconsole"></menu>
+			<menu label="Memory profiler" class="memprof"></menu>
+			<menu label="DevTools" class="devtools"></menu>
+			<menu label="Gpu mem dump" class="gpudump"></menu>
+		</menu>
+		<menu label="Screen Capture" class="screen-capture"></menu>
+	</menu>
+
+	<menu label="Settings" class="settings">
+		<div class="content">
+		</div>
+		<separator></separator>
+		<menu label="User settings" class="user-settings"></menu>
+		<menu label="Project settings" class="project-settings"></menu>
+	</menu>
+</xml>
+        <script defer src="app.js"></script>
+    </head>
+    <body>
+        
+		<header>
+			<h1><a href="https://github.com/tong/hxelectron">hxelectron</a></h1>
+		</header>
+		<main>
+			<div id="system-version"></div>
+            <div id="node-version"></div>
+            <div id="electron-version"></div>
+            <div id="haxe-version"></div>
+		</main>
+		<img class="logo" id="logo-haxe" src="haxe-logo.svg"/>
+		<footer>
+            <a href="https://github.com/tong/hxelectron">https://github.com/tong/hxelectron</a>
+        </footer>
+        <script>
+            // === Обработка суб-вью (Electron/NW.js) ===
+            (function() {
+                function getQueryVariable(variable) {
+                    var query = window.location.search.substring(1);
+                    var vars = query.split("&");
+                    for (var i = 0; i < vars.length; i++) {
+                        var pair = vars[i].split("=");
+                        if (pair[0] == variable) { 
+                            try { return decodeURIComponent(pair[1]); } 
+                            catch(e) { return pair[1]; }
+                        }
+                    }
+                    return null;
+                }
+
+                var subView = getQueryVariable("subView");
+                if (subView != null) {
+                    console.log("[app.html] 🪟 Sub-view requested: " + subView);
+                    
+                    function waitForIde() {
+                        if (window.hide && hide.Ide && hide.Ide.inst && hide.Ide.inst.isInitialized) {
+                            console.log("[app.html] ✅ IDE ready, opening: " + subView);
+                            
+                            var state = null;
+                            var stateJson = getQueryVariable("state");
+                            if (stateJson != null) {
+                                try { state = JSON.parse(decodeURIComponent(stateJson)); } 
+                                catch(e) { console.warn("State parse error:", e); }
+                            }
+                            
+                            var position = getQueryVariable("pos");
+                            
+                            // Вызываем open() из Ide
+                            hide.Ide.inst.open(subView, state, position);
+                        } else {
+                            setTimeout(waitForIde, 100);
+                        }
+                    }
+                    waitForIde();
+                }
+            })();
+        </script>
+    </body>
+</html>

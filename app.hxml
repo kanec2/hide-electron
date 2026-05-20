@@ -1,0 +1,7 @@
+-js app.js
+-main hide.core.Ide
+-lib electron
+-dce full
+--debug
+-D no-deprecation-warnings
+-D message.log-format=pretty

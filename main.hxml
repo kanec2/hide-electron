@@ -1,0 +1,9 @@
+-js main.js
+-main ElectronMain
+-lib electron
+-dce full
+--debug
+-D no-deprecation-warnings
+-D message.log-format=pretty
+-D electron
+-D electron_main

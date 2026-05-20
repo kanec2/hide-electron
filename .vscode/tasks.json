@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "npm: build",
+      "type": "npm",
+      "script": "build",
+      "path": "",
+      "problemMatcher": []
+    },
+    {
+      "label": "npm: start",
+      "type": "npm",
+      "script": "start",
+      "path": "",
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "build-then-start",
+      "dependsOn": ["npm: build", "npm: start"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    }
+  ]
+}

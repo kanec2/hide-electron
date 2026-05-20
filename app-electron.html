@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<!-- Electron: CSP для безопасности (опционально, можно убрать для совместимости) -->
+	<!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' file:;"> -->
+</head>
+<body>
+<!-- CSS подключения — без изменений -->
+<link rel="stylesheet" type="text/css" href="libs/goldenlayout-base.css"/>
+<link rel="stylesheet" type="text/css" href="libs/goldenlayout-dark-theme.css"/>
+<link rel="stylesheet" type="text/css" href="style.css"/>
+<link rel="stylesheet" type="text/css" href="hidekit.css"/>
+<link rel="stylesheet" type="text/css" href="cdb.css"/>
+<link rel="stylesheet" type="text/css" href="icons.css"/>
+<link rel="stylesheet" type="text/css" href="libs/spectrum.css"/>
+<link rel="stylesheet data-name="vs/editor/editor.main" href="libs/monaco/min/vs/editor/editor.main.css">
+
+<!-- Библиотеки — без изменений -->
+<script src="libs/jquery-3.2.1.js"></script>
+<script src="libs/jquery.ui.position.js"></script>
+<script src="libs/goldenlayout.js"></script>
+<script src="libs/spectrum.js"></script>
+
+<!-- WebGL debug — опционально -->
+<!-- <script src="libs/webgl-debug.js"></script> -->
+
+<!-- === БЛОК ИНИЦИАЛИЗАЦИИ: NW.js vs Electron === -->
+<script>
+	// Утилита для получения параметров из URL
+	function getQueryVariable(variable) {
+		var query = window.location.search.substring(1);
+		var vars = query.split("&");
+		for (var i = 0; i < vars.length; i++) {
+			var pair = vars[i].split("=");
+			if (pair[0] == variable) { return pair[1]; }
+		}
+		return false;
+	}
+
+	var thumbnail = getQueryVariable("thumbnail");
+	
+	// >>> Electron/NW.js абстракция для закрытия окна <<<
+	// Используем глобальный объект, который задаётся из Haxe-бэкенда
+	if (!thumbnail) {
+		var currentWin = window.electronBackend 
+			? window.electronBackend.getCurrentWindow() 
+			: (typeof nw !== 'undefined' ? nw.Window.get() : null);
+		
+		if (currentWin && currentWin.on) {
+			currentWin.on('close', function() {
+				// Electron: закрываем все окна через IPC
+				if (window.electronBackend) {
+					window.electronBackend.send('app:quit');
+				} 
+				// NW.js: оригинальная логика
+				else if (typeof nw !== 'undefined') {
+					if (chrome.app && chrome.app.window) {
+						chrome.app.window.getAll().forEach(function(win) { win.close(true); });
+					}
+					nw.App.closeAllWindows();
+					nw.App.quit();
+				}
+				// Fallback для веба
+				else {
+					window.close();
+				}
+			});
+		}
+	}
+</script>
+
+<!-- Фикс для process.argv (работает в обоих) -->
+<script>
+	__filename = typeof process !== 'undefined' ? process.argv[0] : '';
+</script>
+
+<!-- Настройка require для Monaco (важно для Electron!) -->
+<script>
+	// Сохраняем Node.js require ДО загрузки Monaco
+	var nodeRequire = typeof require !== 'undefined' ? require : null;
+	monaco = {};
+</script>
+<script src="libs/monaco/min/vs/loader.js"></script>
+<script>
+	// Восстанавливаем Node.js require после AMD-загрузчика Monaco
+	var amdRequire = require;
+	if (nodeRequire) {
+		require = nodeRequire;
+		require.nodeRequire = nodeRequire;
+	}
+</script>
+
+<!-- XML меню — без изменений (обрабатывается Haxe) -->
+<xml id="mainmenu">
+	<!-- ... содержимое меню ... -->
+</xml>
+
+<!-- Основной скрипт Hide -->
+<script src="hide.js"></script>
+
+<!-- Фикс для Monaco + путь к приложению -->
+<script>
+	if (!thumbnail) {
+		// Фикс Reflect для Monaco
+		var _R = Reflect;
+		Reflect = global.Reflect;
+		for (var f in _R) Reflect[f] = _R[f];
+
+		// Получение пути к приложению
+		var appPath = hide.tools.IdeData.getAppPath();
+		if (appPath != null) {
+			if (!appPath.endsWith("/")) appPath += "/";
+			// Electron: file:// пути работают иначе
+
+			if (appPath.indexOf('file:') !== 0) {
+				appPath = 'file://' + (process.platform === 'win32' ? '/' : '') + appPath.replace(/\\/g, '/');
+			}
+
+		}
+
+		// Настройка baseUrl для Monaco
+		var libPath = (appPath == null ? '' : appPath) + 'libs/monaco/min/';
+		if (amdRequire && amdRequire.config) {
+			amdRequire.config({ baseUrl: libPath });
+			amdRequire(['vs/editor/editor.main'], function() {});
+		}
+	}
+</script>
+
+<!-- Hot reload watcher (Node.js fs) -->
+<script>
+	// Electron поддерживает require('fs') при nodeIntegration: true
+	if (typeof require !== 'undefined' && !thumbnail) {
+		var path = './';
+		var fs = require('fs');
+		var timer = 0;
+		
+		try {
+			var reloadWatcher = fs.watch(path, function(_, file) {
+				if (file == null) return;
+				var ext = file.split(".").pop().toLowerCase();
+				
+				if (ext == "js") {
+					if (thumbnail && window.electronBackend) {
+						window.electronBackend.getCurrentWindow().close();
+						return;
+					}
+					if (timer != 0) clearTimeout(timer);
+					timer = setTimeout(function() {
+						if (reloadWatcher && reloadWatcher.close) reloadWatcher.close();
+						if (hide.Ide && hide.Ide.inst) hide.Ide.inst.reload();
+					}, 1000);
+				}
+				if (ext == "css" && hide.Ide && hide.Ide.inst) {
+					hide.Ide.inst.reloadCss(file);
+				}
+			});
+		} catch(e) {
+			console.warn('File watcher disabled:', e);
+		}
+	}
+</script>
+
+</body>
+</html>
