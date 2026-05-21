@@ -136,12 +136,26 @@ AutoWindow.setupIpc = function() {
 			event.reply("app:clearCache:done");
 		});
 	});
+	electron_main_IpcMain.on("window:open",function(event,data) {
+		var url = data.url;
+		if(url.indexOf("?subView=") != -1) {
+			console.log("AutoWindow.hx:170:","[AutoWindow] ⚠️ Sub-view request (handled by GoldenLayout): " + url);
+			event.sender.send("window:open:subview",{ url : url});
+			return;
+		}
+	});
 	electron_main_IpcMain.on("menu:build",function(event,menuData) {
-		console.log("AutoWindow.hx:165:","[AutoWindow] 📥 Received menu data");
+		console.log("AutoWindow.hx:182:","[AutoWindow] 📥 Received menu data");
 		var template = AutoWindow.processMenuTemplate(menuData,event.sender);
 		var menu = electron_main_Menu.buildFromTemplate(template);
 		electron_main_Menu.setApplicationMenu(menu);
-		console.log("AutoWindow.hx:171:","[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
+		console.log("AutoWindow.hx:188:","[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
+	});
+	electron_main_IpcMain.on("window:open",function(event,data) {
+		var opts = { width : data.options.width != null ? data.options.width : 800, height : data.options.height != null ? data.options.height : 600, title : data.options.title != null ? data.options.title : "Hide", parent : AutoWindow.window, webPreferences : { nodeIntegration : true, contextIsolation : false, enableRemoteModule : true}};
+		var child = new electron_main_BrowserWindow(opts);
+		child.loadFile(data.url);
+		child.webContents.openDevTools({ mode : "detach"});
 	});
 };
 AutoWindow.processMenuTemplate = function(items,sender) {
@@ -158,7 +172,7 @@ AutoWindow.processMenuTemplate = function(items,sender) {
 			var itemId = [item.id];
 			processed.click = (function(itemId) {
 				return function(menuItem,browserWindow,event) {
-					console.log("AutoWindow.hx:195:","[AutoWindow] 🖱 Click: '" + itemId[0] + "'");
+					console.log("AutoWindow.hx:236:","[AutoWindow] 🖱 Click: '" + itemId[0] + "'");
 					sender.send("menu:click",{ id : itemId[0]});
 				};
 			})(itemId);
@@ -167,47 +181,12 @@ AutoWindow.processMenuTemplate = function(items,sender) {
 	}
 	return result;
 };
-var ElectronMain = function() {
-	AutoWindow.start({ onReady : $bind(this,this.startup)});
-};
+var ElectronMain = function() { };
 ElectronMain.main = function() {
-	new ElectronMain();
+	AutoWindow.start({ onReady : ElectronMain.startup});
 };
-ElectronMain.setupIpcHandlers = function() {
-	electron_main_IpcMain.on("app:quit",function(_) {
-		ElectronMain.isQuitting = true;
-		if(AutoWindow.window != null && !AutoWindow.window.isDestroyed()) {
-			AutoWindow.window.close();
-		}
-		electron_main_App.quit();
-	});
-	electron_main_IpcMain.on("app:reload",function(_) {
-		if(AutoWindow.window != null && !AutoWindow.window.isDestroyed()) {
-			AutoWindow.window.reload();
-		}
-	});
-	electron_main_IpcMain.on("app:clearCache",function(event) {
-		if(AutoWindow.window != null) {
-			AutoWindow.window.webContents.session.clearCache().then(function(_) {
-				return event.reply("app:clearCache:done");
-			}).catch(function(err) {
-				console.log("ElectronMain.hx:66:","Cache clear error: " + err);
-				return event.reply("app:clearCache:error");
-			});
-		}
-	});
-	electron_main_IpcMain.on("window:open",function(event,data) {
-		var opts = { width : data.options.width != null ? data.options.width : 800, height : data.options.height != null ? data.options.height : 600, title : data.options.title != null ? data.options.title : "Hide", webPreferences : { nodeIntegration : true, contextIsolation : false, enableRemoteModule : true}};
-		var child = new electron_main_BrowserWindow(opts);
-		child.loadFile(data.url);
-		child.webContents.openDevTools({ mode : "detach"});
-	});
-};
-ElectronMain.prototype = {
-	startup: function() {
-		console.log("ElectronMain.hx:34:","🚀 Startup...");
-		ElectronMain.setupIpcHandlers();
-	}
+ElectronMain.startup = function() {
+	console.log("ElectronMain.hx:21:","🚀 ElectronMain: Startup complete");
 };
 var HxOverrides = function() { };
 HxOverrides.cca = function(s,index) {
@@ -368,15 +347,11 @@ haxe_iterators_ArrayIterator.prototype = {
 	}
 };
 var js_node_Fs = require("fs");
-var $_;
-function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $global.$haxeUID++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = m.bind(o); o.hx__closures__[m.__id__] = f; } return f; }
-$global.$haxeUID |= 0;
 if(typeof(performance) != "undefined" ? typeof(performance.now) == "function" : false) {
 	HxOverrides.now = performance.now.bind(performance);
 }
 if( String.fromCodePoint == null ) String.fromCodePoint = function(c) { return c < 0x10000 ? String.fromCharCode(c) : String.fromCharCode((c>>10)+0xD7C0)+String.fromCharCode((c&0x3FF)+0xDC00); }
-ElectronMain.isQuitting = false;
 ElectronMain.main();
-})(typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
+})({});
 
 //# sourceMappingURL=main.js.map

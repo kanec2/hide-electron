@@ -13,12 +13,18 @@ class ElectronBackend implements IIdeBackend {
     public function init():Void {
         trace("[ElectronBackend] init()");
         
-        // Слушаем клики из Main Process
+         // Слушаем клики из Main Process
         IpcRenderer.on("menu:click", function(event, data) {
             trace("[ElectronBackend] 📥 menu:click received");
             if (menuClickHandler != null && data != null && data.id != null) {
                 menuClickHandler(data.id);
             }
+        });
+        
+        // Слушаем подтверждение очистки кэша
+        IpcRenderer.on("app:clearCache:done", function(event, _) {
+            trace("[ElectronBackend] 🧹 Cache cleared");
+            js.Browser.window.localStorage.clear();
         });
     }
     
@@ -26,41 +32,64 @@ class ElectronBackend implements IIdeBackend {
     
     // === Окна ===
     public function openWindow(url:String, options:Dynamic, ?id:String):Void {
-        // Если это суб-вью — отправляем событие внутри renderer, а не в Main
+        trace("[ElectronBackend] openWindow: " + url);
+        
+        // 👇 Если это суб-вью — обрабатываем ЛОКАЛЬНО, а не отправляем в Main
+        // Суб-вью — это панели GoldenLayout внутри главного окна
         if (url.indexOf("?subView=") != -1) {
             trace("[ElectronBackend] 🪟 Sub-view request, dispatching locally");
             
-            // Парсим параметры
+            // Парсим параметры из строки запроса
             var params = new haxe.ds.StringMap<String>();
             var query = url.split("?")[1];
             if (query != null) {
                 for (pair in query.split("&")) {
                     var parts = pair.split("=");
                     if (parts.length == 2) {
-                        params.set(parts[0], haxe.Uri.decode(parts[1]));
+                        // 👇 ИСПРАВЛЕНИЕ: используем JS decodeURIComponent через untyped
+                        var decoded: String = untyped __js__("decodeURIComponent")(parts[1]);
+                        params.set(parts[0], decoded);
                     }
                 }
             }
             
-            // Если есть subView — вызываем WindowManager.openSubView напрямую
-            if (params.exists("subView") && window.hide != null && window.hide.Ide != null) {
+            // Если есть subView — вызываем WindowManager напрямую
+            // 👇 ИСПРАВЛЕНИЕ: приводим window к Dynamic для доступа к динамическим полям
+            var jsWindow: Dynamic = js.Browser.window;
+            if (params.exists("subView") && 
+                jsWindow.hide != null && 
+                jsWindow.hide.Ide != null &&
+                jsWindow.hide.Ide.inst != null) {
+                
                 var componentName = params.get("subView");
-                var state = null;
+                var state:Dynamic = null;
+                
+                // Парсим состояние, если передано
                 if (params.exists("state")) {
                     try {
-                        state = haxe.Json.parse(haxe.Uri.decode(params.get("state")));
-                    } catch(_) {}
+                        var stateRaw = params.get("state");
+                        // 👇 Также декодируем state перед парсингом JSON
+                        var stateDecoded: String = untyped __js__("decodeURIComponent")(stateRaw);
+                        state = haxe.Json.parse(stateDecoded);
+                    } catch(e:Dynamic) {
+                        trace("[ElectronBackend] ⚠️ Failed to parse state: " + e);
+                    }
                 }
+                
                 var position = params.get("pos");
                 
-                window.hide.Ide.inst.open(componentName, state, position);
+                // Вызываем открытый метод open() из Ide
+                jsWindow.hide.Ide.inst.open(componentName, state, position);
+            } else {
+                trace("[ElectronBackend] ⚠️ Ide not ready yet for subView");
             }
             return;
         }
         
-        // Для настоящих окон — отправляем в Main Process
+        // 👇 Для настоящих новых окон (если они понадобятся) — отправляем в Main Process
         IpcRenderer.send("window:open", { url: url, options: options, id: id });
     }
+
     public function closeWindow(?id:String):Void { trace("[ElectronBackend] closeWindow"); }
     public function focusWindow(?id:String):Void { trace("[ElectronBackend] focusWindow"); }
     public function getCurrentWindowId():String return "main";

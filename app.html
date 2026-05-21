@@ -23,7 +23,41 @@
     <link rel="stylesheet" href="libs/monaco/min/vs/editor/editor.main.css"/>
 </head>
 <body>
-    
+    <!-- 2.1. jQuery — ДО ВСЕХ плагинов -->
+    <script>
+        (function() {
+            // Функция, которая запустится ТОЛЬКО когда jQuery точно будет доступен
+            function startApp() {
+                console.log('✅ jQuery v' + $.fn.jquery + ' готов к работе');
+                // 👇 Ваш код инициализации приложения
+                // $(document).ready(() => { ... });
+                // initUI();
+            }
+
+            // Попытка загрузки через Node.js
+            try {
+                window.$ = window.jQuery = require('jquery');
+                console.log('✅ jQuery загружен через require()');
+                startApp();
+            } catch (e) {
+                console.warn('⚠️ require("jquery") недоступен, пробую локальный файл...');
+            
+                // Фоллбэк: динамически создаём <script>
+                var script = document.createElement('script');
+                script.src = './libs/jquery-3.2.1.js'; // 🔸 Путь относительно app.html
+                script.onload = function() {
+                    // jQuery сам создаёт window.jQuery и window.$, но для надёжности:
+                    window.$ = window.jQuery = window.jQuery || window.$;
+                    console.log('✅ jQuery загружен из локального файла');
+                    startApp();
+                };
+                script.onerror = function() {
+                    console.error('❌ Не удалось загрузить jQuery ни через npm, ни локально!');
+                };
+                document.head.appendChild(script);
+            }
+        })();
+    </script>
     <!-- Ваш HTML-контент без изменений -->
     <header>...</header>
     <main>...</main>
@@ -117,8 +151,7 @@
 </xml>
         <!-- === 2. JS зависимости — СТРОГИЙ ПОРЯДОК === -->
     
-    <!-- 2.1. jQuery — ДО ВСЕХ плагинов -->
-    <script src="libs/jquery-3.2.1.js"></script>
+
     
     <!-- 2.2. Плагины jQuery -->
     <script src="libs/jquery.ui.position.js"></script>
