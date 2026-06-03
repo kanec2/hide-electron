@@ -60,7 +60,12 @@
     </script>
     <!-- Ваш HTML-контент без изменений -->
     <header>...</header>
-    <main>...</main>
+    <main>
+        <div id="system-version"></div>
+        <div id="node-version"></div>
+        <div id="electron-version"></div>
+        <div id="haxe-version"></div>
+    </main>
     <img class="logo" id="logo-haxe" src="haxe-logo.svg"/>
     <footer>...</footer>
     
@@ -201,7 +206,7 @@
         }
         
         // Инициализация GoldenLayout
-        function initGoldenLayout() {
+        /*function initGoldenLayout() {
             if (typeof GoldenLayout === 'undefined') {
                 console.error("[app.html] ❌ GoldenLayout not loaded");
                 return;
@@ -247,10 +252,10 @@
             });
             
             // Универсальный обработчик для компонентов из Haxe
-            myLayout.registerComponent('*', function(container, state) {
-                console.log("[GL] Creating: " + state.componentName);
-                container.getElement().html('<div>[' + state.componentName + ']</div>');
-            });
+            //myLayout.registerComponent('*', function(container, state) {
+            //    console.log("[GL] Creating: " + state.componentName);
+            //    container.getElement().html('<div>[' + state.componentName + ']</div>');
+            //});
             
             myLayout.init();
             console.log("[app.html] ✅ GoldenLayout initialized");
@@ -259,7 +264,7 @@
             if (window.hide.Ide.inst.windowManager) {
                 window.hide.Ide.inst.windowManager.setGoldenLayout(myLayout);
             }
-        }
+        } */
         
         // Обработчик суб-вью из параметров URL
         function initSubViewHandler() {

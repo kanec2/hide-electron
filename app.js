@@ -17,6 +17,12 @@ StringTools.__name__ = true;
 StringTools.replace = function(s,sub,by) {
 	return s.split(sub).join(by);
 };
+var Type = function() { };
+Type.__name__ = true;
+Type.createInstance = function(cl,args) {
+	var ctor = Function.prototype.bind.apply(cl,[null].concat(args));
+	return new (ctor);
+};
 var electron_renderer_IpcRenderer = require("electron").ipcRenderer;
 var haxe_Exception = function(message,previous,native) {
 	Error.call(this,message);
@@ -25,21 +31,48 @@ var haxe_Exception = function(message,previous,native) {
 	this.__nativeException = native != null ? native : this;
 };
 haxe_Exception.__name__ = true;
-haxe_Exception.caught = function(value) {
+haxe_Exception.thrown = function(value) {
 	if(((value) instanceof haxe_Exception)) {
-		return value;
+		return value.get_native();
 	} else if(((value) instanceof Error)) {
-		return new haxe_Exception(value.message,null,value);
+		return value;
 	} else {
-		return new haxe_ValueException(value,null,value);
+		var e = new haxe_ValueException(value);
+		return e;
 	}
 };
 haxe_Exception.__super__ = Error;
 haxe_Exception.prototype = $extend(Error.prototype,{
-	unwrap: function() {
+	get_native: function() {
 		return this.__nativeException;
 	}
 });
+var haxe_Timer = function(time_ms) {
+	var me = this;
+	this.id = setInterval(function() {
+		me.run();
+	},time_ms);
+};
+haxe_Timer.__name__ = true;
+haxe_Timer.delay = function(f,time_ms) {
+	var t = new haxe_Timer(time_ms);
+	t.run = function() {
+		t.stop();
+		f();
+	};
+	return t;
+};
+haxe_Timer.prototype = {
+	stop: function() {
+		if(this.id == null) {
+			return;
+		}
+		clearInterval(this.id);
+		this.id = null;
+	}
+	,run: function() {
+	}
+};
 var haxe_ValueException = function(value,previous,native) {
 	haxe_Exception.call(this,String(value),previous,native);
 	this.value = value;
@@ -47,9 +80,6 @@ var haxe_ValueException = function(value,previous,native) {
 haxe_ValueException.__name__ = true;
 haxe_ValueException.__super__ = haxe_Exception;
 haxe_ValueException.prototype = $extend(haxe_Exception.prototype,{
-	unwrap: function() {
-		return this.value;
-	}
 });
 var haxe_ds_StringMap = function() {
 	this.h = Object.create(null);
@@ -69,6 +99,7 @@ haxe_iterators_ArrayIterator.prototype = {
 	}
 };
 var hide_core_Ide = function() {
+	this.views = [];
 	this.isInitialized = false;
 	hide_core_Ide.inst = this;
 	hide_core_IdeConfig.init();
@@ -82,25 +113,66 @@ hide_core_Ide.createBackend = function() {
 };
 hide_core_Ide.main = function() {
 	window.onload = function() {
-		console.log("hide/core/Ide.hx:286:","🌐 Renderer process starting...");
+		console.log("hide/core/Ide.hx:474:","🌐 Renderer process starting...");
 		window.document.getElementById("system-version").textContent = "🌐 Renderer process starting...";
 		var app = new hide_core_Ide();
 		app.init();
 	};
 };
 hide_core_Ide.prototype = {
-	open: function(componentName,state,position) {
-		console.log("hide/core/Ide.hx:55:","[Ide] 🪟 Opening component: " + componentName);
-		var url = "app.html?subView=" + componentName;
-		if(state != null) {
-			var stateJson = JSON.stringify(state);
-			url += "&state=" + js_node_Url.format(stateJson);
+	open: function(component,state,onCreate,onOpen,positionOverride) {
+		var _gthis = this;
+		if(this.layout == null || this.layout.root == null) {
+			console.log("hide/core/Ide.hx:78:","[Ide] ⚠️ Layout not ready");
+			return;
 		}
-		if(position != null) {
-			url += "&pos=" + position;
+		if(state == null) {
+			state = { };
 		}
-		this.backend.openWindow(url,{ title : componentName.split(".").pop(), width : 800, height : 600, id : componentName},componentName);
-		console.log("hide/core/Ide.hx:80:","[Ide] ✅ Window request sent: " + url);
+		var viewConfig = hide_ui_View.viewClasses.h[component];
+		if(viewConfig == null) {
+			throw haxe_Exception.thrown("Unknown component: " + component);
+		}
+		state.componentName = component;
+		var _g = 0;
+		var _g1 = this.views;
+		while(_g < _g1.length) {
+			var v = _g1[_g];
+			++_g;
+			if(v.viewClass == component && JSON.stringify(v.state) == JSON.stringify(state)) {
+				v.activate();
+				if(onCreate != null) {
+					onCreate(v);
+				}
+				if(onOpen != null) {
+					onOpen(v);
+				}
+				return;
+			}
+		}
+		var options = viewConfig.options;
+		var target = this.getOrInitTarget(positionOverride != null ? positionOverride : options.position);
+		target.on("componentCreated",function(c) {
+			target.off("componentCreated");
+			var view = c.origin.__view;
+			if(view != null) {
+				_gthis.views.push(view);
+				if(onCreate != null) {
+					onCreate(view);
+				}
+				if(onOpen != null) {
+					onOpen(view);
+				}
+			}
+		});
+		var config = { type : "component", componentName : component, componentState : state};
+		if(options.id != null) {
+			config.id = options.id;
+		}
+		target.addChild(config);
+	}
+	,getOrInitTarget: function(position) {
+		return this.layout.root;
 	}
 	,getBackend: function() {
 		return this.backend;
@@ -110,31 +182,32 @@ hide_core_Ide.prototype = {
 		if(this.isInitialized) {
 			return;
 		}
-		console.log("hide/core/Ide.hx:112:","🚀 Hide IDE initializing...");
+		var _ = hide_view_CdbTable;
+		console.log("hide/core/Ide.hx:287:","🚀 Hide IDE initializing...");
 		this.windowManager = new hide_modules_WindowManager(this);
 		this.menuSystem = new hide_modules_MenuSystem(this);
 		this.menuSystem.loadFromXml();
 		this.menuSystem.registerCommand("exit",function() {
-			console.log("hide/core/Ide.hx:123:","🚪 Exit");
+			console.log("hide/core/Ide.hx:298:","🚪 Exit");
 			_gthis.getBackend().quit();
 		});
 		this.menuSystem.registerCommand("open",function() {
-			console.log("hide/core/Ide.hx:128:","📂 Open project");
+			console.log("hide/core/Ide.hx:303:","📂 Open project");
 		});
 		this.menuSystem.registerCommand("clear",function() {
-			console.log("hide/core/Ide.hx:133:","🗑 Clear recents");
+			console.log("hide/core/Ide.hx:308:","🗑 Clear recents");
 		});
 		this.menuSystem.registerCommand("clear-local",function() {
-			console.log("hide/core/Ide.hx:138:","🧹 Clear local profile");
+			console.log("hide/core/Ide.hx:313:","🧹 Clear local profile");
 			window.localStorage.clear();
 			_gthis.getBackend().clearCache();
 			_gthis.getBackend().reload();
 		});
 		this.menuSystem.registerCommand("build-files",function() {
-			console.log("hide/core/Ide.hx:145:","🔨 Build files");
+			console.log("hide/core/Ide.hx:320:","🔨 Build files");
 		});
 		this.menuSystem.registerCommand("debug",function() {
-			console.log("hide/core/Ide.hx:151:","🐛 DevTools");
+			console.log("hide/core/Ide.hx:326:","🐛 DevTools");
 			_gthis.getBackend().showDevTools();
 		});
 		this.menuSystem.registerCommand("hide.view.FileBrowser",function() {
@@ -150,70 +223,62 @@ hide_core_Ide.prototype = {
 			_gthis.open("hide.view.Gym",{ });
 		});
 		this.menuSystem.registerCommand("dbView",function() {
-			_gthis.open("app.html",{ });
+			_gthis.open("dbview.html",{ });
 		});
 		this.menuSystem.registerCommand("dbCustom",function() {
-			console.log("hide/core/Ide.hx:176:","⚙️ DB Custom Types");
+			console.log("hide/core/Ide.hx:351:","⚙️ DB Custom Types");
 		});
 		this.menuSystem.registerCommand("dbCompress",function() {
-			console.log("hide/core/Ide.hx:179:","🗜 DB Compress toggle");
+			console.log("hide/core/Ide.hx:354:","🗜 DB Compress toggle");
 		});
 		this.menuSystem.registerCommand("dbExport",function() {
-			console.log("hide/core/Ide.hx:182:","📤 DB Export");
+			console.log("hide/core/Ide.hx:357:","📤 DB Export");
 		});
 		this.menuSystem.registerCommand("dbImport",function() {
-			console.log("hide/core/Ide.hx:185:","📥 DB Import");
+			console.log("hide/core/Ide.hx:360:","📥 DB Import");
 		});
 		this.menuSystem.registerCommand("dbProofread",function() {
-			console.log("hide/core/Ide.hx:188:","👁 DB Proofread toggle");
+			console.log("hide/core/Ide.hx:363:","👁 DB Proofread toggle");
 		});
 		this.menuSystem.registerCommand("save",function() {
-			console.log("hide/core/Ide.hx:193:","💾 Save layout");
+			console.log("hide/core/Ide.hx:368:","💾 Save layout");
 		});
 		this.menuSystem.registerCommand("saveas",function() {
-			console.log("hide/core/Ide.hx:196:","💾 Save As...");
+			console.log("hide/core/Ide.hx:371:","💾 Save As...");
 		});
 		this.menuSystem.registerCommand("autosave",function() {
-			console.log("hide/core/Ide.hx:199:","🔄 Autosave toggle");
+			console.log("hide/core/Ide.hx:374:","🔄 Autosave toggle");
 		});
 		this.menuSystem.registerCommand("user-settings",function() {
-			console.log("hide/core/Ide.hx:204:","⚙️ User settings");
+			console.log("hide/core/Ide.hx:379:","⚙️ User settings");
 		});
 		this.menuSystem.registerCommand("project-settings",function() {
-			console.log("hide/core/Ide.hx:207:","⚙️ Project settings");
+			console.log("hide/core/Ide.hx:382:","⚙️ Project settings");
 		});
 		this.registerGoldenLayoutComponents();
 		this.isInitialized = true;
-		console.log("hide/core/Ide.hx:230:","✅ Hide IDE ready (stub mode).");
+		console.log("hide/core/Ide.hx:407:","✅ Hide IDE ready (stub mode).");
 		window.document.getElementById("system-version").textContent = "✅ Hide IDE ready (stub mode).";
 	}
 	,registerGoldenLayoutComponents: function() {
-		var wm = this.windowManager;
-		if(wm == null || wm.goldenLayout == null) {
-			console.log("hide/core/Ide.hx:244:","[Ide] ⏳ GoldenLayout not ready yet (will register later)");
+		if(this.windowManager == null || this.windowManager.goldenLayout == null) {
+			console.log("hide/core/Ide.hx:420:","[Ide] ⏳ GoldenLayout not ready yet (will register later)");
 			return;
 		}
-		console.log("hide/core/Ide.hx:248:","[Ide] ✅ GoldenLayout connected, registering components...");
-		wm.goldenLayout.registerComponent("hide.view.CdbTable",function(container,state) {
-			console.log("hide/core/Ide.hx:253:","[GL] Creating CdbTable panel");
-			container.getElement().html("<div class=\"cdb-table\">CdbTable placeholder</div>");
-		});
-		wm.goldenLayout.registerComponent("hide.view.FileBrowser",function(container,state) {
-			console.log("hide/core/Ide.hx:258:","[GL] Creating FileBrowser panel");
-			container.getElement().html("<div class=\"file-browser\">FileBrowser placeholder</div>");
-		});
-		wm.goldenLayout.registerComponent("hide.view.DomkitStudio",function(container,state) {
-			console.log("hide/core/Ide.hx:263:","[GL] Creating DomkitStudio panel");
-			container.getElement().html("<div>DomkitStudio placeholder</div>");
-		});
-		wm.goldenLayout.registerComponent("hide.view.About",function(container,state) {
-			console.log("hide/core/Ide.hx:268:","[GL] Creating About panel");
-			container.getElement().html("<div>About Hide IDE</div>");
-		});
-		wm.goldenLayout.registerComponent("hide.view.Gym",function(container,state) {
-			console.log("hide/core/Ide.hx:273:","[GL] Creating Gym panel");
-			container.getElement().html("<div>Editor Gym placeholder</div>");
-		});
+		var gl = this.windowManager.goldenLayout;
+		this.layout = gl;
+		console.log("hide/core/Ide.hx:426:","[Ide] ✅ GoldenLayout connected, registering components...");
+		var h = hide_ui_View.viewClasses.h;
+		var componentName_h = h;
+		var componentName_keys = Object.keys(h);
+		var componentName_length = componentName_keys.length;
+		var componentName_current = 0;
+		while(componentName_current < componentName_length) {
+			var componentName = componentName_keys[componentName_current++];
+			var tmp = hide_ui_View.glFactory(componentName);
+			gl.registerComponent(componentName,tmp);
+			console.log("hide/core/Ide.hx:430:","[Ide] 📦 GL registered: " + componentName);
+		}
 	}
 };
 var hide_core_IdeConfig = function() { };
@@ -229,67 +294,25 @@ hide_electron_ElectronBackend.__name__ = true;
 hide_electron_ElectronBackend.prototype = {
 	init: function() {
 		var _gthis = this;
-		console.log("hide/electron/ElectronBackend.hx:14:","[ElectronBackend] init()");
+		console.log("hide/electron/ElectronBackend.hx:15:","[ElectronBackend] init()");
 		electron_renderer_IpcRenderer.on("menu:click",function(event,data) {
-			console.log("hide/electron/ElectronBackend.hx:18:","[ElectronBackend] 📥 menu:click received");
+			console.log("hide/electron/ElectronBackend.hx:19:","[ElectronBackend] 📥 menu:click received");
 			if(_gthis.menuClickHandler != null && data != null && data.id != null) {
 				_gthis.menuClickHandler(data.id);
 			}
 		});
 		electron_renderer_IpcRenderer.on("app:clearCache:done",function(event,_) {
-			console.log("hide/electron/ElectronBackend.hx:26:","[ElectronBackend] 🧹 Cache cleared");
+			console.log("hide/electron/ElectronBackend.hx:27:","[ElectronBackend] 🧹 Cache cleared");
 			window.localStorage.clear();
 		});
 	}
-	,openWindow: function(url,options,id) {
-		console.log("hide/electron/ElectronBackend.hx:35:","[ElectronBackend] openWindow: " + url);
-		if(url.indexOf("?subView=") != -1) {
-			console.log("hide/electron/ElectronBackend.hx:40:","[ElectronBackend] 🪟 Sub-view request, dispatching locally");
-			var params_h = Object.create(null);
-			var query = url.split("?")[1];
-			if(query != null) {
-				var _g = 0;
-				var _g1 = query.split("&");
-				while(_g < _g1.length) {
-					var pair = _g1[_g];
-					++_g;
-					var parts = pair.split("=");
-					if(parts.length == 2) {
-						var decoded = decodeURIComponent(parts[1]);
-						params_h[parts[0]] = decoded;
-					}
-				}
-			}
-			var jsWindow = window;
-			if(Object.prototype.hasOwnProperty.call(params_h,"subView") && jsWindow.hide != null && jsWindow.hide.Ide != null && jsWindow.hide.Ide.inst != null) {
-				var componentName = params_h["subView"];
-				var state = null;
-				if(Object.prototype.hasOwnProperty.call(params_h,"state")) {
-					try {
-						var stateRaw = params_h["state"];
-						var stateDecoded = decodeURIComponent(stateRaw);
-						state = JSON.parse(stateDecoded);
-					} catch( _g ) {
-						var e = haxe_Exception.caught(_g).unwrap();
-						console.log("hide/electron/ElectronBackend.hx:75:","[ElectronBackend] ⚠️ Failed to parse state: " + Std.string(e));
-					}
-				}
-				var position = params_h["pos"];
-				jsWindow.hide.Ide.inst.open(componentName,state,position);
-			} else {
-				console.log("hide/electron/ElectronBackend.hx:84:","[ElectronBackend] ⚠️ Ide not ready yet for subView");
-			}
-			return;
-		}
-		electron_renderer_IpcRenderer.send("window:open",{ url : url, options : options, id : id});
-	}
 	,createMenu: function(menuData) {
 		var serialized = JSON.stringify(menuData);
-		console.log("hide/electron/ElectronBackend.hx:101:","[ElectronBackend] 📤 Sending menu JSON: " + serialized);
+		console.log("hide/electron/ElectronBackend.hx:56:","[ElectronBackend] 📤 Sending menu JSON: " + serialized);
 		electron_renderer_IpcRenderer.send("menu:build",menuData);
 	}
 	,onMenuClick: function(handler) {
-		console.log("hide/electron/ElectronBackend.hx:106:","[ElectronBackend] 📡 onMenuClick registered");
+		console.log("hide/electron/ElectronBackend.hx:61:","[ElectronBackend] 📡 onMenuClick registered");
 		this.menuClickHandler = handler;
 	}
 	,clearCache: function() {
@@ -412,6 +435,143 @@ var hide_modules_WindowManager = function(ide) {
 	this.ide = ide;
 };
 hide_modules_WindowManager.__name__ = true;
+var hide_ui_View = function(container,state,viewClass) {
+	this.isActive = false;
+	this.container = container;
+	this.state = state;
+	this.viewClass = viewClass;
+	console.log("hide/ui/View.hx:41:","[View] 🎨 Creating: " + viewClass);
+	this.element = window.document.createElement("div");
+	var tmp = viewClass.split(".").pop();
+	this.element.className = "hide-view hide-view-" + tmp;
+	this.element.style.cssText = "width:100%;height:100%;display:flex;flex-direction:column;";
+	container.getElement().appendChild(this.element);
+	container.origin.__view = this;
+	this.init();
+};
+hide_ui_View.__name__ = true;
+hide_ui_View.register = function(componentName,cls,options) {
+	if(Object.prototype.hasOwnProperty.call(hide_ui_View.viewClasses.h,componentName)) {
+		console.log("hide/ui/View.hx:134:","[View] ⚠️ Already registered: " + componentName);
+		return;
+	}
+	hide_ui_View.viewClasses.h[componentName] = { cls : cls, options : options != null ? options : { position : "Center"}};
+	console.log("hide/ui/View.hx:141:","[View] ✅ Registered: " + componentName);
+};
+hide_ui_View.glFactory = function(componentName) {
+	return function(container,state) {
+		var config = hide_ui_View.viewClasses.h[componentName];
+		if(config == null) {
+			console.log("hide/ui/View.hx:150:","[View] ❌ Unknown component: " + componentName);
+			return null;
+		}
+		var instance = Type.createInstance(config.cls,[container,state]);
+		return instance;
+	};
+};
+hide_ui_View.prototype = {
+	init: function() {
+	}
+	,activate: function() {
+		this.isActive = true;
+		console.log("hide/ui/View.hx:71:","[View] ✅ Activated: " + this.viewClass);
+		this.onActivate();
+	}
+	,onActivate: function() {
+	}
+	,destroy: function() {
+		console.log("hide/ui/View.hx:110:","[View] 🗑 Destroyed: " + this.viewClass);
+		this.element.innerHTML = "";
+	}
+};
+var hide_view_CdbTable = function(container,state) {
+	hide_ui_View.call(this,container,state,"hide.view.CdbTable");
+};
+hide_view_CdbTable.__name__ = true;
+hide_view_CdbTable.__super__ = hide_ui_View;
+hide_view_CdbTable.prototype = $extend(hide_ui_View.prototype,{
+	init: function() {
+		console.log("hide/view/CdbTable.hx:30:","[CdbTable] 🎨 init()");
+		this.buildUI();
+		this.setupEvents();
+		var tmp = this.state;
+		if((tmp != null ? tmp.data : null) != null) {
+			this.renderData(this.state.data);
+		}
+	}
+	,buildUI: function() {
+		this.element.innerHTML = "\r\n        <div class=\"view-header\">\r\n            <span class=\"view-title\">🗄 Database</span>\r\n            <button class=\"btn btn-sm\" id=\"btn-refresh\">⟳</button>\r\n        </div>\r\n        <div class=\"view-body\">\r\n            <div class=\"empty-state\" id=\"empty\">\r\n                <p>📭 No data</p>\r\n                <button class=\"btn\" id=\"btn-load\">Load Sample</button>\r\n            </div>\r\n            <table class=\"data-table\" id=\"table\" style=\"display:none\">\r\n                <thead><tr><th>ID</th><th>Name</th><th>Type</th></tr></thead>\r\n                <tbody id=\"tbody\"></tbody>\r\n            </table>\r\n        </div>\r\n        <div class=\"view-footer\">\r\n            <span id=\"status\">Ready</span>\r\n        </div>\r\n        ";
+		this.tbody = this.element.querySelector("#tbody");
+		this.statusEl = this.element.querySelector("#status");
+		this.element.querySelector(".view-header").style.cssText = "padding:8px 12px;background:#f5f5f5;border-bottom:1px solid #ddd;display:flex;justify-content:space-between;";
+		this.element.querySelector(".view-body").style.cssText = "flex:1;overflow:auto;padding:12px;";
+		this.element.querySelector(".data-table").style.cssText = "width:100%;border-collapse:collapse;font-size:12px;";
+		this.element.querySelector(".data-table th").style.cssText = "background:#f0f0f0;text-align:left;padding:6px 8px;border-bottom:2px solid #ddd;";
+		this.element.querySelector(".data-table td").style.cssText = "padding:6px 8px;border-bottom:1px solid #eee;";
+	}
+	,setupEvents: function() {
+		var _gthis = this;
+		var loadBtn = this.element.querySelector("#btn-load");
+		if(loadBtn != null) {
+			loadBtn.addEventListener("click",function(_) {
+				_gthis.loadSampleData();
+			});
+		}
+		var refreshBtn = this.element.querySelector("#btn-refresh");
+		if(refreshBtn != null) {
+			refreshBtn.addEventListener("click",function(_) {
+				_gthis.setStatus("Refreshing...");
+				haxe_Timer.delay(function() {
+					_gthis.setStatus("Ready");
+				},300);
+			});
+		}
+		this.container.on("open",function() {
+			_gthis.activate();
+		});
+		this.container.on("destroy",function() {
+			_gthis.destroy();
+		});
+	}
+	,loadSampleData: function() {
+		var data = [{ id : 1, name : "Players", type : "Table"},{ id : 2, name : "Items", type : "Table"},{ id : 3, name : "Quests", type : "Table"}];
+		this.renderData(data);
+		this.setStatus("Loaded ${data.length} items");
+	}
+	,renderData: function(rows) {
+		var empty = this.element.querySelector("#empty");
+		var table = this.element.querySelector("#table");
+		if(empty != null) {
+			empty.style.display = "none";
+		}
+		if(table != null) {
+			table.style.display = "table";
+		}
+		if(this.tbody != null) {
+			this.tbody.innerHTML = "";
+			var _g = 0;
+			while(_g < rows.length) {
+				var row = rows[_g];
+				++_g;
+				var tr = window.document.createElement("tr");
+				tr.innerHTML = "<td>" + Std.string(row.id) + "</td><td>" + Std.string(row.name) + "</td><td>" + Std.string(row.type) + "</td>";
+				this.tbody.appendChild(tr);
+			}
+		}
+	}
+	,setStatus: function(text) {
+		if(this.statusEl != null) {
+			this.statusEl.textContent = text;
+		}
+	}
+	,onActivate: function() {
+		console.log("hide/view/CdbTable.hx:133:","[CdbTable] 👁 Panel activated");
+	}
+	,destroy: function() {
+		console.log("hide/view/CdbTable.hx:137:","[CdbTable] 🧹 Cleanup");
+		hide_ui_View.prototype.destroy.call(this);
+	}
+});
 var js_Boot = function() { };
 js_Boot.__name__ = true;
 js_Boot.__string_rec = function(o,s) {
@@ -478,12 +638,13 @@ js_Boot.__string_rec = function(o,s) {
 		return String(o);
 	}
 };
-var js_node_Url = require("url");
 var $_;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $global.$haxeUID++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = m.bind(o); o.hx__closures__[m.__id__] = f; } return f; }
 $global.$haxeUID |= 0;
 String.__name__ = true;
 Array.__name__ = true;
+hide_ui_View.viewClasses = new haxe_ds_StringMap();
+hide_ui_View.register("hide.view.CdbTable",hide_view_CdbTable,{ position : "Center", id : "cdbTable"});
 js_Boot.__toStr = ({ }).toString;
 hide_core_IdeConfig.appPath = "";
 hide_core_IdeConfig.isElectron = false;
