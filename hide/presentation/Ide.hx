@@ -2,6 +2,7 @@ package hide.presentation;
 
 import hide.application.services.MenuService;
 import hide.application.services.WindowService;
+import hide.application.services.PluginManager;
 import hide.presentation.ui.View;
 import hide.presentation.ui.StatusBar;
 import hide.shared.types.Result;
@@ -10,7 +11,8 @@ import hide.shared.types.Failure;
 
 import hide.application.commands.LoadProjectUseCase;
 import hide.application.commands.SetFullscreenUseCase;
-
+import hide.application.dto.ViewDto;
+import hide.domain.valueobjects.DisplayPosition;
 // Импорты для событий
 import hide.shared.events.ProjectLoaded;
 import hide.shared.events.ErrorOccurred;
@@ -37,6 +39,10 @@ import hide.shared.types.IPlatform;
 class Ide {
     public static var inst(default, null):Ide;
 
+    private var viewRegistry:ViewRegistry;
+    private var views:Array<ViewDto>;
+    private var pluginManager:PluginManager;
+
     // === Сервисы (инъекция зависимостей) ===
     private var windowService:WindowService;
     private var menuService:MenuService;
@@ -44,10 +50,10 @@ class Ide {
     private var setFullscreenUseCase:SetFullscreenUseCase;
     private var saveLayoutUseCase:SaveLayoutUseCase;
     private var closeProjectUseCase:CloseProjectUseCase;
+    private var openViewUseCase:OpenViewUseCase; // ← ДОБАВИТЬ
 
     // === UI компоненты ===
     private var statusBar:StatusBar;
-    private var views:Map<String, View<Dynamic>>;
 
     // === Состояние (только для отображения) ===
     public var currentProjectName(get, never):String;
@@ -75,6 +81,17 @@ class Ide {
         setFullscreenUseCase = services.get("setFullscreen");
         saveLayoutUseCase = services.get("saveLayout");
         closeProjectUseCase = services.get("closeProject");
+        openViewUseCase = services.get("openView");
+
+        viewRegistry = services.get("viewRegistry");
+        views = viewRegistry.all();
+
+        // Добавить обработчики для view через MenuService
+        for (view in views) {
+            menuService.addViewMenu(view);
+            menuService.onItemClick("view.${view.name}", function() openView(view.name));
+        }
+
 
         // Инициализация UI
         statusBar = new StatusBar(Element.byId("status-bar"));
@@ -96,6 +113,12 @@ class Ide {
         _layoutChangedUnsub = eventBus.subscribe(function(e:LayoutChanged) {
             // Можно добавить "dirty indicator"
             trace("Layout changed");
+        });
+
+        _projectClosedUnsub = eventBus.subscribe(function(e:ProjectClosed) {
+            _currentProject = null;
+            statusBar.showMessage("Project closed");
+            updateWindowTitle();
         });
     }
 
@@ -141,13 +164,31 @@ class Ide {
             case "project.close": onCloseProject();
             case "help.about": showAboutDialog();
             case "project.recents.${p}": onOpenRecent(p);
+            case "view.editor": openView("editor"); // ← ДОБАВИТЬ
+            case "view.project": openView("project"); // ← ДОБАВИТЬ
             // case "project.recents.*": onOpenRecent(...) // обрабатывается в MenuService
             default:
                 // log unknown ID
                 trace("Unknown menu item ID: $id");
         }
     }
+    // — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —
+    // 🔧 ДОБАВИТЬ:
+    private function openView(viewName:String):Void {
+        var view = views.find(v -> v.name == viewName);
+        if (view == null) {
+            throw "View not found: $viewName";
+        }
 
+        var position = switch viewName {
+            case "editor": DisplayPosition.Center;
+            case "project": DisplayPosition.Left;
+            default: DisplayPosition.Center;
+        };
+
+        openViewUseCase.execute(view.name, view.defaultState, position);
+    }
+    
     // === Вспомогательные методы для обновления UI ===
     private function onOpenRecent(path:String):Void {
         loadProjectUseCase.execute(new FilePath(path));
@@ -206,8 +247,11 @@ class Ide {
             container.get<IEventBus>("eventBus")
         ));
 
+        // hide/presentation/Ide.hx → main()
+
         container.register("openView", new OpenViewUseCase(
-            container.get<ILayoutEngine>("layout")
+            container.get<ILayoutEngine>("layout"),
+            container.get<ViewRegistry>("viewRegistry")
         ));
 
         container.register("addRecentProject", new AddRecentProjectUseCase(
@@ -224,6 +268,12 @@ class Ide {
             container.get<IEventBus>("eventBus")
         ));
 
+        container.register("viewRegistry", new ViewRegistry());
+
+        container.register("pluginManager", new PluginManager(
+            container.get<ViewRegistry>("viewRegistry"),
+            container.get<IEventBus>("eventBus")
+        ));
         // Создаём и запускаем Ide
         var ide = new Ide(container);
         ide.startup();
@@ -231,7 +281,7 @@ class Ide {
 
     private function startup():Void {
         // Инициализация меню из шаблона (данные, а не nw.Menu)
-        var menuTemplate = menuService.buildFromHtml(Element.byId("mainmenu").html());
+        //var menuTemplate = menuService.buildFromHtml(Element.byId("mainmenu").html());
         // Регистрация обработчиков кликов (в UI-рендере или здесь)
         // menuService.onItemClick("project.recents.${p}", onOpenRecent)
 
@@ -250,6 +300,7 @@ class Ide {
         _projectLoadedUnsub();
         _errorUnsub();
         _layoutChangedUnsub();
+        _projectClosedUnsub();
         // views.clear(), statusBar.dispose(), и т.д.
     }
 }

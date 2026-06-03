@@ -1,0 +1,19 @@
+// plugins.json
+{
+  "plugins": [
+    {
+      "name": "ConsolePlugin",
+      "class": "plugins.ConsolePlugin",
+      "enabled": true,
+      "config": {
+        "defaultLogLevel": "info"
+      }
+    },
+    {
+      "name": "TerminalPlugin",
+      "class": "plugins.TerminalPlugin",
+      "enabled": false,
+      "config": {}
+    }
+  ]
+}

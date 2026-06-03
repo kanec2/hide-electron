@@ -4,15 +4,36 @@ package hide.application.commands;
 
 import hide.domain.services.ILayoutEngine;
 import hide.domain.valueobjects.DisplayPosition;
+import hide.application.services.ViewRegistry;
+import js.html.Element;
 
 class OpenViewUseCase {
     private var layoutEngine:ILayoutEngine;
+    private var viewRegistry:ViewRegistry;
 
-    public function new(layoutEngine:ILayoutEngine) {
+    public function new(layoutEngine:ILayoutEngine, viewRegistry:ViewRegistry) {
         this.layoutEngine = layoutEngine;
+        this.viewRegistry = viewRegistry;
     }
 
     public function execute(viewName:String, state:Dynamic, ?position:DisplayPosition):Void {
-        layoutEngine.open(viewName, state, position);
+        var view = viewRegistry.find(viewName);
+        if (view == null) {
+            throw "View not found: $viewName";
+        }
+
+        var factory = viewRegistry.getFactory(viewName);
+        if (factory == null) {
+            throw "View factory not found: $viewName";
+        }
+
+        // Создать контейнер (если нужен)
+        var container = Browser.document.createElement("div");
+        container.id = "view-${viewName}";
+
+        // Создать view
+        factory.create(container, state);
+
+        layoutEngine.open(viewName, state, position != null ? position : DisplayPosition.Center);
     }
 }
