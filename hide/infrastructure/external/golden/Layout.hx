@@ -1,4 +1,5 @@
 package golden;
+import golden.*;
 
 @:native("GoldenLayout")
 extern class Layout {

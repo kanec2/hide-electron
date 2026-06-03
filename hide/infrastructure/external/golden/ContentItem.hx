@@ -1,5 +1,5 @@
 package golden;
-
+import golden.*;
 extern class ContentItem {
 
 	var type : Config.ItemType;

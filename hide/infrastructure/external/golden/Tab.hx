@@ -1,5 +1,5 @@
 package golden;
-
+import golden.*;
 extern class Tab {
 
 	public var isActive : Bool;

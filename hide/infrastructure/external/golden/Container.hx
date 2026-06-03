@@ -1,5 +1,7 @@
 package golden;
 
+import golden.*;
+
 extern class Container {
 
 	public var width(default,null) : Int;
