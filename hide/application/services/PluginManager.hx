@@ -2,61 +2,64 @@
 
 package hide.application.services;
 
-import hide.application.dto.ViewDto;
 import hide.shared.types.IEventBus;
-import hide.shared.events.ViewOpened;
+import hide.domain.services.IPlugin;
 import haxe.Json;
 import sys.io.File;
 import sys.FileSystem;
 
 /**
  * Управляет загрузкой и активацией плагинов.
+ * Плагины загружаются из plugins.json, но инициализируются через PluginRegistry.
  */
 class PluginManager {
-    private var plugins:Array<PluginInstance> = [];
+    private var registry:PluginRegistry;
     private var config:PluginsConfig;
+    private var enabledPlugins:Map<String, IPlugin> = [];
 
-    public function new(viewRegistry:ViewRegistry, eventBus:IEventBus, ?configPath:String = "plugins.json") {
+    public function new(registry:PluginRegistry, ?configPath:String = "plugins.json") {
+        this.registry = registry;
+
         // Загрузка конфига
         if (FileSystem.exists(configPath)) {
             config = Json.parse(File.getContent(configPath));
         } else {
             config = { plugins: [] };
-            // Сохранить дефолтный конфиг
             File.saveContent(configPath, Json.stringify(config, "  "));
         }
+    }
 
-        // Активация плагинов
+    /**
+     * Загружает и активирует плагины из конфига.
+     */
+    public function loadAll():Void {
         for (pluginConfig in config.plugins) {
             if (!pluginConfig.enabled) continue;
 
             try {
-                var instance = loadPlugin(pluginConfig, viewRegistry, eventBus);
-                plugins.push({
-                    name: pluginConfig.name,
-                    class: pluginConfig.class,
-                    instance: instance,
-                    config: pluginConfig.config
-                });
+                var plugin = loadPlugin(pluginConfig);
+                if (plugin != null) {
+                    plugin.activate(pluginRegistry, eventBus);
+                    enabledPlugins.set(pluginConfig.name, plugin);
+                }
             } catch (e:Dynamic) {
                 trace("Failed to load plugin: ${pluginConfig.name} - ${e}");
             }
         }
     }
 
-    private function loadPlugin(pluginConfig:PluginConfig, viewRegistry:ViewRegistry, eventBus:IEventBus):Dynamic {
+    // hide/application/services/PluginManager.hx
+
+    private function loadPlugin(pluginConfig:PluginConfig):Null<IPlugin> {
         var className = pluginConfig.class;
-        var params = [
-            viewRegistry,
-            eventBus,
-            pluginConfig.config
-        ];
+        var plugin = PluginFactory.load(className);
 
-        return Type.createInstance(className, params);
-    }
+        if (plugin == null) {
+            trace("Plugin not found or invalid: $className");
+            return null;
+        }
 
-    public function all():Array<PluginInstance> {
-        return plugins.copy();
+        return plugin;
     }
 
     public function enable(name:String):Bool {
@@ -84,22 +87,4 @@ class PluginManager {
     private function saveConfig():Void {
         File.saveContent("plugins.json", Json.stringify(config, "  "));
     }
-}
-
-typedef PluginsConfig = {
-    var plugins:Array<PluginConfig>;
-}
-
-typedef PluginConfig = {
-    var name:String;
-    var class:String;
-    var enabled:Bool;
-    var config:Dynamic;
-}
-
-typedef PluginInstance = {
-    var name:String;
-    var class:String;
-    var instance:Dynamic;
-    var config:Dynamic;
 }

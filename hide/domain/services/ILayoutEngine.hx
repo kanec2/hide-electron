@@ -41,4 +41,11 @@ interface ILayoutEngine {
      * Используется в `LayoutService`, чтобы обновлять UI.
      */
     function onLayoutChanged(callback:Void->Void):Void;
+
+    /**
+     * Регистрация view-фабрик (через IElement)
+     */
+    function registerView(type:String, factory:IViewFactory):Void
+
+
 }

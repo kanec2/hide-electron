@@ -1,38 +1,24 @@
-package plugins.console;
-
 // plugins/console/ConsoleView.hx
 
-import hide.presentation.ui.View;
-import js.html.Element;
+package plugins.console;
 
-class ConsoleView extends View<Dynamic> {
-    private var logContainer:Element;
-    private var logLevel:String = "info";
+import hide.domain.services.IElement;
 
-    public function new(container:Element, state:Dynamic) {
-        super(container, state);
+class ConsoleView {
+    private var container:IElement;
+    private var logLevel:String;
 
-        // Инициализация UI
-        logContainer = container.createChild("div", "console-log");
-        logContainer.innerHtml = "<div class='console-title'>Консоль</div>";
+    public function new(container:IElement, state:Dynamic) {
+        this.container = container;
+        this.logLevel = state.logLevel != null ? state.logLevel : "info";
 
-        // Настройка уровня логов
-        if (state != null && state.logLevel != null) {
-            logLevel = state.logLevel;
-        }
-
-        // Добавить кнопку очистки
-        var clearBtn = container.createChild("button", "console-clear");
-        clearBtn.innerHtml = "Очистить";
-        clearBtn.addEventListener("click", function(_) {
-            logContainer.innerHtml = "";
-        });
+        container.setInnerHtml("<div class='console'><div class='console-content'></div></div>");
     }
 
     public function log(level:String, message:String):Void {
         if (shouldLog(level)) {
-            var entry = logContainer.createChild("div", "log-entry ${level}");
-            entry.innerHtml = "<span class='timestamp'>${getTimestamp()}</span> ${message}";
+            // Здесь можно добавить UI-логику
+            trace("[$level] $message");
         }
     }
 
@@ -41,10 +27,5 @@ class ConsoleView extends View<Dynamic> {
         var indexLevel = levels.indexOf(level);
         var indexConfig = levels.indexOf(logLevel);
         return indexLevel >= indexConfig;
-    }
-
-    private function getTimestamp():String {
-        var date = new Date();
-        return '${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}';
     }
 }

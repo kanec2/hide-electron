@@ -4,13 +4,12 @@ package hide.infrastructure.external;
 
 import golden.*;
 import hide.domain.services.ILayoutEngine;
+import hide.domain.services.IViewFactory;
 import hide.domain.valueobjects.LayoutState;
 import hide.domain.valueobjects.DisplayPosition;
-import hide.application.dto.ViewDto;
-import hide.shared.types.IEventBus; // ← ДОБАВИТЬ
-import hide.shared.events.LayoutChanged; // ← ДОБАВИТЬ
-//import golden.Layout;
-//import golden.Config;
+import hide.shared.types.IEventBus;
+import hide.shared.events.LayoutChanged;
+import js.html.Element;
 
 /**
  * Адаптер для GoldenLayout.
@@ -19,22 +18,22 @@ import hide.shared.events.LayoutChanged; // ← ДОБАВИТЬ
 class GoldenLayoutAdapter implements ILayoutEngine {
     private var layout:Layout;
     private var container:Element;
-    private var eventBus:IEventBus; // ← ДОБАВИТЬ
-    private var componentRegistry:Map<String, ViewFactory>;
+    private var eventBus:IEventBus;
+    private var viewFactories:Map<String, IViewFactory>;
+    private var onLayoutChangedCallbacks:Array<Void->Void>;
 
-    // — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —
-    // 🔧 ДОБАВИТЬ:
-    public function new(container:Element, eventBus:IEventBus) { // ← ДОБАВИТЬ eventBus
+    // === Конструктор ===
+
+    public function new(container:Element, eventBus:IEventBus, viewFactories:Map<String, IViewFactory>) {
         this.container = container;
-        this.eventBus = eventBus; // ← ДОБАВИТЬ
-        this.componentRegistry = new Map();
+        this.eventBus = eventBus;
+        this.viewFactories = viewFactories;
+        this.onLayoutChangedCallbacks = [];
     }
-    // — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —
 
     // === ILayoutEngine ===
 
     public function init(state:LayoutState):Void {
-        // Преобразуем LayoutState → GoldenLayout Config
         var config = toGoldenConfig(state.content);
         config.settings ??= {};
         config.settings.reorderEnabled = true;
@@ -42,20 +41,18 @@ class GoldenLayoutAdapter implements ILayoutEngine {
         config.settings.showMaximiseIcon = true;
 
         layout = new Layout(config, container.get(0));
-        
-        // Регистрация компонентов после инициализации
-        for (type => factory in componentRegistry) {
-            layout.registerComponent(type, function(container, state) {
-                var view = factory.create(container.getElement(), state);
-                return view;
+
+        // Регистрация view после инициализации
+        for (type => factory in viewFactories) {
+            layout.registerComponent(type, function(glContainer, state) {
+                var element = new HtmlElement(glContainer.getElement());
+                return factory.create(element, state);
             });
         }
 
         layout.init();
         layout.on('stateChanged', _ -> {
-            // Публикация события
-            eventBus.publish(new LayoutChanged({})); // ← ДОБАВИТЬ
-            // Вызов callback'ов ILayoutEngine.onLayoutChanged(...)
+            eventBus.publish(new LayoutChanged({}));
             for (cb in onLayoutChangedCallbacks) cb();
         });
     }
@@ -87,12 +84,11 @@ class GoldenLayoutAdapter implements ILayoutEngine {
         var config = layout.toConfig();
         return {
             content: fromGoldenConfig(config.content),
-            fullScreen: null // TODO: support fullScreen
+            fullScreen: null
         };
     }
 
     public function reopenLastClosed():Void {
-        // TODO: add lastClosedTabStates management
         trace("reopenLastClosed() not implemented");
     }
 
@@ -108,22 +104,14 @@ class GoldenLayoutAdapter implements ILayoutEngine {
         onLayoutChangedCallbacks.push(callback);
     }
 
-    // === Вспомогательные методы ===
-
-    public function registerComponent(type:String, factory:ViewFactory):Void {
-        componentRegistry.set(type, factory);
+    public function registerView(type:String, factory:IViewFactory):Void {
+        viewFactories.set(type, factory);
         if (layout != null) {
-            layout.registerComponent(type, function(container, state) {
-                var view = factory.create(container.getElement(), state);
-                return view;
+            layout.registerComponent(type, function(glContainer, state) {
+                var element = new HtmlElement(glContainer.getElement());
+                return factory.create(element, state);
             });
         }
-    }
-
-    private var onLayoutChangedCallbacks:Array<Void->Void> = [];
-
-    private function onLayoutChangedCallback():Void {
-        for (cb in onLayoutChangedCallbacks) cb();
     }
 
     // === Маппинг JSON (для GoldenLayout) ===
@@ -132,10 +120,10 @@ class GoldenLayoutAdapter implements ILayoutEngine {
         return {
             content: [for (item in stateContent) toGoldenItem(item)],
             settings: {
-                reorderEnabled: true,
-                constrainDragToHeader: true,
-                showPopoutIcon: false,
-                showMaximiseIcon: true
+                reorderEnabled = true,
+                constrainDragToHeader = true,
+                showPopoutIcon = false,
+                showMaximiseIcon = true
             }
         };
     }
@@ -167,8 +155,4 @@ class GoldenLayoutAdapter implements ILayoutEngine {
             height: item.height
         };
     }
-}
-
-typedef ViewFactory = {
-    function create(container:Element, state:Dynamic):View<Dynamic>;
 }
