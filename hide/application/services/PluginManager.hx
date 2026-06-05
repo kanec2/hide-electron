@@ -1,83 +1,116 @@
-// hide/application/services/PluginManager.hx
-
 package hide.application.services;
 
 import hide.shared.types.IEventBus;
 import hide.domain.services.IPlugin;
+import hide.domain.services.IFileSystem;
+import hide.shared.types.FilePath;
 import haxe.Json;
-import sys.io.File;
-import sys.FileSystem;
 
-/**
- * Управляет загрузкой и активацией плагинов.
- * Плагины загружаются из plugins.json, но инициализируются через PluginRegistry.
- */
 class PluginManager {
     private var registry:PluginRegistry;
+    private var viewRegistry:ViewRegistry;
+    private var eventBus:IEventBus;
+    private var fileSystem:IFileSystem;
+    private var configPath:FilePath;
     private var config:PluginsConfig;
-    private var enabledPlugins:Map<String, IPlugin> = [];
 
-    public function new(registry:PluginRegistry, ?configPath:String = "plugins.json") {
+    public function new(
+        registry:PluginRegistry,
+        viewRegistry:ViewRegistry,
+        eventBus:IEventBus,
+        fileSystem:IFileSystem,
+        ?configPathStr:String = "plugins.json"
+    ) {
         this.registry = registry;
-
-        // Загрузка конфига
-        if (FileSystem.exists(configPath)) {
-            config = Json.parse(File.getContent(configPath));
-        } else {
-            config = { plugins: [] };
-            File.saveContent(configPath, Json.stringify(config, "  "));
-        }
+        this.viewRegistry = viewRegistry;
+        this.eventBus = eventBus;
+        this.fileSystem = fileSystem;
+        this.configPath = new FilePath(configPathStr);
+        loadConfig();
     }
 
-    /**
-     * Загружает и активирует плагины из конфига.
-     */
+    private function loadConfig():Void {
+        if (fileSystem.exists(configPath)) {
+            var content = fileSystem.readText(configPath);
+            config = Json.parse(content);
+        } else {
+            config = { plugins: [] };
+            saveConfig();
+        }
+    }
+    
     public function loadAll():Void {
         for (pluginConfig in config.plugins) {
             if (!pluginConfig.enabled) continue;
+            if (registry.get(pluginConfig.name) != null) continue;
 
             try {
                 var plugin = loadPlugin(pluginConfig);
                 if (plugin != null) {
-                    plugin.activate(pluginRegistry, eventBus);
-                    enabledPlugins.set(pluginConfig.name, plugin);
+                    plugin.activate(); // ✅ Вызываем БЕЗ аргументов!
+                    registry.add(pluginConfig.name, plugin);
                 }
             } catch (e:Dynamic) {
-                trace("Failed to load plugin: ${pluginConfig.name} - ${e}");
+                trace('Failed to load plugin: ${pluginConfig.name} - ${e}');
             }
         }
     }
 
-    // hide/application/services/PluginManager.hx
-
     private function loadPlugin(pluginConfig:PluginConfig):Null<IPlugin> {
         var className = pluginConfig.class;
-        var plugin = PluginFactory.load(className);
-
-        if (plugin == null) {
-            trace("Plugin not found or invalid: $className");
+        var pluginClass = Type.resolveClass(className);
+        
+        if (pluginClass == null) {
+            trace('Plugin class not found: $className');
             return null;
         }
 
-        return plugin;
+        try {
+            // ✅ Передаем ВСЕ зависимости в конструктор плагина
+            var args = [viewRegistry, eventBus, pluginConfig.config != null ? pluginConfig.config : {}];
+            var plugin = Type.createInstance(pluginClass, args);
+
+            if (!Std.is(plugin, IPlugin)) {
+                trace('Plugin $className does not implement IPlugin');
+                return null;
+            }
+            return cast plugin;
+        } catch (e:Dynamic) {
+            trace('Failed to instantiate plugin $className. Error: ${e}');
+            return null;
+        }
     }
 
     public function enable(name:String):Bool {
-        for (plugin in config.plugins) {
-            if (plugin.name == name && !plugin.enabled) {
-                plugin.enabled = true;
+        for (pluginConfig in config.plugins) {
+            if (pluginConfig.name == name && !pluginConfig.enabled) {
+                pluginConfig.enabled = true;
                 saveConfig();
-                return true;
+                
+                var plugin = loadPlugin(pluginConfig);
+                if (plugin != null) {
+                    plugin.activate(); // ✅ Без аргументов
+                    registry.add(name, plugin);
+                    // ❌ УДАЛЕНО: enabledPlugins.set(name, plugin); (переменной не существует)
+                    return true;
+                }
+                return false;
             }
         }
         return false;
     }
 
     public function disable(name:String):Bool {
-        for (plugin in config.plugins) {
-            if (plugin.name == name && plugin.enabled) {
-                plugin.enabled = false;
+        for (pluginConfig in config.plugins) {
+            if (pluginConfig.name == name && pluginConfig.enabled) {
+                pluginConfig.enabled = false;
                 saveConfig();
+
+                var plugin = registry.get(name);
+                if (plugin != null) {
+                    plugin.deactivate();
+                    registry.remove(name);
+                }
                 return true;
             }
         }
@@ -85,6 +118,11 @@ class PluginManager {
     }
 
     private function saveConfig():Void {
-        File.saveContent("plugins.json", Json.stringify(config, "  "));
+        var jsonStr = Json.stringify(config, "  ");
+        fileSystem.writeText(configPath, jsonStr);
+    }
+    
+    public function getActivePluginNames():Array<String> {
+        return registry.getNames(); // ✅ Теперь этот метод существует
     }
 }

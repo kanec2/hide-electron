@@ -1,0 +1,5274 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+application/commands/AddRecentProjectUseCase.hx
+application/commands/BuildProjectUseCase.hx
+application/commands/ClearRecentProjectsUseCase.hx
+application/commands/CloseProjectUseCase.hx
+application/commands/ExportDatabaseUseCase.hx
+application/commands/LoadProjectUseCase.hx
+application/commands/OpenResourceUseCase.hx
+application/commands/OpenViewUseCase.hx
+application/commands/SaveLayoutUseCase.hx
+application/commands/SetFullscreenUseCase.hx
+application/commands/SetRendererUseCase.hx
+application/dto/MenuItem.hx
+application/dto/ResourceMetadataDto.hx
+application/dto/ViewDto.hx
+application/dto/WindowBoundsDto.hx
+application/services/ClipboardService.hx
+application/services/MenuService.hx
+application/services/PluginFactory.hx
+application/services/PluginManager.hx
+application/services/PluginRegistry.hx
+application/services/ProjectService.hx
+application/services/ResourceService.hx
+application/services/ViewRegistry.hx
+application/services/WindowService.hx
+domain/entities/Database.hx
+domain/entities/LayoutConfig.hx
+domain/entities/Project.hx
+domain/entities/Resource.hx
+domain/entities/UserSettings.hx
+domain/enums/MenuItemType.hx
+domain/enums/ResourceType.hx
+domain/enums/ViewType.hx
+domain/enums/WindowEvent.hx
+domain/exceptions/FileNotFoundError.hx
+domain/exceptions/InvalidConfigError.hx
+domain/exceptions/ProjectLoadError.hx
+domain/exceptions/ResourceNotFoundError.hx
+domain/services/IClipboardService.hx
+domain/services/IElement.hx
+domain/services/IFileSystem.hx
+domain/services/ILayoutEngine.hx
+domain/services/IPlugin.hx
+domain/services/IResourceLoader.hx
+domain/services/IViewFactory.hx
+domain/services/IWindowManager.hx
+domain/services/PluginConfig.hx
+domain/services/PluginsConfig.hx
+domain/valueobjects/DisplayPosition.hx
+domain/valueobjects/FilePath.hx
+domain/valueobjects/LayoutConfig.hx
+domain/valueobjects/LayoutState.hx
+domain/valueobjects/ResourceId.hx
+domain/valueobjects/ScreenBounds.hx
+domain/valueobjects/WindowBounds.hx
+infrastructure/config/PackageJsonLoader.hx
+infrastructure/config/ProjectConfigParser.hx
+infrastructure/config/UserSettingsLoader.hx
+infrastructure/external/golden/Config.hx
+infrastructure/external/golden/Container.hx
+infrastructure/external/golden/ContentItem.hx
+infrastructure/external/golden/Event.hx
+infrastructure/external/golden/Header.hx
+infrastructure/external/golden/Layout.hx
+infrastructure/external/golden/Tab.hx
+infrastructure/external/GoldenLayoutAdapter.hx
+infrastructure/external/HeapsEngineAdapter.hx
+infrastructure/external/HtmlElement.hx
+infrastructure/external/jQueryElementAdapter.hx
+infrastructure/external/monaco/KeyCode.hx
+infrastructure/external/monaco/KeyMod.hx
+infrastructure/external/monaco/Languages.hx
+infrastructure/external/monaco/MarkdownString.hx
+infrastructure/external/monaco/Model.hx
+infrastructure/external/monaco/ModelDeltaDecoration.hx
+infrastructure/external/monaco/Position.hx
+infrastructure/external/monaco/Range.hx
+infrastructure/external/monaco/ScriptEditor.hx
+infrastructure/external/monaco/Todo.hx
+infrastructure/external/MonacoEditorAdapter.hx
+infrastructure/external/nw/App.hx
+infrastructure/external/nw/Clipboard.hx
+infrastructure/external/nw/Menu.hx
+infrastructure/external/nw/MenuItem.hx
+infrastructure/external/nw/Screen.hx
+infrastructure/external/nw/Window.hx
+infrastructure/persistence/FileSystemRepository.hx
+infrastructure/persistence/LocalStorageRepository.hx
+infrastructure/persistence/MemoryRepository.hx
+infrastructure/platform/electron/ElectronClipboardAdapter.hx
+infrastructure/platform/electron/ElectronFileSystemAdapter.hx
+infrastructure/platform/electron/ElectronIpcBridge.hx
+infrastructure/platform/electron/ElectronScreenAdapter.hx
+infrastructure/platform/electron/ElectronShortcutAdapter.hx
+infrastructure/platform/electron/ElectronWindowAdapter.hx
+infrastructure/platform/nwjs/NwClipboardAdapter.hx
+infrastructure/platform/nwjs/NwFileSystemAdapter.hx
+infrastructure/platform/nwjs/NwIpcBridge.hx
+infrastructure/platform/nwjs/NwScreenAdapter.hx
+infrastructure/platform/nwjs/NwShortcutAdapter.hx
+infrastructure/platform/nwjs/NwWindowAdapter.hx
+infrastructure/platform/web/BrowserWindowAdapter.hx
+infrastructure/platform/web/LocalStorageAdapter.hx
+legacy/Extension.hx
+legacy/Ide.hx
+plugins.json
+plugins/console/ConsoleView.hx
+plugins/console/ConsoleViewFactory.hx
+plugins/ConsolePlugin.hx
+presentation/controllers/DragDropController.hx
+presentation/controllers/KeyboardController.hx
+presentation/controllers/MenuController.hx
+presentation/Ide.hx
+presentation/styles/CssVariables.hx
+presentation/styles/Theme.hx
+presentation/ui/Dialog.hx
+presentation/ui/Element.hx
+presentation/ui/MenuBuilder.hx
+presentation/ui/StatusBar.hx
+presentation/ui/View.hx
+presentation/views/CdbTableView.hx
+presentation/views/ModelView.hx
+presentation/views/PrefabView.hx
+presentation/views/ScriptEditorView.hx
+shared/events/ErrorOccurred.hx
+shared/events/FullscreenChanged.hx
+shared/events/LayoutChanged.hx
+shared/events/LayoutSaved.hx
+shared/events/ProjectClosed.hx
+shared/events/ProjectClosing.hx
+shared/events/ProjectLoaded.hx
+shared/events/RecentProjectsUpdated.hx
+shared/events/RendererChanged.hx
+shared/events/ResourceOpened.hx
+shared/events/ViewOpened.hx
+shared/extensions/ArrayExt.hx
+shared/extensions/DateExt.hx
+shared/extensions/StringExt.hx
+shared/types/EventBusImpl.hx
+shared/types/IEventBus.hx
+shared/types/NonEmptyArray.hx
+shared/types/Option.hx
+shared/types/Result.hx
+shared/utils/AsyncUtils.hx
+shared/utils/JsonUtils.hx
+shared/utils/PathUtils.hx
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="application/commands/AddRecentProjectUseCase.hx">
+// hide/application/commands/AddRecentProjectUseCase.hx
+
+package hide.application.commands;
+
+import hide.application.services.MenuService;
+import hide.shared.types.IEventBus;
+import hide.shared.events.RecentProjectsUpdated;
+
+class AddRecentProjectUseCase {
+    private var menuService:MenuService;
+    private var eventBus:IEventBus;
+
+    public function new(menuService:MenuService, eventBus:IEventBus) {
+        this.menuService = menuService;
+        this.eventBus = eventBus;
+    }
+
+    public function execute(path:String):Void {
+        menuService.addRecentProject(path);
+        eventBus.publish(new RecentProjectsUpdated(menuService.getRecentProjects()));
+    }
+}
+</file>
+
+<file path="application/commands/BuildProjectUseCase.hx">
+package hide.application.commands;
+</file>
+
+<file path="application/commands/ClearRecentProjectsUseCase.hx">
+// hide/application/commands/ClearRecentProjectsUseCase.hx
+
+package hide.application.commands;
+
+import hide.application.services.MenuService;
+import hide.shared.types.IEventBus;
+import hide.shared.events.RecentProjectsUpdated;
+
+class ClearRecentProjectsUseCase {
+    private var menuService:MenuService;
+    private var eventBus:IEventBus;
+
+    public function new(menuService:MenuService, eventBus:IEventBus) {
+        this.menuService = menuService;
+        this.eventBus = eventBus;
+    }
+
+    public function execute():Void {
+        menuService.clearRecentProjects();
+        eventBus.publish(new RecentProjectsUpdated([]));
+    }
+}
+</file>
+
+<file path="application/commands/CloseProjectUseCase.hx">
+// hide/application/commands/CloseProjectUseCase.hx
+
+package hide.application.commands;
+
+import hide.domain.services.ILayoutEngine;
+import hide.shared.types.IEventBus;
+import hide.shared.events.ProjectClosing;
+import hide.shared.events.ProjectClosed;
+
+class CloseProjectUseCase {
+    private var layoutEngine:ILayoutEngine;
+    private var eventBus:IEventBus;
+
+    public function new(layoutEngine:ILayoutEngine, eventBus:IEventBus) {
+        this.layoutEngine = layoutEngine;
+        this.eventBus = eventBus;
+    }
+
+    public function execute():Void {
+        // 1. Публикуем ProjectClosing
+        eventBus.publish(new ProjectClosing());
+
+        // 2. Сохраняем текущий layout
+        layoutEngine.save();
+
+        // 3. Публикуем ProjectClosed
+        eventBus.publish(new ProjectClosed());
+    }
+}
+</file>
+
+<file path="application/commands/ExportDatabaseUseCase.hx">
+package hide.application.commands;
+</file>
+
+<file path="application/commands/LoadProjectUseCase.hx">
+// hide/application/commands/LoadProjectUseCase.hx
+
+package hide.application.commands;
+
+import hide.domain.services.IFileSystem;
+import hide.domain.services.IResourceLoader;
+import hide.shared.types.IEventBus;
+import hide.shared.events.ProjectLoaded;
+import hide.shared.events.ErrorOccurred;
+import hide.shared.types.FilePath;
+import hide.shared.types.Result;
+import hide.shared.types.Success;
+import hide.shared.types.Failure;
+import hide.domain.entities.Project;
+
+class LoadProjectUseCase {
+    private var fileSystem:IFileSystem;
+    private var resourceLoader:IResourceLoader;
+    private var eventBus:IEventBus;
+
+    public function new(fileSystem:IFileSystem, resourceLoader:IResourceLoader, eventBus:IEventBus) {
+        this.fileSystem = fileSystem;
+        this.resourceLoader = resourceLoader;
+        this.eventBus = eventBus;
+    }
+
+    public function execute(projectPath:FilePath):Result<Project, String> {
+        try {
+            var content = fileSystem.readText(projectPath);
+            var project = Project.fromJson(content);
+            // Загрузка ресурсов
+            resourceLoader.loadProjectResources(project);
+            // Публикация
+            eventBus.publish(new ProjectLoaded(project));
+            return Success(project);
+        } catch (e:Dynamic) {
+            eventBus.publish(new ErrorOccurred("LoadProjectUseCase", new Error(e)));
+            return Failure(e.message);
+        }
+    }
+}
+</file>
+
+<file path="application/commands/OpenResourceUseCase.hx">
+package hide.application.commands;
+</file>
+
+<file path="application/commands/OpenViewUseCase.hx">
+// hide/application/commands/OpenViewUseCase.hx
+
+package hide.application.commands;
+
+import hide.domain.services.ILayoutEngine;
+import hide.domain.valueobjects.DisplayPosition;
+import hide.application.services.ViewRegistry;
+import js.html.Element;
+
+class OpenViewUseCase {
+    private var layoutEngine:ILayoutEngine;
+    private var viewRegistry:ViewRegistry;
+
+    public function new(layoutEngine:ILayoutEngine, viewRegistry:ViewRegistry) {
+        this.layoutEngine = layoutEngine;
+        this.viewRegistry = viewRegistry;
+    }
+
+    public function execute(viewName:String, state:Dynamic, ?position:DisplayPosition):Void {
+        var view = viewRegistry.find(viewName);
+        if (view == null) {
+            throw "View not found: $viewName";
+        }
+
+        var factory = viewRegistry.getFactory(viewName);
+        if (factory == null) {
+            throw "View factory not found: $viewName";
+        }
+
+        // Создать контейнер (если нужен)
+        var container = Browser.document.createElement("div");
+        container.id = "view-${viewName}";
+
+        // Создать view
+        factory.create(container, state);
+
+        layoutEngine.open(viewName, state, position != null ? position : DisplayPosition.Center);
+    }
+}
+</file>
+
+<file path="application/commands/SaveLayoutUseCase.hx">
+// hide/application/commands/SaveLayoutUseCase.hx
+
+package hide.application.commands;
+
+import hide.domain.services.ILayoutEngine;
+import hide.shared.types.IEventBus;
+import hide.shared.events.LayoutSaved;
+import hide.domain.valueobjects.LayoutState;
+
+class SaveLayoutUseCase {
+    private var layoutEngine:ILayoutEngine;
+    private var eventBus:IEventBus;
+
+    public function new(layoutEngine:ILayoutEngine, eventBus:IEventBus) {
+        this.layoutEngine = layoutEngine;
+        this.eventBus = eventBus;
+    }
+
+    public function execute():Void {
+        var state:LayoutState = layoutEngine.save(); // ← получаем состояние
+        eventBus.publish(new LayoutSaved({}));
+    }
+}
+</file>
+
+<file path="application/commands/SetFullscreenUseCase.hx">
+// hide/application/commands/SetFullscreenUseCase.hx
+
+package hide.application.commands;
+
+import hide.application.services.WindowService;
+import hide.shared.types.IEventBus;
+import hide.shared.events.FullscreenChanged;
+
+class SetFullscreenUseCase {
+    private var windowService:WindowService;
+    private var eventBus:IEventBus;
+
+    public function new(windowService:WindowService, eventBus:IEventBus) {
+        this.windowService = windowService;
+        this.eventBus = eventBus;
+    }
+
+    public function execute(enabled:Bool):Void {
+        if (enabled) {
+            windowService.enterFullscreen();
+        } else {
+            windowService.leaveFullscreen();
+        }
+        eventBus.publish(new FullscreenChanged(enabled));
+    }
+}
+</file>
+
+<file path="application/commands/SetRendererUseCase.hx">
+// hide/application/commands/SetRendererUseCase.hx
+
+package hide.application.commands;
+
+import hide.shared.types.IEventBus;
+import hide.shared.events.RendererChanged;
+
+class SetRendererUseCase {
+    private var eventBus:IEventBus;
+
+    public function new(eventBus:IEventBus) {
+        this.eventBus = eventBus;
+    }
+
+    public function execute(rendererName:String):Void {
+        // Смена рендерера — зависит от вашего проекта
+        // Например: H3D.setRenderer(rendererName);
+        eventBus.publish(new RendererChanged(rendererName));
+    }
+}
+</file>
+
+<file path="application/dto/MenuItem.hx">
+package hide.application.dto;
+
+typedef MenuItem = {
+    var id:String;             // Идентификатор пункта меню (например, "view.editor")
+    var label:String;          // Отображаемое имя
+    var icon:Null<String>;     // Иконка (опционально)
+}
+</file>
+
+<file path="application/dto/ResourceMetadataDto.hx">
+package hide.application.dto;
+</file>
+
+<file path="application/dto/ViewDto.hx">
+// hide/application/dto/ViewDto.hx
+
+package hide.application.dto;
+
+typedef ViewDto = {
+    var name:String;           // Идентификатор (для componentName в GoldenLayout)
+    var label:String;          // Отображаемое имя в меню (например, "Редактор")
+    var description:String;    // Описание (для tooltip, справки)
+    var icon:Null<String>;     // Иконка (например, "fa-code" или SVG-код)
+    var defaultState:Dynamic;  // Начальное состояние (например, { path: "..." })
+}
+</file>
+
+<file path="application/dto/WindowBoundsDto.hx">
+package hide.application.dto;
+</file>
+
+<file path="application/services/ClipboardService.hx">
+package hide.application.services;
+</file>
+
+<file path="application/services/MenuService.hx">
+package hide.application.services;
+
+import hide.domain.services.IClipboardService;
+import hide.domain.enums.MenuItemType;
+import hide.application.dto.MenuItemDto;
+
+/**
+ * Сервис для работы с меню.
+ * Работает с данными (MenuItemDto), а не с нативными объектами.
+ * Поддерживает:
+ * - Парсинг HTML-шаблона
+ * - Динамические вставки (recents, renderers, layout)
+ * - Глобальные идентификаторы (`data-id`) и обработчики
+ * - Сериализация для IPC и сохранения в конфиг
+ */
+class MenuService {
+    private var handlers:Map<String, Void->Void> = [];
+    private var menuItems:Array<MenuItem> = [];
+
+    public function onItemClick(id:String, handler:Void->Void):Void {
+        handlers[id] = handler;
+    }
+
+    public function trigger(id:String):Void {
+        if (handlers.exists(id)) {
+            handlers[id]();
+        } else {
+            trace("Unknown menu item: $id");
+        }
+    }
+
+    public function buildFromHtml(html:String):MenuTemplate {
+        var dom = new haxe.xml.Fast(Xml.parse(html));
+        var items = [];
+
+        for (item in dom.node.querySelectorAll("item")) {
+            var id = item.att.id;
+            var label = item.node.firstChild().data;
+            items.push({ id: id, label: label });
+        }
+
+        return { items: items };
+    }
+
+    public function addItem(id:String, label:String):Void {
+        menuItems.push({ id: id, label: label });
+    }
+
+    public function addViewMenu(view:ViewDto):Void {
+        var id = "view.${view.name}";
+        addItem(id, view.label, view.icon);
+        // Можно добавить иконку, подменю и т.д.
+    }
+
+    public function getMenuItems():Array<MenuItem> {
+        return menuItems.copy();
+    }
+}
+
+// --- DTO & Config ---
+
+typedef MenuTemplate = {
+    var items:Array<MenuItem>;
+}
+typedef MenuConfig = {
+    var recents:Array<String>;
+    var renderers:Array<String>;
+    var layouts:Array<String>;
+    var onOpenRecent:String->Void;
+}
+</file>
+
+<file path="application/services/PluginFactory.hx">
+// hide/application/services/PluginFactory.hx
+
+package hide.application.services;
+
+import hide.domain.services.IPlugin;
+import haxe.macro.Expr;
+
+/**
+ * Фабрика плагинов.
+ * Загружает плагины динамически, используя рефлексию.
+ */
+class PluginFactory {
+    public static function load(className:String):Null<IPlugin> {
+        try {
+            var pluginClass = Type.resolveClass(className);
+            if (pluginClass == null) return null;
+
+            var plugin = Type.createInstance(pluginClass, []);
+            if (!Std.is(plugin, IPlugin)) return null;
+
+            return cast plugin;
+        } catch (e:Dynamic) {
+            trace("Failed to load plugin: $className - ${e}");
+            return null;
+        }
+    }
+}
+</file>
+
+<file path="application/services/PluginManager.hx">
+// hide/application/services/PluginManager.hx
+
+package hide.application.services;
+
+import hide.shared.types.IEventBus;
+import hide.domain.services.IPlugin;
+import hide.domain.services.IFileSystem; // ← Используем порт домена
+import hide.shared.types.FilePath;       // ← Value Object для путей
+import haxe.Json;
+/**
+ * Управляет загрузкой и активацией плагинов.
+ * Плагины загружаются из plugins.json, но инициализируются через PluginRegistry.
+ */
+class PluginManager {
+    private var registry:PluginRegistry;
+    private var viewRegistry:ViewRegistry;
+    private var eventBus:IEventBus;
+    private var fileSystem:IFileSystem; // ← Внедренная зависимость
+    
+    private var configPath:FilePath;
+    private var config:PluginsConfig;
+    private var enabledPlugins:Map<String, IPlugin> = [];
+
+    public function new(
+        registry:PluginRegistry,
+        viewRegistry:ViewRegistry,
+        eventBus:IEventBus,
+        fileSystem:IFileSystem, // ← Внедряем через DI
+        ?configPathStr:String = "plugins.json"
+    ) {
+        this.registry = registry;
+        this.viewRegistry = viewRegistry;
+        this.eventBus = eventBus;
+        this.fileSystem = fileSystem;
+        this.configPath = new FilePath(configPathStr);
+
+        loadConfig();
+    }
+
+    private function loadConfig():Void {
+        if (fileSystem.exists(configPath)) {
+            var content = fileSystem.readText(configPath);
+            config = Json.parse(content);
+        } else {
+            config = { plugins: [] };
+            saveConfig();
+        }
+    }
+    
+    /**
+     * Загружает и активирует все включенные плагины из конфига.
+     */
+    public function loadAll():Void {
+        for (pluginConfig in config.plugins) {
+            if (!pluginConfig.enabled) continue;
+            
+            // Если уже загружен, пропускаем
+            if (enabledPlugins.exists(pluginConfig.name)) continue;
+
+            try {
+                var plugin = loadPlugin(pluginConfig);
+                if (plugin != null) {
+                    plugin.activate(viewRegistry, eventBus);
+                    registry.add(pluginConfig.name, plugin);
+                    enabledPlugins.set(pluginConfig.name, plugin);
+                }
+            } catch (e:Dynamic) {
+                trace('Failed to load plugin: ${pluginConfig.name} - ${e}');
+            }
+        }
+    }
+
+    // hide/application/services/PluginManager.hx
+
+    private function loadPlugin(pluginConfig:PluginConfig):Null<IPlugin> {
+        var className = pluginConfig.class;
+        var pluginClass = Type.resolveClass(className);
+        
+        if (pluginClass == null) {
+            trace('Plugin class not found: $className');
+            return null;
+        }
+
+        try {
+            // Ожидаем, что конструктор плагина имеет сигнатуру: 
+            // new(viewRegistry: ViewRegistry, eventBus: IEventBus, config: Dynamic)
+            var args = [viewRegistry, eventBus, pluginConfig.config != null ? pluginConfig.config : {}];
+            var plugin = Type.createInstance(pluginClass, args);
+
+            if (!Std.is(plugin, IPlugin)) {
+                trace('Plugin $className does not implement IPlugin');
+                return null;
+            }
+            return cast plugin;
+        } catch (e:Dynamic) {
+            trace('Failed to instantiate plugin $className. Check constructor signature. Error: ${e}');
+            return null;
+        }
+    }
+
+    /**
+     * Включает плагин, сохраняет конфиг и сразу загружает его.
+     */
+    public function enable(name:String):Bool {
+        for (pluginConfig in config.plugins) {
+            if (pluginConfig.name == name && !pluginConfig.enabled) {
+                pluginConfig.enabled = true;
+                saveConfig();
+                
+                // Сразу загружаем и активируем
+                var plugin = loadPlugin(pluginConfig);
+                if (plugin != null) {
+                    plugin.activate(viewRegistry, eventBus);
+                    registry.add(name, plugin);
+                    enabledPlugins.set(name, plugin);
+                    return true;
+                }
+                return false; // Не удалось загрузить
+            }
+        }
+        return false; // Не найден или уже включен
+    }
+
+    /**
+     * Отключает плагин, деактивирует его, удаляет из реестра и сохраняет конфиг.
+     */
+    public function disable(name:String):Bool {
+        for (pluginConfig in config.plugins) {
+            if (pluginConfig.name == name && pluginConfig.enabled) {
+                pluginConfig.enabled = false;
+                saveConfig();
+
+                // Корректная деактивация
+                if (enabledPlugins.exists(name)) {
+                    var plugin = enabledPlugins.get(name);
+                    plugin.deactivate(); // ← Очищаем слушатели и ресурсы
+                    registry.remove(name);
+                    enabledPlugins.remove(name);
+                }
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private function saveConfig():Void {
+        // ✅ Теперь используем правильный путь и абстракцию файловой системы
+        var jsonStr = Json.stringify(config, "  ");
+        fileSystem.writeText(configPath, jsonStr);
+    }
+    
+    /**
+     * Возвращает список имен активных плагинов (для UI).
+     */
+    public function getActivePluginNames():Array<String> {
+        return [for (name in enabledPlugins.keys()) name];
+    }
+}
+</file>
+
+<file path="application/services/PluginRegistry.hx">
+// hide/application/services/PluginRegistry.hx
+
+package hide.application.services;
+
+import hide.domain.services.IPlugin;
+
+/**
+ * Хранилище активных плагинов.
+ * Используется для управления плагинами (enable/disable, reload).
+ */
+class PluginRegistry {
+    private var plugins:Map<String, IPlugin> = [];
+
+    public function add(name:String, plugin:IPlugin):Void {
+        if (plugins.exists(name)) throw "Plugin $name already exists";
+        plugins.set(name, plugin);
+    }
+
+    public function get(name:String):Null<IPlugin> {
+        return plugins.get(name);
+    }
+
+    public function remove(name:String):Bool {
+        return plugins.remove(name);
+    }
+
+    public function all():Array<IPlugin> {
+        return [for (p in plugins) p];
+    }
+
+    public function count():Int {
+        return plugins.length;
+    }
+}
+</file>
+
+<file path="application/services/ProjectService.hx">
+package hide.application.services;
+</file>
+
+<file path="application/services/ResourceService.hx">
+package hide.application.services;
+</file>
+
+<file path="application/services/ViewRegistry.hx">
+// hide/application/services/ViewRegistry.hx
+
+package hide.application.services;
+
+import hide.domain.services.IViewFactory;
+import hide.application.dto.ViewDto;
+
+class ViewRegistry {
+    private var views:Array<ViewDto> = [];
+    private var viewFactories:Map<String, IViewFactory> = [];
+    public function new() {
+        add({ name: "editor", label: "Редактор", description: "Открыть редактор кода", icon: "fa-code", defaultState: {} });
+        add({ name: "project", label: "Проект", description: "Показать дерево проекта", icon: "fa-folder", defaultState: {} });
+    }
+
+    public function registerViewFactory(name:String, factory:IViewFactory){
+        viewFactories.set(name,factory);
+    }  
+
+    public function getFactory(name:String):Null<IViewFactory> {
+        return viewFactories.get(name);
+    }
+
+
+    public function add(view:ViewDto):Void {
+        if (find(view.name) != null) throw "View already exists: ${view.name}";
+        views.push(view);
+    }
+
+    public function find(name:String):Null<ViewDto> {
+        return views.find(v -> v.name == name);
+    }
+
+    public function all():Array<ViewDto> {
+        return views.copy();
+    }
+
+    public function count():Int {
+        return views.length;
+    }
+}
+</file>
+
+<file path="application/services/WindowService.hx">
+package hide.application.services;
+
+import hide.domain.services.IWindowManager;
+import hide.domain.enums.WindowEvent;
+import hide.domain.valueobjects.WindowBounds;
+
+/**
+ * Сервис управления окном для уровня приложения.
+ * Кеширует состояние, транслирует события, скрывает детали платформы.
+ * Поддерживает: showDevTools, fullscreen, close handlers, move/resize, focus, title.
+ */
+class WindowService {
+    private var manager:IWindowManager;
+    
+    // === Состояние ===
+    public var isFullscreen(default, null):Bool = false;
+    public var isMaximized(default, null):Bool = false;
+    public var isFocused(default, null):Bool = false;
+    public var bounds(get, never):WindowBounds;
+    
+    // === Конструктор ===
+    public function new(manager:IWindowManager) {
+        this.manager = manager;
+        setupStateSync();
+    }
+
+    // === Публичное API ===
+    public function resizeBy(dw:Int, dh:Int):Void { manager.resizeBy(dw, dh); }
+    public function moveTo(x:Int, y:Int):Void { manager.moveTo(x, y); }
+    public function maximize():Void { manager.maximize(); isMaximized = true; }
+    public function unmaximize():Void { manager.unmaximize(); isMaximized = false; }
+    public function focus():Void { manager.focus(); isFocused = true; }
+    public function blur():Void { manager.blur(); isFocused = false; }
+    public function setTitle(title:String):Void { manager.setTitle(title); }
+    public function getTitle():String return manager.getTitle();
+
+    // --- Фуллскрин (NW.js-совместимый) ---
+    public function enterFullscreen():Void {
+        manager.enterFullscreen();
+        isFullscreen = true;
+        isMaximized = false; // NW.js сбрасывает maximize при fullscreen
+    }
+    public function leaveFullscreen():Void {
+        manager.leaveFullscreen();
+        isFullscreen = false;
+    }
+
+    // --- Другие методы ---
+    public function showDevTools():Void { manager.showDevTools(); }
+
+    // --- Обработка событий ===
+    public function onClose(callback:Void->Void):Void { manager.on(WindowEvent.Close, _ -> callback()); }
+    public function onMove(callback:Void->Void):Void { manager.on(WindowEvent.Move, _ -> haxe.Timer.delay(callback, 100)); }
+    public function onResize(callback:Void->Void):Void { manager.on(WindowEvent.Resize, _ -> haxe.Timer.delay(callback, 100)); }
+    public function onBlur(callback:Void->Void):Void { manager.on(WindowEvent.Blur, _ -> { isFocused = false; callback(); }); }
+    public function onFocus(callback:Void->Void):Void { manager.on(WindowEvent.Focus, _ -> { isFocused = true; callback(); }); }
+
+    // --- Проброс событий через `on(event, cb)` (для старой сигнатуры) ---
+    public function on(event:WindowEvent, cb:Dynamic->Void):Void { manager.on(event, cb); }
+    public function off(event:WindowEvent, cb:Dynamic->Void):Void { manager.off(event, cb); }
+
+    // === Геттеры ===
+    private function get_bounds():WindowBounds {
+        var raw = manager.getBounds();
+        // Уточнение: if (isMaximized) возвращаем bounds.maximized, иначе .normal
+        return raw;
+    }
+
+    // === Синхронизация состояния через события ===
+    private function setupStateSync():Void {
+        manager.on(WindowEvent.Maximize, _ -> {
+            isMaximized = true;
+            isFullscreen = false;
+        });
+
+        manager.on(WindowEvent.Restore, _ -> {
+            isMaximized = false;
+            isFullscreen = false;
+        });
+
+        manager.on(WindowEvent.FullscreenEnter, _ -> {
+            isFullscreen = true;
+            isMaximized = false; // NW.js сбрасывает maximize при fullscreen
+        });
+
+        manager.on(WindowEvent.FullscreenLeave, _ -> {
+            isFullscreen = false;
+        });
+
+        manager.on(WindowEvent.Move, _ -> { /* можно добавить isMoved, если нужно */ });
+        manager.on(WindowEvent.Resize, _ -> { /* можно добавить isResized */ });
+    }
+
+    // === Ресурсоосвобождение ===
+    public function dispose():Void {
+        manager.dispose(); // очистить подписки, если поддерживается
+    }
+}
+</file>
+
+<file path="domain/entities/Database.hx">
+package hide.domain.entities;
+</file>
+
+<file path="domain/entities/LayoutConfig.hx">
+package hide.domain.entities;
+</file>
+
+<file path="domain/entities/Project.hx">
+package hide.domain.entities;
+
+import hide.domain.valueobjects.FilePath;
+import hide.domain.enums.ResourceType;
+
+/**
+ * Сущность проекта — чистая бизнес-логика, без зависимостей от UI или платформы.
+ */
+class Project {
+    public final id:String;
+    public final name:String;
+    public final rootPath:FilePath;
+    
+    private var resources:Map<String, Resource>;
+    private var _isDirty:Bool;
+    
+    public function new(id:String, name:String, rootPath:FilePath) {
+        this.id = id;
+        this.name = name;
+        this.rootPath = rootPath.validate() ? rootPath : throw 'Invalid path: $rootPath';
+        this.resources = new Map();
+        this._isDirty = false;
+    }
+    
+    public function addResource(resource:Resource):Void {
+        if (resources.exists(resource.id)) {
+            throw 'Resource ${resource.id} already exists';
+        }
+        resources.set(resource.id, resource);
+        _isDirty = true;
+    }
+    
+    public function getResource(id:String):Null<Resource> {
+        return resources.get(id);
+    }
+    
+    public function getResourcesByType(type:ResourceType):Array<Resource> {
+        return [for (r in resources) if (r.type == type) r];
+    }
+    
+    public function get_isDirty():Bool return _isDirty;
+    public function markSaved():Void _isDirty = false;
+}
+</file>
+
+<file path="domain/entities/Resource.hx">
+package hide.domain.entities;
+</file>
+
+<file path="domain/entities/UserSettings.hx">
+package hide.domain.entities;
+</file>
+
+<file path="domain/enums/MenuItemType.hx">
+package hide.domain.enums;
+</file>
+
+<file path="domain/enums/ResourceType.hx">
+package hide.domain.enums;
+</file>
+
+<file path="domain/enums/ViewType.hx">
+package hide.domain.enums;
+</file>
+
+<file path="domain/enums/WindowEvent.hx">
+package hide.domain.enums;
+
+/**
+ * Типобезопасные события окна.
+ * Заменяет строковые литералы "focus", "blur", "resize" и т.д.
+ */
+enum WindowEvent {
+    Focus;
+    Blur;
+    Resize;
+    Move;
+    Maximize;
+    Unmaximize;
+    Minimize;
+    Restore;
+    Close;
+}
+</file>
+
+<file path="domain/exceptions/FileNotFoundError.hx">
+package hide.domain.exceptions;
+</file>
+
+<file path="domain/exceptions/InvalidConfigError.hx">
+package hide.domain.exceptions;
+</file>
+
+<file path="domain/exceptions/ProjectLoadError.hx">
+package hide.domain.exceptions;
+</file>
+
+<file path="domain/exceptions/ResourceNotFoundError.hx">
+package hide.domain.exceptions;
+</file>
+
+<file path="domain/services/IClipboardService.hx">
+package hide.domain.services;
+</file>
+
+<file path="domain/services/IElement.hx">
+// hide/domain/services/IElement.hx
+
+package hide.domain.services;
+
+/**
+ * Доменная абстракция DOM-элемента.
+ * Реализуется в infrastructure (HtmlElement, CanvasElement, SkiaElement).
+ */
+interface IElement {
+    /**
+     * Устанавливает HTML-содержимое элемента.
+     */
+    function setInnerHtml(html:String):Void;
+
+    /**
+     * Добавляет дочерний элемент.
+     */
+    function appendChild(child:IElement):Void;
+
+    /**
+     * Добавляет обработчик события.
+     */
+    function addEventListener(event:String, handler:Dynamic->Void):Void;
+
+    /**
+     * Возвращает родительский элемент (если есть).
+     */
+    function getParent():Null<IElement>;
+}
+</file>
+
+<file path="domain/services/IFileSystem.hx">
+package hide.domain.services;
+
+import hide.domain.valueobjects.FilePath;
+import hide.domain.exceptions.FileNotFoundError;
+
+/**
+ * Порт (интерфейс) для файловой системы.
+ * Не зависит от реализации (Electron, NW.js, Node, Browser).
+ */
+interface IFileSystem {
+    /**
+     * Проверяет существование файла/директории.
+     * @throws FileNotFoundError если путь невалиден
+     */
+    function exists(path:FilePath):Bool;
+    
+    /**
+     * Читает текстовый файл.
+     * @throws FileNotFoundError если файл не найден
+     * @throws IOError если ошибка чтения
+     */
+    function readText(path:FilePath):String;
+    
+    /**
+     * Записывает текст в файл (создаёт директорию при необходимости).
+     * @throws IOError если ошибка записи
+     */
+    function writeText(path:FilePath, content:String):Void;
+    
+    /**
+     * Рекурсивно перечисляет файлы в директории.
+     */
+    function listFiles(path:FilePath, ?recursive:Bool):Array<FilePath>;
+    
+    /**
+     * Возвращает абсолютный путь к директории данных приложения.
+     */
+    function getAppDataPath():FilePath;
+}
+</file>
+
+<file path="domain/services/ILayoutEngine.hx">
+// hide/domain/services/ILayoutEngine.hx
+
+package hide.domain.services;
+
+import hide.domain.valueobjects.LayoutState;
+import hide.domain.valueobjects.DisplayPosition;
+
+import hide.shared.types.IEventBus; // ← ВАЖНО: из shared, а не domain
+/**
+ * Доменный интерфейс для управления layout'ом.
+ * НЕ зависит от GoldenLayout, HTML или платформы.
+ */
+interface ILayoutEngine {
+    /**
+     * Инициализирует layout из сохранённого состояния.
+     */
+    function init(state:LayoutState):Void;
+
+    /**
+     * Открывает компонент в указанной позиции.
+     */
+    function open(componentName:String, state:Dynamic, ?position:DisplayPosition):Void;
+
+    /**
+     * Сохраняет текущее состояние layout'а.
+     */
+    function save():LayoutState;
+
+    /**
+     * Закрытая вкладка → reopenLastClosed()
+     */
+    function reopenLastClosed():Void;
+
+    /**
+     * Закрывает текущий layout и освобождает ресурсы.
+     */
+    function dispose():Void;
+
+    /**
+     * Подписка на событие изменения layout'а.
+     * Используется в `LayoutService`, чтобы обновлять UI.
+     */
+    function onLayoutChanged(callback:Void->Void):Void;
+
+    /**
+     * Регистрация view-фабрик (через IElement)
+     */
+    function registerView(type:String, factory:IViewFactory):Void
+
+
+}
+</file>
+
+<file path="domain/services/IPlugin.hx">
+// hide/domain/services/IPlugin.hx
+
+package hide.domain.services;
+
+import hide.application.services.ViewRegistry;
+import hide.shared.types.IEventBus;
+
+/**
+ * Интерфейс плагина.
+ * Плагин регистрирует себя в ViewRegistry и LayoutEngine.
+ */
+interface IPlugin {
+    /**
+     * Активирует плагин (регистрирует view, слушатели событий).
+     */
+    function activate(viewRegistry:ViewRegistry, eventBus:IEventBus):Void;
+
+    /**
+     * Деактивирует плагин (удаляет зарегистрированные ресурсы).
+     */
+    function deactivate():Void;
+}
+</file>
+
+<file path="domain/services/IResourceLoader.hx">
+package hide.domain.services;
+</file>
+
+<file path="domain/services/IViewFactory.hx">
+// hide/domain/services/IViewFactory.hx
+
+package hide.domain.services;
+
+interface IViewFactory {
+    /**
+     * Создаёт view-компонент внутри указанного контейнера.
+     */
+    function create(container:IElement, state:Dynamic):Dynamic;
+}
+</file>
+
+<file path="domain/services/IWindowManager.hx">
+package hide.domain.services;
+
+import hide.domain.valueobjects.WindowBounds;
+import hide.domain.enums.WindowEvent;
+
+/**
+ * Порт (интерфейс) для управления нативным окном.
+ * НЕ знает ничего про Electron, NW.js или DOM.
+ */
+interface IWindowManager {
+    function resizeBy(dw:Int, dh:Int):Void;
+    function moveTo(x:Int, y:Int):Void;
+    function maximize():Void;
+    function unmaximize():Void;
+    function focus():Void;
+    function blur():Void;
+    function setTitle(title:String):Void;
+    function getTitle():String;
+    function enterFullscreen():Void;
+    function leaveFullscreen():Void;
+    function showDevTools():Void;
+    
+    function on(event:WindowEvent, cb:Dynamic->Void):Void;
+    function off(event:WindowEvent, cb:Dynamic->Void):Void;
+    
+    function getBounds():WindowBounds;
+    function dispose():Void;
+}
+</file>
+
+<file path="domain/services/PluginConfig.hx">
+package hide.domain.services;
+
+typedef PluginConfig = {
+    name:String,
+    class:String,
+    enabled:Bool,
+    ?config:Dynamic
+}
+</file>
+
+<file path="domain/services/PluginsConfig.hx">
+package hide.domain.services;
+
+typedef PluginsConfig = {
+    var plugins:Array<PluginConfig>;
+}
+</file>
+
+<file path="domain/valueobjects/DisplayPosition.hx">
+package hide.domain.valueobjects;
+
+enum DisplayPosition {
+    Left;
+    Center;
+    Bottom;
+    Right;
+    MiddleColumnInternal;
+}
+</file>
+
+<file path="domain/valueobjects/FilePath.hx">
+package hide.domain.valueobjects;
+</file>
+
+<file path="domain/valueobjects/LayoutConfig.hx">
+package hide.domain.valueobjects;
+
+typedef LayoutConfig = {
+    var type:String;
+    var componentName:Null<String>;
+    var componentState:Null<Dynamic>;
+    var content:Array<LayoutConfig>;
+    var id:Null<String>;
+    var width:Null<Int>;
+    var height:Null<Int>;
+}
+</file>
+
+<file path="domain/valueobjects/LayoutState.hx">
+package hide.domain.valueobjects;
+
+typedef LayoutState = {
+    var content:Array<LayoutConfig>;
+    var fullScreen:Null<{component:String, state:Dynamic}>;
+}
+</file>
+
+<file path="domain/valueobjects/ResourceId.hx">
+package hide.domain.valueobjects;
+</file>
+
+<file path="domain/valueobjects/ScreenBounds.hx">
+package hide.domain.valueobjects;
+</file>
+
+<file path="domain/valueobjects/WindowBounds.hx">
+package hide.domain.valueobjects;
+
+/**
+ * Неизменяемое значение, описывающее геометрию окна.
+ * Не зависит от платформы, UI или внешних библиотек.
+ */
+typedef WindowBounds = {
+    x: Int,
+    y: Int,
+    width: Int,
+    height: Int
+}
+</file>
+
+<file path="infrastructure/config/PackageJsonLoader.hx">
+package hide.infrastructure.config;
+</file>
+
+<file path="infrastructure/config/ProjectConfigParser.hx">
+package hide.infrastructure.config;
+</file>
+
+<file path="infrastructure/config/UserSettingsLoader.hx">
+package hide.infrastructure.config;
+</file>
+
+<file path="infrastructure/external/golden/Config.hx">
+package golden;
+
+typedef Config = {
+	@:optional var settings: {
+		@:optional var hasHeaders : Bool;
+		@:optional var constrainDragToContainer : Bool;
+		@:optional var constrainDragToHeader : Bool;
+		@:optional var reorderEnabled : Bool;
+		@:optional var selectionEnabled : Bool;
+		@:optional var popoutWholeStack : Bool;
+		@:optional var blockedPopoutsThrowError : Bool;
+		@:optional var closePopoutsOnUnload : Bool;
+		@:optional var showPopoutIcon : Bool;
+		@:optional var showMaximiseIcon : Bool;
+		@:optional var showCloseIcon : Bool;
+	};
+	@:optional var dimensions: {
+		@:optional var borderWidth: Int;
+		@:optional var minItemHeight : Int;
+		@:optional var minItemWidth : Int;
+		@:optional var headerHeight : Int;
+		@:optional var dragProxyWidth : Int;
+		@:optional var dragProxyHeight : Int;
+	};
+	@:optional var labels: {
+		@:optional var close: String;
+		@:optional var maximise: String;
+		@:optional var minimise: String;
+		@:optional var popout: String;
+	};
+	@:optional var content: Array<ItemConfig>;
+};
+
+enum abstract ItemType(String) {
+	var Row = "row";
+	var Column = "column";
+	var Stack = "stack";
+	var Component = "component";
+}
+
+typedef ItemConfig = {
+	var type: ItemType;
+	@:optional var componentName : String;
+	@:optional var componentState : Dynamic;
+	@:optional var content : Array<ItemConfig>;
+	@:optional var id : String;
+	@:optional var width : Int;
+	@:optional var height: Int;
+	@:optional var isClosable : Bool;
+	@:optional var title : String;
+	@:optional var activeItemIndex : Int;
+}
+</file>
+
+<file path="infrastructure/external/golden/Container.hx">
+package golden;
+
+import golden.*;
+
+extern class Container {
+
+	public var width(default,null) : Int;
+	public var height(default,null) : Int;
+	public var parent : ContentItem;
+
+	public var tab : Tab;
+	public var title(default,null) : String;
+	public var layoutManager(default,null) : Layout;
+	public var isHidden(default,null) : Bool;
+
+	public function getElement() : js.jquery.JQuery;
+
+	public function setTitle( title : String ) : Void;
+	public function setState( state : Dynamic ) : Void;
+	public function setSize( width : Int, height : Int ) : Void;
+
+	public function hide() : Void;
+	public function show() : Bool;
+
+	public function close() : Bool;
+
+	public function on( type : String, callb : Event<Container> -> Void ) : Void;
+	public function off( type : String ) : Void;
+
+}
+</file>
+
+<file path="infrastructure/external/golden/ContentItem.hx">
+package golden;
+import golden.*;
+extern class ContentItem {
+
+	var type : Config.ItemType;
+	var parent : ContentItem;
+	var contentItems : Array<ContentItem>;
+	var element : js.jquery.JQuery;
+	var childElementContainer : Container;
+	var config : Config.ItemConfig;
+	var header : Header;
+	var id : String;
+
+	var __view : Dynamic;
+
+	public function addChild( config : Config.ItemConfig, ?index : Int ) : Void;
+	public function on( type : String, callb : Event<ContentItem> -> Void ) : Void;
+	public function off( type : String ) : Void;
+	public function replaceChild( c : ContentItem, config : Config.ItemConfig ) : Void;
+	public function getItemsByFilter( f : ContentItem -> Bool ) : Array<ContentItem>;
+	public function getActiveContentItem() : ContentItem;
+	public function setActiveContentItem( item : ContentItem ) : Void;
+	public function getItemsById(id : String) : Array<ContentItem>;
+	public function remove() : Void ;
+}
+</file>
+
+<file path="infrastructure/external/golden/Event.hx">
+package golden;
+
+typedef Event<T> = {
+	var name : String;
+	var origin : T;
+	function preventDefault() : Void;
+}
+</file>
+
+<file path="infrastructure/external/golden/Header.hx">
+package golden;
+import golden.*;
+extern class Header {
+
+	public var tabs : Array<Tab>;
+
+	function setActiveContentItem( it : ContentItem ) : Void;
+
+}
+</file>
+
+<file path="infrastructure/external/golden/Layout.hx">
+package golden;
+import golden.*;
+
+@:native("GoldenLayout")
+extern class Layout {
+
+
+	var root : ContentItem;
+	var selectedItem : ContentItem;
+	var isInitialised : Bool;
+	var config : Config;
+
+	function new( config : Config, parent : js.html.Element = null ) : Void;
+	function init() : Void;
+	function destroy() : Void;
+	function updateSize(width: Int = null, height: Int = null) : Void;
+
+	function registerComponent( name : String, callb : Container -> Dynamic -> Void ) : Void;
+	function on( event : String, f : Void -> Void ) : Void;
+
+	function toConfig() : Config;
+
+}
+</file>
+
+<file path="infrastructure/external/golden/Tab.hx">
+package golden;
+import golden.*;
+extern class Tab {
+
+	public var isActive : Bool;
+	public var header : Header;
+	public var element : js.jquery.JQuery;
+
+	dynamic function onClose() : Bool;
+
+}
+</file>
+
+<file path="infrastructure/external/GoldenLayoutAdapter.hx">
+// hide/infrastructure/external/GoldenLayoutAdapter.hx
+
+package hide.infrastructure.external;
+
+import golden.*;
+import hide.domain.services.ILayoutEngine;
+import hide.domain.services.IViewFactory;
+import hide.domain.valueobjects.LayoutState;
+import hide.domain.valueobjects.DisplayPosition;
+import hide.shared.types.IEventBus;
+import hide.shared.events.LayoutChanged;
+import js.html.Element;
+
+/**
+ * Адаптер для GoldenLayout.
+ * Реализует ILayoutEngine, скрывая детали JS-библиотеки.
+ */
+class GoldenLayoutAdapter implements ILayoutEngine {
+    private var layout:Layout;
+    private var container:Element;
+    private var eventBus:IEventBus;
+    private var viewFactories:Map<String, IViewFactory>;
+    private var onLayoutChangedCallbacks:Array<Void->Void>;
+
+    // === Конструктор ===
+
+    public function new(container:Element, eventBus:IEventBus, viewFactories:Map<String, IViewFactory>) {
+        this.container = container;
+        this.eventBus = eventBus;
+        this.viewFactories = viewFactories;
+        this.onLayoutChangedCallbacks = [];
+    }
+
+    // === ILayoutEngine ===
+
+    public function init(state:LayoutState):Void {
+        var config = toGoldenConfig(state.content);
+        config.settings ??= {};
+        config.settings.reorderEnabled = true;
+        config.settings.showPopoutIcon = false;
+        config.settings.showMaximiseIcon = true;
+
+        layout = new Layout(config, container.get(0));
+
+        // Регистрация view после инициализации
+        for (type => factory in viewFactories) {
+            layout.registerComponent(type, function(glContainer, state) {
+                var element = new HtmlElement(glContainer.getElement());
+                return factory.create(element, state);
+            });
+        }
+
+        layout.init();
+        layout.on('stateChanged', _ -> {
+            eventBus.publish(new LayoutChanged({}));
+            for (cb in onLayoutChangedCallbacks) cb();
+        });
+    }
+
+    public function open(componentName:String, state:Dynamic, ?position:DisplayPosition):Void {
+        if (layout == null) throw "Layout not initialized";
+
+        var targetId = switch position {
+            case Left: "left";
+            case Center: "center";
+            case Bottom: "bottom";
+            case Right: "right";
+            case MiddleColumnInternal: "middle-column";
+            case null: null;
+        };
+
+        var config:Config.ItemConfig = {
+            type: Component,
+            componentName: componentName,
+            componentState: state,
+            id: targetId
+        };
+
+        var targetContainer = layout.root.getItemsById(targetId)[0] ?? layout.root;
+        targetContainer.addChild(config);
+    }
+
+    public function save():LayoutState {
+        var config = layout.toConfig();
+        return {
+            content: fromGoldenConfig(config.content),
+            fullScreen: null
+        };
+    }
+
+    public function reopenLastClosed():Void {
+        trace("reopenLastClosed() not implemented");
+    }
+
+    public function dispose():Void {
+        if (layout != null) {
+            layout.destroy();
+            layout = null;
+        }
+        onLayoutChangedCallbacks = [];
+    }
+
+    public function onLayoutChanged(callback:Void->Void):Void {
+        onLayoutChangedCallbacks.push(callback);
+    }
+
+    public function registerView(type:String, factory:IViewFactory):Void {
+        viewFactories.set(type, factory);
+        if (layout != null) {
+            layout.registerComponent(type, function(glContainer, state) {
+                var element = new HtmlElement(glContainer.getElement());
+                return factory.create(element, state);
+            });
+        }
+    }
+
+    // === Маппинг JSON (для GoldenLayout) ===
+
+    private function toGoldenConfig(stateContent:Array<Dynamic>):Config {
+        return {
+            content: [for (item in stateContent) toGoldenItem(item)],
+            settings: {
+                reorderEnabled = true,
+                constrainDragToHeader = true,
+                showPopoutIcon = false,
+                showMaximiseIcon = true
+            }
+        };
+    }
+
+    private function toGoldenItem(item:Dynamic):Config.ItemConfig {
+        return {
+            type: item.type,
+            componentName: item.componentName,
+            componentState: item.componentState,
+            content: item.content != null ? [for (i in item.content) toGoldenItem(i)] : null,
+            id: item.id,
+            width: item.width,
+            height: item.height
+        };
+    }
+
+    private function fromGoldenConfig(items:Array<Config.ItemConfig>):Array<Dynamic> {
+        return [for (item in items) fromGoldenItem(item)];
+    }
+
+    private function fromGoldenItem(item:Config.ItemConfig):Dynamic {
+        return {
+            type: item.type,
+            componentName: item.componentName,
+            componentState: item.componentState,
+            content: item.content != null ? [for (i in item.content) fromGoldenItem(i)] : null,
+            id: item.id,
+            width: item.width,
+            height: item.height
+        };
+    }
+}
+</file>
+
+<file path="infrastructure/external/HeapsEngineAdapter.hx">
+package hide.infrastructure.external;
+</file>
+
+<file path="infrastructure/external/HtmlElement.hx">
+// hide/infrastructure/external/HtmlElement.hx
+
+package hide.infrastructure.external;
+
+import hide.domain.services.IElement;
+import js.html.Element;
+
+class HtmlElement implements IElement {
+    private var element:Element;
+
+    public function new(element:Element) {
+        this.element = element;
+    }
+
+    public function setInnerHtml(html:String):Void {
+        element.innerHtml = html;
+    }
+
+    public function appendChild(child:IElement):Void {
+        element.appendChild(cast child.element);
+    }
+
+    public function addEventListener(event:String, handler:Dynamic->Void):Void {
+        element.addEventListener(event, handler);
+    }
+
+    public function getParent():Null<IElement> {
+        if (element.parentElement == null) return null;
+        return new HtmlElement(element.parentElement);
+    }
+
+    public function getElement():Element {
+        return element;
+    }
+}
+</file>
+
+<file path="infrastructure/external/jQueryElementAdapter.hx">
+package hide.infrastructure.external;
+</file>
+
+<file path="infrastructure/external/monaco/KeyCode.hx">
+package monaco;
+
+enum abstract KeyCode(Int) from Int to Int {
+	var Unknown = 0;
+	var Backspace = 1;
+	var Tab = 2;
+	var Enter = 3;
+	var Shift = 4;
+	var Ctrl = 5;
+	var Alt = 6;
+	var PauseBreak = 7;
+	var CapsLock = 8;
+	var Escape = 9;
+	var Space = 10;
+	var PageUp = 11;
+	var PageDown = 12;
+	var End = 13;
+	var Home = 14;
+	var LeftArrow = 15;
+	var UpArrow = 16;
+	var RightArrow = 17;
+	var DownArrow = 18;
+	var Insert = 19;
+	var Delete = 20;
+	var KEY_0 = 21;
+	var KEY_1 = 22;
+	var KEY_2 = 23;
+	var KEY_3 = 24;
+	var KEY_4 = 25;
+	var KEY_5 = 26;
+	var KEY_6 = 27;
+	var KEY_7 = 28;
+	var KEY_8 = 29;
+	var KEY_9 = 30;
+	var KEY_A = 31;
+	var KEY_B = 32;
+	var KEY_C = 33;
+	var KEY_D = 34;
+	var KEY_E = 35;
+	var KEY_F = 36;
+	var KEY_G = 37;
+	var KEY_H = 38;
+	var KEY_I = 39;
+	var KEY_J = 40;
+	var KEY_K = 41;
+	var KEY_L = 42;
+	var KEY_M = 43;
+	var KEY_N = 44;
+	var KEY_O = 45;
+	var KEY_P = 46;
+	var KEY_Q = 47;
+	var KEY_R = 48;
+	var KEY_S = 49;
+	var KEY_T = 50;
+	var KEY_U = 51;
+	var KEY_V = 52;
+	var KEY_W = 53;
+	var KEY_X = 54;
+	var KEY_Y = 55;
+	var KEY_Z = 56;
+	var Meta = 57;
+	var ContextMenu = 58;
+	var F1 = 59;
+	var F2 = 60;
+	var F3 = 61;
+	var F4 = 62;
+	var F5 = 63;
+	var F6 = 64;
+	var F7 = 65;
+	var F8 = 66;
+	var F9 = 67;
+	var F10 = 68;
+	var F11 = 69;
+	var F12 = 70;
+	var F13 = 71;
+	var F14 = 72;
+	var F15 = 73;
+	var F16 = 74;
+	var F17 = 75;
+	var F18 = 76;
+	var F19 = 77;
+	var NumLock = 78;
+	var ScrollLock = 79;
+	var US_SEMICOLON = 80;
+	var US_EQUAL = 81;
+	var US_COMMA = 82;
+	var US_MINUS = 83;
+	var US_DOT = 84;
+	var US_SLASH = 85;
+	var US_BACKTICK = 86;
+	var US_OPEN_SQUARE_BRACKET = 87;
+	var US_BACKSLASH = 88;
+	var US_CLOSE_SQUARE_BRACKET = 89;
+	var US_QUOTE = 90;
+	var OEM_8 = 91;
+	var OEM_102 = 92;
+	var NUMPAD_0 = 93;
+	var NUMPAD_1 = 94;
+	var NUMPAD_2 = 95;
+	var NUMPAD_3 = 96;
+	var NUMPAD_4 = 97;
+	var NUMPAD_5 = 98;
+	var NUMPAD_6 = 99;
+	var NUMPAD_7 = 100;
+	var NUMPAD_8 = 101;
+	var NUMPAD_9 = 102;
+	var NUMPAD_MULTIPLY = 103;
+	var NUMPAD_ADD = 104;
+	var NUMPAD_SEPARATOR = 105;
+	var NUMPAD_SUBTRACT = 106;
+	var NUMPAD_DECIMAL = 107;
+	var NUMPAD_DIVIDE = 108;
+	var MAX_VALUE = 109;
+}
+</file>
+
+<file path="infrastructure/external/monaco/KeyMod.hx">
+package monaco;
+
+extern class KeyMod {
+	static var CtrlCmd : Int;
+    static var Shift : Int;
+    static var Alt : Int;
+    static var WinCtrl : Int;
+}
+</file>
+
+<file path="infrastructure/external/monaco/Languages.hx">
+package monaco;
+
+typedef CompletionProvider = {
+	var ?triggerCharacters : Array<String>;
+	function provideCompletionItems( model : Model, position : Position, token : Any, context : CompletionContext ) : { suggestions : Array<CompletionItem>, ?incomplete: Bool };
+}
+
+typedef CompletionContext = {
+	var ?triggerCharacter : String;
+	var triggerKind : SuggestTriggerKind;
+}
+
+enum abstract SuggestTriggerKind(Int) {
+	var Invoke;
+	var TriggerCharacter;
+	var TriggerForIncompleteCompletions;
+}
+
+enum abstract CompletionItemKind(Int) {
+	var Class = 6;
+	var Color = 15;
+	var Constructor = 3;
+	var Enum = 12;
+	var Field = 4;
+	var File = 16;
+	var Folder = 18;
+	var Function = 2;
+	var Interface = 7;
+	var Keyword = 13;
+	var Method = 1;
+	var Module = 8;
+	var Property = 9;
+	var Reference = 17;
+	var Snippet = 14;
+	var Text = 0;
+	var Unit = 10;
+	var Value = 11;
+	var Variable = 5;
+}
+
+enum abstract CompletionItemInsertTextRule(Int) {
+	var InsertAsSnippet = 4;
+	var KeepWhitespace = 1;
+	var None = 0;
+}
+
+typedef CompletionItem = {
+	var ?additionalTextEdits : Any;
+	var ?command : Any;
+	var ?commitCharacters : Array<String>;
+	var ?detail : String;
+	var ?documentation : MarkdownString;
+	var ?filterText : String;
+	var ?insertText : String;
+	var kind : CompletionItemKind;
+	var label : String;
+	var ?range : Range;
+	var ?sortText : String;
+	var ?insertTextRules: CompletionItemInsertTextRule;
+	//var ?textEdit : deprecated
+}
+
+@:native("monaco.languages")
+extern class Languages {
+
+	public static function registerCompletionItemProvider( language : String, provider : CompletionProvider ) : Void;
+
+}
+</file>
+
+<file path="infrastructure/external/monaco/MarkdownString.hx">
+package monaco;
+
+typedef MarkdownString = {
+	var value: String;
+}
+</file>
+
+<file path="infrastructure/external/monaco/Model.hx">
+package monaco;
+
+extern class Model {
+	function updateOptions( opts : {?insertSpaces:Bool,?tabSize:Int,?trimAutoWhitespace:Bool} ) : Void;
+	function getValueInRange( pos : { startLineNumber : Int, startColumn : Int, endLineNumber : Int, endColumn : Int } ) : String;
+}
+</file>
+
+<file path="infrastructure/external/monaco/ModelDeltaDecoration.hx">
+package monaco;
+
+typedef ModelDeltaDecoration = {
+	var range : Range;
+	var options : {
+		?afterContentClassName : String,
+		?beforeContentClassName : String,
+		?className : String,
+		?glyphMarginClassName : String,
+		?glyphMarginHoverMessage : MarkdownString,
+		?hoverMessage : MarkdownString,
+		?inlineClassName : String,
+		?inlineClassNameAffectsLetterSpacing : Bool,
+		?isWholeLine : Bool,
+		?linesDecorationsClassName : String,
+		?marginClassName : String,
+		?overviewRuler : Todo,
+		?stickiness : Todo,
+		?zIndex : Int,
+	};
+}
+</file>
+
+<file path="infrastructure/external/monaco/Position.hx">
+package monaco;
+
+typedef Position = {
+	var column : Int;
+	var lineNumber : Int;
+}
+</file>
+
+<file path="infrastructure/external/monaco/Range.hx">
+package monaco;
+
+extern class Range {
+	var startColumn : Int;
+	var endColumn : Int;
+	var startLineNumber : Int;
+	var endLineNumber : Int;
+	public function new(startLineNumber: Int, startColumn: Int, endLineNumber: Int, endColumn: Int) : Void;
+}
+</file>
+
+<file path="infrastructure/external/monaco/ScriptEditor.hx">
+package monaco;
+
+enum abstract ScrollType(Int) {
+	var Smooth = 0;
+	var Immediate = 1;
+}
+
+@:native("monaco.editor")
+extern class ScriptEditor {
+
+
+	function addCommand( command : Int, callback : Void -> Void ) : Void;
+	function getValue( ?options : { ?lineEnding : String, ?preserveBOM : Bool } ) : String;
+	function onDidChangeModelContent( listener : Void -> Void ) : Void;
+	function onDidBlurEditorText( listener : Void -> Void ) : Void;
+	function onDidFocusEditorText( listener : Void -> Void ) : Void;
+	function focus() : Void;
+	function dispose() : Void;
+	function getModel() : Model;
+	function deltaDecorations( old : Array<String>, newDeco : Array<ModelDeltaDecoration> ) : Array<String>;
+	function setValue( script : String ) : Void;
+	function executeEdits( source : String, edits : Array<Dynamic>, ?endCursorState : Array<Dynamic> ) : Void;
+	function updateOptions( options : Dynamic ) : Void;
+	function getPosition() : Position;
+	function setPosition( p : Position ) : Void;
+	function revealLine(lineNumber: Int, ?ScrollType: ScrollType) : Void;
+	function revealLineInCenter(lineNumber: Int, ?ScrollType: ScrollType) : Void;
+	function revealLineNearTop( lineNumber : Int, ?ScrollType: ScrollType) : Void;
+	function getOption( opt : Int ) : Dynamic;
+	function setScrollTop( value : Int ) : Void;
+
+
+	public static function create( elt : js.html.Element, ?options : Dynamic ) : ScriptEditor;
+
+}
+</file>
+
+<file path="infrastructure/external/monaco/Todo.hx">
+package monaco;
+
+abstract Todo(Dynamic) {
+}
+</file>
+
+<file path="infrastructure/external/MonacoEditorAdapter.hx">
+package hide.infrastructure.external;
+</file>
+
+<file path="infrastructure/external/nw/App.hx">
+package nw;
+
+extern class App {
+
+	public static var argv(default, never) : Array<String>;
+	public static var manifest(default, never) : Dynamic;
+	public static var dataPath(default, never) : String;
+	public static function on( event : String, callb : String -> Void ) : Void;
+	public static function clearCache( ) : Void;
+
+}
+</file>
+
+<file path="infrastructure/external/nw/Clipboard.hx">
+package nw;
+
+enum abstract ClipboardType(String) {
+	var Text = "text";
+	var Png = "png";
+	var Jpeg = "jpeg";
+	var Html = "html";
+	var Rtf = "rtf";
+}
+
+typedef ClipboardData = {
+	data: String,
+	?type: ClipboardType,
+	?raw: Bool
+}
+extern class Clipboard {
+
+	function set( clipboardData : Dynamic ) : Void;
+	function get( ?type : ClipboardType, ?raw : Bool ) : String;
+	function readAvailableTypes() : Array<ClipboardType>;
+	function clear() : Void;
+
+	static function get() : Clipboard;
+
+}
+</file>
+
+<file path="infrastructure/external/nw/Menu.hx">
+package nw;
+
+enum abstract MenuType(String) {
+	var Menubar = "menubar";
+	var ContextMenu = "contextmenu";
+}
+
+extern class Menu {
+
+	public function new( ?options : { ?label : String, ?type : MenuType } ) : Void;
+	public function append( m : MenuItem ) : Void;
+	public function popup( x : Int, y : Int ) : Void;
+
+}
+</file>
+
+<file path="infrastructure/external/nw/MenuItem.hx">
+package nw;
+
+enum abstract MenuItemType(String) {
+	var Normal = "normal";
+	var Checkbox = "checkbox";
+	var Separator = "separator";
+}
+
+typedef MenuItemOptions = { label : String, ?icon : String, ?type : MenuItemType, ?submenu : Menu, ?key : String, ?modifiers : String };
+
+extern class MenuItem {
+
+	public var checked : Bool;
+	public var enabled : Bool;
+
+	public function new( options : MenuItemOptions ) : Void;
+	public dynamic function click() : Void;
+}
+</file>
+
+<file path="infrastructure/external/nw/Screen.hx">
+package nw;
+
+typedef IndividualScreen = {
+    var id : Int;
+
+    // physical screen resolution, can be negative, not necessarily start from 0,depending on screen arrangement
+    var bounds : {
+        x : Int,
+        y : Int,
+        width : Int,
+        height : Int,
+    };
+    // useable area within the screen bound
+    var work_area : {
+        x : Int,
+        y : Int,
+        width : Int,
+        height : Int,
+    };
+    var scaleFactor : Float;
+    var isBuiltIn : Bool;
+    var rotation : Int;
+    var touchSupport : Int;
+}
+
+extern class Screen {
+	public static var screens(default, never) : Array<IndividualScreen>;
+	public static function Init() : Void;
+	public static function on( event : String, callb : IndividualScreen -> Void ) : Void;
+	public static function chooseDesktopMedia(sources : Array<String>, callb : Dynamic -> Void) : Void;
+
+}
+</file>
+
+<file path="infrastructure/external/nw/Window.hx">
+package nw;
+
+extern class Window {
+
+	public var x : Int;
+	public var y : Int;
+	public var width : Int;
+	public var height : Int;
+	public var zoomLevel : Float;
+
+	public var window : js.html.Window;
+
+	public var menu : Menu;
+	public var title : String;
+
+	public function showDevTools() : Void;
+
+	public function moveTo( x : Int, y : Int ) : Void;
+	public function moveBy( dx : Int, dy : Int ) : Void;
+	public function resizeTo( w : Int, h : Int ) : Void;
+	public function resizeBy( dw : Int, dh : Int ) : Void;
+
+	public function maximize() : Void;
+	public function minimize() : Void;
+	public function restore() : Void;
+	public function enterFullscreen() : Void;
+	public function leaveFullscreen() : Void;
+	public function on( event : String, callb : Void -> Void ) : Void;
+
+	public function focus() : Void;
+	public function blur() : Void;
+	public function show( ?b : Bool ) : Void;
+
+	public function close( ?force : Bool ) : Void;
+
+	public static function get() : Window;
+	public static function open( url : String, ?params : {?new_instance:Bool,?inject_js_start:String,?inject_js_end:String,?id:String}, ?callb:Window->Void ) : Void;
+
+}
+</file>
+
+<file path="infrastructure/persistence/FileSystemRepository.hx">
+package hide.infrastructure.persistence;
+</file>
+
+<file path="infrastructure/persistence/LocalStorageRepository.hx">
+package hide.infrastructure.persistence;
+</file>
+
+<file path="infrastructure/persistence/MemoryRepository.hx">
+package hide.infrastructure.persistence;
+</file>
+
+<file path="infrastructure/platform/electron/ElectronClipboardAdapter.hx">
+package hide.infrastructure.platform.electron;
+</file>
+
+<file path="infrastructure/platform/electron/ElectronFileSystemAdapter.hx">
+package hide.infrastructure.platform.electron;
+
+import hide.domain.services.IFileSystem;
+import hide.domain.valueobjects.FilePath;
+import hide.domain.exceptions.FileNotFoundError;
+import js.Node;
+
+/**
+ * Адаптер файловой системы для Electron.
+ * Реализует интерфейс IFileSystem из domain layer.
+ */
+class ElectronFileSystemAdapter implements IFileSystem {
+    private var fs:Dynamic;
+    private var path:Dynamic;
+    private var app:Dynamic;
+    
+    public function new() {
+        var electron = js.Node.require("electron");
+        fs = js.Node.require("fs");
+        path = js.Node.require("path");
+        app = electron.app;
+    }
+    
+    public function exists(filePath:FilePath):Bool {
+        return fs.existsSync(filePath.toString());
+    }
+    
+    public function readText(filePath:FilePath):String {
+        if (!exists(filePath)) {
+            throw new FileNotFoundError(filePath);
+        }
+        return fs.readFileSync(filePath.toString(), "utf-8");
+    }
+    
+    public function writeText(filePath:FilePath, content:String):Void {
+        var dir = path.dirname(filePath.toString());
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+        fs.writeFileSync(filePath.toString(), content, "utf-8");
+    }
+    
+    public function listFiles(filePath:FilePath, ?recursive:Bool = false):Array<FilePath> {
+        var result:Array<FilePath> = [];
+        
+        function scan(dir:String) {
+            for (entry in fs.readdirSync(dir)) {
+                var fullPath = path.join(dir, entry);
+                var stat = fs.statSync(fullPath);
+                if (stat.isDirectory() && recursive) {
+                    scan(fullPath);
+                } else if (stat.isFile()) {
+                    result.push(new FilePath(fullPath));
+                }
+            }
+        }
+        
+        scan(filePath.toString());
+        return result;
+    }
+    
+    public function getAppDataPath():FilePath {
+        return new FilePath(app.getPath("userData"));
+    }
+}
+</file>
+
+<file path="infrastructure/platform/electron/ElectronIpcBridge.hx">
+package hide.infrastructure.platform.electron;
+</file>
+
+<file path="infrastructure/platform/electron/ElectronScreenAdapter.hx">
+package hide.infrastructure.platform.electron;
+</file>
+
+<file path="infrastructure/platform/electron/ElectronShortcutAdapter.hx">
+package hide.infrastructure.platform.electron;
+</file>
+
+<file path="infrastructure/platform/electron/ElectronWindowAdapter.hx">
+package hide.infrastructure.platform.electron;
+
+import hide.domain.services.IWindowManager;
+import hide.domain.enums.WindowEvent;
+import hide.domain.valueobjects.WindowBounds;
+import hide.ElectronBackend; // Ваш существующий бэкенд
+
+/**
+ * Адаптер для Electron. Преобразует доменные вызовы в IPC.
+ */
+class ElectronWindowAdapter implements IWindowManager {
+    private var backend:ElectronBackend;
+    
+    public function new(backend:ElectronBackend) {
+        this.backend = backend;
+    }
+    
+    public function getBounds():WindowBounds {
+        return {
+            x: backend.getWindowX(), y: backend.getWindowY(),
+            width: backend.getOuterWidth(), height: backend.getOuterHeight()
+        };
+    }
+    
+    public function resizeBy(dw:Int, dh:Int):Void { backend.resizeBy(dw, dh); }
+    public function resizeTo(w:Int, h:Int):Void { backend.resizeTo(w, h); }
+    public function moveTo(x:Int, y:Int):Void { backend.moveTo(x, y); }
+    public function setFullscreen(value:Bool):Void { backend.setFullscreen(value); }
+    public function maximize():Void { backend.maximize(); }
+    public function unmaximize():Void { backend.unmaximize(); }
+    public function minimize():Void { backend.minimize(); }
+    public function restore():Void { backend.restore(); }
+    public function focus():Void { backend.focus(); }
+    public function blur():Void { backend.blur(); }
+    public function setTitle(title:String):Void { backend.setTitle(title); }
+    
+    public function on(event:WindowEvent, callback:Dynamic->Void):Void {
+        // Преобразуем enum в строку, ожидаемую backend.onWindowEvent
+        var eventName = switch event {
+            case Focus: "focus"; case Blur: "blur";
+            case Resize: "resize"; case Move: "move";
+            case Maximize: "maximize"; case Unmaximize: "unmaximize";
+            case Minimize: "minimize"; case Restore: "restore";
+            case Close: "close";
+        };
+        backend.onWindowEvent(eventName, callback);
+    }
+    
+    public function off(event:WindowEvent, callback:Dynamic->Void):Void {
+        var eventName = switch event {
+            case Focus: "focus"; case Blur: "blur";
+            case Resize: "resize"; case Move: "move";
+            case Maximize: "maximize"; case Unmaximize: "unmaximize";
+            case Minimize: "minimize"; case Restore: "restore";
+            case Close: "close";
+        };
+        backend.removeWindowEventListener(eventName, callback);
+    }
+}
+</file>
+
+<file path="infrastructure/platform/nwjs/NwClipboardAdapter.hx">
+package hide.infrastructure.platform.electron;
+</file>
+
+<file path="infrastructure/platform/nwjs/NwFileSystemAdapter.hx">
+package hide.infrastructure.platform.electron;
+</file>
+
+<file path="infrastructure/platform/nwjs/NwIpcBridge.hx">
+package hide.infrastructure.platform.electron;
+</file>
+
+<file path="infrastructure/platform/nwjs/NwScreenAdapter.hx">
+package hide.infrastructure.platform.electron;
+</file>
+
+<file path="infrastructure/platform/nwjs/NwShortcutAdapter.hx">
+package hide.infrastructure.platform.electron;
+</file>
+
+<file path="infrastructure/platform/nwjs/NwWindowAdapter.hx">
+package hide.infrastructure.platform.electron;
+
+import hide.domain.services.IWindowManager;
+
+class NwWindowManager implements IWindowManager {
+    public var window:nw.Window;
+    
+    public function new(window:nw.Window) this.window = window;
+
+    public function enterFullscreen() window.enterFullscreen();
+    public function leaveFullscreen() window.leaveFullscreen();
+    public function showDevTools() window.showDevTools();
+    // и т.д.
+}
+</file>
+
+<file path="infrastructure/platform/web/BrowserWindowAdapter.hx">
+package hide.infrastructure.platform.web;
+</file>
+
+<file path="infrastructure/platform/web/LocalStorageAdapter.hx">
+package hide.infrastructure.platform.web;
+</file>
+
+<file path="legacy/Extension.hx">
+package hide;
+
+typedef ExtensionOptions = {
+	?icon : String,
+	?createNew : String,
+	?name : String,
+}
+
+typedef ExtensionDesc = {
+	var component : String;
+	var extensions : Array<String>;
+	var options : ExtensionOptions;
+}
+
+class Extension {
+	public static var EXTENSIONS = new Map<String, ExtensionDesc>();
+
+	public static function registerExtension<T>( c : Class<hide.ui.View<T>>, extensions : Array<String>, ?options : ExtensionOptions ) {
+		hide.ui.View.register(c);
+		for (e in extensions) {
+			var registered = EXTENSIONS.get(e);
+			if (registered == null) {
+				registered = {component: Type.getClassName(c), options: {}, extensions: extensions };
+				EXTENSIONS.set(e, registered);
+			}
+			else {
+				// Override views in projects
+				registered.component = Type.getClassName(c);
+			}
+			if( options == null ) options = {};
+			for (field in Reflect.fields(options)) {
+				Reflect.setField(registered.options, field, Reflect.field(options, field));
+			}
+		}
+		return null;
+	}
+
+	public static function getExtension( file : String ) {
+		var ext = new haxe.io.Path(file).ext;
+		if( ext == null ) return null;
+		ext = ext.toLowerCase();
+		if( ext == "json" ) {
+			try {
+				var obj : Dynamic = haxe.Json.parse(sys.io.File.getContent(file));
+				if( obj.type != null && Std.isOfType(obj.type, String) ) {
+					var e = EXTENSIONS.get("json." + obj.type);
+					if( e != null ) return e;
+				}
+			} catch( e : Dynamic ) {
+			}
+		}
+		return EXTENSIONS.get(ext);
+	}
+}
+</file>
+
+<file path="legacy/Ide.hx">
+package hide;
+#if !editor
+#error "Non editor code shouldn't depend on hide"
+#end
+
+enum MessageKind {
+	Info;
+	Error;
+}
+class IdeCache {
+	public var getTextureCache : Map<String, h3d.mat.Texture> = [];
+
+	public function new() {};
+}
+@:expose
+class Ide extends hide.tools.IdeData {
+
+	public var initializing(default,null) : Bool;
+
+	public var mouseX : Int = 0;
+	public var mouseY : Int = 0;
+
+	public var isWindows(get, never) : Bool;
+	public var isFocused(get, never) : Bool;
+
+	public var shaderLoader : hide.tools.ShaderLoader;
+	public var isCDB = false;
+	public var isDebugger = false;
+
+	public var gamePad(default,null) : hxd.Pad;
+	public var localStorage(get,never) : js.html.Storage;
+
+	var window : nw.Window;
+	var saveMenu : nw.Menu;
+	var layout : golden.Layout;
+
+	var currentLayout : { name : String, state : HideProjectConfig.LayoutState };
+	var currentFullScreen(default,set) : hide.ui.View<Dynamic>;
+	var maximized : Bool;
+	var fullscreen : Bool;
+	var updates : Array<Void->Void> = [];
+	var views : Array<hide.ui.View<Dynamic>> = [];
+	var lastClosedTabStates : Array<Dynamic> = [];
+
+	var renderers : Array<h3d.mat.MaterialSetup>;
+	var subView : { component : String, state : Dynamic, events : {} };
+	var scripts : Map<String,Array<Void->Void>> = new Map();
+	var hasReloaded = false;
+	public var thumbnailMode : Bool = false;
+
+	var dataTransfer : Map<String, Dynamic> = new Map();
+
+	var hideRoot : hide.Element;
+	var statusBar : hide.Element;
+	var goldenContainer : hide.Element;
+	var statusIcons : hide.Element;
+
+	var breakShortcut : Dynamic;
+
+	public var show3DIcons = true;
+	public var show3DIconsCategory : Map<hrt.impl.EditorTools.IconCategory, Bool> = new Map();
+
+	static var firstInit = true;
+
+	var customMenus : Array<nw.MenuItem> = [];
+
+	var filePickerElement : hide.Element;
+
+	function new() {
+		super();
+		initPad();
+		isCDB = Sys.getEnv("HIDE_START_CDB") == "1" || nw.App.manifest.name == "CDB";
+		isDebugger = Sys.getEnv("HIDE_DEBUG") == "1";
+
+		var thumb = StringTools.contains(js.Browser.window.location.href, "thumbnail");
+		if (thumb) {
+			thumbnailMode = true;
+		}
+
+		function wait() {
+			if( monaco.ScriptEditor == null && !thumbnailMode ) {
+				haxe.Timer.delay(wait, 10);
+				return;
+			}
+			startup();
+		}
+		wait();
+	}
+
+	function get_localStorage() {
+		return js.Browser.window.localStorage;
+	}
+
+	override function getAppDataPath() {
+		return nw.App.dataPath;
+	}
+
+	function initPad() {
+		gamePad = hxd.Pad.createDummy();
+		hxd.Pad.wait((p) -> gamePad = p);
+	}
+
+	function thumbnailInit() {
+		var generator = @:privateAccess new hide.tools.ThumbnailGenerator();
+	}
+
+	function startup() {
+		inst = this;
+		window = nw.Window.get();
+		var cwd = Sys.getCwd();
+		initConfig(cwd);
+		var current = ideConfig.currentProject;
+		if( StringTools.endsWith(cwd,"package.nw") && sys.FileSystem.exists(cwd.substr(0,-10)+"res") )
+			cwd = cwd.substr(0,-11);
+		if( current == "" ) cwd;
+
+		var args = js.Browser.document.URL.split("?")[1];
+		if( args != null ) {
+			var parts = args.split("&");
+			var vars = new Map();
+			for( p in parts ) {
+				var p = p.split("=");
+				vars.set(p[0],StringTools.urlDecode(p[1]));
+			}
+			var sub = vars.get("subView");
+			if( sub != null ) {
+				var obj = untyped global.sharedRefs.get(Std.parseInt(vars.get("sid")));
+				subView = { component : sub, state : obj.state, events : obj.events };
+			}
+		}
+
+		nw.Screen.Init();
+		var xMax = 1;
+		var yMax = 1;
+		for( s in nw.Screen.screens ) {
+			if( s.work_area.x + s.work_area.width > xMax )
+				xMax = s.work_area.x + s.work_area.width;
+			if( s.work_area.y + s.work_area.height > yMax )
+				yMax = s.work_area.y + s.work_area.height;
+		}
+		if( subView == null ) {
+			var wp = ideConfig.windowPos;
+			if( wp != null ) {
+				if( wp.w > 400 && wp.h > 300 )
+					window.resizeBy(wp.w - Std.int(window.window.outerWidth), wp.h - Std.int(window.window.outerHeight));
+				if( wp.x >= 0 && wp.y >= 0 && wp.x < xMax && wp.y < yMax)
+					window.moveTo(wp.x, wp.y);
+				if( wp.max ) {
+					window.maximize();
+					maximized = true;
+				}
+			}
+		}
+
+		if (!thumbnailMode)
+			window.show(true);
+
+		if( config.global.get("hide") == null )
+			error("Failed to load defaultProps.json");
+
+		if( !sys.FileSystem.exists(current) || !sys.FileSystem.isDirectory(current) ) {
+			if( current != "" ) js.Browser.alert(current+" no longer exists");
+			current = cwd;
+		}
+
+		setProject(current);
+		loadProject();
+
+		if (thumbnailMode) {
+			thumbnailInit();
+			hxd.System.setLoop(mainLoop);
+			return;
+		}
+
+		window.window.document.addEventListener("mousedown", function(e) {
+			mouseX = e.x;
+			mouseY = e.y;
+		});
+		window.window.document.addEventListener("mousemove", function(e) {
+			mouseX = e.x;
+			mouseY = e.y;
+		});
+		window.on('maximize', function() {
+			if(fullscreen) return;
+			maximized = true;
+			onWindowChange();
+		});
+		window.on('restore', function() {
+			if(fullscreen) return;
+			maximized = false;
+			onWindowChange();
+		});
+		window.on('move', function() haxe.Timer.delay(onWindowChange,100));
+		window.on('resize', function() haxe.Timer.delay(onWindowChange,100));
+		if (!thumbnailMode) {
+			window.on('close', function() {
+				if( hasReloaded ) return;
+				if( !isDebugger )
+					for( v in views )
+						if( !v.onBeforeClose() )
+							return;
+				window.close(true);
+			});
+		}
+
+		window.on("blur", function() { if( h3d.Engine.getCurrent() != null && !hasReloaded ) hxd.Key.initialize(); });
+
+		// handle commandline parameters
+		function onOpen(cmd: String) {
+			var dyncmd: Dynamic = cmd;
+			if (Type.typeof(dyncmd).match(TClass(Array))) {
+				var arr: Array<String> = dyncmd;
+				cmd = arr[arr.length - 1];
+			}
+			var protocols = ["hide://", "cdb://"];
+			for (p in protocols) {
+				var uriIndex = cmd.indexOf(p);
+				if (uriIndex >= 0) {
+					var uri = cmd.substr(uriIndex);
+					if (!StringTools.contains(uri, " ")) {
+						hide.view.RemoteConsoleView.onOpenUri(uri);
+					}
+				}
+			}
+			haxe.Timer.delay(() -> trace("on open", cmd), 500);
+			nw.App.on("open", onOpen);
+			if( hasReloaded ) return;
+			~/"([^"]+)"/g.map(cmd, function(r) {
+				var file = r.matched(1);
+				if( sys.FileSystem.exists(file) ) openFile(file);
+				return "";
+			});
+		}
+		nw.App.on("open", onOpen);
+
+		var body = window.window.document.body;
+		window.on("focus", function() {
+			// handle cancel on type=file
+
+			if (filePickerElement != null && filePickerElement.data("allownull") != null) {
+				haxe.Timer.delay(() -> {
+					if (filePickerElement != null) {
+						filePickerElement.change();
+					}
+				}, 100);
+			}
+
+			if(fileExists(databaseFile) && getFileText(databaseFile) != lastDBContent) {
+				if(js.Browser.window.confirm(databaseFile + " has changed outside of Hide. Do you want to reload?")) {
+					loadDatabase(true);
+					hide.comp.cdb.Editor.refreshAll(true);
+				};
+			}
+		});
+		function dragFunc(drop : Bool, e : js.html.DragEvent) {
+			syncMousePosition(e);
+			var view = getViewAt(mouseX, mouseY);
+			if (view != null) {
+				var handled = drop ? view.onDrop(e) : view.onDrag(e);
+				if (handled) {
+					e.preventDefault();
+					e.stopPropagation();
+					return true;
+				}
+			}
+			return false;
+		}
+
+		body.ondragenter = function(e:js.html.DragEvent) {
+			dragFunc(false, e);
+			return false;
+		};
+
+		body.ondragover = function(e:js.html.DragEvent) {
+			dragFunc(false, e);
+			return false;
+		};
+		body.ondrop = function(e:js.html.DragEvent) {
+			if(!dragFunc(true, e)) {
+				for( f in e.dataTransfer.files )
+					openFile(Reflect.field(f,"path"));
+				e.preventDefault();
+			}
+			return false;
+		}
+		body.ondragend = function(e: js.html.DragEvent) {
+			for (v in views) {
+				if (v != null)
+					v.onDragEnd(e);
+			}
+			e.preventDefault();
+			e.stopPropagation();
+			return true;
+		}
+
+		if( subView != null ) body.className +=" hide-subview";
+
+		// dispatch global keys based on mouse position
+		new Element(body).keydown(function(e) {
+			var view = getViewAt(mouseX, mouseY);
+			if(view != null) view.processKeyEvent(e);
+		});
+
+		hrt.impl.EditorTools.setupIconCategories();
+
+		untyped chrome.settingsPrivate.setPref('spellcheck.dictionaries', ["en-US","fr-FR"], "null", ()->{});
+
+		refreshFont();
+	}
+
+	public function getViews<K,T:hide.ui.View<K>>( cl : Class<T> ) {
+		return [for( v in views ) { var t = Std.downcast(v,cl); if( t != null ) t; }];
+	}
+
+	function getViewAt(x : Float, y : Float) {
+		var pickedEl = js.Browser.document.elementFromPoint(x, y);
+		for( v in views ) {
+			var viewEl = v.element[0];
+			var el = pickedEl;
+			while(el != null) {
+				if(el == viewEl) return v;
+				el = el.parentElement;
+			}
+		}
+		return null;
+	}
+
+	function syncMousePosition(e:js.html.MouseEvent) {
+		mouseX = e.clientX;
+		mouseY = e.clientY;
+		for( c in new Element("canvas") ) {
+			var s : hide.comp.Scene = (c:Dynamic).__scene;
+			if( s != null ) @:privateAccess {
+				if (s.window != null) {
+					s.window.curMouseX = mouseX;
+					s.window.curMouseY = mouseY;
+				}
+			}
+		}
+	}
+
+	function get_isWindows() {
+		return Sys.systemName() == "Windows";
+	}
+
+	function get_isFocused() {
+		return js.Browser.document.hasFocus();
+	}
+	public function focus() {
+		window.focus();
+	}
+	public function blur() {
+		window.blur();
+	}
+
+	function onWindowChange() {
+		if( hasReloaded )
+			return;
+		if( ideConfig.windowPos == null ) ideConfig.windowPos = { x : 0, y : 0, w : 0, h : 0, max : false };
+		ideConfig.windowPos.max = maximized;
+		if( !maximized ) {
+			ideConfig.windowPos.x = window.x;
+			ideConfig.windowPos.y = window.y;
+			ideConfig.windowPos.w = Std.int(window.window.outerWidth);
+			ideConfig.windowPos.h = Std.int(window.window.outerHeight);
+		}
+		if( subView == null )
+			config.global.save();
+
+		for (v in views)
+			v.onResize();
+	}
+
+	public function getOrInitTarget(position: hide.ui.View.DisplayPosition) : golden.ContentItem {
+		if (layout.root == null)
+			return null;
+		var target = layout.root.getItemsById(position)[0];
+		if (target != null) {
+			target.config.content ??= [];
+			return target;
+		}
+
+		var parent : golden.ContentItem = null;
+		var config : golden.Config.ItemConfig;
+		var index : Int = null;
+		var rootRow = layout.root.contentItems[0];
+		switch(position) {
+			case Left:
+				config = {
+					type: Stack,
+				};
+				parent = rootRow;
+				index = 0;
+			case Center:
+				config = {
+					type: Stack,
+					isClosable: false,
+					width: 1500,
+					height: 800,
+				};
+				parent = getOrInitTarget(MiddleColumnInternal);
+				index = 0;
+			case Bottom:
+				config = {
+					type: Stack,
+				};
+				parent = getOrInitTarget(MiddleColumnInternal);
+				index = parent.contentItems.length;
+			case Right:
+				config = {
+					type: Stack,
+				};
+				parent = rootRow;
+				index = parent.contentItems.length;
+			case MiddleColumnInternal:
+				config = {
+					type: Column,
+					isClosable: false,
+				}
+				parent = rootRow;
+				index = hxd.Math.iclamp(1, 0, parent.contentItems.length);
+		}
+
+		config.id = position;
+		parent.addChild(config, index);
+		var target = layout.root.getItemsById(position)[0];
+
+		return target;
+	}
+
+	function initLayout( ?state : { name : String, state : HideProjectConfig.LayoutState } ) {
+		initializing = true;
+
+		if( layout != null ) {
+			layout.destroy();
+			layout = null;
+		}
+
+		var emptyLayout : HideProjectConfig.LayoutState = { content : [], fullScreen : null };
+
+		if( state == null ) {
+			var emptyLayout : HideProjectConfig.LayoutState = {
+				content: [{type: golden.Config.ItemType.Row, isClosable: false, id: "content_root"}], fullScreen : null,
+			};
+
+
+			var layoutName = isCDB ? "CDB" : "Default";
+			for( i => p in projectConfig.layouts.copy() ) {
+				if( p.name == layoutName ) {
+					if( p.state.content == null || (p.state.content:Array<Dynamic>)[0]?.id != "content_root") {
+						projectConfig.layouts.splice(i, 1);
+						continue;
+					};
+					state = p;
+				}
+			}
+
+			if( state == null ) {
+				state = { name : layoutName, state : emptyLayout };
+				projectConfig.layouts.push(state);
+			}
+		}
+
+		if( subView != null )
+			state = { name : "SubView", state : emptyLayout };
+
+		currentLayout = state;
+
+		var goldenConfig : golden.Config = {
+			content: state.state.content,
+			settings: {
+				// Default to false
+				reorderEnabled : config.user.get('layout.reorderEnabled', true) == true,
+				constrainDragToHeader : config.user.get('layout.constrainDragToHeader', true) == true,
+				showPopoutIcon : config.user.get('layout.showPopoutIcon') == true,
+				showMaximiseIcon : config.user.get('layout.showMaximiseIcon') == true
+			}
+		};
+
+		var comps = new Map();
+		for( vcl in hide.ui.View.viewClasses )
+			comps.set(vcl.name, true);
+		function checkRec(i:golden.Config.ItemConfig) {
+			if (i.componentName == 'hide.view.FileTree' && i.componentState?.legacy == null) {
+				i.componentName = "hide.view.FileBrowser";
+				i.componentState = {savedLayout: "SingleTree"};
+			}
+			if( i.componentName != null && i.componentState != null && !comps.exists(i.componentName) ) {
+				i.componentState.deletedComponent = i.componentName;
+				i.componentName = "hide.view.Unknown";
+			}
+			if( i.content != null ) for( i in i.content ) checkRec(i);
+		}
+		for( i in goldenConfig.content ) checkRec(i);
+
+		if (hideRoot != null) {
+			hideRoot.remove();
+			hideRoot = null;
+		}
+		hideRoot = new Element('<div class="hide-root"></div>').appendTo(new Element("body"));
+
+		goldenContainer = new Element('<div class="golden-layout-root"></div>').appendTo(hideRoot);
+
+		statusBar = new Element('<div class="status-bar"></div>').appendTo(hideRoot);
+		statusIcons = new Element('<div id="status-icons"></div>').appendTo(statusBar);
+
+		var commitHash = getGitCommitHashAndDate();
+		if (commitHash.length > 0) {
+			new Element('<span class="build">hide $commitHash</span>').appendTo(statusBar);
+		}
+
+		layout = new golden.Layout(goldenConfig, goldenContainer.get(0));
+
+
+
+		var resizeTimer : haxe.Timer = null;
+		var observer = new hide.comp.ResizeObserver((elts, observer) -> {
+			if (resizeTimer != null) {
+				resizeTimer.stop();
+			}
+
+			resizeTimer = new haxe.Timer(20);
+			resizeTimer.run = () -> {
+				var rect = goldenContainer.get(0).getBoundingClientRect();
+				layout.updateSize(Std.int(rect.width), Std.int(rect.height));
+				resizeTimer.stop();
+				resizeTimer = null;
+			};
+			});
+		observer.observe(goldenContainer.get(0));
+
+		var initViews = [];
+		function initView(view:hide.ui.View<Dynamic>) {
+			if( isDebugger ) view.rebuild() else try view.rebuild() catch( e : Dynamic ) error(view+":"+e);
+		}
+		for( vcl in hide.ui.View.viewClasses )
+			layout.registerComponent(vcl.name,function(cont,state) {
+				var view = Type.createInstance(vcl.cl,[state]);
+				view.setContainer(cont);
+				if( initializing )
+					initViews.push(view);
+				else
+					initView(view);
+			});
+
+		layout.init();
+		layout.on('stateChanged', onLayoutChanged);
+
+		// remove dangling RefViewers
+		for (v in views) {
+			if (v.state.componentName == "hide.view.RefViewer") {
+				v.close();
+			}
+		}
+
+
+		getOrInitTarget(Center);
+
+		// register a global shortcut that break in the debugger
+		// on Alt+F1. Usefull to debug UI elements that are temporary
+		// Note : the debugger window must be open for this to work
+		{
+			var option = {
+				key: "Alt+F1",
+				active: () -> {
+					js.Lib.debug();
+				}
+			};
+
+			breakShortcut = js.Syntax.construct("nw.Shortcut", option);
+			untyped nw.App.registerGlobalHotKey(breakShortcut);
+		}
+
+		var waitCount = 0;
+		function waitInit() {
+			waitCount++;
+			if( !layout.isInitialised ) {
+				if( waitCount > 20 ) {
+					// timeout : error recovery if invalid component
+					state.state = emptyLayout;
+					initLayout();
+					return;
+				}
+				haxe.Timer.delay(waitInit, 50);
+				return;
+			}
+			if( state.state.fullScreen != null ) {
+				var fs = state.state.fullScreen;
+				var found = [for( v in views ) if( v.viewClass == fs.name ) v];
+				if( found.length == 1 )
+					found[0].fullScreen = true;
+				else {
+					for( f in found )
+						if( haxe.Json.stringify(f.state) == haxe.Json.stringify(fs.state) ) {
+							f.fullScreen = true;
+							break;
+						}
+				}
+			}
+			initializing = false;
+			for( v in initViews )
+				initView(v);
+			initViews = null;
+			if( subView == null && views.length == 0 ) {
+				if( isCDB )
+					open("hide.view.CdbTable",{}, function(v) v.fullScreen = true);
+				else
+					open("hide.view.FileBrowser",{savedLayout: "SingleTree"}, Left);
+			}
+			if( firstInit ) {
+				firstInit = false;
+				for( file in nw.App.argv ) {
+					if( !sys.FileSystem.exists(file) ) continue;
+					openFile(file);
+				}
+				if( subView != null )
+					open(subView.component, subView.state);
+			}
+		};
+		waitInit();
+
+		hxd.System.setLoop(mainLoop);
+	}
+
+	function mainLoop() {
+		hxd.Timer.update();
+		@:privateAccess hxd.Pad.syncPads();
+		for( f in updates )
+			f();
+	}
+
+	public function setFullscreen(b : Bool) {
+		if (b) {
+			fullscreen = true;
+			window.maximize();
+			saveMenu = window.menu;
+			window.menu = null;
+			window.enterFullscreen();
+		} else {
+			window.menu = saveMenu;
+			window.leaveFullscreen();
+
+			// NWJS bug: changing fullscreen triggers spurious "restore" events
+			haxe.Timer.delay(function() {
+				fullscreen = false;
+				if(maximized)
+					window.maximize();
+			}, 150);
+		}
+	}
+
+	function set_currentFullScreen(v) {
+		var old = currentFullScreen;
+		currentFullScreen = v;
+		if( old != null ) old.fullScreen = false;
+		onLayoutChanged();
+		return v;
+	}
+
+	function onLayoutChanged() {
+		if( initializing || !ideConfig.autoSaveLayout || isCDB )
+			return;
+		currentLayout.state = saveLayout();
+		if( subView == null ) this.config.user.save();
+	}
+
+	function saveLayout() : HideProjectConfig.LayoutState {
+		return {
+			content : layout.toConfig().content,
+			fullScreen : currentFullScreen == null ? null : { name : currentFullScreen.viewClass, state : currentFullScreen.state }
+		};
+	}
+
+
+	public function setClipboard( data : String, type: nw.Clipboard.ClipboardType = Text ) {
+		nw.Clipboard.get().set([{data: data, type: type }]);
+	}
+
+	public function setClipboardMultiple( datas: Array<nw.Clipboard.ClipboardData> ) {
+		nw.Clipboard.get().set(datas);
+	}
+
+	public function getClipboard(type: nw.Clipboard.ClipboardType = Text) {
+		return nw.Clipboard.get().get(type);
+	}
+
+
+	public function setData(key: String,  data: Dynamic) {
+		dataTransfer.set(key, data);
+	}
+
+	public function getData(key: String) {
+		return dataTransfer.get(key);
+	}
+
+	public function popData(key: String) {
+		var d = dataTransfer.get(key);
+		dataTransfer.remove(key);
+		return d;
+	}
+
+
+	public function registerUpdate( updateFun ) {
+		updates.push(updateFun);
+	}
+
+	public function unregisterUpdate( updateFun ) {
+		for( u in updates )
+			if( Reflect.compareMethods(u,updateFun) ) {
+				updates.remove(u);
+				return true;
+			}
+		return false;
+	}
+
+	public function makeSignature( content : String ) {
+		var sign = js.node.Crypto.createHash(js.node.Crypto.CryptoAlgorithm.MD5);
+		return sign.update(content).digest("base64");
+	}
+
+	public function cleanObject( v : Dynamic ) {
+		for( f in Reflect.fields(v) )
+			if( Reflect.field(v, f) == null )
+				Reflect.deleteField(v, f);
+	}
+
+	static var textureCacheKey = "TextureCache";
+
+	public function getHideResPath(basePath:String) {
+		return getPath("${HIDE}/res/" + basePath);
+	}
+
+	// Get a texture from a file on disk. Cache the results
+    public function getTexture(fullPath:String) {
+		if (fullPath == null)
+			return null;
+
+
+		var engine = h3d.Engine.getCurrent();
+		var cache : IdeCache = cast @:privateAccess engine.resCache.get(IdeCache);
+		if(cache == null) {
+			cache = new IdeCache();
+			@:privateAccess engine.resCache.set(IdeCache, cache);
+		}
+
+		var texCache = cache.getTextureCache;
+
+		var tex = texCache[fullPath];
+		if (tex != null)
+			return tex;
+
+        var data = sys.io.File.getBytes(fullPath);
+		var res = hxd.res.Any.fromBytes(fullPath, data);
+		tex = res.toImage().toTexture();
+
+		texCache.set(fullPath, tex);
+		return tex;
+	}
+
+	var showErrors = true;
+	var errorWindow :Element = null;
+	override function error( e : Dynamic ) {
+		if( showErrors ) {
+			onIdeError(e);
+			if( !js.Browser.window.confirm(e) )
+				showErrors = false;
+		}
+
+		if (!showErrors) {
+			if (errorWindow == null) {
+				statusBar.toggleClass("error");
+
+				errorWindow = new Element('<div class="error-suppressed">
+					<button class="reload"><i class="icon ico ico-refresh"></i>Reload</button>
+					<span>Errors are currently suppressed in the editor. Please save your work and reload.</span>
+					</div>
+				');
+
+				errorWindow.insertAfter(statusIcons);
+
+				var btnSaveReload = errorWindow.find(".reload");
+				btnSaveReload.click(function(_) {
+					this.reload();
+				});
+			}
+		}
+
+		js.Browser.console.error(e);
+	}
+
+	public function quickError( msg : Dynamic, timeoutSeconds : Float = 5.0 ) {
+		js.Browser.console.error(msg);
+
+		globalMessage(msg, Error, timeoutSeconds);
+	}
+
+	function loadProject() {
+		var dir = ideConfig.currentProject;
+		setProgress();
+		shaderLoader = new hide.tools.ShaderLoader();
+		hxsl.Cache.clear();
+
+		var localDir = sys.FileSystem.exists(resourceDir) ? resourceDir : projectDir;
+		var fsconf = config.current.get("fs.config", "default");
+		hxd.res.Loader.currentInstance = new CustomLoader(new hxd.fs.LocalFileSystem(localDir,fsconf));
+		hxd.res.Image.ASYNC_LOADER = new hxd.impl.AsyncLoader.NodeLoader();
+		renderers = [
+			new hide.Renderer.MaterialSetup("Default"),
+			new hide.Renderer.PbrSetup("PBR"),
+		];
+
+		var plugins : Array<String> = config.current.get("plugins");
+		for ( plugin in plugins )
+			loadPlugin(plugin, function() {});
+
+		loadDatabase();
+
+		if( config.project.get("debug.displayErrors")  ) {
+			js.Browser.window.onerror = function(msg, url, line, col, error) {
+				if( error == null ) return true; // some internal chrome errors are only a msg, skip
+				var e = error.stack;
+				e = ~/\(?chrome-extension:\/\/[a-z0-9\-\.\/]+.js:[0-9]+:[0-9]+\)?/g.replace(e,"");
+				e = ~/at ([A-Za-z0-9_\.\$]+)/g.map(e,function(r) { var path = r.matched(1); path = path.split("$hx_exports.").pop().split("$hxClasses.").pop(); return path; });
+				e = e.split("\t").join("    ");
+				this.error(e);
+				return true;
+			};
+		} else
+			Reflect.deleteField(js.Browser.window, "onerror");
+
+		waitScripts(function() {
+			var extraRenderers = config.current.get("renderers");
+			for( name in Reflect.fields(extraRenderers) ) {
+				var clName = Reflect.field(extraRenderers, name);
+				var cl = try js.Lib.eval(clName) catch( e : Dynamic ) null;
+				if( cl == null  ) {
+					error(clName+" could not be found");
+					return;
+				}
+				renderers.push(Type.createInstance(cl,[]));
+			}
+
+			var render = renderers[0];
+			if( projectConfig.renderer == null )
+				projectConfig.renderer = config.current.get("defaultRenderer");
+			for( r in renderers ) {
+				var name = r.displayName == null ? r.name : r.displayName;
+				if( name == projectConfig.renderer ) {
+					render = r;
+					break;
+				}
+			}
+			h3d.mat.MaterialSetup.current = render;
+
+			if (thumbnailMode) {
+				return;
+			}
+			initMenu();
+			initLayout();
+		});
+	}
+
+	function waitScripts( f : Void -> Void ) {
+		if( !isScriptLoading() ) {
+			f();
+			return;
+		}
+		var wait = scripts.get("");
+		if( wait == null ) {
+			wait = [];
+			scripts.set("",wait);
+		}
+		wait.push(f);
+	}
+
+	function isScriptLoading() {
+		for( s in scripts.keys() )
+			if( s != "" && scripts.get(s).length > 0 )
+				return true;
+		return false;
+	}
+
+	public function injectCss(data: String) {
+		var head = new Element("head");
+		var style = new Element("<style>").appendTo(head);
+		style.text(data);
+	}
+
+	function loadPlugin( file : String, callb : Void -> Void, ?forceType : String ) {
+		file = getPath(file);
+		var wait = scripts.get(file);
+		if( wait != null ) {
+			if( wait.length == 0 )
+				callb();
+			else
+				wait.push(callb);
+			return;
+		}
+		wait = [callb];
+		scripts.set(file, wait);
+		function onLoad() {
+			scripts.set(file, []);
+			for( w in wait )
+				w();
+			if( !isScriptLoading() ) {
+				wait = scripts.get("");
+				scripts.set("",[]);
+				for( w in wait ) w();
+			}
+		}
+		function onError() {
+			error("Error while loading "+file);
+		}
+		var type = forceType == null ? haxe.io.Path.extension(file).toLowerCase() : forceType;
+		switch ( type ) {
+			case "js":
+				var e = js.Browser.document.createScriptElement();
+				e.addEventListener("load", onLoad);
+				e.addEventListener("error", onError);
+				e.async = false;
+				e.type = "text/javascript";
+				e.src = "file://"+file.split("\\").join("/");
+				js.Browser.document.body.appendChild(e);
+				fileWatcher.register(file,reload);
+			case "css":
+				var e = js.Browser.document.createLinkElement();
+				e.addEventListener("load", onLoad);
+				e.addEventListener("error", onError);
+				e.rel = "stylesheet";
+				e.type = "text/css";
+				e.href = "file://" + file.split("\\").join("/");
+				js.Browser.document.body.appendChild(e);
+				fileWatcher.register(file, () -> reloadCss());
+			default: error('Unknown plugin type $type for file $file');
+		}
+	}
+
+	inline function loadScript( file : String, callb : Void -> Void ) {
+		loadPlugin(file, callb);
+	}
+
+	public function reload() {
+		hasReloaded = true;
+		fileWatcher.dispose();
+		untyped nw.App.unregisterGlobalHotKey(breakShortcut);
+		hide.tools.FileManager.onBeforeReload();
+		hide.view.RemoteConsoleView.onBeforeReload();
+		js.Browser.location.reload();
+	}
+
+	public function reloadCss(path: String = null) {
+		var css = new js.jquery.JQuery('link[type="text/css"]');
+		css.each(function(i, e) : Void {
+			var link : js.html.LinkElement = cast e;
+			if (path == null || StringTools.contains(link.href, path)) {
+				link.href = link.href + "?" + haxe.Timer.stamp();
+			}
+		});
+	}
+
+	public function getCDBContent<T>( sheetName : String ) : Array<T> {
+		for( s in database.sheets )
+			if( s.name == sheetName ) {
+				var s = Reflect.copy(@:privateAccess s.realSheet.sheet);
+				s.lines = [for( l in s.lines ) Reflect.copy(l)];
+				@:privateAccess cdb.Types.Index.initLines(s);
+				return cast s.lines;
+			}
+		return null;
+	}
+
+	public function getUnCachedUrl( path : String ) {
+		return "file://" + getPath(path) + "?t=" + fileWatcher.getVersion(path);
+	}
+
+	public static var IMG_EXTS = ["jpg", "jpeg", "gif", "png", "raw", "dds", "hdr", "tga"];
+	public function chooseImage( onSelect, allowNull=false ) {
+		chooseFile(IMG_EXTS, onSelect, allowNull);
+	}
+
+	public function chooseFileOptions(onSelect: Null<Array<String>> -> Void, options: {
+		?exts : Array<String>,
+		?workingDir: String,
+		?onlyDirectory: Bool,
+		?saveAs: String,
+		?isAbsolute: Bool,
+		?allowNull: Bool,
+		?multiple: Bool,
+	} = null) {
+		options = options ?? {};
+
+		function callback() {
+			if (filePickerElement != null)
+				filePickerElement.remove();
+
+			var args : Array<String> = [];
+
+			if (options.allowNull == true)
+				args.push("data-allownull='true'");
+			if (options.saveAs != null)
+				args.push('nwsaveas="${options.saveAs}"');
+			if (options.exts != null)
+				args.push('accept="${[for( e in options.exts ) "."+e].join(",")}"');
+			if (options.onlyDirectory == true)
+				args.push("nwdirectory");
+			if (options.multiple == true)
+				args.push('multiple="multiple"');
+			if (options.workingDir != null && options.workingDir != "#MISSING") {
+				var pathArray = getPath(options.workingDir).split("/");
+				var c = isWindows ? "\\" : "/";
+				var workingDirPath = pathArray.join(c);
+				args.push('nwworkingdir="$workingDirPath"');
+			}
+
+			var argsString = args.join(" ");
+
+			var buildString = '<input type="file" style="visibility:hidden; position:fixed; top:0px;" value="" $argsString/>';
+
+			filePickerElement = new Element(buildString).appendTo(window.window.document.body);
+
+			filePickerElement.change(function(_) {
+				var file = filePickerElement.val();
+				filePickerElement.remove();
+				filePickerElement = null;
+				if( file == "" && !options.allowNull ) return;
+				if (file == "") {
+					onSelect(null);
+				} else {
+					var files = file.split(";");
+					if (options.isAbsolute != true) {
+						for (i => file in files) {
+							files[i] = makeRelative(file);
+						}
+					}
+					onSelect(files);
+				}
+			});
+
+			filePickerElement.click();
+		}
+
+		if (options.allowNull) {
+			haxe.Timer.delay(callback, 100);
+		}
+		else {
+			callback();
+		}
+	}
+
+	/**
+		Adds an element to the ide status bar
+	**/
+	public function addStatusIcon(e: hide.Element) {
+		function wait() {
+			if( statusIcons == null ) {
+				haxe.Timer.delay(wait, 10);
+				return;
+			}
+
+			var wrapper = new hide.Element('<div class="statusbar-icon"></div>').appendTo(statusIcons);
+			wrapper.append(e);
+		}
+		wait();
+	}
+
+	public function chooseFiles( exts : Array<String>, onSelect : Array<String> -> Void, allowNull=false ) {
+		chooseFileOptions(onSelect, {exts: exts, allowNull: allowNull, multiple: true});
+	}
+
+	public function chooseFile( exts : Array<String>, onSelect : Null<String> -> Void, allowNull = false, workingdir:String = null) {
+		chooseFileOptions((files) -> onSelect(files != null ? files.pop() : null), {exts: exts, allowNull: allowNull, workingDir: workingdir});
+	}
+
+	public function chooseFileSave( defaultPath : String, onSelect : String -> Void, allowNull=false ) {
+		chooseFileOptions((files) -> onSelect(files != null ? files.pop() : null),{saveAs: defaultPath,allowNull: allowNull,});
+	}
+
+	public function chooseDirectory( onSelect : String -> Void, ?isAbsolute = false, allowNull=false ) {
+		chooseFileOptions((files) -> onSelect(files != null ? files.pop() : null),{isAbsolute: isAbsolute,onlyDirectory: true,allowNull: allowNull,});
+	}
+
+	public function search(text : String, ?filesToInclude : Array<String>, ?filesToExclude : Array<String>) : Array<hide.view.RefViewer.Reference> {
+		var refs : Array<hide.view.RefViewer.Reference> = [];
+
+		var includeReg : EReg = filesToInclude == null ? null : new EReg('.[.](${[for (i in filesToInclude) '${i}'].join("|")})$', "");
+		var exludeReg : EReg = filesToExclude == null ? null : new EReg('.[.](${[for (i in filesToExclude) '${i}'].join("|")})$', "");
+		var searchReg = new EReg(text, "g");
+		function rec(path : String, file : String) {
+			var absPath = path + "/" + file;
+			var files = sys.FileSystem.readDirectory(absPath);
+			for (f in files) {
+				if (f.charAt(0) == "." || (exludeReg != null && exludeReg.match(absPath + "/" + f))) continue;
+				if (sys.FileSystem.isDirectory(absPath + "/" + f)) {
+					rec(absPath, f);
+					continue;
+				}
+
+				if (includeReg == null || includeReg.match(absPath + "/" + f)) {
+					var content = sys.io.File.getContent(absPath + "/" + f);
+					var results = searchReg.split(content);
+					if (results.length > 1) {
+						var r = { file: f, path: absPath + "/" + f, results: [] };
+						var curLen = 0;
+						for (idx in 0...(results.length - 1)) {
+							var res = results[idx];
+							curLen += res.length;
+							var contextLength = 15;
+							var start = curLen - contextLength + idx * text.length;
+							var end = start + text.length + (contextLength * 2);
+							r.results.push({ text: content.substring(start, end), goto: () -> {
+								var opened = false;
+
+								function getRefInPrefab(rootPrefab: hrt.prefab.Prefab) {
+									var hits = [];
+									function rec(obj : hrt.prefab.Prefab) {
+										for (field in Reflect.fields(obj)) {
+											if (Reflect.field(obj, field) == text)
+												hits.push(obj);
+										}
+										for (c in obj.children)
+											rec(c);
+									}
+
+									rec(rootPrefab);
+									return hits[idx];
+								}
+
+								var ext = f.substr(f.lastIndexOf('.') + 1);
+								switch (ext) {
+									case "prefab":
+										openFile(absPath + "/" + f, null, (view) -> {
+											opened = true;
+											var v = Std.downcast(view, hide.view.Prefab);
+											v.delaySceneEditor(() -> {
+												v.sceneEditor.selectElementsIndirect([getRefInPrefab(@:privateAccess v.data)]);
+											});
+										});
+
+									case "fx":
+										openFile(absPath + "/" + f, null, (view) -> {
+											opened = true;
+											var v = Std.downcast(view, hide.view.FXEditor);
+											v.delaySceneEditor(() -> {
+												@:privateAccess v.sceneEditor.selectElementsIndirect([getRefInPrefab(@:privateAccess cast v.data)]);
+											});
+										});
+
+									case "cdb":
+										var hits : Array<{sheet: cdb.Sheet, path: hrt.tools.CdbUtils.Path}> = [];
+										for( rootSheet in database.sheets ) {
+											// Don't search through datafiles since we already searched them before with prefabs
+											if (rootSheet.props.dataFiles != null && rootSheet.lines == null)
+												continue;
+
+											function rec(sheet : cdb.Sheet, objs : Array<Dynamic>, path : hrt.tools.CdbUtils.Path, depth : Int) {
+												for (idx => obj in objs) {
+													for (c in sheet.columns) {
+														if (Reflect.field(obj, c.name) == text) {
+															var newPath = new hrt.tools.CdbUtils.Path();
+															for (p in path)
+																newPath.push(p);
+															newPath.push(hrt.tools.CdbUtils.PathPart.Prop(c.name));
+															hits.push({ sheet: rootSheet, path: newPath });
+														}
+
+														var sub = sheet.getSub(c);
+														var subObjs: Array<Dynamic> = c.type.match(cdb.Data.ColumnType.TProperties | cdb.Data.ColumnType.TPolymorph) ? [Reflect.field(obj, c.name)] : Reflect.field(obj, c.name);
+														if (sub != null && subObjs != null) {
+															var newPath = new hrt.tools.CdbUtils.Path();
+															for (p in path)
+																newPath.push(p);
+															newPath.push(hrt.tools.CdbUtils.PathPart.Line(idx, c.name));
+															rec(sub, subObjs, newPath, depth+1);
+														}
+													}
+												}
+											}
+
+											var path = new hrt.tools.CdbUtils.Path();
+											rec(rootSheet, rootSheet.lines, path, 0);
+										}
+
+
+										hide.comp.cdb.Editor.openReference2(hits[idx].sheet, hits[idx].path);
+
+									default:
+										Ide.showFileInExplorer(absPath + "/" + f);
+								}
+							}});
+						}
+						refs.push(r);
+					}
+				}
+			}
+		}
+
+		var path = projectDir.substr(0, projectDir.lastIndexOf("/"));
+		var file = projectDir.substring(projectDir.lastIndexOf("/") + 1);
+		rec(path, file);
+
+		return refs;
+	}
+
+	/**
+		Iterate throught all the strings in the project that could contain a path, replacing
+		the value by what `callb` returns. The callb must call `changed()` if it changed the path.
+	**/
+	public function filterPaths(callb: (ctx : FilterPathContext) -> Void) {
+		var context = new FilterPathContext(callb);
+
+		var adaptedFilter = function(name: String) {
+			return context.filter(name, context.currentObject);
+		}
+
+		function filterContent(content:Dynamic) {
+			var visited = new Map<{}, Bool>();
+			function browseRec(obj:Dynamic, parent: Dynamic) : Dynamic {
+				switch( Type.typeof(obj) ) {
+				case TObject:
+					if( visited.exists(cast obj)) return null;
+					visited.set(cast obj, true);
+					for( f in Reflect.fields(obj) ) {
+						var v : Dynamic = Reflect.field(obj, f);
+						v = browseRec(v, obj);
+						if( v != null ) Reflect.setField(obj, f, v);
+					}
+				case TClass(Array):
+					if( visited.exists(cast obj)) return null;
+					visited.set(cast obj, true);
+					var arr : Array<Dynamic> = obj;
+					for( i in 0...arr.length ) {
+						var v : Dynamic = arr[i];
+						v = browseRec(v, arr);
+						if( v != null ) arr[i] = v;
+					}
+				case TClass(String):
+					return context.filter(obj, parent);
+				default:
+				}
+				return null;
+			}
+			for( f in Reflect.fields(content) ) {
+				if (f == "children")
+					continue;
+				var v = browseRec(Reflect.field(content,f), content);
+				if( v != null ) Reflect.setField(content,f,v);
+			}
+		}
+
+		{
+			var currentPath : String = null;
+			var currentPrefab: hrt.prefab.Prefab = null;
+			context.getRef = () -> {
+				var p = currentPath; // needed capture
+				var cp = currentPrefab; // needed capture
+				return {str: '$p:${cp.getAbsPath()}', goto: () -> openFile(getPath(p), null, (view) -> {
+					var pref = Std.downcast(view, hide.view.Prefab);
+					if (pref != null) {
+						pref.delaySceneEditor(() -> {
+							pref.sceneEditor.selectElementsIndirect([cp]);
+						});
+					}
+					else {
+						var fx = Std.downcast(view, hide.view.FXEditor);
+						fx.delaySceneEditor(() -> {
+							@:privateAccess fx.sceneEditor.selectElementsIndirect([cp]);
+						});
+					}
+				})};
+			};
+
+			filterPrefabs(function(p:hrt.prefab.Prefab, path: String) {
+				context.changed = false;
+				currentPath = path;
+				currentPrefab = p;
+				context.currentObject = p;
+				p.source = context.filter(p.source, p);
+				var h = p.getHideProps();
+				if( h.onResourceRenamed != null )
+					h.onResourceRenamed(adaptedFilter);
+				else {
+					filterContent(p);
+				}
+				return context.changed;
+			});
+		}
+
+		{
+			var currentPath : String = null;
+			context.getRef = () -> {
+				var p = currentPath;
+				return {str: p, goto : Ide.showFileInExplorer.bind(getPath(p))};
+			}
+
+			filterProps(function(content:Dynamic, path: String) {
+				context.changed = false;
+				currentPath = path;
+				filterContent(content);
+				return context.changed;
+			});
+		}
+
+
+		context.changed = false;
+		var tmpSheets = [];
+
+		var currentSheet : cdb.Sheet = null;
+		var currentColumn : String = null;
+		var currentObject : Dynamic = null;
+		context.getRef = () -> {
+			var cs = currentSheet;
+			var cc = currentColumn;
+			var sheets = cdb.Sheet.getSheetPath(cs, cc);
+
+			var path = hide.comp.cdb.Editor.splitPath({s: sheets, o: currentObject});
+			return {str: sheets[0].s.name+"."+path.pathNames.join("."), goto: hide.comp.cdb.Editor.openReference2.bind(sheets[0].s, path.pathParts)};
+		};
+
+		for( sheet in database.sheets ) {
+			if( sheet.props.dataFiles != null && sheet.lines == null ) {
+				// we already updated prefabs, no need to load data files
+				tmpSheets.push(sheet);
+				@:privateAccess sheet.sheet.lines = [];
+			}
+			for( c in sheet.columns ) {
+				switch( c.type ) {
+				case TFile:
+					var sheets = cdb.Sheet.getSheetPath(sheet, c.name);
+					for( obj in sheet.getObjects() ) {
+						currentSheet = sheet;
+						currentColumn = c.name;
+						currentObject = obj;
+						var path = Reflect.field(obj.path[obj.path.length - 1], c.name);
+						var v : Dynamic = context.filter(path, obj.path[obj.path.length - 1]);
+						if( v != null ) Reflect.setField(obj.path[obj.path.length - 1], c.name, v);
+					}
+				case TTilePos:
+					var sheets = cdb.Sheet.getSheetPath(sheet, c.name);
+					for( obj in sheet.getObjects() ) {
+						currentSheet = sheet;
+						currentColumn = c.name;
+						currentObject = obj;
+
+						var tilePos : cdb.Types.TilePos = Reflect.field(obj.path[obj.path.length - 1], c.name);
+						if (tilePos != null) {
+							var v : Dynamic = context.filter(tilePos.file, tilePos);
+							if (v != null) Reflect.setField(tilePos, 'file', v);
+						}
+					}
+				default:
+				}
+			}
+		}
+		if( context.changed ) {
+			saveDatabase();
+			hide.comp.cdb.Editor.refreshAll(true);
+		}
+		for( sheet in tmpSheets )
+			@:privateAccess sheet.sheet.lines = null;
+
+		for (customFilter in customFilepathRefFilters) {
+			customFilter(context);
+		}
+	}
+
+	public var customFilepathRefFilters : Array<(ctx : FilterPathContext) -> Void> = [];
+
+	public function refreshFont() {
+		var font = ideConfig.useAlternateFont ? "Verdana" : "Inter";
+		var size = ideConfig.useAlternateFont ? "9pt" : "9.5pt";
+		js.Browser.document.documentElement.style.setProperty("--default-font", font);
+		js.Browser.document.documentElement.style.setProperty("--default-font-size", size);
+
+	}
+
+	public function filterPrefabs( callb : (hrt.prefab.Prefab, path: String) -> Bool) {
+		var exts = Lambda.array({iterator : @:privateAccess hrt.prefab.Prefab.extensionRegistry.keys });
+		exts.push("prefab");
+		var todo = [];
+		browseFiles(function(path) {
+			var ext = path.split(".").pop();
+			if( exts.indexOf(ext) < 0 ) return;
+			var prefab = loadPrefab(path);
+			var changed = false;
+			function filterRec(p) {
+				if( callb(p, path) ) changed = true;
+				for( ps in p.children )
+					filterRec(ps);
+			}
+			filterRec(prefab);
+			if( !changed ) return;
+			@:privateAccess todo.push(function() sys.io.File.saveContent(getPath(path), toJSON(prefab.serialize())));
+		});
+		for( t in todo )
+			t();
+	}
+
+	public function filterProps( callb : (data: Dynamic, path: String) -> Bool ) {
+		var exts = ["props", "json"];
+		var todo = [];
+		browseFiles(function(path) {
+			var ext = path.split(".").pop();
+			if( exts.indexOf(ext) < 0 ) return;
+			try {
+				if (path == "assets/Enviro_Props/Props/materials.props")
+					trace("break");
+				var content = parseJSON(sys.io.File.getContent(getPath(path)));
+				var changed = callb(content, path);
+				if( !changed ) return;
+				todo.push(function() sys.io.File.saveContent(getPath(path), toJSON(content)));
+			} catch (e) {};
+		});
+		for( t in todo )
+			t();
+	}
+
+	function browseFiles( callb : String -> Void ) {
+		function browseRec(path) {
+			if( path == ".tmp" ) return;
+			if( path == ".backed" ) return;
+
+			for( p in sys.FileSystem.readDirectory(resourceDir + "/" + path) ) {
+				var p = path == "" ? p : path + "/" + p;
+				if( sys.FileSystem.isDirectory(resourceDir+"/"+p) ) {
+					browseRec(p);
+					continue;
+				}
+				callb(p);
+			}
+		}
+		browseRec("");
+	}
+
+	public function setProgress( ?text : String ) {
+		if( text != null ) {
+			window.title = text;
+			return;
+		}
+		var title = config.current.get("hide.windowTitle");
+		window.title = title != null ? title : ((isCDB ? "CastleDB" : "HIDE") + " - " + projectDir);
+	}
+
+	public function runCommand(cmd, ?callb:String->Void) {
+		var c = cmd.split("%PROJECTDIR%").join(projectDir);
+		var slash = isWindows ? "\\" : "/";
+		c = c.split("/").join(slash);
+		js.node.ChildProcess.exec(c, function(e:js.node.ChildProcess.ChildProcessExecError,_,_) callb(e == null ? null : e.message));
+	}
+
+	public function addCustomMenu(item: nw.MenuItem) {
+		customMenus.push(item);
+	}
+
+	public function initMenu() {
+
+		if( subView != null ) return;
+
+		var menuHTML = "<content>"+new Element("#mainmenu").html() + config.project.get("menu.extra")+"</content>";
+		var menu = new Element(menuHTML);
+
+		// project
+		if( ideConfig.recentProjects.length > 0 )
+			menu.find(".project .recents").html("");
+		for( v in ideConfig.recentProjects.copy() ) {
+			if( !sys.FileSystem.exists(v) ) {
+				ideConfig.recentProjects.remove(v);
+				config.global.save();
+				continue;
+			}
+			new Element("<menu>").attr("label",v).appendTo(menu.find(".project .recents")).click(function(_){
+				var dir = v;
+				setProject(dir);
+				reload(); // Reload stylesheets
+			});
+		}
+		menu.find(".project .open").click(function(_) {
+			chooseDirectory(function(dir) {
+				if( dir == null ) return;
+				if( StringTools.endsWith(dir,"/res") || StringTools.endsWith(dir,"\\res") )
+					dir = dir.substr(0,-4);
+				setProject(dir);
+				reload();
+			}, true);
+		});
+		menu.find(".project .clear").click(function(_) {
+			ideConfig.recentProjects = [];
+			config.global.save();
+			initMenu();
+		});
+		menu.find(".project .exit").click(function(_) {
+			Sys.exit(0);
+		});
+		menu.find(".project .clear-local").click(function(_) {
+			js.Browser.window.localStorage.clear();
+			nw.App.clearCache();
+			try sys.FileSystem.deleteFile(Ide.inst.appPath + "/props.json") catch( e : Dynamic ) {};
+			untyped chrome.runtime.reload();
+		});
+		menu.find(".build-files").click(function(_) {
+			hrt.impl.BuildTools.buildAllFiles(resourceDir + "/", function(percent, currentFile) {
+				setProgress('($percent%) $currentFile');
+			}, function(msg) {
+				error(msg);
+			}, function(count, errCount) {
+				setProgress();
+			});
+		});
+
+		for( r in renderers ) {
+			var name = r.displayName != null ? r.displayName : r.name;
+			new Element("<menu type='checkbox'>").attr("label", name).prop("checked",r == h3d.mat.MaterialSetup.current).appendTo(menu.find(".project .renderers")).click(function(_) {
+				if( r != h3d.mat.MaterialSetup.current ) {
+					projectConfig.renderer = name;
+					config.user.save();
+					reload();
+				}
+			});
+		}
+
+		// view
+		if( !sys.FileSystem.exists(resourceDir) )
+			menu.find(".view").remove();
+		menu.find(".debug").click(function(_) window.showDevTools());
+		var comps = menu.find("[component]");
+		for( c in comps.elements() ) {
+			var cname = c.attr("component");
+			var cl = Type.resolveClass(cname);
+			if( cl == null ) error("Missing component class "+cname);
+			var state = c.attr("state");
+			if( state != null ) try haxe.Json.parse(state) catch( e : Dynamic ) error("Invalid state "+state+" ("+e+")");
+
+			var position : hide.ui.View.DisplayPosition = c.attr("position");
+			c.click(function(_) {
+				open(cname, state == null ? null : haxe.Json.parse(state), position);
+			});
+		}
+
+		// database
+		var db = menu.find(".database");
+		db.find(".dbView").click(function(_) {
+			open("hide.view.CdbTable",{});
+		});
+		db.find(".dbCompress").prop("checked",database.compress).click(function(_) {
+			database.compress = !database.compress;
+			saveDatabase();
+		});
+		db.find(".dbExport").click(function(_) {
+			hide.comp.cdb.DataFiles.load();
+			var lang = new cdb.Lang(@:privateAccess database.data);
+			var xml = lang.buildXML();
+			xml = String.fromCharCode(0xFEFF) + xml; // prefix with BOM
+			chooseFileSave("export.xml", function(f) {
+				if( f != null ) sys.io.File.saveContent(getPath(f), xml);
+			});
+		});
+		db.find(".dbImport").click(function(_) {
+			chooseFile(["xml"], function(file) {
+				hide.comp.cdb.DataFiles.load();
+				var lang = new cdb.Lang(@:privateAccess database.data);
+				var xml = sys.io.File.getContent(getPath(file));
+				lang.apply(xml);
+				saveDatabase(true);
+
+				for( file in @:privateAccess hide.comp.cdb.DataFiles.watching.keys() ) {
+					if( sys.FileSystem.isDirectory(getPath(file)) )
+						continue;
+					var p = loadPrefab(file);
+					lang.applyPrefab(p);
+					savePrefab(file, p);
+				}
+
+				hide.comp.cdb.Editor.refreshAll();
+				message("Import completed");
+			});
+		});
+
+		var proofing = projectConfig.dbProofread == true;
+		db.find(".dbProofread").prop("checked", proofing).click(function(_) {
+			projectConfig.dbProofread = !proofing;
+			config.global.save();
+			for( v in getViews(hide.view.CdbTable) )
+				v.applyProofing();
+			initMenu();
+		});
+
+		function setDiff(f) {
+			databaseDiff = f;
+			config.user.set("cdb.databaseDiff", f);
+			config.user.save();
+			loadDatabase();
+			hide.comp.cdb.Editor.refreshAll();
+			initMenu();
+			for( v in getViews(hide.view.CdbTable) )
+				v.rebuild();
+		}
+		db.find(".dbCreateDiff").click(function(_) {
+			chooseFileSave("cdb.diff", function(name) {
+				if( name == null ) return;
+				if( name.indexOf(".") < 0 ) name += ".diff";
+				sys.io.File.saveContent(getPath(name),"{}");
+				setDiff(name);
+			});
+		});
+		db.find(".dbLoadDiff").click(function(_) {
+			chooseFile(["diff"], function(f) {
+				if( f == null ) return;
+				setDiff(f);
+			});
+		});
+		db.find(".dbCloseDiff").click(function(_) {
+			setDiff(null);
+		}).attr("disabled", databaseDiff == null ? "disabled" : null);
+		db.find(".dbCustom").click(function(_) {
+			open("hide.view.CdbCustomTypes",{});
+		});
+		db.find(".dbFormulasEnable").prop("checked",ideConfig.enableDBFormulas).click(function(_) {
+			ideConfig.enableDBFormulas = !ideConfig.enableDBFormulas;
+			config.global.save();
+			hide.comp.cdb.Editor.refreshAll();
+		});
+		db.find(".dbFormulas").click(function(_) {
+			open("hide.comp.cdb.FormulasView",{ path : config.current.get("cdb.formulasFile") });
+		});
+
+		// Categories
+		{
+			function applyCategories() {
+				for( v in getViews(hide.view.CdbTable) )
+					v.applyCategories(projectConfig.dbCategories);
+				initMenu();
+			}
+			var allCats = hide.comp.cdb.Editor.getCategories(database);
+			var showAll = db.find(".dbCatShowAll");
+			for(cat in allCats) {
+				var isShown = projectConfig.dbCategories == null || projectConfig.dbCategories.indexOf(cat) >= 0;
+				new Element("<menu type='checkbox'>").attr("label",cat).prop("checked", isShown).insertBefore(showAll).click(function(_){
+					if(projectConfig.dbCategories == null)
+						projectConfig.dbCategories = allCats; // Init with all cats
+					if(isShown)
+						projectConfig.dbCategories.remove(cat);
+					else
+						projectConfig.dbCategories.push(cat);
+					config.user.save();
+					applyCategories();
+				});
+			}
+			new Element("<separator>").insertBefore(showAll);
+
+			db.find(".dbCatShowAll").click(function(_) {
+				projectConfig.dbCategories = null;
+				config.user.save();
+				applyCategories();
+			});
+			db.find(".dbCatHideAll").click(function(_) {
+				projectConfig.dbCategories = [];
+				config.user.save();
+				applyCategories();
+			});
+		}
+
+		// layout
+		var layouts = menu.find(".layout .content");
+		layouts.html("");
+		if(projectConfig.layouts == null)
+			projectConfig.layouts = [];
+		for( l in projectConfig.layouts ) {
+			if( l.name == "Default" ) continue;
+			new Element("<menu>").attr("label",l.name).addClass(l.name).appendTo(layouts).click(function(_) {
+				initLayout(l);
+			});
+		}
+		menu.find(".layout .autosave").click(function(_) {
+			ideConfig.autoSaveLayout = !ideConfig.autoSaveLayout;
+			config.global.save();
+		}).prop("checked",ideConfig.autoSaveLayout);
+
+		menu.find(".layout .saveas").click(function(_) {
+			var name = ask("Please enter a layout name:");
+			if( name == null || name == "" ) return;
+			projectConfig.layouts.push({ name : name, state : saveLayout() });
+			config.user.save();
+			initMenu();
+		});
+		menu.find(".layout .save").click(function(_) {
+			currentLayout.state = saveLayout();
+			config.global.save();
+		});
+
+		menu.find(".screen-capture").click(function(_) {
+			var currentView : hide.ui.View<Dynamic> = null;
+			for (v in views) {
+				if (v.isActive())
+					currentView = v;
+			}
+
+			var scene : hide.comp.Scene = null;
+			var modelView = Std.downcast(currentView, hide.view.Model);
+			if (modelView != null)
+				scene = @:privateAccess modelView.scene;
+			var prefabView = Std.downcast(currentView, hide.view.Prefab);
+			if (prefabView != null)
+				scene = @:privateAccess prefabView.scene;
+			var fxView = Std.downcast(currentView, hide.view.FXEditor);
+			if (fxView != null)
+				scene = @:privateAccess fxView.scene;
+
+			if (scene == null) {
+				quickError("Active view isn't capturable");
+				return;
+			}
+
+			chooseFileSave("capture.png", (path) -> {
+				var textureRes = ideConfig.screenCaptureResolution;
+
+
+				var renderTexture = new h3d.mat.Texture(Std.int(textureRes * scene.s3d.camera.screenRatio), textureRes, [Target]);
+				renderTexture.depthBuffer = new h3d.mat.Texture(renderTexture.width, renderTexture.height, Depth24Stencil8);
+				scene.s3d.setOutputTarget(scene.engine, renderTexture);
+				scene.s3d.render(scene.engine);
+				scene.s3d.setOutputTarget();
+
+				var pixels = renderTexture.capturePixels();
+				var absPath = getPath(path);
+				sys.io.File.saveBytes(absPath, pixels.toPNG(0));
+				quickMessage('Screen capture saved at ${path}');
+			});
+		});
+
+		// analysis
+		var analysis = menu.find(".analysis");
+		analysis.find(".memprof").click(function(_) {
+			#if (hashlink >= "1.15.0")
+			open("hide.view.MemProfiler",{});
+			#else
+			quickMessage("Memory Profiler not available. Please update hashlink to version 1.15.0 or later.");
+			#end
+		});
+		analysis.find(".remoteconsole").click(function(_) {
+			open("hide.view.RemoteConsoleView",{});
+		});
+		analysis.find(".devtools").click(function(_) {
+			open("hide.view.DevTools",{});
+		});
+		analysis.find(".gpudump").click(function(_) {
+			var path = hide.tools.MemDump.gpudump();
+			quickMessage('Gpu mem dumped at ${path}.');
+		});
+
+		var settings = menu.find(".settings");
+		settings.find('.user-settings').click(function(_) {
+			open("hide.view.settings.UserSettings", {});
+		});
+		settings.find('.project-settings').click(function(_) {
+			open("hide.view.settings.ProjectSettings", {});
+		});
+
+		var finalMenu = new hide.ui.Menu(menu).root;
+		for (custom in customMenus) {
+			finalMenu.append(custom);
+		}
+
+		window.menu = finalMenu;
+	}
+
+	public function showFileInResources(path: String) {
+		var filebrowsers = getViews(hide.view.FileBrowser);
+		for (filebrowser in filebrowsers) {
+			if (@:privateAccess filebrowser.fancyTree == null)
+				filebrowser.onDisplay();
+			filebrowser.activate();
+			filebrowser.reveal(path);
+		}
+	}
+
+	public static function showFileInExplorer(path : String) {
+		if(!haxe.io.Path.isAbsolute(path)) {
+			path = Ide.inst.getPath(path);
+		}
+
+		switch(Sys.systemName()) {
+			case "Windows": {
+				var cmd = "explorer.exe /select," + '"' + StringTools.replace(path, "/", "\\") + '"';
+				trace("OpenInExplorer: " + cmd);
+				Sys.command(cmd);
+			};
+			case "Mac":	Sys.command("open " + haxe.io.Path.directory(path));
+			case "Linux":
+				Sys.command('dbus-send --session --dest=org.freedesktop.FileManager1 --type=method_call /org/freedesktop/FileManager1 org.freedesktop.FileManager1.ShowItems array:string:"$path" string:""');
+			default: throw "Exploration not implemented on this platform";
+		}
+	}
+
+	public function openFile( file : String, ?onCreate, ?onOpen) {
+		var ext = Extension.getExtension(file);
+		if( ext == null ) return;
+		// look if already open
+		var path = makeRelative(file);
+		for( v in views )
+			if( Type.getClassName(Type.getClass(v)) == ext.component && v.state.path == path ) {
+				if( v.container.tab != null ) {
+					v.container.parent.parent.setActiveContentItem(v.container.parent);
+					if (onOpen != null ) onOpen(v);
+				}
+				return;
+			}
+		open(ext.component, { path : path }, onCreate, onOpen);
+	}
+
+	public function openSubView<T>( component : Class<hide.ui.View<T>>, state : T, events : {} ) {
+		var sharedRefs : Map<Int,Dynamic> = untyped global.sharedRefs;
+		if( sharedRefs == null ) {
+			sharedRefs = new Map();
+			untyped global.sharedRefs = sharedRefs;
+		}
+		var id = 0;
+		while( sharedRefs.exists(id) ) id++;
+		sharedRefs.set(id,{ state : state, events : events });
+		var compName = Type.getClassName(component);
+		nw.Window.open("app.html?subView="+compName+"&sid="+id,{ id : compName });
+	}
+
+	public function callParentView( name : String, param : Dynamic ) {
+		if( subView != null ) Reflect.callMethod(subView.events,Reflect.field(subView.events,name),[param]);
+	}
+
+	public function closeInspector() {
+		var inspector = layout.root.getItemsById("inspector")[0];
+		if (inspector != null) {
+			inspector.remove();
+		}
+	}
+
+	public function open( component : String, state : Dynamic, ?onCreate : hide.ui.View<Dynamic> -> Void, ?onOpen : hide.ui.View<Dynamic> -> Void, ?positionOverride: hide.ui.View.DisplayPosition ) {
+		if (layout.root == null)
+			return;
+		if( state == null ) state = {};
+
+		var viewConfig = hide.ui.View.viewClasses.get(component);
+		if( viewConfig == null )
+			throw "Unknown component " + component;
+
+		state.componentName = component;
+		for( v in views ) {
+			if( v.viewClass == component && haxe.Json.stringify(v.state) == haxe.Json.stringify(state) ) {
+				v.activate();
+				if( onCreate != null ) onCreate(v);
+				if ( onOpen != null ) onOpen(v);
+				return;
+			}
+		}
+
+		var options = viewConfig.options;
+
+		var target = getOrInitTarget(positionOverride ?? options.position ?? Center);
+
+		var needResize = options.width != null;
+		target.on("componentCreated", function(c) {
+			target.off("componentCreated");
+			var view : hide.ui.View<Dynamic> = untyped c.origin.__view;
+			if( onCreate != null ) onCreate(view);
+			if ( onOpen != null ) onOpen(view);
+			if( needResize ) {
+				// when opening restricted size after free size
+				haxe.Timer.delay(function() {
+					view.container.setSize(options.width, view.container.height);
+				},0);
+			} else {
+				// when opening free size after restricted size
+				var v0 = views[0];
+				if( views.length == 2 && views[1] == view && v0.defaultOptions.width != null )
+					haxe.Timer.delay(function() {
+						v0.container.setSize(v0.defaultOptions.width, v0.container.height);
+					},0);
+			}
+		});
+		var config : golden.Config.ItemConfig = {
+			type : Component,
+			componentName : component,
+			componentState : state,
+		};
+
+		if (options.id != null) {
+			config.id = options.id;
+		}
+
+		target.addChild(config);
+	}
+
+	public function reopenLastClosedTab() {
+		var state = lastClosedTabStates.pop();
+		if( state != null && state.componentName != null ) {
+			open(state.componentName, state);
+		}
+	}
+
+	var deduplicateMessages : Map<String, {element: Element, timer: haxe.Timer}> = [];
+
+	public function globalMessage(message: String, kind: MessageKind, timeoutSeconds : Float = 5.0) {
+		var str = StringTools.htmlEscape(Std.string(message));
+		str = StringTools.replace(str, "\n", "<br/>");
+
+		var element = switch(kind) {
+			case Info:
+				new Element('
+				<div class="message">
+					<div class="icon ico ico-info-circle"></div>
+					<div class="text">${str}</div>
+				</div>');
+			case Error:
+				new Element('
+				<div class="message error">
+					<div class="icon ico ico-warning"></div>
+					<div class="text">${str}</div>
+				</div>');
+		}
+
+		final mergeMessageDelayMs = 200;
+
+		function timeMessage(element: Element) {
+			var timer = haxe.Timer.delay(() -> {
+				deduplicateMessages.remove(str);
+				haxe.Timer.delay(() -> {
+					element.get(0).ontransitionend = function(_){
+						element.remove();
+					};
+					element.removeClass("show");
+				}, Std.int(timeoutSeconds * 1000.0 - mergeMessageDelayMs));
+			}, mergeMessageDelayMs);
+			deduplicateMessages.set(str, {element: element, timer: timer});
+		}
+
+		var prev = deduplicateMessages.get(str);
+		// if there is already a message with the same message as ours, restart it
+		if (prev != null) {
+			prev.timer.stop();
+			deduplicateMessages.remove(str);
+			timeMessage(prev.element);
+			return;
+		}
+
+		var body = new Element('body');
+		var messages = body.find("#message-container");
+		if (messages.length == 0) {
+			messages = new Element('<div id="message-container"></div>');
+			body.append(messages);
+		}
+
+		messages.append(element);
+
+		haxe.Timer.delay(() -> {
+			element.addClass("show");
+		}, 10);
+
+		timeMessage(element);
+	}
+
+	public function quickMessage( text : String, timeoutSeconds : Float = 5.0 ) {
+		js.Browser.console.log(text);
+
+		globalMessage(text, Info, timeoutSeconds);
+	}
+
+	public function message( text : String ) {
+		js.Browser.window.alert(text);
+	}
+
+	public function confirm( text : String ) {
+		return js.Browser.window.confirm(text);
+	}
+
+	public function ask( text : String, ?defaultValue = "" ) {
+		return js.Browser.window.prompt(text, defaultValue);
+	}
+
+	var delayedSvnStatusCallbacks : Array<(files : Array<String>) -> Void> = null;
+
+	function onSvnStatusFinished(callbacks: Array<(files : Array<String>) -> Void>, error: Dynamic, stdOut: String, stderr: String) {
+		var modifiedFiles : Array<String> = [];
+		var outputs : Array<String> = stdOut.split("\r\n");
+		for (o in outputs) {
+			if (o.length == 0)
+				continue;
+
+			o = StringTools.replace(o, '\\', "/");
+			var file = getPath(o.substr(o.indexOf("res/") + 4));
+			modifiedFiles.push(file);
+		}
+		for (callback in callbacks) {
+			callback(modifiedFiles);
+		}
+
+		if (delayedSvnStatusCallbacks != null && delayedSvnStatusCallbacks.length > 0) {
+			var oldCallbacks = delayedSvnStatusCallbacks;
+			delayedSvnStatusCallbacks = [];
+			execSvnCommand(onSvnStatusFinished.bind(oldCallbacks));
+		} else {
+			delayedSvnStatusCallbacks = null;
+		}
+	}
+
+	function execSvnCommand(callback: (error: Dynamic, stdOut: String, stderr: String) -> Void) {
+		js.node.ChildProcess.exec('svn status', { cwd: projectDir }, callback);
+	}
+
+	public function getSVNModifiedFiles(callback: (files : Array<String>) -> Void) : Void{
+		if (!isSVNAvailable())
+			throw "SVN not available";
+
+		if (delayedSvnStatusCallbacks == null) {
+			delayedSvnStatusCallbacks = [];
+			execSvnCommand(onSvnStatusFinished.bind([callback]));
+		} else {
+			hide.tools.Extensions.ArrayExtensions.pushUnique(delayedSvnStatusCallbacks, callback);
+		}
+	}
+
+	public function isSVNAvailable() {
+		return js.node.ChildProcess.spawnSync("svn",["--version"]).status == 0 &&
+		js.node.ChildProcess.spawnSync("where.exe", ["TortoiseProc.exe"]).status == 0 &&
+		js.node.ChildProcess.spawnSync("svn", ["info", getPath(projectDir)]).status == 0;
+	}
+
+	public static dynamic function onIdeError(e: Dynamic) {}
+
+	public static var inst : Ide;
+
+	static function main() {
+		h3d.impl.RenderContext.STRICT = false; // prevent errors with bad renderer
+		new Ide();
+	}
+
+
+	public static function getGitCommitHashAndDate():String {
+
+		// Check if there is changes in git. If thats the case, we are certainly on a dev machine
+		var out = "";
+		try {
+			out = js.node.ChildProcess.execSync('git status --porcelain=v1');
+		} catch (_) {
+			return "";
+		}
+
+		if (out.length > 0) {
+			return "dev";
+		}
+
+		try {
+			out = js.node.ChildProcess.execSync('git log --pretty=format:"%h(%cs)" -n 1');
+		} catch (_) {
+			return "";
+		}
+
+		return out;
+	}
+
+
+
+
+}
+
+
+class CustomLoader extends hxd.res.Loader {
+
+	var pathKeys = new Map<String,{}>();
+
+	function getKey( path : String ) {
+		var k = pathKeys.get(path);
+		if( k == null ) {
+			k = {};
+			pathKeys.set(path, k);
+		}
+		return k;
+	}
+
+	override function loadCache<T:hxd.res.Resource>( path : String, c : Class<T> ) : T {
+		var engine = h3d.Engine.getCurrent();
+		var i = Std.downcast(@:privateAccess engine.resCache.get(getKey(path)), c);
+		if( i == null ) {
+			i = Type.createInstance(c, [fs.get(path)]);
+			// i = new hxd.res.Image(fs.get(path));
+			@:privateAccess engine.resCache.set(getKey(path), i);
+		}
+		return i;
+	}
+
+}
+
+@:allow(hide.Ide)
+class FilterPathContext {
+	public var valueCurrent: String;
+	public var currentObject: Dynamic;
+	var valueChanged: String;
+
+	public var filterFn: (FilterPathContext) -> Void;
+
+	var changed = false;
+	public function new(filterFn: (FilterPathContext) -> Void) {
+		this.filterFn = filterFn;
+	};
+
+	public function change(newValue) : Void {
+		changed = true;
+		valueChanged = newValue;
+	}
+
+	public function filter(valueCurrent: String, obj: Dynamic) {
+		this.valueCurrent = valueCurrent;
+		this.currentObject = obj;
+		valueChanged = null;
+		var prevChanged = changed;
+		changed = false;
+		filterFn(this);
+		var res = changed ? valueChanged : valueCurrent;
+		changed = prevChanged || changed;
+		return res;
+	}
+
+	public var getRef : () -> {str: String, ?goto: () -> Void};
+}
+</file>
+
+<file path="presentation/controllers/DragDropController.hx">
+package hide.presentation.controllers;
+</file>
+
+<file path="presentation/controllers/KeyboardController.hx">
+package hide.presentation.controllers;
+</file>
+
+<file path="presentation/controllers/MenuController.hx">
+package hide.presentation.controllers;
+</file>
+
+<file path="presentation/Ide.hx">
+package hide.presentation;
+
+import hide.application.services.MenuService;
+import hide.application.services.WindowService;
+import hide.application.services.PluginManager;
+import hide.presentation.ui.View;
+import hide.presentation.ui.StatusBar;
+import hide.shared.types.Result;
+import hide.shared.types.Success;
+import hide.shared.types.Failure;
+
+import hide.application.commands.LoadProjectUseCase;
+import hide.application.commands.SetFullscreenUseCase;
+import hide.application.dto.ViewDto;
+import hide.domain.valueobjects.DisplayPosition;
+// Импорты для событий
+import hide.shared.events.ProjectLoaded;
+import hide.shared.events.ErrorOccurred;
+import hide.shared.events.LayoutChanged;
+import hide.shared.events.ProjectClosed;
+
+// Импорты для типов
+import hide.shared.types.FilePath;
+import hide.shared.types.IFileDialog;
+import hide.shared.types.IEventBus;
+import hide.shared.types.IDialog;
+import hide.shared.types.IAppInfo;
+import hide.shared.types.IPlatform;
+
+/**
+ * Главный контроллер приложения (Presentation Layer).
+ * ОТВЕТСТВЕННОСТЬ:
+ * - Инициализация зависимостей (через контейнер)
+ * - Обработка пользовательских действий → вызов Use-Cases
+ * - Подписка на события → обновление UI
+ * - НЕ содержит бизнес-логики!
+ */
+@:expose
+class Ide {
+    public static var inst(default, null):Ide;
+
+    private var viewRegistry:ViewRegistry;
+    private var views:Array<ViewDto>;
+    private var pluginManager:PluginManager;
+
+    // === Сервисы (инъекция зависимостей) ===
+    private var windowService:WindowService;
+    private var menuService:MenuService;
+    private var loadProjectUseCase:LoadProjectUseCase;
+    private var setFullscreenUseCase:SetFullscreenUseCase;
+    private var saveLayoutUseCase:SaveLayoutUseCase;
+    private var closeProjectUseCase:CloseProjectUseCase;
+    private var openViewUseCase:OpenViewUseCase; // ← ДОБАВИТЬ
+
+    // === UI компоненты ===
+    private var statusBar:StatusBar;
+
+    // === Состояние (только для отображения) ===
+    public var currentProjectName(get, never):String;
+    private var _currentProject:Null<String>;
+
+    // === Контейнер зависимостей ===
+    private var services:ServiceContainer;
+
+    // === Отписки от EventBus (для dispose) ===
+    private var _projectLoadedUnsub:Void->Void;
+    private var _errorUnsub:Void->Void;
+    private var _layoutChangedUnsub:Void->Void;
+
+    /**
+     * Конструктор. Принимает уже сконфигурированный `ServiceContainer`.
+     */
+    public function new(_services:ServiceContainer) {
+        inst = this;
+        services = _services;
+
+        // Получение сервисов
+        windowService = services.get("window");
+        menuService = services.get("menu");
+        loadProjectUseCase = services.get("loadProject");
+        setFullscreenUseCase = services.get("setFullscreen");
+        saveLayoutUseCase = services.get("saveLayout");
+        closeProjectUseCase = services.get("closeProject");
+        openViewUseCase = services.get("openView");
+
+        viewRegistry = services.get("viewRegistry");
+        views = viewRegistry.all();
+
+        // Добавить обработчики для view через MenuService
+        for (view in views) {
+            menuService.addViewMenu(view);
+            menuService.onItemClick("view.${view.name}", function() openView(view.name));
+        }
+
+
+        // Инициализация UI
+        statusBar = new StatusBar(Element.byId("status-bar"));
+        views = new Map();
+
+        // Подписка на события
+        var eventBus = services.get<IEventBus>("eventBus");
+
+        _projectLoadedUnsub = eventBus.subscribe(function(e:ProjectLoaded) {
+            _currentProject = e.project.name;
+            statusBar.showMessage('Project loaded: ${e.project.name}');
+            updateWindowTitle();
+        });
+
+        _errorUnsub = eventBus.subscribe(function(e:ErrorOccurred) {
+            statusBar.setError('${e.context}: ${e.error.message}');
+        });
+
+        _layoutChangedUnsub = eventBus.subscribe(function(e:LayoutChanged) {
+            // Можно добавить "dirty indicator"
+            trace("Layout changed");
+        });
+
+        _projectClosedUnsub = eventBus.subscribe(function(e:ProjectClosed) {
+            _currentProject = null;
+            statusBar.showMessage("Project closed");
+            updateWindowTitle();
+        });
+    }
+
+    // === Обработчики пользовательских действий ===
+
+    public function onMenuOpenProject():Void {
+        services.get<IFileDialog>("fileDialog").showOpen({ filters: ["json"] })
+            .then(function(path) {
+                if (path != null) {
+                    loadProjectUseCase.execute(new FilePath(path))
+                        .then(function(result) {
+                            switch result {
+                                case Success(_): // проект загружен через ProjectLoaded
+                                    null;
+                                case Failure(err):
+                                    statusBar.setError('Failed to load: ${err.message}');
+                            }
+                        });
+                }
+            })
+            .catch(function(err) {
+                statusBar.setError('File dialog error: ${err.message}');
+            });
+    }
+
+    public function onToggleFullscreen():Void {
+        setFullscreenUseCase.execute(!windowService.isFullscreen());
+    }
+
+    public function onLayoutSave():Void {
+        saveLayoutUseCase.execute();
+    }
+
+    public function onCloseProject():Void {
+        closeProjectUseCase.execute();
+    }
+
+    public function onMenuItemClick(id:String):Void {
+        switch id {
+            case "project.open": onMenuOpenProject();
+            case "view.fullscreen": onToggleFullscreen();
+            case "layout.save": onLayoutSave();
+            case "project.close": onCloseProject();
+            case "help.about": showAboutDialog();
+            case "project.recents.${p}": onOpenRecent(p);
+            case "view.editor": openView("editor"); // ← ДОБАВИТЬ
+            case "view.project": openView("project"); // ← ДОБАВИТЬ
+            // case "project.recents.*": onOpenRecent(...) // обрабатывается в MenuService
+            default:
+                // log unknown ID
+                trace("Unknown menu item ID: $id");
+        }
+    }
+    // — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — — —
+    // 🔧 ДОБАВИТЬ:
+    private function openView(viewName:String):Void {
+        var view = views.find(v -> v.name == viewName);
+        if (view == null) {
+            throw "View not found: $viewName";
+        }
+
+        var position = switch viewName {
+            case "editor": DisplayPosition.Center;
+            case "project": DisplayPosition.Left;
+            default: DisplayPosition.Center;
+        };
+
+        openViewUseCase.execute(view.name, view.defaultState, position);
+    }
+    
+    // === Вспомогательные методы для обновления UI ===
+    private function onOpenRecent(path:String):Void {
+        loadProjectUseCase.execute(new FilePath(path));
+    }
+    private function updateWindowTitle():Void {
+        var title = _currentProject != null ? '${_currentProject} - HIDE' : 'HIDE IDE';
+        windowService.setTitle(title);
+    }
+
+    private function showAboutDialog():Void {
+        services.get<IDialog>("dialog").showInfo('HIDE IDE\nVersion ${getAppVersion()}');
+    }
+
+    private function getAppVersion():String {
+        return services.get<IAppInfo>("appInfo").version;
+    }
+
+    // === Геттеры ===
+
+    private function get_currentProjectName():String {
+        return _currentProject != null ? _currentProject : "No project";
+    }
+
+    // === Точка входа ===
+
+    public static function main():Void {
+        var container = new ServiceContainer();
+
+        // Регистрация платформы
+        #if electron
+        container.register("platform", new ElectronPlatform());
+        #elseif nw
+        container.register("platform", new NwPlatform());
+        #else
+        container.register("platform", new StubPlatform());
+        #end
+
+        var platform = container.get<IPlatform>("platform");
+
+        // Регистрация сервисов
+        container.register("window", new WindowService(platform.window));
+        container.register("menu", new MenuService(platform.clipboard));
+        container.register("eventBus", new EventBusImpl());
+        
+        container.register("dialog", new DialogImpl());
+        container.register("fileDialog", new FileDialogImpl());
+        container.register("appInfo", new AppInfoImpl());
+
+        //Use-Cases
+        container.register("saveLayout", new SaveLayoutUseCase(
+            container.get<ILayoutEngine>("layout"),
+            container.get<IEventBus>("eventBus")
+        ));
+
+        container.register("closeProject", new CloseProjectUseCase(
+            container.get<ILayoutEngine>("layout"),
+            container.get<IEventBus>("eventBus")
+        ));
+
+        // hide/presentation/Ide.hx → main()
+
+        container.register("openView", new OpenViewUseCase(
+            container.get<ILayoutEngine>("layout"),
+            container.get<ViewRegistry>("viewRegistry")
+        ));
+
+        container.register("addRecentProject", new AddRecentProjectUseCase(
+            container.get<MenuService>("menu"),
+            container.get<IEventBus>("eventBus")
+        ));
+
+        container.register("clearRecentProjects", new ClearRecentProjectsUseCase(
+            container.get<MenuService>("menu"),
+            container.get<IEventBus>("eventBus")
+        ));
+
+        container.register("setRenderer", new SetRendererUseCase(
+            container.get<IEventBus>("eventBus")
+        ));
+
+        container.register("viewRegistry", new ViewRegistry());
+
+        container.register("pluginManager", new PluginManager(
+            container.get("pluginRegistry"),
+            container.get("viewRegistry"),
+            container.get("eventBus"),
+            container.get("fileSystem") // ← Добавлено
+        ));
+        // Создаём и запускаем Ide
+        var ide = new Ide(container);
+        ide.startup();
+    }
+
+    private function startup():Void {
+        // Инициализация меню из шаблона (данные, а не nw.Menu)
+        //var menuTemplate = menuService.buildFromHtml(Element.byId("mainmenu").html());
+        // Регистрация обработчиков кликов (в UI-рендере или здесь)
+        // menuService.onItemClick("project.recents.${p}", onOpenRecent)
+
+        // Загрузка проекта из аргументов командной строки
+        var args = services.get<IPlatform>("platform").getAppArgs();
+        if (args.length > 0) {
+            loadProjectUseCase.execute(new FilePath(args[0]));
+        }
+
+        // Показ окна
+        windowService.show();
+    }
+
+    // === Ресурсоосвобождение (для dispose) ===
+    public function dispose():Void {
+        _projectLoadedUnsub();
+        _errorUnsub();
+        _layoutChangedUnsub();
+        _projectClosedUnsub();
+        // views.clear(), statusBar.dispose(), и т.д.
+    }
+}
+</file>
+
+<file path="presentation/styles/CssVariables.hx">
+package hide.presentation.styles;
+</file>
+
+<file path="presentation/styles/Theme.hx">
+package hide.presentation.styles;
+</file>
+
+<file path="presentation/ui/Dialog.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/Element.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/MenuBuilder.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/StatusBar.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/View.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/views/CdbTableView.hx">
+package hide.presentation.views;
+</file>
+
+<file path="presentation/views/ModelView.hx">
+package hide.presentation.views;
+</file>
+
+<file path="presentation/views/PrefabView.hx">
+package hide.presentation.views;
+</file>
+
+<file path="presentation/views/ScriptEditorView.hx">
+package hide.presentation.views;
+</file>
+
+<file path="shared/events/ErrorOccurred.hx">
+// hide/shared/events/ErrorOccurred.hx
+
+package hide.shared.events;
+
+typedef ErrorOccurred = {
+    var context:String; // название Use-Case (например, "LoadProjectUseCase")
+    var error:Dynamic;  // js.lib.Error, но Dynamic — safer для совместимости
+}
+</file>
+
+<file path="shared/events/FullscreenChanged.hx">
+// hide/shared/events/FullscreenChanged.hx
+
+package hide.shared.events;
+
+typedef FullscreenChanged = {
+    var enabled:Bool;
+}
+</file>
+
+<file path="shared/events/LayoutChanged.hx">
+// hide/shared/events/LayoutChanged.hx
+
+package hide.shared.events;
+
+typedef LayoutChanged = {};
+</file>
+
+<file path="shared/events/LayoutSaved.hx">
+// hide/shared/events/LayoutSaved.hx
+
+package hide.shared.events;
+
+typedef LayoutSaved = {};
+</file>
+
+<file path="shared/events/ProjectClosed.hx">
+// hide/shared/events/ProjectClosed.hx
+
+package hide.shared.events;
+
+typedef ProjectClosed = {};
+</file>
+
+<file path="shared/events/ProjectClosing.hx">
+// hide/shared/events/ProjectClosing.hx
+
+package hide.shared.events;
+
+typedef ProjectClosing = {
+    var isCancelled:Bool;
+}
+</file>
+
+<file path="shared/events/ProjectLoaded.hx">
+// hide/shared/events/ProjectLoaded.hx
+
+package hide.shared.events;
+
+import hide.domain.entities.Project;
+
+typedef ProjectLoaded = {
+    var project:Project;
+}
+</file>
+
+<file path="shared/events/RecentProjectsUpdated.hx">
+// hide/shared/events/RecentProjectsUpdated.hx
+
+package hide.shared.events;
+
+typedef RecentProjectsUpdated = {
+    var recentProjects:Array<String>;
+}
+</file>
+
+<file path="shared/events/RendererChanged.hx">
+// hide/shared/events/RendererChanged.hx
+
+package hide.shared.events;
+
+typedef RendererChanged = {
+    var rendererName:String;
+}
+</file>
+
+<file path="shared/events/ResourceOpened.hx">
+package hide.application.events;
+</file>
+
+<file path="shared/events/ViewOpened.hx">
+// hide/shared/events/ViewOpened.hx
+
+package hide.shared.events;
+
+import hide.domain.valueobjects.DisplayPosition;
+
+typedef ViewOpened = {
+    var viewName:String;
+    var state:Dynamic;
+    var position:DisplayPosition;
+}
+</file>
+
+<file path="shared/types/EventBusImpl.hx">
+// hide/shared/types/EventBusImpl.hx
+
+package hide.shared.types;
+
+class EventBusImpl implements IEventBus {
+    private var handlers:Map<String, Array<Dynamic->Void>> = [];
+
+    public function subscribe<T>(handler:T->Void):Void->Void {
+        var typeName = Type.getClassName(Type.getClass(handler));
+        if (handlers[typeName] == null) handlers[typeName] = [];
+        handlers[typeName].push(handler);
+
+        return function() {
+            handlers[typeName].remove(handler);
+            if (handlers[typeName].length == 0) handlers.remove(typeName);
+        };
+    }
+
+    public function publish<T>(event:T):Void {
+        var typeName = Type.getClassName(Type.getClass(event));
+        for (h in handlers[typeName] ?? []) {
+            h(event);
+        }
+    }
+}
+</file>
+
+<file path="shared/types/IEventBus.hx">
+// hide/shared/types/IEventBus.hx
+
+package hide.shared.types;
+
+/**
+ * Общий интерфейс для EventBus.
+ * Используется во всех слоях (domain, application, presentation).
+ * Предоставляет публикацию и подписку на события.
+ */
+interface IEventBus {
+    /**
+     * Подписка на событие типа T.
+     * Возвращает функцию-отписку.
+     */
+    public function subscribe<T>(handler:T->Void):Void->Void;
+
+    /**
+     * Публикация события.
+     */
+    public function publish<T>(event:T):Void;
+}
+</file>
+
+<file path="plugins.json">
+{
+  "plugins": [
+    {
+      "name": "ConsolePlugin",
+      "class": "plugins.ConsolePlugin",
+      "enabled": true,
+      "config": {
+        "defaultLogLevel": "info"
+      }
+    },
+    {
+      "name": "TerminalPlugin",
+      "class": "plugins.TerminalPlugin",
+      "enabled": false,
+      "config": {}
+    }
+  ]
+}
+</file>
+
+<file path="plugins/console/ConsoleViewFactory.hx">
+// plugins/console/ConsoleViewFactory.hx
+
+package plugins.console;
+
+import hide.domain.services.IViewFactory;
+import hide.domain.services.IElement;
+
+/**
+ * Реализация IViewFactory для ConsoleView.
+ * Использует IElement вместо js.html.Element.
+ */
+class ConsoleViewFactory implements IViewFactory {
+    public function create(container:IElement, state:Dynamic):Dynamic {
+        return new ConsoleView(container, state);
+    }
+}
+</file>
+
+<file path="plugins/ConsolePlugin.hx">
+// plugins/ConsolePlugin.hx
+
+package plugins;
+
+import hide.domain.services.IPlugin;
+import hide.application.services.ViewRegistry;
+import hide.shared.types.IEventBus;
+import hide.application.dto.ViewDto;
+import hide.domain.services.ILayoutEngine;
+
+/**
+ * Пример плагина, регистрирующего view "Консоль".
+ */
+class ConsolePlugin implements IPlugin {
+
+    public function new() {}
+
+    public function activate(viewRegistry:ViewRegistry, eventBus:IEventBus, config:Dynamic) {
+        // 1. Регистрация DTO
+        viewRegistry.add({
+            name: "console",
+            label: "Консоль",
+            description: "Консоль вывода логов",
+            icon: "fa-terminal",
+            defaultState: { logLevel: "info" }
+        });
+
+        // 2. Регистрация view-фабрики (если нужен ILayoutEngine)
+        // (если `ILayoutEngine` доступен — можно сразу зарегистрировать)
+        // Но лучше это сделать через ViewFactory:
+        //viewRegistry.registerView("console", ConsoleViewFactory);
+        //layout.registerView("console", new plugins.console.ConsoleViewFactory());
+        //viewRegistry.
+    }
+
+    public function deactivate():Void {
+        // Удаление view / отписка
+    }
+}
+
+// Вспомогательный класс-фабрика
+typedef ConsoleViewFactory = {
+    function create(container:js.html.Element, state:Dynamic):plugins.console.ConsoleView;
+}
+</file>
+
+<file path="shared/extensions/ArrayExt.hx">
+package shared.extensions;
+</file>
+
+<file path="shared/extensions/DateExt.hx">
+package shared.extensions;
+</file>
+
+<file path="shared/extensions/StringExt.hx">
+package shared.extensions;
+</file>
+
+<file path="shared/types/NonEmptyArray.hx">
+package shared.types;
+</file>
+
+<file path="shared/types/Option.hx">
+package shared.types;
+</file>
+
+<file path="shared/utils/AsyncUtils.hx">
+package shared.utils;
+</file>
+
+<file path="shared/utils/JsonUtils.hx">
+package shared.utils;
+</file>
+
+<file path="shared/utils/PathUtils.hx">
+package shared.utils;
+</file>
+
+<file path="plugins/console/ConsoleView.hx">
+// plugins/console/ConsoleView.hx
+
+package plugins.console;
+
+import hide.domain.services.IElement;
+
+class ConsoleView {
+    private var container:IElement;
+    private var logLevel:String;
+
+    public function new(container:IElement, state:Dynamic) {
+        this.container = container;
+        this.logLevel = state.logLevel != null ? state.logLevel : "info";
+
+        container.setInnerHtml("<div class='console'><div class='console-content'></div></div>");
+    }
+
+    public function log(level:String, message:String):Void {
+        if (shouldLog(level)) {
+            // Здесь можно добавить UI-логику
+            trace("[$level] $message");
+        }
+    }
+
+    private function shouldLog(level:String):Bool {
+        var levels = ["error", "warn", "info", "debug"];
+        var indexLevel = levels.indexOf(level);
+        var indexConfig = levels.indexOf(logLevel);
+        return indexLevel >= indexConfig;
+    }
+}
+</file>
+
+<file path="shared/types/Result.hx">
+package hide.shared.types;
+
+/**
+ * Generic Result type to represent Success or Failure without throwing exceptions.
+ * Used for cross-boundary communication between Application and Presentation layers.
+ */
+enum Result<T, E> {
+    Success(value: T);
+    Failure(error: E);
+}
+</file>
+
+</files>

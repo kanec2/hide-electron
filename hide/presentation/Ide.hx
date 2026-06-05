@@ -217,9 +217,9 @@ class Ide {
     public static function main():Void {
         var container = new ServiceContainer();
 
-        // Регистрация платформы
+        // 1. Регистрация платформы
         #if electron
-        container.register("platform", new ElectronPlatform());
+        container.register("platform", new ElectronPlatform()); // Убедись, что этот класс существует
         #elseif nw
         container.register("platform", new NwPlatform());
         #else
@@ -227,16 +227,23 @@ class Ide {
         #end
 
         var platform = container.get<IPlatform>("platform");
+        
+        // 2. Регистрация базовых сервисов
+        container.register("eventBus", new EventBusImpl());
+        container.register("viewRegistry", new ViewRegistry());
+        container.register("pluginRegistry", new PluginRegistry()); // ✅ ДОБАВЛЕНО
+        
+        // ✅ ДОБАВЛЕНО: Регистрация файловой системы (пример для Electron)
+        // Если используешь NW.js, замени на NwFileSystemAdapter
+        container.register("fileSystem", new hide.infrastructure.platform.electron.ElectronFileSystemAdapter());
 
-        // Регистрация сервисов
         container.register("window", new WindowService(platform.window));
         container.register("menu", new MenuService(platform.clipboard));
-        container.register("eventBus", new EventBusImpl());
         container.register("dialog", new DialogImpl());
         container.register("fileDialog", new FileDialogImpl());
         container.register("appInfo", new AppInfoImpl());
 
-        //Use-Cases
+        // 3. Регистрация Use-Cases
         container.register("saveLayout", new SaveLayoutUseCase(
             container.get<ILayoutEngine>("layout"),
             container.get<IEventBus>("eventBus")
@@ -271,12 +278,18 @@ class Ide {
         container.register("viewRegistry", new ViewRegistry());
 
         container.register("pluginManager", new PluginManager(
-            container.get<ViewRegistry>("viewRegistry"),
-            container.get<IEventBus>("eventBus")
+            container.get("pluginRegistry"),
+            container.get("viewRegistry"),
+            container.get("eventBus"),
+            container.get("fileSystem") // ← Добавлено
         ));
-        // Создаём и запускаем Ide
+
+        // 4. Запуск
         var ide = new Ide(container);
         ide.startup();
+
+        // 5. Загрузка плагинов после полного старта
+        container.get<PluginManager>("pluginManager").loadAll();
     }
 
     private function startup():Void {

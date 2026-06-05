@@ -1,22 +1,24 @@
 // hide/domain/services/IPlugin.hx
-
 package hide.domain.services;
 
-import hide.application.services.ViewRegistry;
-import hide.shared.types.IEventBus;
-
 /**
- * Интерфейс плагина.
- * Плагин регистрирует себя в ViewRegistry и LayoutEngine.
+ * Интерфейс доменного плагина.
+ * Не знает ничего о ViewRegistry, EventBus или UI.
  */
 interface IPlugin {
     /**
-     * Активирует плагин (регистрирует view, слушатели событий).
+     * Инициализирует внутреннюю логику плагина.
+     * Возвращает true, если инициализация прошла успешно.
      */
-    function activate(viewRegistry:ViewRegistry, eventBus:IEventBus):Void;
-
+    function activate():Bool;
+    
     /**
-     * Деактивирует плагин (удаляет зарегистрированные ресурсы).
+     * Очищает ресурсы плагина.
      */
     function deactivate():Void;
+    
+    /**
+     * Имя плагина (для логирования и реестра).
+     */
+    var name(get, never):String;
 }

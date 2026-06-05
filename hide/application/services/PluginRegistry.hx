@@ -20,6 +20,10 @@ class PluginRegistry {
         return plugins.get(name);
     }
 
+    public function getNames():Array<String> {
+        return [for (name in plugins.keys()) name];
+    }
+    
     public function remove(name:String):Bool {
         return plugins.remove(name);
     }

@@ -5,7 +5,6 @@ package hide.domain.services;
 import hide.domain.valueobjects.LayoutState;
 import hide.domain.valueobjects.DisplayPosition;
 
-import hide.shared.types.IEventBus; // ← ВАЖНО: из shared, а не domain
 /**
  * Доменный интерфейс для управления layout'ом.
  * НЕ зависит от GoldenLayout, HTML или платформы.
@@ -25,11 +24,6 @@ interface ILayoutEngine {
      * Сохраняет текущее состояние layout'а.
      */
     function save():LayoutState;
-
-    /**
-     * Закрытая вкладка → reopenLastClosed()
-     */
-    function reopenLastClosed():Void;
 
     /**
      * Закрывает текущий layout и освобождает ресурсы.
