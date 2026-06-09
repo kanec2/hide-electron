@@ -2,12 +2,12 @@ package hide.domain.services;
 
 import hide.domain.valueobjects.WindowBounds;
 import hide.domain.enums.WindowEvent;
-
+import hx.injection.Service;
 /**
  * Порт (интерфейс) для управления нативным окном.
  * НЕ знает ничего про Electron, NW.js или DOM.
  */
-interface IWindowManager {
+interface IWindowManager extends Service{
     function resizeBy(dw:Int, dh:Int):Void;
     function moveTo(x:Int, y:Int):Void;
     function maximize():Void;

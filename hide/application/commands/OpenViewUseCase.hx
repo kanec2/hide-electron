@@ -2,6 +2,7 @@
 
 package hide.application.commands;
 
+import hide.infrastructure.external.HtmlElement;
 import hide.domain.services.ILayoutEngine;
 import hide.domain.valueobjects.DisplayPosition;
 import hide.application.services.ViewRegistry;
@@ -26,13 +27,6 @@ class OpenViewUseCase {
         if (factory == null) {
             throw "View factory not found: $viewName";
         }
-
-        // Создать контейнер (если нужен)
-        var container = Browser.document.createElement("div");
-        container.id = "view-${viewName}";
-
-        // Создать view
-        factory.create(container, state);
 
         layoutEngine.open(viewName, state, position != null ? position : DisplayPosition.Center);
     }

@@ -1,0 +1,112 @@
+Я внимательно проанализировал файл `legacy/Ide.hx` (и связанные с ним части кодовой базы). Это классический "God Object": огромный монолитный класс (~1500+ строк), который смешивает в себе управление окном, бизнес-логику, рендеринг сцены (Heaps), работу с DOM, загрузку плагинов и глобальное состояние.
+
+Использование этого legacy-кода как **справочника по функциональности** (а не как шаблона для копирования) — это абсолютно правильная стратегия. Мы знаем, *что* должно работать, и теперь мы реализуем это *правильно*, используя Clean Architecture.
+
+Ниже представлен подробный план дальнейшей разработки, разбитый на логические фазы, с прямой картой переноса функционала из Legacy в новую архитектуру.
+
+---
+
+### 🗺️ Карта переноса: Legacy → Новая Архитектура
+
+| Функция в Legacy (`Ide.hx`) | Новый слой / Интерфейс | Новая реализация (Infrastructure) |
+| :--- | :--- | :--- |
+| `nw.Window.get().moveTo(...)` | `IWindowManager.moveTo()` | `ElectronWindowAdapter` / `NwWindowAdapter` |
+| `sys.io.File.getContent(...)` | `IFileSystem.readText()` | `ElectronFileSystemAdapter` |
+| `nw.Clipboard.get().set(...)` | `IClipboardService.set()` | `ElectronClipboardAdapter` |
+| `layout = new golden.Layout(...)`| `ILayoutEngine.init()` | `GoldenLayoutAdapter` |
+| `menu.find(...).click(...)` | `MenuService` + `IEventBus` | Парсинг HTML-шаблона + публикация событий |
+| `fileWatcher.register(...)` | `IFileSystem.watch()` (или отдельный сервис) | `ElectronFileWatcherAdapter` |
+| `hxd.res.Loader.currentInstance`| `IResourceLoader` | `HeapsResourceLoaderAdapter` (инкапсулирует глобальное состояние) |
+| `loadPlugin(...)` | `PluginManager.loadAll()` | Динамическая загрузка + регистрация через `ViewRegistry` |
+
+---
+
+### 🚀 Поэтапный план разработки (Roadmap)
+
+Не пытайтесь переписать всё сразу. Двигайтесь итеративно, добиваясь работоспособности на каждом этапе.
+
+#### 🔹 Фаза 1: Фундамент и "Hello World" (Инфраструктура)
+*Цель: Запустить приложение, показать пустое окно с GoldenLayout и убедиться, что DI работает.*
+
+1. **Завершить `ElectronFileSystemAdapter`**:
+   - Реализовать методы `exists`, `readText`, `writeText`, `getAppDataPath` через `js.Node.require("fs")` и `js.Node.require("path")`.
+   - Добавить обработку ошибок (выбрасывать `FileNotFoundError` из `domain.exceptions`).
+2. **Реализовать `ElectronWindowAdapter`**:
+   - Обернуть вызовы `ElectronBackend` в чистый интерфейс `IWindowManager`.
+   - Реализовать проброс событий (`Focus`, `Blur`, `Resize`) через `IEventBus` или колбэки.
+3. **Настроить `GoldenLayoutAdapter`**:
+   - Убедиться, что `init()` корректно создает дефолтный лейаут (Left, Center, Right), если сохраненного состояния нет.
+   - Реализовать заглушку для `registerView`, которая просто выводит `trace("View $type created")` в консоль.
+4. **Связать всё в `Ide.main()`**:
+   - Убедиться, что `ServiceContainer` корректно создает `Ide`, и вызывается `startup()`, который показывает окно.
+
+#### 🔹 Фаза 2: Базовый поток "Открыть проект" (Application Layer)
+*Цель: Воспроизвести базовый сценарий: Меню -> Открыть файл -> Загрузка данных -> Обновление UI.*
+
+1. **Реализовать `MenuService`**:
+   - Взять логику парсинга HTML из `legacy/Ide.hx` (`buildFromHtml`), но сделать её чистой: парсить в `MenuTemplate` (DTO), а не манипулировать DOM напрямую.
+   - Реализовать динамическое добавление "Recent Projects" и "Renderers" в DTO.
+2. **Реализовать `LoadProjectUseCase`**:
+   - Использовать `IFileSystem` для чтения `props.json` или основного файла проекта.
+   - Распарсить в доменную сущность `Project`.
+   - Опубликовать событие `ProjectLoaded` через `IEventBus`.
+3. **Обновить `Ide.hx` (Presentation)**:
+   - Подписаться на `ProjectLoaded` и обновить `StatusBar` и заголовок окна (`windowService.setTitle`).
+   - Реализовать `onMenuOpenProject`, вызывающий `IFileDialog` (пока можно использовать заглушку или `js.Browser.window.prompt` для теста).
+
+#### 🔹 Фаза 3: Система View и Интеграция с UI
+*Цель: Научиться открывать реальные вкладки в GoldenLayout.*
+
+1. **Завершить `ViewRegistry` и `IViewFactory`**:
+   - Создать первую реальную фабрику, например, `FileBrowserViewFactory`.
+   - Реализовать `FileBrowserView`, который принимает `IElement` и рендерит внутри него простой HTML-список (пока хардкод).
+2. **Реализовать `OpenViewUseCase`**:
+   - Получить фабрику из `ViewRegistry`.
+   - Вызвать `layoutEngine.open()`, передав имя компонента и состояние.
+   - `GoldenLayoutAdapter` должен использовать фабрику для создания контента внутри контейнера GoldenLayout.
+3. **Реализовать `SaveLayoutUseCase`**:
+   - Вызвать `layout.toConfig()`, преобразовать в `LayoutState` и сохранить через `IFileSystem` в конфиг пользователя.
+
+#### 🔹 Фаза 4: Интеграция Heaps (Самая сложная часть)
+*Цель: Запустить 3D/2D сцену внутри вкладки, не ломая глобальное состояние.*
+
+> ⚠️ **Критическое предупреждение из Legacy:** В старом коде `h3d.Engine.getCurrent()` и `hxd.res.Loader.currentInstance` были глобальными. В новой архитектуре каждая вкладка со сценой должна иметь *свой* изолированный контекст или мы должны четко контролировать переключение `engine.setCurrent()`.
+
+1. **Создать `HeapsSceneViewFactory`**:
+   - Реализовать `IViewFactory`, который создает `IElement` (HTML-див).
+2. **Реализовать `HeapsEngineAdapter` (или `SceneController`)**:
+   - При создании view инициализировать `h3d.Engine` или `h2d.Scene`, привязанный к этому конкретному `IElement`.
+   - Инкапсулировать `hxd.res.Loader` для этой сцены, чтобы ресурсы не конфликтовали.
+   - Реализовать цикл обновления (`hxd.Timer`) только для активных видимых сцен (оптимизация из Legacy `unfocusCPUSavingMode`).
+3. **Перенести `ModelView` / `PrefabView`**:
+   - Взять логику загрузки `.hmd` / `.fbx` из Legacy, но переписать её так, чтобы она использовала новый `IResourceLoader` и `IFileSystem`, а не прямые вызовы `sys.io`.
+
+#### 🔹 Фаза 5: Продвинутые функции и Плагины
+*Цель: Достичь паритета с основными фичами Legacy.*
+
+1. **Улучшить `PluginManager`**:
+   - В Legacy плагины были просто JS/CSS файлами. В новой архитектуре сделайте так, чтобы плагин мог регистрировать свои `IViewFactory` и `UseCase` через DI.
+   - Реализовать загрузку `plugins.json` через `IFileSystem`.
+2. **Реализовать `DragDropController`**:
+   - Перенести логику `body.ondragover`, `body.ondrop` из Legacy.
+   - Сделать её чистой: контроллер слушает события на `IElement`, определяет тип файла через `IFileSystem`, и вызывает соответствующий `UseCase` (например, `OpenResourceUseCase`).
+3. **Глобальный поиск (`filterPaths`)**:
+   - Вынести огромную функцию `filterPaths` из Legacy в отдельный `SearchProjectUseCase`.
+   - Разбить её на читаемые части: обход файлов, проверка совпадений, возврат `Array<RefViewer.Reference>`.
+
+---
+
+### 🛑 "Красные флаги" Legacy-кода (Чего НЕЛЬЗЯ делать в новом коде)
+
+1. **Прямые вызовы `nw.*` или `js.Node.*` вне слоя Infrastructure**. Если вы видите `js.Node.require` в `application` или `presentation` — это нарушение архитектуры.
+2. **Использование `Ide.inst` как глобальной свалки**. В новом коде все зависимости должны приходить через конструктор (DI). Если чему-то нужен `EventBus`, он должен требовать `IEventBus` в конструкторе, а не делать `Ide.inst.eventBus`.
+3. **Синхронная блокировка UI**. В Legacy есть `sys.io.File.getContent`. В Electron это может подвесить рендер-процесс. По возможности используйте асинхронные обещания (`Promise` или `tink.core.Future`), особенно для `LoadProjectUseCase`.
+4. **Мутация переданных объектов**. В `filterPaths` Legacy код мутирует объекты prefab'а напрямую. В новой архитектуре UseCase должен возвращать новый объект или явно сохранять изменения через `IFileSystem`.
+
+---
+
+### ▶️ Ваш следующий шаг
+
+Я рекомендую начать с **Фазы 1, Шага 1**. Это даст быстрый видимый результат и заложит надежный фундамент.
+
+**Хотите, чтобы я написал полную, готовую к использованию реализацию `ElectronFileSystemAdapter.hx` с правильной обработкой ошибок и типами `FilePath`, или мы начнем с настройки `GoldenLayoutAdapter`?**

@@ -24,29 +24,40 @@ class ElectronFileSystemAdapter implements IFileSystem {
     public function exists(filePath:FilePath):Bool {
         return fs.existsSync(filePath.toString());
     }
-    
+
     public function readText(filePath:FilePath):String {
         if (!exists(filePath)) {
             throw new FileNotFoundError(filePath);
         }
-        return fs.readFileSync(filePath.toString(), "utf-8");
+        try {
+            return fs.readFileSync(filePath, "utf-8");
+        } catch (e:Dynamic) {
+            throw new FileNotFoundError(filePath); // Или IOError, если есть такой класс
+        }
     }
     
     public function writeText(filePath:FilePath, content:String):Void {
-        var dir = path.dirname(filePath.toString());
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
+        try {
+            var dir = path.dirname(filePath);
+            // Автоматически создаём все необходимые родительские директории
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            fs.writeFileSync(filePath, content, "utf-8");
+        } catch (e:Dynamic) {
+            throw 'Failed to write file: $filePath. Error: $e';
         }
-        fs.writeFileSync(filePath.toString(), content, "utf-8");
     }
     
     public function listFiles(filePath:FilePath, ?recursive:Bool = false):Array<FilePath> {
         var result:Array<FilePath> = [];
         
         function scan(dir:String) {
-            for (entry in fs.readdirSync(dir)) {
+            var entries = fs.readdirSync(dir);
+            for (entry in entries) {
                 var fullPath = path.join(dir, entry);
                 var stat = fs.statSync(fullPath);
+                
                 if (stat.isDirectory() && recursive) {
                     scan(fullPath);
                 } else if (stat.isFile()) {
@@ -54,12 +65,15 @@ class ElectronFileSystemAdapter implements IFileSystem {
                 }
             }
         }
-        
-        scan(filePath.toString());
+
+        if (exists(filePath)) {
+            scan(filePath);
+        }
         return result;
     }
     
     public function getAppDataPath():FilePath {
+        // В Electron это возвращает путь к папке пользовательских данных (например, AppData/Roaming/YourApp)
         return new FilePath(app.getPath("userData"));
     }
 }

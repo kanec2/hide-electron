@@ -5,12 +5,12 @@
   "description": "A minimal Electron application",
   "repository": "https://github.com/tong/hxelectron",
   "main": "main.js",
-  "window":{
+  "window": {
     "title": "Custom Hide",
     "url": "app.html",
-    "width": 1000, 
+    "width": 1000,
     "height": 700,
-    "frame": true, 
+    "frame": true,
     "icon": "icon-192.png"
   },
   "scripts": {
@@ -21,8 +21,9 @@
     "start": "electron . --no-sandbox --enable-logging --unbuffered"
   },
   "devDependencies": {
-    "electron": "v40.1.0",
     "@electron/rebuild": "^3.7.0",
-    "jquery": "3.2.1"
+    "electron": "v40.1.0",
+    "jquery": "3.2.1",
+    "lix": "^16.0.2"
   }
 }

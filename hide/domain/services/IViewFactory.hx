@@ -1,8 +1,8 @@
 // hide/domain/services/IViewFactory.hx
 
 package hide.domain.services;
-
-interface IViewFactory {
+import hx.injection.Service;
+interface IViewFactory extends Service{
     /**
      * Создаёт view-компонент внутри указанного контейнера.
      */

@@ -1,7 +1,7 @@
 // hide/shared/types/IEventBus.hx
 
 package hide.shared.types;
-
+import tink.core.CallbackLink;
 /**
  * Общий интерфейс для EventBus.
  * Используется во всех слоях (domain, application, presentation).
@@ -9,13 +9,15 @@ package hide.shared.types;
  */
 interface IEventBus {
     /**
-     * Подписка на событие типа T.
-     * Возвращает функцию-отписку.
+     * Подписка на событие.
+     * @param eventClass Класс события (нужен для определения типа в рантайме)
+     * @param handler Функция-обработчик
+     * @return Ссылка для отписки (вызовите .cancel() для удаления слушателя)
      */
-    public function subscribe<T>(handler:T->Void):Void->Void;
+    function subscribe<T>(eventClass:Class<T>, handler:T->Void):CallbackLink;
 
     /**
      * Публикация события.
      */
-    public function publish<T>(event:T):Void;
+    function publish<T>(eventClass:Class<T>, event:T):Void;
 }

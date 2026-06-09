@@ -2,12 +2,12 @@ package hide.domain.services;
 
 import hide.domain.valueobjects.FilePath;
 import hide.domain.exceptions.FileNotFoundError;
-
+import hx.injection.Service;
 /**
  * Порт (интерфейс) для файловой системы.
  * Не зависит от реализации (Electron, NW.js, Node, Browser).
  */
-interface IFileSystem {
+interface IFileSystem extends Service{
     /**
      * Проверяет существование файла/директории.
      * @throws FileNotFoundError если путь невалиден

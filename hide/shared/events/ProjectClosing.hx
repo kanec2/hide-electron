@@ -1,7 +1,9 @@
 // hide/shared/events/ProjectClosing.hx
 
 package hide.shared.events;
-
-typedef ProjectClosing = {
-    var isCancelled:Bool;
+class ProjectClosing {
+    public isCancelled:Bool;
+    public function new(isCancelled:Bool) {
+        this.isCancelled = isCancelled;
+    }
 }

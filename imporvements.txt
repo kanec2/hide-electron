@@ -1,0 +1,123 @@
+Да, конечно. Я проанализировал весь предоставленный код (включая пустые файлы, логику и архитектурные связи) и составил **полный, структурированный список предложений**. 
+
+Он разделен на 5 категорий: от критических ошибок, которые не дадут проекту скомпилироваться, до архитектурных улучшений и плана заполнения пустых файлов.
+
+---
+
+### 🚨 1. Критические исправления (Блокируют компиляцию или ломают логику)
+
+Эти ошибки нужно исправить в первую очередь, иначе проект не соберется или упадет при запуске.
+
+1. **Конфликт типов в `presentation/Ide.hx`**:
+   - *Проблема:* Поле `views` объявлено как `Array<ViewDto>`, но в конструкторе есть строка `views = new Map();`.
+   - *Решение:* Удалить строку `views = new Map();`. Массив инициализируется через `viewRegistry.all()`.
+2. **Необъявленная переменная в `presentation/Ide.hx`**:
+   - *Проблема:* Используется `_projectClosedUnsub`, но оно не объявлено в полях класса (в отличие от `_projectLoadedUnsub`).
+   - *Решение:* Добавить `private var _projectClosedUnsub:CallbackLink;` в начало класса.
+3. **Неизвестная переменная `Center` в `LayoutHistoryService.hx`**:
+   - *Проблема:* Вызов `layoutEngine.open(..., Center)` вызовет ошибку компиляции.
+   - *Решение:* Заменить на `hide.domain.valueobjects.DisplayPosition.Center` (и добавить импорт).
+4. **Потеря данных в `SaveLayoutUseCase.hx`**:
+   - *Проблема:* Вы получаете `state`, но в событие передаете пустой объект: `eventBus.publish(new LayoutSaved({}))`.
+   - *Решение:* Изменить на `eventBus.publish(new LayoutSaved(state))` (убедившись, что конструктор `LayoutSaved` принимает `LayoutState`).
+5. **Несоответствие типов в `MenuService.hx`**:
+   - *Проблема:* Импортируется `MenuItemDto`, но в коде используется тип `MenuItem` (например, `Array<MenuItem>`).
+   - *Решение:* Привести всё к единому имени, например, переименовать `MenuItemDto.hx` в `MenuItem.hx` или заменить все упоминания `MenuItem` на `MenuItemDto`.
+
+---
+
+### 🏗️ 2. Архитектурные улучшения (Clean Architecture)
+
+Чтобы ваша архитектура действительно работала как Hexagonal/Clean, а не просто выглядела как она.
+
+1. **Полный переход на `haxe-injection`**:
+   - *Проблема:* Самописный `ServiceContainer` в `Ide.hx` является антипаттерном Service Locator и усложняет тестирование.
+   - *Решение:* Использовать `ServiceCollection` и `ServiceProvider` из `haxe-injection`. Вынести регистрацию в `infrastructure/di/AppModule.hx` (как мы обсуждали ранее).
+2. **Рефакторинг создания плагинов в `PluginManager.hx`**:
+   - *Проблема:* Сейчас используется жесткая рефлексия: `Type.createInstance(pluginClass, [viewRegistry, eventBus, config])`. Если плагину понадобится `IFileSystem`, код сломается.
+   - *Решение:* Внедрить `ServiceProvider` в `PluginManager`. Тогда создание плагина будет выглядеть так: `var plugin = provider.getService(pluginClass);`. Это делегирует разрешение зависимостей DI-контейнеру.
+3. **Отсутствие интерфейсов, на которые ссылается код**:
+   - *Проблема:* В `Ide.hx` используются `IPlatform`, `IFileDialog`, `IDialog`, `IAppInfo`, но этих файлов **нет** в предоставленном списке.
+   - *Решение:* Создать эти интерфейсы в `domain/services/` или `shared/types/` и реализовать их в `infrastructure/`.
+4. **Утечка абстракций в `EventBusImpl.hx`**:
+   - *Проблема:* Использование `cast` и `Dynamic` для сигналов делает EventBus небезопасным по типам.
+   - *Решение:* Оставить как есть для простоты (это распространенный компромисс в Haxe), но обязательно добавить `-lib tink_core` в зависимости, так как используются `tink.core.Signal` и `CallbackLink`.
+
+---
+
+### 🧩 3. Список пустых или незавершенных файлов (Требуют реализации)
+
+Вот приоритетный список файлов, которые сейчас пустые или содержат только заглушки, но критически важны для работы IDE:
+
+**Application Layer (Use Cases & Services):**
+- `application/commands/BuildProjectUseCase.hx` – Логика сборки.
+- `application/commands/OpenResourceUseCase.hx` – Открытие файла в нужном View.
+- `application/services/ProjectService.hx` – Оркестрация состояния проекта.
+- `application/services/ResourceService.hx` – Управление ресурсами проекта.
+- `application/services/ClipboardService.hx` – Обертка над буфером обмена.
+
+**Domain Layer (Entities & Interfaces):**
+- `domain/entities/Resource.hx` – Сущность ресурса (путь, тип, метаданные).
+- `domain/entities/Database.hx` – Сущность базы данных (CDB).
+- `domain/services/IResourceLoader.hx` – Интерфейс загрузчика ресурсов (нужен для `LoadProjectUseCase`).
+- `domain/exceptions/FileNotFoundError.hx` – (Сделать `class FileNotFoundError extends haxe.Exception`)
+- `domain/exceptions/ProjectLoadError.hx`
+
+**Infrastructure Layer (Adapters):**
+- `infrastructure/external/MonacoEditorAdapter.hx` – **Критически важно**. Должен реализовывать `IViewFactory` или оборачивать `monaco.editor.create` для использования в GoldenLayout.
+- `infrastructure/persistence/LocalStorageRepository.hx` – Сохранение настроек IDE.
+
+**Presentation Layer (UI):**
+- `presentation/ui/StatusBar.hx` – Заглушка, но вызывается в `Ide.hx`.
+- `presentation/ui/Dialog.hx` – Заглушка для модальных окон.
+- `presentation/ui/Element.hx` – Заглушка для DOM-обертки (хотя есть `infrastructure/external/HtmlElement.hx`, возможно, их нужно объединить).
+
+---
+
+### 🧹 4. Технический долг и рефакторинг
+
+1. **Огромный файл `legacy/Ide.hx`**:
+   - *Проблема:* Этот файл содержит >1000 строк старого кода, жестко привязанного к NW.js и Heaps. Он создает шум и может вызвать конфликты имен с новым `presentation/Ide.hx`.
+   - *Решение:* Если новый `Ide.hx` является полноценной заменой, переместите `legacy/Ide.hx` в папку `_archive` или удалите его. Если он еще нужен, переименуйте его в `LegacyIde.hx`, чтобы избежать путаницы.
+2. **Магические строки (Magic Strings)**:
+   - *Проблема:* В коде много строк вроде `"view.editor"`, `"project.open"`, `"editor"`, `"project"`.
+   - *Решение:* Создать `enum abstract` для идентификации View и Menu. Например:
+     ```haxe
+     enum abstract ViewId(String) from String to String {
+         var Editor = "editor";
+         var Project = "project";
+         var Console = "console";
+     }
+     ```
+3. **Обработка ошибок в `LoadProjectUseCase.hx`**:
+   - *Проблема:* Блок `catch (e:Dynamic)` ловит всё подряд.
+   - *Решение:* Ловить конкретные исключения (`FileNotFoundError`, `ProjectLoadError`) и мапить их в понятные сообщения для `ErrorOccurred`.
+
+---
+
+### 🛠️ 5. Инфраструктура и сборка (HXML / Haxelib)
+
+1. **Обновите `haxelib.json` или `.hxml` файлы**:
+   Убедитесь, что там прописаны все необходимые библиотеки. Сейчас в `extraParams.hxml` только `Json2Object`. Должно быть примерно так:
+   ```hxml
+   -lib haxe-injection
+   -lib tink_core
+   -lib hxnodejs       # Для типов Node.js (fs, path, electron)
+   -lib Json2Object
+   ```
+2. **Настройка Conditional Compilation (Условная компиляция)**:
+   В `AppModule.hx` уже есть `#if electron` / `#elseif nw`. Убедитесь, что ваш `build.hxml` передает эти флаги (например, `-D electron`), иначе адаптеры не подключатся.
+
+---
+
+### 🚀 Рекомендуемый порядок действий (Roadmap)
+
+Если вы хотите системно привести проект в порядок, действуйте в таком порядке:
+
+1. **Шаг 1: Исправление компиляции.** Примените исправления из раздела **1 (Критические исправления)**.
+2. **Шаг 2: Настройка DI.** Создайте `AppModule.hx`, подключите `haxe-injection` и перепишите `main()` в `Ide.hx`, убрав самописный `ServiceContainer`.
+3. **Шаг 3: Заполнение критических заглушек.** Реализуйте `FileNotFoundError.hx`, `StatusBar.hx` и базовый `MonacoEditorAdapter.hx`.
+4. **Шаг 4: Рефакторинг плагинов.** Измените `PluginManager`, чтобы он использовал DI-контейнер для создания экземпляров плагинов, а не жесткий `Type.createInstance`.
+5. **Шаг 5: Чистка.** Уберите или заархивируйте `legacy/Ide.hx`.
+
+Хотите, чтобы я написал **готовый код** для какого-то конкретного пункта из этого списка? (Например, для `MonacoEditorAdapter.hx`, `AppModule.hx` или исправленного `PluginManager.hx`?)

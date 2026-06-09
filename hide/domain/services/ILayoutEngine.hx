@@ -4,12 +4,12 @@ package hide.domain.services;
 
 import hide.domain.valueobjects.LayoutState;
 import hide.domain.valueobjects.DisplayPosition;
-
+import hx.injection.Service;
 /**
  * Доменный интерфейс для управления layout'ом.
  * НЕ зависит от GoldenLayout, HTML или платформы.
  */
-interface ILayoutEngine {
+interface ILayoutEngine extends Service{
     /**
      * Инициализирует layout из сохранённого состояния.
      */
@@ -39,7 +39,7 @@ interface ILayoutEngine {
     /**
      * Регистрация view-фабрик (через IElement)
      */
-    function registerView(type:String, factory:IViewFactory):Void
+    function registerView(type:String, factory:IViewFactory):Void;
 
 
 }

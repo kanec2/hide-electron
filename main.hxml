@@ -1,6 +1,8 @@
 -js main.js
 -main ElectronMain
 -lib electron
+-lib tink_core
+-lib haxe-injection
 -dce full
 --debug
 -D no-deprecation-warnings

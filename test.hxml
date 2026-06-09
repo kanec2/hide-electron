@@ -1,0 +1,5 @@
+-cp src
+-lib haxe-injection
+
+-main TestMain
+--interp

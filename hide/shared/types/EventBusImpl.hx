@@ -1,25 +1,32 @@
 // hide/shared/types/EventBusImpl.hx
-
 package hide.shared.types;
-
+import tink.core.Signal;
+import tink.core.CallbackLink;
 class EventBusImpl implements IEventBus {
-    private var handlers:Map<String, Array<Dynamic->Void>> = [];
+    // Храним сигналы по имени класса. Используем Dynamic, так как дженерики в Haxe стираются в рантайме.
+    private var signals:Map<String, Signal<Dynamic>> = [];
 
-    public function subscribe<T>(handler:T->Void):Void->Void {
-        var typeName = Type.getClassName(Type.getClass(handler));
-        if (handlers[typeName] == null) handlers[typeName] = [];
-        handlers[typeName].push(handler);
+    public function new() {}
 
-        return function() {
-            handlers[typeName].remove(handler);
-            if (handlers[typeName].length == 0) handlers.remove(typeName);
-        };
+    public function subscribe<T>(eventClass:Class<T>, handler:T->Void):CallbackLink {
+        var typeName = Type.getClassName(eventClass);
+        
+        if (!signals.exists(typeName)) {
+            // Создаем новый сигнал для этого типа события
+            signals.set(typeName, cast new Signal<Dynamic>());
+        }
+
+        var signal = signals.get(typeName);
+        // Приводим handler к Dynamic->Void, чтобы Signal мог его принять
+        return signal.handle(cast handler);
     }
 
-    public function publish<T>(event:T):Void {
-        var typeName = Type.getClassName(Type.getClass(event));
-        for (h in handlers[typeName] ?? []) {
-            h(event);
+    public function publish<T>(eventClass:Class<T>, event:T):Void {
+        var typeName = Type.getClassName(eventClass);
+        
+        if (signals.exists(typeName)) {
+            var signal = signals.get(typeName);
+            signal.trigger(cast event);
         }
     }
 }

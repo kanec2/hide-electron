@@ -18,6 +18,7 @@ class SaveLayoutUseCase {
 
     public function execute():Void {
         var state:LayoutState = layoutEngine.save(); // ← получаем состояние
-        eventBus.publish(new LayoutSaved({}));
+        // ИСПРАВЛЕНО: передаем реальное состояние, а не пустой объект {}
+        eventBus.publish(new LayoutSaved(state)); 
     }
 }

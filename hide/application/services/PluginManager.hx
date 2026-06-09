@@ -38,7 +38,7 @@ class PluginManager {
             saveConfig();
         }
     }
-    
+
     public function loadAll():Void {
         for (pluginConfig in config.plugins) {
             if (!pluginConfig.enabled) continue;
@@ -46,9 +46,11 @@ class PluginManager {
 
             try {
                 var plugin = loadPlugin(pluginConfig);
-                if (plugin != null) {
-                    plugin.activate(); // ✅ Вызываем БЕЗ аргументов!
+                // ✅ Проверяем результат activate()
+                if (plugin != null && plugin.activate()) {
                     registry.add(pluginConfig.name, plugin);
+                } else if (plugin != null) {
+                    trace('Plugin ${pluginConfig.name} activation returned false');
                 }
             } catch (e:Dynamic) {
                 trace('Failed to load plugin: ${pluginConfig.name} - ${e}');
@@ -88,10 +90,9 @@ class PluginManager {
                 saveConfig();
                 
                 var plugin = loadPlugin(pluginConfig);
-                if (plugin != null) {
-                    plugin.activate(); // ✅ Без аргументов
+                // ✅ Проверяем результат
+                if (plugin != null && plugin.activate()) {
                     registry.add(name, plugin);
-                    // ❌ УДАЛЕНО: enabledPlugins.set(name, plugin); (переменной не существует)
                     return true;
                 }
                 return false;
@@ -99,6 +100,7 @@ class PluginManager {
         }
         return false;
     }
+
 
     public function disable(name:String):Bool {
         for (pluginConfig in config.plugins) {

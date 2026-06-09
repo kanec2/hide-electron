@@ -56,8 +56,8 @@ application/dto/ResourceMetadataDto.hx
 application/dto/ViewDto.hx
 application/dto/WindowBoundsDto.hx
 application/services/ClipboardService.hx
+application/services/LayoutHistoryService.hx
 application/services/MenuService.hx
-application/services/PluginFactory.hx
 application/services/PluginManager.hx
 application/services/PluginRegistry.hx
 application/services/ProjectService.hx
@@ -333,6 +333,7 @@ package hide.application.commands;
 
 package hide.application.commands;
 
+import hide.infrastructure.external.HtmlElement;
 import hide.domain.services.ILayoutEngine;
 import hide.domain.valueobjects.DisplayPosition;
 import hide.application.services.ViewRegistry;
@@ -357,13 +358,6 @@ class OpenViewUseCase {
         if (factory == null) {
             throw "View factory not found: $viewName";
         }
-
-        // Создать контейнер (если нужен)
-        var container = Browser.document.createElement("div");
-        container.id = "view-${viewName}";
-
-        // Создать view
-        factory.create(container, state);
 
         layoutEngine.open(viewName, state, position != null ? position : DisplayPosition.Center);
     }
@@ -484,6 +478,34 @@ package hide.application.dto;
 package hide.application.services;
 </file>
 
+<file path="application/services/LayoutHistoryService.hx">
+package hide.application.services;
+
+// hide/application/services/LayoutHistoryService.hx
+class LayoutHistoryService {
+    private var history:Array<{name:String, state:Dynamic}> = [];
+    private var layoutEngine:ILayoutEngine;
+
+    // ✅ ИСПРАВЛЕНО: Убраны "...", добавлена реальная инициализация
+    public function new(layoutEngine:ILayoutEngine) {
+        this.layoutEngine = layoutEngine;
+    }
+
+    public function pushToHistory(name:String, state:Dynamic):Void {
+        history.push({name: name, state: state});
+        if (history.length > 20) history.shift(); // Лимит истории
+    }
+
+    public function reopenLast():Void {
+        var last = history.pop();
+        if (last != null) {
+            // Используем стандартный open, но без сохранения в историю, чтобы не было цикла
+            layoutEngine.open(last.name, last.state, Center); 
+        }
+    }
+}
+</file>
+
 <file path="application/services/MenuService.hx">
 package hide.application.services;
 
@@ -529,9 +551,9 @@ class MenuService {
         return { items: items };
     }
 
-    public function addItem(id:String, label:String):Void {
-        menuItems.push({ id: id, label: label });
-    }
+    public function addItem(id:String, label:String, ?icon:String):Void {
+    menuItems.push({ id: id, label: label, icon: icon });
+}
 
     public function addViewMenu(view:ViewDto):Void {
         var id = "view.${view.name}";
@@ -557,65 +579,28 @@ typedef MenuConfig = {
 }
 </file>
 
-<file path="application/services/PluginFactory.hx">
-// hide/application/services/PluginFactory.hx
-
-package hide.application.services;
-
-import hide.domain.services.IPlugin;
-import haxe.macro.Expr;
-
-/**
- * Фабрика плагинов.
- * Загружает плагины динамически, используя рефлексию.
- */
-class PluginFactory {
-    public static function load(className:String):Null<IPlugin> {
-        try {
-            var pluginClass = Type.resolveClass(className);
-            if (pluginClass == null) return null;
-
-            var plugin = Type.createInstance(pluginClass, []);
-            if (!Std.is(plugin, IPlugin)) return null;
-
-            return cast plugin;
-        } catch (e:Dynamic) {
-            trace("Failed to load plugin: $className - ${e}");
-            return null;
-        }
-    }
-}
-</file>
-
 <file path="application/services/PluginManager.hx">
-// hide/application/services/PluginManager.hx
-
 package hide.application.services;
 
 import hide.shared.types.IEventBus;
 import hide.domain.services.IPlugin;
-import hide.domain.services.IFileSystem; // ← Используем порт домена
-import hide.shared.types.FilePath;       // ← Value Object для путей
+import hide.domain.services.IFileSystem;
+import hide.shared.types.FilePath;
 import haxe.Json;
-/**
- * Управляет загрузкой и активацией плагинов.
- * Плагины загружаются из plugins.json, но инициализируются через PluginRegistry.
- */
+
 class PluginManager {
     private var registry:PluginRegistry;
     private var viewRegistry:ViewRegistry;
     private var eventBus:IEventBus;
-    private var fileSystem:IFileSystem; // ← Внедренная зависимость
-    
+    private var fileSystem:IFileSystem;
     private var configPath:FilePath;
     private var config:PluginsConfig;
-    private var enabledPlugins:Map<String, IPlugin> = [];
 
     public function new(
         registry:PluginRegistry,
         viewRegistry:ViewRegistry,
         eventBus:IEventBus,
-        fileSystem:IFileSystem, // ← Внедряем через DI
+        fileSystem:IFileSystem,
         ?configPathStr:String = "plugins.json"
     ) {
         this.registry = registry;
@@ -623,7 +608,6 @@ class PluginManager {
         this.eventBus = eventBus;
         this.fileSystem = fileSystem;
         this.configPath = new FilePath(configPathStr);
-
         loadConfig();
     }
 
@@ -636,31 +620,25 @@ class PluginManager {
             saveConfig();
         }
     }
-    
-    /**
-     * Загружает и активирует все включенные плагины из конфига.
-     */
+
     public function loadAll():Void {
         for (pluginConfig in config.plugins) {
             if (!pluginConfig.enabled) continue;
-            
-            // Если уже загружен, пропускаем
-            if (enabledPlugins.exists(pluginConfig.name)) continue;
+            if (registry.get(pluginConfig.name) != null) continue;
 
             try {
                 var plugin = loadPlugin(pluginConfig);
-                if (plugin != null) {
-                    plugin.activate(viewRegistry, eventBus);
+                // ✅ Проверяем результат activate()
+                if (plugin != null && plugin.activate()) {
                     registry.add(pluginConfig.name, plugin);
-                    enabledPlugins.set(pluginConfig.name, plugin);
+                } else if (plugin != null) {
+                    trace('Plugin ${pluginConfig.name} activation returned false');
                 }
             } catch (e:Dynamic) {
                 trace('Failed to load plugin: ${pluginConfig.name} - ${e}');
             }
         }
     }
-
-    // hide/application/services/PluginManager.hx
 
     private function loadPlugin(pluginConfig:PluginConfig):Null<IPlugin> {
         var className = pluginConfig.class;
@@ -672,8 +650,7 @@ class PluginManager {
         }
 
         try {
-            // Ожидаем, что конструктор плагина имеет сигнатуру: 
-            // new(viewRegistry: ViewRegistry, eventBus: IEventBus, config: Dynamic)
+            // ✅ Передаем ВСЕ зависимости в конструктор плагина
             var args = [viewRegistry, eventBus, pluginConfig.config != null ? pluginConfig.config : {}];
             var plugin = Type.createInstance(pluginClass, args);
 
@@ -683,49 +660,40 @@ class PluginManager {
             }
             return cast plugin;
         } catch (e:Dynamic) {
-            trace('Failed to instantiate plugin $className. Check constructor signature. Error: ${e}');
+            trace('Failed to instantiate plugin $className. Error: ${e}');
             return null;
         }
     }
 
-    /**
-     * Включает плагин, сохраняет конфиг и сразу загружает его.
-     */
     public function enable(name:String):Bool {
         for (pluginConfig in config.plugins) {
             if (pluginConfig.name == name && !pluginConfig.enabled) {
                 pluginConfig.enabled = true;
                 saveConfig();
                 
-                // Сразу загружаем и активируем
                 var plugin = loadPlugin(pluginConfig);
-                if (plugin != null) {
-                    plugin.activate(viewRegistry, eventBus);
+                // ✅ Проверяем результат
+                if (plugin != null && plugin.activate()) {
                     registry.add(name, plugin);
-                    enabledPlugins.set(name, plugin);
                     return true;
                 }
-                return false; // Не удалось загрузить
+                return false;
             }
         }
-        return false; // Не найден или уже включен
+        return false;
     }
 
-    /**
-     * Отключает плагин, деактивирует его, удаляет из реестра и сохраняет конфиг.
-     */
+
     public function disable(name:String):Bool {
         for (pluginConfig in config.plugins) {
             if (pluginConfig.name == name && pluginConfig.enabled) {
                 pluginConfig.enabled = false;
                 saveConfig();
 
-                // Корректная деактивация
-                if (enabledPlugins.exists(name)) {
-                    var plugin = enabledPlugins.get(name);
-                    plugin.deactivate(); // ← Очищаем слушатели и ресурсы
+                var plugin = registry.get(name);
+                if (plugin != null) {
+                    plugin.deactivate();
                     registry.remove(name);
-                    enabledPlugins.remove(name);
                 }
                 return true;
             }
@@ -734,16 +702,12 @@ class PluginManager {
     }
 
     private function saveConfig():Void {
-        // ✅ Теперь используем правильный путь и абстракцию файловой системы
         var jsonStr = Json.stringify(config, "  ");
         fileSystem.writeText(configPath, jsonStr);
     }
     
-    /**
-     * Возвращает список имен активных плагинов (для UI).
-     */
     public function getActivePluginNames():Array<String> {
-        return [for (name in enabledPlugins.keys()) name];
+        return registry.getNames(); // ✅ Теперь этот метод существует
     }
 }
 </file>
@@ -771,6 +735,10 @@ class PluginRegistry {
         return plugins.get(name);
     }
 
+    public function getNames():Array<String> {
+        return [for (name in plugins.keys()) name];
+    }
+    
     public function remove(name:String):Bool {
         return plugins.remove(name);
     }
@@ -804,14 +772,23 @@ import hide.application.dto.ViewDto;
 class ViewRegistry {
     private var views:Array<ViewDto> = [];
     private var viewFactories:Map<String, IViewFactory> = [];
+    private var onFactoryRegistered:Null<String->IViewFactory->Void>;
+
+    public function setFactoryRegistrationCallback(cb:String->IViewFactory->Void):Void {
+        this.onFactoryRegistered = cb;
+    }
+
+    public function registerViewFactory(name:String, factory:IViewFactory):Void {
+        viewFactories.set(name, factory);
+        if (onFactoryRegistered != null) {
+            onFactoryRegistered(name, factory); // ← Уведомляем Layout Engine
+        }
+    }
+    
     public function new() {
         add({ name: "editor", label: "Редактор", description: "Открыть редактор кода", icon: "fa-code", defaultState: {} });
         add({ name: "project", label: "Проект", description: "Показать дерево проекта", icon: "fa-folder", defaultState: {} });
     }
-
-    public function registerViewFactory(name:String, factory:IViewFactory){
-        viewFactories.set(name,factory);
-    }  
 
     public function getFactory(name:String):Null<IViewFactory> {
         return viewFactories.get(name);
@@ -1134,7 +1111,6 @@ package hide.domain.services;
 import hide.domain.valueobjects.LayoutState;
 import hide.domain.valueobjects.DisplayPosition;
 
-import hide.shared.types.IEventBus; // ← ВАЖНО: из shared, а не domain
 /**
  * Доменный интерфейс для управления layout'ом.
  * НЕ зависит от GoldenLayout, HTML или платформы.
@@ -1156,11 +1132,6 @@ interface ILayoutEngine {
     function save():LayoutState;
 
     /**
-     * Закрытая вкладка → reopenLastClosed()
-     */
-    function reopenLastClosed():Void;
-
-    /**
      * Закрывает текущий layout и освобождает ресурсы.
      */
     function dispose():Void;
@@ -1174,7 +1145,7 @@ interface ILayoutEngine {
     /**
      * Регистрация view-фабрик (через IElement)
      */
-    function registerView(type:String, factory:IViewFactory):Void
+    function registerView(type:String, factory:IViewFactory):Void;
 
 
 }
@@ -1182,26 +1153,28 @@ interface ILayoutEngine {
 
 <file path="domain/services/IPlugin.hx">
 // hide/domain/services/IPlugin.hx
-
 package hide.domain.services;
 
-import hide.application.services.ViewRegistry;
-import hide.shared.types.IEventBus;
-
 /**
- * Интерфейс плагина.
- * Плагин регистрирует себя в ViewRegistry и LayoutEngine.
+ * Интерфейс доменного плагина.
+ * Не знает ничего о ViewRegistry, EventBus или UI.
  */
 interface IPlugin {
     /**
-     * Активирует плагин (регистрирует view, слушатели событий).
+     * Инициализирует внутреннюю логику плагина.
+     * Возвращает true, если инициализация прошла успешно.
      */
-    function activate(viewRegistry:ViewRegistry, eventBus:IEventBus):Void;
-
+    function activate():Bool;
+    
     /**
-     * Деактивирует плагин (удаляет зарегистрированные ресурсы).
+     * Очищает ресурсы плагина.
      */
     function deactivate():Void;
+    
+    /**
+     * Имя плагина (для логирования и реестра).
+     */
+    var name(get, never):String;
 }
 </file>
 
@@ -1285,7 +1258,23 @@ enum DisplayPosition {
 </file>
 
 <file path="domain/valueobjects/FilePath.hx">
+// hide/domain/valueobjects/FilePath.hx (Рекомендуемая реализация)
 package hide.domain.valueobjects;
+
+@:forward
+abstract FilePath(String) from String to String {
+    public function new(path:String) {
+        if (path == null || path.trim() == "") {
+            throw "FilePath cannot be null or empty";
+        }
+        // Здесь можно добавить нормализацию: path = path.replace("\\", "/");
+        this = path;
+    }
+
+    public function isValid():Bool {
+        return this.length > 0; // Упрощенная проверка
+    }
+}
 </file>
 
 <file path="domain/valueobjects/LayoutConfig.hx">
@@ -1525,10 +1514,9 @@ extern class Tab {
 </file>
 
 <file path="infrastructure/external/GoldenLayoutAdapter.hx">
-// hide/infrastructure/external/GoldenLayoutAdapter.hx
-
 package hide.infrastructure.external;
 
+import hide.application.services.ViewRegistry;
 import golden.*;
 import hide.domain.services.ILayoutEngine;
 import hide.domain.services.IViewFactory;
@@ -1538,30 +1526,36 @@ import hide.shared.types.IEventBus;
 import hide.shared.events.LayoutChanged;
 import js.html.Element;
 
-/**
- * Адаптер для GoldenLayout.
- * Реализует ILayoutEngine, скрывая детали JS-библиотеки.
- */
 class GoldenLayoutAdapter implements ILayoutEngine {
     private var layout:Layout;
     private var container:Element;
     private var eventBus:IEventBus;
-    private var viewFactories:Map<String, IViewFactory>;
+    
+    // ✅ 1. Инициализация Map
+    private var viewFactories:Map<String, IViewFactory>; 
     private var onLayoutChangedCallbacks:Array<Void->Void>;
+    private var viewRegistry:ViewRegistry;
 
-    // === Конструктор ===
-
-    public function new(container:Element, eventBus:IEventBus, viewFactories:Map<String, IViewFactory>) {
+    public function new(container:Element, eventBus:IEventBus, viewRegistry:ViewRegistry) {
         this.container = container;
         this.eventBus = eventBus;
-        this.viewFactories = viewFactories;
+        this.viewRegistry = viewRegistry;
+        this.viewFactories = new Map(); // ✅ ИСПРАВЛЕНО: Создаем Map
         this.onLayoutChangedCallbacks = [];
+
+        // ✅ 3. Подписываемся на новые регистрации в ViewRegistry
+        // Когда плагин вызовет viewRegistry.registerViewFactory, сработает этот коллбэк
+        viewRegistry.setFactoryRegistrationCallback(registerView);
     }
 
-    // === ILayoutEngine ===
-
     public function init(state:LayoutState):Void {
-        var config = toGoldenConfig(state.content);
+        // ✅ 2. Обработка "Пустого старта"
+        var contentData = state.content;
+        if (contentData == null || contentData.length == 0) {
+            contentData = createDefaultSkeleton().content;
+        }
+
+        var config = toGoldenConfig(contentData);
         config.settings ??= {};
         config.settings.reorderEnabled = true;
         config.settings.showPopoutIcon = false;
@@ -1569,15 +1563,13 @@ class GoldenLayoutAdapter implements ILayoutEngine {
 
         layout = new Layout(config, container.get(0));
 
-        // Регистрация view после инициализации
+        // Регистрация ВСЕХ существующих фабрик из ViewRegistry ПЕРЕД init()
         for (type => factory in viewFactories) {
-            layout.registerComponent(type, function(glContainer, state) {
-                var element = new HtmlElement(glContainer.getElement());
-                return factory.create(element, state);
-            });
+            registerComponentInLayout(type, factory);
         }
 
         layout.init();
+        
         layout.on('stateChanged', _ -> {
             eventBus.publish(new LayoutChanged({}));
             for (cb in onLayoutChangedCallbacks) cb();
@@ -1587,23 +1579,14 @@ class GoldenLayoutAdapter implements ILayoutEngine {
     public function open(componentName:String, state:Dynamic, ?position:DisplayPosition):Void {
         if (layout == null) throw "Layout not initialized";
 
-        var targetId = switch position {
-            case Left: "left";
-            case Center: "center";
-            case Bottom: "bottom";
-            case Right: "right";
-            case MiddleColumnInternal: "middle-column";
-            case null: null;
-        };
-
         var config:Config.ItemConfig = {
             type: Component,
             componentName: componentName,
-            componentState: state,
-            id: targetId
+            componentState: state
         };
 
-        var targetContainer = layout.root.getItemsById(targetId)[0] ?? layout.root;
+        // ✅ 2. Безопасное получение или создание контейнера
+        var targetContainer = getOrInitTarget(position);
         targetContainer.addChild(config);
     }
 
@@ -1613,10 +1596,6 @@ class GoldenLayoutAdapter implements ILayoutEngine {
             content: fromGoldenConfig(config.content),
             fullScreen: null
         };
-    }
-
-    public function reopenLastClosed():Void {
-        trace("reopenLastClosed() not implemented");
     }
 
     public function dispose():Void {
@@ -1633,25 +1612,112 @@ class GoldenLayoutAdapter implements ILayoutEngine {
 
     public function registerView(type:String, factory:IViewFactory):Void {
         viewFactories.set(type, factory);
-        if (layout != null) {
-            layout.registerComponent(type, function(glContainer, state) {
-                var element = new HtmlElement(glContainer.getElement());
-                return factory.create(element, state);
-            });
+        
+        // Если Layout уже инициализирован (плагин загрузился на лету), регистрируем сразу
+        if (layout != null && layout.isInitialised) {
+            registerComponentInLayout(type, factory);
         }
     }
 
-    // === Маппинг JSON (для GoldenLayout) ===
+    // === Вспомогательные методы ===
 
+    private function registerComponentInLayout(type:String, factory:IViewFactory):Void {
+        layout.registerComponent(type, function(glContainer, state) {
+            var element = new HtmlElement(glContainer.getElement());
+            factory.create(element, state);
+        });
+    }
+
+    /**
+     * Создает дефолтную структуру окон, если её нет.
+     */
+    private function createDefaultSkeleton():Config {
+        return {
+            content: [{
+                type: Row,
+                content: [
+                    { type: Stack, id: "left", width: 20 },      
+                    { type: Column, id: "middle-column", width: 60, content: [
+                        { type: Stack, id: "center" },            
+                        { type: Stack, id: "bottom", height: 30 } 
+                    ]},
+                    { type: Stack, id: "right", width: 20 }      
+                ]
+            }],
+            settings: {}
+        };
+    }
+
+    /**
+     * Находит контейнер по позиции или создает его, если он был удален пользователем.
+     * Это критически важно для IDE!
+     */
+    private function getOrInitTarget(position:DisplayPosition):ContentItem {
+        if (layout.root == null) return layout.root;
+
+        var targetId = switch position {
+            case Left: "left";
+            case Center: "center";
+            case Bottom: "bottom";
+            case Right: "right";
+            case MiddleColumnInternal: "middle-column";
+            case null: null;
+        };
+
+        if (targetId == null) return layout.root;
+
+        // 1. Пытаемся найти существующий
+        var items = layout.root.getItemsById(targetId);
+        if (items.length > 0) return items[0];
+
+        // 2. Создаем недостающий (упрощенная логика для основных зон)
+        var rootRow = layout.root.contentItems[0];
+        if (rootRow == null || rootRow.type != Row) {
+            // Если корень не Row, добавляем в корень
+            var newStack:Config.ItemConfig = { type: Stack, id: targetId };
+            layout.root.addChild(newStack);
+            return layout.root.getItemsById(targetId)[0];
+        }
+
+        switch position {
+            case Left:
+                // Вставляем в начало корневого Row
+                rootRow.addChild({ type: Stack, id: "left", width: 20 }, 0);
+            
+            case Right:
+                // Вставляем в конец корневого Row
+                rootRow.addChild({ type: Stack, id: "right", width: 20 });
+
+            case Center | Bottom | MiddleColumnInternal:
+                // Ищем или создаем "middle-column"
+                var middleItems = layout.root.getItemsById("middle-column");
+                var middleCol:ContentItem = middleItems.length > 0 ? middleItems[0] : null;
+
+                if (middleCol == null) {
+                    // Создаем Column посередине (индекс 1, между left и right)
+                    rootRow.addChild({ type: Column, id: "middle-column", isClosable: false }, 1);
+                    middleCol = layout.root.getItemsById("middle-column")[0];
+                }
+
+                if (position == Center) {
+                    middleCol.addChild({ type: Stack, id: "center" }, 0);
+                } else if (position == Bottom) {
+                    middleCol.addChild({ type: Stack, id: "bottom" });
+                }
+            
+            default:
+                return layout.root;
+        }
+
+        // Возвращаем свеже созданный
+        return layout.root.getItemsById(targetId)[0];
+    }
+
+    // === Маппинг JSON (без изменений) ===
     private function toGoldenConfig(stateContent:Array<Dynamic>):Config {
         return {
             content: [for (item in stateContent) toGoldenItem(item)],
-            settings: {
-                reorderEnabled = true,
-                constrainDragToHeader = true,
-                showPopoutIcon = false,
-                showMaximiseIcon = true
-            }
+            settings: { reorderEnabled: true, constrainDragToHeader: true, showPopoutIcon: false, showMaximiseIcon: true }
         };
     }
 
@@ -4658,9 +4724,9 @@ class Ide {
     private var services:ServiceContainer;
 
     // === Отписки от EventBus (для dispose) ===
-    private var _projectLoadedUnsub:Void->Void;
-    private var _errorUnsub:Void->Void;
-    private var _layoutChangedUnsub:Void->Void;
+    private var _projectLoadedUnsub:CallbackLink;
+    private var _errorUnsub:CallbackLink;
+    private var _layoutChangedUnsub:CallbackLink;
 
     /**
      * Конструктор. Принимает уже сконфигурированный `ServiceContainer`.
@@ -4695,22 +4761,22 @@ class Ide {
         // Подписка на события
         var eventBus = services.get<IEventBus>("eventBus");
 
-        _projectLoadedUnsub = eventBus.subscribe(function(e:ProjectLoaded) {
+        _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded, function(e:ProjectLoaded) {
             _currentProject = e.project.name;
             statusBar.showMessage('Project loaded: ${e.project.name}');
             updateWindowTitle();
         });
 
-        _errorUnsub = eventBus.subscribe(function(e:ErrorOccurred) {
+        _errorUnsub = eventBus.subscribe(ErrorOccurred, function(e:ErrorOccurred) {
             statusBar.setError('${e.context}: ${e.error.message}');
         });
 
-        _layoutChangedUnsub = eventBus.subscribe(function(e:LayoutChanged) {
+        _layoutChangedUnsub = eventBus.subscribe(LayoutChanged, function(e:LayoutChanged) {
             // Можно добавить "dirty indicator"
             trace("Layout changed");
         });
 
-        _projectClosedUnsub = eventBus.subscribe(function(e:ProjectClosed) {
+        _projectClosedUnsub = eventBus.subscribe(ProjectClosed, function(e:ProjectClosed) {
             _currentProject = null;
             statusBar.showMessage("Project closed");
             updateWindowTitle();
@@ -4812,9 +4878,9 @@ class Ide {
     public static function main():Void {
         var container = new ServiceContainer();
 
-        // Регистрация платформы
+        // 1. Регистрация платформы
         #if electron
-        container.register("platform", new ElectronPlatform());
+        container.register("platform", new ElectronPlatform()); // Убедись, что этот класс существует
         #elseif nw
         container.register("platform", new NwPlatform());
         #else
@@ -4822,17 +4888,23 @@ class Ide {
         #end
 
         var platform = container.get<IPlatform>("platform");
+        
+        // 2. Регистрация базовых сервисов
+        container.register("eventBus", new EventBusImpl());
+        container.register("viewRegistry", new ViewRegistry());
+        container.register("pluginRegistry", new PluginRegistry()); // ✅ ДОБАВЛЕНО
+        
+        // ✅ ДОБАВЛЕНО: Регистрация файловой системы (пример для Electron)
+        // Если используешь NW.js, замени на NwFileSystemAdapter
+        container.register("fileSystem", new hide.infrastructure.platform.electron.ElectronFileSystemAdapter());
 
-        // Регистрация сервисов
         container.register("window", new WindowService(platform.window));
         container.register("menu", new MenuService(platform.clipboard));
-        container.register("eventBus", new EventBusImpl());
-        
         container.register("dialog", new DialogImpl());
         container.register("fileDialog", new FileDialogImpl());
         container.register("appInfo", new AppInfoImpl());
 
-        //Use-Cases
+        // 3. Регистрация Use-Cases
         container.register("saveLayout", new SaveLayoutUseCase(
             container.get<ILayoutEngine>("layout"),
             container.get<IEventBus>("eventBus")
@@ -4872,9 +4944,13 @@ class Ide {
             container.get("eventBus"),
             container.get("fileSystem") // ← Добавлено
         ));
-        // Создаём и запускаем Ide
+
+        // 4. Запуск
         var ide = new Ide(container);
         ide.startup();
+
+        // 5. Загрузка плагинов после полного старта
+        container.get<PluginManager>("pluginManager").loadAll();
     }
 
     private function startup():Void {
@@ -4895,6 +4971,8 @@ class Ide {
 
     // === Ресурсоосвобождение (для dispose) ===
     public function dispose():Void {
+        if (_projectLoadedLink != null) _projectLoadedLink.cancel();
+        if (_errorLink != null) _errorLink.cancel();
         _projectLoadedUnsub();
         _errorUnsub();
         _layoutChangedUnsub();
@@ -4953,9 +5031,13 @@ package hide.presentation.views;
 
 package hide.shared.events;
 
-typedef ErrorOccurred = {
-    var context:String; // название Use-Case (например, "LoadProjectUseCase")
-    var error:Dynamic;  // js.lib.Error, но Dynamic — safer для совместимости
+class ErrorOccurred {
+    public var context:String;
+    public var error:Dynamic;
+    public function new(context:String, error:Dynamic) {
+        this.context = context;
+        this.error = error;
+    }
 }
 </file>
 
@@ -4964,8 +5046,11 @@ typedef ErrorOccurred = {
 
 package hide.shared.events;
 
-typedef FullscreenChanged = {
-    var enabled:Bool;
+class FullscreenChanged {
+    public enabled:Bool;
+    public function new(enabled:Bool) {
+        this.enabled = enabled;
+    }
 }
 </file>
 
@@ -4974,7 +5059,7 @@ typedef FullscreenChanged = {
 
 package hide.shared.events;
 
-typedef LayoutChanged = {};
+class LayoutChanged { public function new() {} }
 </file>
 
 <file path="shared/events/LayoutSaved.hx">
@@ -4982,7 +5067,7 @@ typedef LayoutChanged = {};
 
 package hide.shared.events;
 
-typedef LayoutSaved = {};
+class LayoutSaved { public function new() {} }
 </file>
 
 <file path="shared/events/ProjectClosed.hx">
@@ -4990,16 +5075,18 @@ typedef LayoutSaved = {};
 
 package hide.shared.events;
 
-typedef ProjectClosed = {};
+class ProjectClosed { public function new() {} }
 </file>
 
 <file path="shared/events/ProjectClosing.hx">
 // hide/shared/events/ProjectClosing.hx
 
 package hide.shared.events;
-
-typedef ProjectClosing = {
-    var isCancelled:Bool;
+class ProjectClosing {
+    public isCancelled:Bool;
+    public function new(isCancelled:Bool) {
+        this.isCancelled = isCancelled;
+    }
 }
 </file>
 
@@ -5007,11 +5094,13 @@ typedef ProjectClosing = {
 // hide/shared/events/ProjectLoaded.hx
 
 package hide.shared.events;
-
 import hide.domain.entities.Project;
 
-typedef ProjectLoaded = {
-    var project:Project;
+class ProjectLoaded {
+    public var project:Project;
+    public function new(project:Project) {
+        this.project = project;
+    }
 }
 </file>
 
@@ -5019,9 +5108,11 @@ typedef ProjectLoaded = {
 // hide/shared/events/RecentProjectsUpdated.hx
 
 package hide.shared.events;
-
-typedef RecentProjectsUpdated = {
-    var recentProjects:Array<String>;
+class RecentProjectsUpdated {
+    public recentProjects:Array<String>;
+    public function new(recentProjects:Array<String>) {
+        this.recentProjects = recentProjects;
+    }
 }
 </file>
 
@@ -5029,14 +5120,18 @@ typedef RecentProjectsUpdated = {
 // hide/shared/events/RendererChanged.hx
 
 package hide.shared.events;
-
-typedef RendererChanged = {
-    var rendererName:String;
+class RendererChanged {
+    public rendererName:String;
+    public function new(rendererName:String) {
+        this.rendererName = rendererName;
+    }
 }
 </file>
 
 <file path="shared/events/ResourceOpened.hx">
 package hide.application.events;
+
+class ResourceOpened { public function new() {} }
 </file>
 
 <file path="shared/events/ViewOpened.hx">
@@ -5046,36 +5141,48 @@ package hide.shared.events;
 
 import hide.domain.valueobjects.DisplayPosition;
 
-typedef ViewOpened = {
-    var viewName:String;
-    var state:Dynamic;
-    var position:DisplayPosition;
+class ViewOpened {
+    public var viewName:String;
+    public var state:Dynamic;
+    public var position:DisplayPosition;
+    public function new(viewName:String, state:Dynamic, position:DisplayPosition) {
+        this.viewName = viewName;
+        this.state = state;
+        this.position = position;
+    }
 }
 </file>
 
 <file path="shared/types/EventBusImpl.hx">
 // hide/shared/types/EventBusImpl.hx
-
 package hide.shared.types;
-
+import tink.core.Signal;
+import tink.core.CallbackLink;
 class EventBusImpl implements IEventBus {
-    private var handlers:Map<String, Array<Dynamic->Void>> = [];
+    // Храним сигналы по имени класса. Используем Dynamic, так как дженерики в Haxe стираются в рантайме.
+    private var signals:Map<String, Signal<Dynamic>> = [];
 
-    public function subscribe<T>(handler:T->Void):Void->Void {
-        var typeName = Type.getClassName(Type.getClass(handler));
-        if (handlers[typeName] == null) handlers[typeName] = [];
-        handlers[typeName].push(handler);
+    public function new() {}
 
-        return function() {
-            handlers[typeName].remove(handler);
-            if (handlers[typeName].length == 0) handlers.remove(typeName);
-        };
+    public function subscribe<T>(eventClass:Class<T>, handler:T->Void):CallbackLink {
+        var typeName = Type.getClassName(eventClass);
+        
+        if (!signals.exists(typeName)) {
+            // Создаем новый сигнал для этого типа события
+            signals.set(typeName, cast new Signal<Dynamic>());
+        }
+
+        var signal = signals.get(typeName);
+        // Приводим handler к Dynamic->Void, чтобы Signal мог его принять
+        return signal.handle(cast handler);
     }
 
-    public function publish<T>(event:T):Void {
-        var typeName = Type.getClassName(Type.getClass(event));
-        for (h in handlers[typeName] ?? []) {
-            h(event);
+    public function publish<T>(eventClass:Class<T>, event:T):Void {
+        var typeName = Type.getClassName(eventClass);
+        
+        if (signals.exists(typeName)) {
+            var signal = signals.get(typeName);
+            signal.trigger(cast event);
         }
     }
 }
@@ -5085,7 +5192,7 @@ class EventBusImpl implements IEventBus {
 // hide/shared/types/IEventBus.hx
 
 package hide.shared.types;
-
+import tink.core.CallbackLink;
 /**
  * Общий интерфейс для EventBus.
  * Используется во всех слоях (domain, application, presentation).
@@ -5093,15 +5200,17 @@ package hide.shared.types;
  */
 interface IEventBus {
     /**
-     * Подписка на событие типа T.
-     * Возвращает функцию-отписку.
+     * Подписка на событие.
+     * @param eventClass Класс события (нужен для определения типа в рантайме)
+     * @param handler Функция-обработчик
+     * @return Ссылка для отписки (вызовите .cancel() для удаления слушателя)
      */
-    public function subscribe<T>(handler:T->Void):Void->Void;
+    function subscribe<T>(eventClass:Class<T>, handler:T->Void):CallbackLink;
 
     /**
      * Публикация события.
      */
-    public function publish<T>(event:T):Void;
+    function publish<T>(eventClass:Class<T>, event:T):Void;
 }
 </file>
 
@@ -5142,53 +5251,6 @@ class ConsoleViewFactory implements IViewFactory {
     public function create(container:IElement, state:Dynamic):Dynamic {
         return new ConsoleView(container, state);
     }
-}
-</file>
-
-<file path="plugins/ConsolePlugin.hx">
-// plugins/ConsolePlugin.hx
-
-package plugins;
-
-import hide.domain.services.IPlugin;
-import hide.application.services.ViewRegistry;
-import hide.shared.types.IEventBus;
-import hide.application.dto.ViewDto;
-import hide.domain.services.ILayoutEngine;
-
-/**
- * Пример плагина, регистрирующего view "Консоль".
- */
-class ConsolePlugin implements IPlugin {
-
-    public function new() {}
-
-    public function activate(viewRegistry:ViewRegistry, eventBus:IEventBus, config:Dynamic) {
-        // 1. Регистрация DTO
-        viewRegistry.add({
-            name: "console",
-            label: "Консоль",
-            description: "Консоль вывода логов",
-            icon: "fa-terminal",
-            defaultState: { logLevel: "info" }
-        });
-
-        // 2. Регистрация view-фабрики (если нужен ILayoutEngine)
-        // (если `ILayoutEngine` доступен — можно сразу зарегистрировать)
-        // Но лучше это сделать через ViewFactory:
-        //viewRegistry.registerView("console", ConsoleViewFactory);
-        //layout.registerView("console", new plugins.console.ConsoleViewFactory());
-        //viewRegistry.
-    }
-
-    public function deactivate():Void {
-        // Удаление view / отписка
-    }
-}
-
-// Вспомогательный класс-фабрика
-typedef ConsoleViewFactory = {
-    function create(container:js.html.Element, state:Dynamic):plugins.console.ConsoleView;
 }
 </file>
 
@@ -5254,6 +5316,61 @@ class ConsoleView {
         var indexLevel = levels.indexOf(level);
         var indexConfig = levels.indexOf(logLevel);
         return indexLevel >= indexConfig;
+    }
+}
+</file>
+
+<file path="plugins/ConsolePlugin.hx">
+package plugins;
+
+import hide.domain.services.IPlugin;
+import hide.application.services.ViewRegistry;
+import hide.shared.types.IEventBus;
+import plugins.console.ConsoleViewFactory;
+
+/**
+ * Пример плагина, регистрирующего view "Консоль".
+ */
+class ConsolePlugin implements IPlugin {
+    private var viewRegistry:ViewRegistry;
+    private var eventBus:IEventBus;
+    private var config:Dynamic;
+
+    public var name(get, never):String;
+    private function get_name():String return "ConsolePlugin";
+    // ✅ Все зависимости приходят СЮДА (через рефлексию в PluginManager)
+    public function new(viewRegistry:ViewRegistry, eventBus:IEventBus, config:Dynamic) {
+        this.viewRegistry = viewRegistry;
+        this.eventBus = eventBus;
+        this.config = config;
+    }
+
+    // ✅ Сигнатура теперь совпадает с чистым IPlugin
+    public function activate():Bool {
+
+        try {
+            var logLevel = config != null && config.defaultLogLevel != null ? config.defaultLogLevel : "info";
+            
+            viewRegistry.add({
+                name: "console",
+                label: "Консоль",
+                description: "Консоль вывода логов",
+                icon: "fa-terminal",
+                defaultState: { logLevel: logLevel }
+            });
+
+            viewRegistry.registerViewFactory("console", new ConsoleViewFactory());
+            trace("ConsolePlugin activated with log level: " + logLevel);
+            return true;
+        } catch (e:Dynamic) {
+            trace("ConsolePlugin activation failed: " + e);
+            return false;
+        }
+    }
+
+    public function deactivate():Void {
+        // Здесь можно удалить view из registry, если нужно
+        trace("ConsolePlugin deactivated");
     }
 }
 </file>

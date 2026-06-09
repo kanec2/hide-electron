@@ -27,6 +27,11 @@ import hide.shared.types.IDialog;
 import hide.shared.types.IAppInfo;
 import hide.shared.types.IPlatform;
 
+import hx.injection.ServiceCollection;
+import hx.injection.ServiceProvider;
+
+// ✅ Включаем extension-методы для красивого синтаксиса
+using hx.injection.ServiceExtensions;
 /**
  * Главный контроллер приложения (Presentation Layer).
  * ОТВЕТСТВЕННОСТЬ:
@@ -39,19 +44,8 @@ import hide.shared.types.IPlatform;
 class Ide {
     public static var inst(default, null):Ide;
 
-    private var viewRegistry:ViewRegistry;
+
     private var views:Array<ViewDto>;
-    private var pluginManager:PluginManager;
-
-    // === Сервисы (инъекция зависимостей) ===
-    private var windowService:WindowService;
-    private var menuService:MenuService;
-    private var loadProjectUseCase:LoadProjectUseCase;
-    private var setFullscreenUseCase:SetFullscreenUseCase;
-    private var saveLayoutUseCase:SaveLayoutUseCase;
-    private var closeProjectUseCase:CloseProjectUseCase;
-    private var openViewUseCase:OpenViewUseCase; // ← ДОБАВИТЬ
-
     // === UI компоненты ===
     private var statusBar:StatusBar;
 
@@ -63,31 +57,51 @@ class Ide {
     private var services:ServiceContainer;
 
     // === Отписки от EventBus (для dispose) ===
-    private var _projectLoadedUnsub:Void->Void;
-    private var _errorUnsub:Void->Void;
-    private var _layoutChangedUnsub:Void->Void;
+    private var _projectLoadedUnsub:CallbackLink;
+    private var _errorUnsub:CallbackLink;
+    private var _layoutChangedUnsub:CallbackLink;
+
+    // === Сервисы ===
+    private var windowService:WindowService,
+    private var menuService:MenuService,
+    private var loadProjectUseCase:LoadProjectUseCase,
+    private var setFullscreenUseCase:SetFullscreenUseCase,
+    private var saveLayoutUseCase:SaveLayoutUseCase,
+    private var closeProjectUseCase:CloseProjectUseCase,
+    private var openViewUseCase:OpenViewUseCase,
+    private var viewRegistry:ViewRegistry,
+    private var pluginManager:PluginManager,
+    private var eventBus:IEventBus // Для подписок
 
     /**
      * Конструктор. Принимает уже сконфигурированный `ServiceContainer`.
      */
-    public function new(_services:ServiceContainer) {
+    public function new(
+        windowService:WindowService,
+        menuService:MenuService,
+        loadProjectUseCase:LoadProjectUseCase,
+        setFullscreenUseCase:SetFullscreenUseCase,
+        saveLayoutUseCase:SaveLayoutUseCase,
+        closeProjectUseCase:CloseProjectUseCase,
+        openViewUseCase:OpenViewUseCase,
+        viewRegistry:ViewRegistry,
+        pluginManager:PluginManager,
+        eventBus:IEventBus // Для подписок
+    ) {
+        this.windowService = windowService
+        this.menuService = menuService
+        this.loadProjectUseCase = loadProjectUseCase
+        this.setFullscreenUseCase = setFullscreenUseCase
+        this.saveLayoutUseCase = saveLayoutUseCase
+        this.closeProjectUseCase = closeProjectUseCase
+        this.openViewUseCase = openViewUseCase
+        this.viewRegistry = viewRegistry
+        this.pluginManager = pluginManager
+        this.eventBus = eventBus
         inst = this;
-        services = _services;
-
-        // Получение сервисов
-        windowService = services.get("window");
-        menuService = services.get("menu");
-        loadProjectUseCase = services.get("loadProject");
-        setFullscreenUseCase = services.get("setFullscreen");
-        saveLayoutUseCase = services.get("saveLayout");
-        closeProjectUseCase = services.get("closeProject");
-        openViewUseCase = services.get("openView");
-
-        viewRegistry = services.get("viewRegistry");
-        views = viewRegistry.all();
 
         // Добавить обработчики для view через MenuService
-        for (view in views) {
+        for (view in viewRegistry.all();) {
             menuService.addViewMenu(view);
             menuService.onItemClick("view.${view.name}", function() openView(view.name));
         }
@@ -98,24 +112,18 @@ class Ide {
         views = new Map();
 
         // Подписка на события
-        var eventBus = services.get<IEventBus>("eventBus");
-
-        _projectLoadedUnsub = eventBus.subscribe(function(e:ProjectLoaded) {
-            _currentProject = e.project.name;
-            statusBar.showMessage('Project loaded: ${e.project.name}');
-            updateWindowTitle();
-        });
-
-        _errorUnsub = eventBus.subscribe(function(e:ErrorOccurred) {
+        _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded,onProjectLoadedHandler);
+        
+        _errorUnsub = eventBus.subscribe(ErrorOccurred, function(e:ErrorOccurred) {
             statusBar.setError('${e.context}: ${e.error.message}');
         });
 
-        _layoutChangedUnsub = eventBus.subscribe(function(e:LayoutChanged) {
+        _layoutChangedUnsub = eventBus.subscribe(LayoutChanged, function(e:LayoutChanged) {
             // Можно добавить "dirty indicator"
             trace("Layout changed");
         });
 
-        _projectClosedUnsub = eventBus.subscribe(function(e:ProjectClosed) {
+        _projectClosedUnsub = eventBus.subscribe(ProjectClosed, function(e:ProjectClosed) {
             _currentProject = null;
             statusBar.showMessage("Project closed");
             updateWindowTitle();
@@ -123,25 +131,37 @@ class Ide {
     }
 
     // === Обработчики пользовательских действий ===
-
-    public function onMenuOpenProject():Void {
-        services.get<IFileDialog>("fileDialog").showOpen({ filters: ["json"] })
-            .then(function(path) {
-                if (path != null) {
-                    loadProjectUseCase.execute(new FilePath(path))
-                        .then(function(result) {
-                            switch result {
-                                case Success(_): // проект загружен через ProjectLoaded
-                                    null;
-                                case Failure(err):
-                                    statusBar.setError('Failed to load: ${err.message}');
-                            }
-                        });
+    public function onMenuOpenProject(): Void {
+        // 1. Показываем диалог выбора файла (предполагаем, что IFileDialog зарегистрирован в DI)
+        var fileDialog = services.get("fileDialog"); 
+        
+        fileDialog.showOpen({ filters: ["json", "hide"] }).then(function(path: String) {
+            if (path != null) {
+                // 2. Вызываем UseCase
+                var result = loadProjectUseCase.execute(new FilePath(path));
+                
+                // 3. Обрабатываем результат (хотя основное обновление UI произойдет через EventBus)
+                switch (result) {
+                    case Success(_):
+                        trace("Project loading initiated successfully.");
+                    case Failure(err):
+                        statusBar.setError('Failed to load project: $err');
                 }
-            })
-            .catch(function(err) {
-                statusBar.setError('File dialog error: ${err.message}');
-            });
+            }
+        }).catch(function(err: Dynamic) {
+            statusBar.setError('File dialog error: ${Std.string(err)}');
+        });
+    }
+
+    // Этот метод вызывается автоматически, когда UseCase публикует ProjectLoaded
+    private function onProjectLoadedHandler(event: ProjectLoaded): Void {
+        _currentProject = event.project.name;
+        statusBar.showMessage('Project loaded: ${_currentProject}');
+        updateWindowTitle();
+        
+        // БОНУС: Автоматически открываем нужные вьюхи при загрузке проекта
+        openView("project"); // Открыть дерево проекта слева
+        openView("editor");  // Открыть редактор по центру
     }
 
     public function onToggleFullscreen():Void {
@@ -193,8 +213,9 @@ class Ide {
     private function onOpenRecent(path:String):Void {
         loadProjectUseCase.execute(new FilePath(path));
     }
-    private function updateWindowTitle():Void {
-        var title = _currentProject != null ? '${_currentProject} - HIDE' : 'HIDE IDE';
+
+    private function updateWindowTitle(): Void {
+        var title = _currentProject != null ? '$_currentProject - HIDE IDE' : 'HIDE IDE';
         windowService.setTitle(title);
     }
 
@@ -215,81 +236,23 @@ class Ide {
     // === Точка входа ===
 
     public static function main():Void {
-        var container = new ServiceContainer();
+        // 1. Создаем пустую коллекцию
+        var collection = new ServiceCollection();
 
-        // 1. Регистрация платформы
-        #if electron
-        container.register("platform", new ElectronPlatform()); // Убедись, что этот класс существует
-        #elseif nw
-        container.register("platform", new NwPlatform());
-        #else
-        container.register("platform", new StubPlatform());
-        #end
+        // 2. Делегируем конфигурацию специализированному классу
+        AppModule.configure(collection);
 
-        var platform = container.get<IPlatform>("platform");
+        // 3. Создаем провайдер (он строит граф зависимостей)
+        var provider = collection.createProvider();
+
+        // 4. Запрашиваем главный класс. Все его зависимости будут разрешены автоматически!
+        var ide = provider.getService(Ide);
         
-        // 2. Регистрация базовых сервисов
-        container.register("eventBus", new EventBusImpl());
-        container.register("viewRegistry", new ViewRegistry());
-        container.register("pluginRegistry", new PluginRegistry()); // ✅ ДОБАВЛЕНО
-        
-        // ✅ ДОБАВЛЕНО: Регистрация файловой системы (пример для Electron)
-        // Если используешь NW.js, замени на NwFileSystemAdapter
-        container.register("fileSystem", new hide.infrastructure.platform.electron.ElectronFileSystemAdapter());
-
-        container.register("window", new WindowService(platform.window));
-        container.register("menu", new MenuService(platform.clipboard));
-        container.register("dialog", new DialogImpl());
-        container.register("fileDialog", new FileDialogImpl());
-        container.register("appInfo", new AppInfoImpl());
-
-        // 3. Регистрация Use-Cases
-        container.register("saveLayout", new SaveLayoutUseCase(
-            container.get<ILayoutEngine>("layout"),
-            container.get<IEventBus>("eventBus")
-        ));
-
-        container.register("closeProject", new CloseProjectUseCase(
-            container.get<ILayoutEngine>("layout"),
-            container.get<IEventBus>("eventBus")
-        ));
-
-        // hide/presentation/Ide.hx → main()
-
-        container.register("openView", new OpenViewUseCase(
-            container.get<ILayoutEngine>("layout"),
-            container.get<ViewRegistry>("viewRegistry")
-        ));
-
-        container.register("addRecentProject", new AddRecentProjectUseCase(
-            container.get<MenuService>("menu"),
-            container.get<IEventBus>("eventBus")
-        ));
-
-        container.register("clearRecentProjects", new ClearRecentProjectsUseCase(
-            container.get<MenuService>("menu"),
-            container.get<IEventBus>("eventBus")
-        ));
-
-        container.register("setRenderer", new SetRendererUseCase(
-            container.get<IEventBus>("eventBus")
-        ));
-
-        container.register("viewRegistry", new ViewRegistry());
-
-        container.register("pluginManager", new PluginManager(
-            container.get("pluginRegistry"),
-            container.get("viewRegistry"),
-            container.get("eventBus"),
-            container.get("fileSystem") // ← Добавлено
-        ));
-
-        // 4. Запуск
-        var ide = new Ide(container);
+        // 5. Запускаем
         ide.startup();
 
-        // 5. Загрузка плагинов после полного старта
-        container.get<PluginManager>("pluginManager").loadAll();
+        // 6. Инициализируем плагины
+        provider.getService(PluginManager).loadAll();
     }
 
     private function startup():Void {
@@ -310,6 +273,8 @@ class Ide {
 
     // === Ресурсоосвобождение (для dispose) ===
     public function dispose():Void {
+        if (_projectLoadedLink != null) _projectLoadedLink.cancel();
+        if (_errorLink != null) _errorLink.cancel();
         _projectLoadedUnsub();
         _errorUnsub();
         _layoutChangedUnsub();

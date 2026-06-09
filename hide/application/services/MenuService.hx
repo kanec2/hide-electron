@@ -42,9 +42,9 @@ class MenuService {
         return { items: items };
     }
 
-    public function addItem(id:String, label:String):Void {
-        menuItems.push({ id: id, label: label });
-    }
+    public function addItem(id:String, label:String, ?icon:String):Void {
+    menuItems.push({ id: id, label: label, icon: icon });
+}
 
     public function addViewMenu(view:ViewDto):Void {
         var id = "view.${view.name}";

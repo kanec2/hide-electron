@@ -15,27 +15,32 @@ import hide.domain.entities.Project;
 
 class LoadProjectUseCase {
     private var fileSystem:IFileSystem;
-    private var resourceLoader:IResourceLoader;
     private var eventBus:IEventBus;
 
-    public function new(fileSystem:IFileSystem, resourceLoader:IResourceLoader, eventBus:IEventBus) {
+    public function new(fileSystem:IFileSystem, eventBus:IEventBus) {
         this.fileSystem = fileSystem;
-        this.resourceLoader = resourceLoader;
         this.eventBus = eventBus;
     }
 
     public function execute(projectPath:FilePath):Result<Project, String> {
         try {
+            // 1. Читаем файл (например, project.json или .hide)
             var content = fileSystem.readText(projectPath);
-            var project = Project.fromJson(content);
-            // Загрузка ресурсов
-            resourceLoader.loadProjectResources(project);
-            // Публикация
-            eventBus.publish(new ProjectLoaded(project));
+            // 2. Парсим (пока упрощенно, можно использовать haxe.Json.parse)
+            var data = haxe.Json.parse(content);
+            var projectName = data.name != null ? data.name : "Unnamed Project";
+            // 3. Создаем доменную сущность
+            var project = new Project("id-1", projectName, projectPath);
+            
+            // 4. Публикуем событие об успехе
+            eventBus.publish(ProjectLoaded, new ProjectLoaded(project));
+            
             return Success(project);
         } catch (e:Dynamic) {
-            eventBus.publish(new ErrorOccurred("LoadProjectUseCase", new Error(e)));
-            return Failure(e.message);
+            // 5. Публикуем событие об ошибке
+            var errorMsg = Std.string(e);
+            eventBus.publish(ErrorOccurred, new ErrorOccurred("LoadProjectUseCase", errorMsg));
+            return Failure(errorMsg);
         }
     }
 }

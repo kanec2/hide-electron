@@ -2,4 +2,4 @@
 
 package hide.shared.events;
 
-typedef ProjectClosed = {};
+class ProjectClosed { public function new() {} }

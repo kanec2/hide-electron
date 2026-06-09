@@ -1,7 +1,9 @@
 // hide/shared/events/RecentProjectsUpdated.hx
 
 package hide.shared.events;
-
-typedef RecentProjectsUpdated = {
-    var recentProjects:Array<String>;
+class RecentProjectsUpdated {
+    public recentProjects:Array<String>;
+    public function new(recentProjects:Array<String>) {
+        this.recentProjects = recentProjects;
+    }
 }

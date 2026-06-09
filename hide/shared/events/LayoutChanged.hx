@@ -2,4 +2,4 @@
 
 package hide.shared.events;
 
-typedef LayoutChanged = {};
+class LayoutChanged { public function new() {} }

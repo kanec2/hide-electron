@@ -2,7 +2,11 @@
 
 package hide.shared.events;
 
-typedef ErrorOccurred = {
-    var context:String; // название Use-Case (например, "LoadProjectUseCase")
-    var error:Dynamic;  // js.lib.Error, но Dynamic — safer для совместимости
+class ErrorOccurred {
+    public var context:String;
+    public var error:Dynamic;
+    public function new(context:String, error:Dynamic) {
+        this.context = context;
+        this.error = error;
+    }
 }
