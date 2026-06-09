@@ -60,18 +60,18 @@ class Ide {
     private var _projectLoadedUnsub:CallbackLink;
     private var _errorUnsub:CallbackLink;
     private var _layoutChangedUnsub:CallbackLink;
-
+    private var _projectClosedUnsub:CallbackLink; // <-- ДОБАВИТЬ ЭТО
     // === Сервисы ===
-    private var windowService:WindowService,
-    private var menuService:MenuService,
-    private var loadProjectUseCase:LoadProjectUseCase,
-    private var setFullscreenUseCase:SetFullscreenUseCase,
-    private var saveLayoutUseCase:SaveLayoutUseCase,
-    private var closeProjectUseCase:CloseProjectUseCase,
-    private var openViewUseCase:OpenViewUseCase,
-    private var viewRegistry:ViewRegistry,
-    private var pluginManager:PluginManager,
-    private var eventBus:IEventBus // Для подписок
+    private var windowService:WindowService;
+    private var menuService:MenuService;
+    private var loadProjectUseCase:LoadProjectUseCase;
+    private var setFullscreenUseCase:SetFullscreenUseCase;
+    private var saveLayoutUseCase:SaveLayoutUseCase;
+    private var closeProjectUseCase:CloseProjectUseCase;
+    private var openViewUseCase:OpenViewUseCase;
+    private var viewRegistry:ViewRegistry;
+    private var pluginManager:PluginManager;
+    private var eventBus:IEventBus; // Для подписок
 
     /**
      * Конструктор. Принимает уже сконфигурированный `ServiceContainer`.
@@ -109,7 +109,7 @@ class Ide {
 
         // Инициализация UI
         statusBar = new StatusBar(Element.byId("status-bar"));
-        views = new Map();
+        views = new Arra<ViewDto>();
 
         // Подписка на события
         _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded,onProjectLoadedHandler);
@@ -256,6 +256,7 @@ class Ide {
     }
 
     private function startup():Void {
+        trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
         // Инициализация меню из шаблона (данные, а не nw.Menu)
         //var menuTemplate = menuService.buildFromHtml(Element.byId("mainmenu").html());
         // Регистрация обработчиков кликов (в UI-рендере или здесь)
@@ -273,12 +274,9 @@ class Ide {
 
     // === Ресурсоосвобождение (для dispose) ===
     public function dispose():Void {
-        if (_projectLoadedLink != null) _projectLoadedLink.cancel();
-        if (_errorLink != null) _errorLink.cancel();
-        _projectLoadedUnsub();
-        _errorUnsub();
-        _layoutChangedUnsub();
-        _projectClosedUnsub();
-        // views.clear(), statusBar.dispose(), и т.д.
+        if (_projectLoadedUnsub != null) _projectLoadedUnsub.cancel();
+        if (_errorUnsub != null) _errorUnsub.cancel();
+        if (_layoutChangedUnsub != null) _projectClosedUnsub.cancel(); // Исправьте на _layoutChangedUnsub.cancel()
+        if (_projectClosedUnsub != null) _projectClosedUnsub.cancel();
     }
 }

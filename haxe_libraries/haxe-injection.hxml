@@ -1,4 +1,3 @@
 # @install: lix --silent download "gh://github.com/paulsgcross/haxe-injection#7bb93913446ce60cacac1fb695038d8c204aec0f" into haxe-injection/3.0.0/github/7bb93913446ce60cacac1fb695038d8c204aec0f
 -cp ${HAXE_LIBCACHE}/haxe-injection/3.0.0/github/7bb93913446ce60cacac1fb695038d8c204aec0f/src/
 -D haxe-injection=3.0.0
--lib Json2Object

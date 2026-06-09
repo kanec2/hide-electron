@@ -1,5 +1,5 @@
 -cp src
 -lib haxe-injection
-
+-lib json2object
 -main TestMain
 --interp

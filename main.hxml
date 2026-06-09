@@ -1,8 +1,9 @@
 -js main.js
 -main ElectronMain
--lib electron
--lib tink_core
 -lib haxe-injection
+-lib tink_core
+-lib hxnodejs
+-lib Json2Object
 -dce full
 --debug
 -D no-deprecation-warnings
