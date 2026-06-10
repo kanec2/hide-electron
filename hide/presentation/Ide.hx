@@ -109,14 +109,12 @@ class Ide {
 
         // Инициализация UI
         statusBar = new StatusBar(Element.byId("status-bar"));
-        views = new Arra<ViewDto>();
+        views = new Array<ViewDto>();
 
         // Подписка на события
         _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded,onProjectLoadedHandler);
         
-        _errorUnsub = eventBus.subscribe(ErrorOccurred, function(e:ErrorOccurred) {
-            statusBar.setError('${e.context}: ${e.error.message}');
-        });
+        _errorUnsub = eventBus.subscribe(ErrorOccurred,onErrorOccurred);
 
         _layoutChangedUnsub = eventBus.subscribe(LayoutChanged, function(e:LayoutChanged) {
             // Можно добавить "dirty indicator"
@@ -131,32 +129,41 @@ class Ide {
     }
 
     // === Обработчики пользовательских действий ===
+
     public function onMenuOpenProject(): Void {
-        // 1. Показываем диалог выбора файла (предполагаем, что IFileDialog зарегистрирован в DI)
-        var fileDialog = services.get("fileDialog"); 
+        var fileDialog = services.get("fileDialog");
         
-        fileDialog.showOpen({ filters: ["json", "hide"] }).then(function(path: String) {
-            if (path != null) {
-                // 2. Вызываем UseCase
-                var result = loadProjectUseCase.execute(new FilePath(path));
-                
-                // 3. Обрабатываем результат (хотя основное обновление UI произойдет через EventBus)
-                switch (result) {
-                    case Success(_):
-                        trace("Project loading initiated successfully.");
-                    case Failure(err):
-                        statusBar.setError('Failed to load project: $err');
-                }
+        fileDialog.showOpen({ filters: [{ name: "Project Files", extensions: ["json", "hide"] }] })
+        .handle(function(result) {
+            switch result {
+                case Success(path):
+                    if (path != null) {
+                        loadProjectUseCase.execute(new FilePath(path)).handle(function(loadResult) {
+                            switch loadResult {
+                                case Success(_):
+                                    statusBar.showMessage("Project loaded successfully");
+                                case Failure(err):
+                                    statusBar.setError('Failed to load: ${err}');
+                            }
+                        });
+                    }
+                case Failure(err):
+                    statusBar.setError('File dialog error: ${err}');
             }
-        }).catch(function(err: Dynamic) {
-            statusBar.setError('File dialog error: ${Std.string(err)}');
         });
+    }
+
+    private function onErrorOccurred(event:ErrorOccurred):Void {
+        trace("UI ERROR [" + event.context + "]: " + event.error);
+        // Здесь можно показать модальное окно с ошибкой
+        //statusBar.setError('${event.context}: ${event.error.message}');
     }
 
     // Этот метод вызывается автоматически, когда UseCase публикует ProjectLoaded
     private function onProjectLoadedHandler(event: ProjectLoaded): Void {
         _currentProject = event.project.name;
-        statusBar.showMessage('Project loaded: ${_currentProject}');
+        //statusBar.showMessage('Project loaded: ${_currentProject}');
+        trace("UI: Project loaded successfully: " + _currentProject);
         updateWindowTitle();
         
         // БОНУС: Автоматически открываем нужные вьюхи при загрузке проекта
@@ -216,7 +223,9 @@ class Ide {
 
     private function updateWindowTitle(): Void {
         var title = _currentProject != null ? '$_currentProject - HIDE IDE' : 'HIDE IDE';
-        windowService.setTitle(title);
+        // Пример: если есть WindowService, вызови windowService.setTitle(...)
+        trace("Window title updated to: " + _currentProject + " - HIDE IDE");
+        //windowService.setTitle(title);
     }
 
     private function showAboutDialog():Void {

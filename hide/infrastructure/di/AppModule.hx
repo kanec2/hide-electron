@@ -48,7 +48,10 @@ class AppModule {
         
         // 1. Инфраструктура (Платформенно-зависимые реализации)
         #if electron
+        // 1. Регистрируем IPC Bridge как Singleton
+        collection.addSingleton(ElectronIpcBridge);
         collection.addSingleton(IFileSystem, ElectronFileSystemAdapter);
+        collection.addSingleton(IFileDialog, ElectronFileDialogAdapter);
         collection.addSingleton(IWindowManager, ElectronWindowAdapter);
         // TODO: Добавить ElectronPlatformAdapter, ElectronFileDialogAdapter и IAppInfoAdapter
         #elseif nw

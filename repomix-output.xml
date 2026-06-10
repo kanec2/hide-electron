@@ -40,187 +40,155 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
-application/
-  commands/
-    AddRecentProjectUseCase.hx
-    BuildProjectUseCase.hx
-    ClearRecentProjectsUseCase.hx
-    CloseProjectUseCase.hx
-    ExportDatabaseUseCase.hx
-    LoadProjectUseCase.hx
-    OpenResourceUseCase.hx
-    OpenViewUseCase.hx
-    SaveLayoutUseCase.hx
-    SetFullscreenUseCase.hx
-    SetRendererUseCase.hx
-  dto/
-    MenuItem.hx
-    ResourceMetadataDto.hx
-    ViewDto.hx
-    WindowBoundsDto.hx
-  services/
-    ClipboardService.hx
-    LayoutHistoryService.hx
-    MenuService.hx
-    PluginManager.hx
-    PluginRegistry.hx
-    ProjectService.hx
-    ResourceService.hx
-    ViewRegistry.hx
-    WindowService.hx
-domain/
-  entities/
-    Database.hx
-    LayoutConfig.hx
-    Project.hx
-    Resource.hx
-    UserSettings.hx
-  enums/
-    MenuItemType.hx
-    ResourceType.hx
-    ViewType.hx
-    WindowEvent.hx
-  exceptions/
-    FileNotFoundError.hx
-    InvalidConfigError.hx
-    ProjectLoadError.hx
-    ResourceNotFoundError.hx
-  services/
-    IClipboardService.hx
-    IElement.hx
-    IFileSystem.hx
-    ILayoutEngine.hx
-    IPlugin.hx
-    IResourceLoader.hx
-    IViewFactory.hx
-    IWindowManager.hx
-    PluginConfig.hx
-    PluginsConfig.hx
-  valueobjects/
-    DisplayPosition.hx
-    FilePath.hx
-    LayoutConfig.hx
-    LayoutState.hx
-    ResourceId.hx
-    ScreenBounds.hx
-    WindowBounds.hx
-infrastructure/
-  config/
-    PackageJsonLoader.hx
-    ProjectConfigParser.hx
-    UserSettingsLoader.hx
-  di/
-    AppModule.hx
-  external/
-    golden/
-      Config.hx
-      Container.hx
-      ContentItem.hx
-      Event.hx
-      Header.hx
-      Layout.hx
-      Tab.hx
-    monaco/
-      KeyCode.hx
-      KeyMod.hx
-      Languages.hx
-      MarkdownString.hx
-      Model.hx
-      ModelDeltaDecoration.hx
-      Position.hx
-      Range.hx
-      ScriptEditor.hx
-      Todo.hx
-    nw/
-      App.hx
-      Clipboard.hx
-      Menu.hx
-      MenuItem.hx
-      Screen.hx
-      Window.hx
-    GoldenLayoutAdapter.hx
-    HeapsEngineAdapter.hx
-    HtmlElement.hx
-    jQueryElementAdapter.hx
-    MonacoEditorAdapter.hx
-  persistence/
-    FileSystemRepository.hx
-    LocalStorageRepository.hx
-    MemoryRepository.hx
-  platform/
-    electron/
-      ElectronClipboardAdapter.hx
-      ElectronFileSystemAdapter.hx
-      ElectronIpcBridge.hx
-      ElectronScreenAdapter.hx
-      ElectronShortcutAdapter.hx
-      ElectronWindowAdapter.hx
-    nwjs/
-      NwClipboardAdapter.hx
-      NwFileSystemAdapter.hx
-      NwIpcBridge.hx
-      NwScreenAdapter.hx
-      NwShortcutAdapter.hx
-      NwWindowAdapter.hx
-    web/
-      BrowserWindowAdapter.hx
-      LocalStorageAdapter.hx
-legacy/
-  Extension.hx
-  Ide.hx
-plugins/
-  console/
-    ConsoleView.hx
-    ConsoleViewFactory.hx
-  ConsolePlugin.hx
-presentation/
-  controllers/
-    DragDropController.hx
-    KeyboardController.hx
-    MenuController.hx
-  styles/
-    CssVariables.hx
-    Theme.hx
-  ui/
-    Dialog.hx
-    Element.hx
-    MenuBuilder.hx
-    StatusBar.hx
-    View.hx
-  views/
-    CdbTableView.hx
-    ModelView.hx
-    PrefabView.hx
-    ScriptEditorView.hx
-  Ide.hx
-shared/
-  events/
-    ErrorOccurred.hx
-    FullscreenChanged.hx
-    LayoutChanged.hx
-    LayoutSaved.hx
-    ProjectClosed.hx
-    ProjectClosing.hx
-    ProjectLoaded.hx
-    RecentProjectsUpdated.hx
-    RendererChanged.hx
-    ResourceOpened.hx
-    ViewOpened.hx
-  extensions/
-    ArrayExt.hx
-    DateExt.hx
-    StringExt.hx
-  types/
-    EventBusImpl.hx
-    IEventBus.hx
-    NonEmptyArray.hx
-    Option.hx
-    Result.hx
-  utils/
-    AsyncUtils.hx
-    JsonUtils.hx
-    PathUtils.hx
+application/commands/AddRecentProjectUseCase.hx
+application/commands/BuildProjectUseCase.hx
+application/commands/ClearRecentProjectsUseCase.hx
+application/commands/CloseProjectUseCase.hx
+application/commands/ExportDatabaseUseCase.hx
+application/commands/LoadProjectUseCase.hx
+application/commands/OpenResourceUseCase.hx
+application/commands/OpenViewUseCase.hx
+application/commands/SaveLayoutUseCase.hx
+application/commands/SetFullscreenUseCase.hx
+application/commands/SetRendererUseCase.hx
+application/dto/MenuItem.hx
+application/dto/ResourceMetadataDto.hx
+application/dto/ViewDto.hx
+application/dto/WindowBoundsDto.hx
+application/services/ClipboardService.hx
+application/services/LayoutHistoryService.hx
+application/services/MenuService.hx
+application/services/PluginManager.hx
+application/services/PluginRegistry.hx
+application/services/ProjectService.hx
+application/services/ResourceService.hx
+application/services/ViewRegistry.hx
+application/services/WindowService.hx
+domain/entities/Database.hx
+domain/entities/LayoutConfig.hx
+domain/entities/Project.hx
+domain/entities/Resource.hx
+domain/entities/UserSettings.hx
+domain/enums/MenuItemType.hx
+domain/enums/ResourceType.hx
+domain/enums/ViewType.hx
+domain/enums/WindowEvent.hx
+domain/exceptions/FileNotFoundError.hx
+domain/exceptions/InvalidConfigError.hx
+domain/exceptions/ProjectLoadError.hx
+domain/exceptions/ResourceNotFoundError.hx
+domain/services/IAppInfo.hx
+domain/services/IClipboardService.hx
+domain/services/IElement.hx
+domain/services/IFileDialog.hx
+domain/services/IFileSystem.hx
+domain/services/ILayoutEngine.hx
+domain/services/IPlatform.hx
+domain/services/IPlugin.hx
+domain/services/IResourceLoader.hx
+domain/services/IViewFactory.hx
+domain/services/IWindowManager.hx
+domain/services/PluginConfig.hx
+domain/services/PluginsConfig.hx
+domain/valueobjects/DisplayPosition.hx
+domain/valueobjects/FilePath.hx
+domain/valueobjects/LayoutConfig.hx
+domain/valueobjects/LayoutState.hx
+domain/valueobjects/ResourceId.hx
+domain/valueobjects/ScreenBounds.hx
+domain/valueobjects/WindowBounds.hx
+infrastructure/config/PackageJsonLoader.hx
+infrastructure/config/ProjectConfigParser.hx
+infrastructure/config/UserSettingsLoader.hx
+infrastructure/di/AppModule.hx
+infrastructure/external/golden/Config.hx
+infrastructure/external/golden/Container.hx
+infrastructure/external/golden/ContentItem.hx
+infrastructure/external/golden/Event.hx
+infrastructure/external/golden/Header.hx
+infrastructure/external/golden/Layout.hx
+infrastructure/external/golden/Tab.hx
+infrastructure/external/GoldenLayoutAdapter.hx
+infrastructure/external/HeapsEngineAdapter.hx
+infrastructure/external/HtmlElement.hx
+infrastructure/external/jQueryElementAdapter.hx
+infrastructure/external/monaco/KeyCode.hx
+infrastructure/external/monaco/KeyMod.hx
+infrastructure/external/monaco/Languages.hx
+infrastructure/external/monaco/MarkdownString.hx
+infrastructure/external/monaco/Model.hx
+infrastructure/external/monaco/ModelDeltaDecoration.hx
+infrastructure/external/monaco/Position.hx
+infrastructure/external/monaco/Range.hx
+infrastructure/external/monaco/ScriptEditor.hx
+infrastructure/external/monaco/Todo.hx
+infrastructure/external/MonacoEditorAdapter.hx
+infrastructure/external/nw/App.hx
+infrastructure/external/nw/Clipboard.hx
+infrastructure/external/nw/Menu.hx
+infrastructure/external/nw/MenuItem.hx
+infrastructure/external/nw/Screen.hx
+infrastructure/external/nw/Window.hx
+infrastructure/persistence/FileSystemRepository.hx
+infrastructure/persistence/LocalStorageRepository.hx
+infrastructure/persistence/MemoryRepository.hx
+infrastructure/platform/electron/ElectronClipboardAdapter.hx
+infrastructure/platform/electron/ElectronFileSystemAdapter.hx
+infrastructure/platform/electron/ElectronIpcBridge.hx
+infrastructure/platform/electron/ElectronScreenAdapter.hx
+infrastructure/platform/electron/ElectronShortcutAdapter.hx
+infrastructure/platform/electron/ElectronWindowAdapter.hx
+infrastructure/platform/nwjs/NwClipboardAdapter.hx
+infrastructure/platform/nwjs/NwFileSystemAdapter.hx
+infrastructure/platform/nwjs/NwIpcBridge.hx
+infrastructure/platform/nwjs/NwScreenAdapter.hx
+infrastructure/platform/nwjs/NwShortcutAdapter.hx
+infrastructure/platform/nwjs/NwWindowAdapter.hx
+infrastructure/platform/web/BrowserWindowAdapter.hx
+infrastructure/platform/web/LocalStorageAdapter.hx
+legacy/Extension.hx
+legacy/Ide.hx
 plugins.json
+plugins/console/ConsoleView.hx
+plugins/console/ConsoleViewFactory.hx
+plugins/ConsolePlugin.hx
+presentation/controllers/DragDropController.hx
+presentation/controllers/KeyboardController.hx
+presentation/controllers/MenuController.hx
+presentation/Ide.hx
+presentation/styles/CssVariables.hx
+presentation/styles/Theme.hx
+presentation/ui/Dialog.hx
+presentation/ui/Element.hx
+presentation/ui/MenuBuilder.hx
+presentation/ui/StatusBar.hx
+presentation/ui/View.hx
+presentation/views/CdbTableView.hx
+presentation/views/ModelView.hx
+presentation/views/PrefabView.hx
+presentation/views/ScriptEditorView.hx
+shared/events/ErrorOccurred.hx
+shared/events/FullscreenChanged.hx
+shared/events/LayoutChanged.hx
+shared/events/LayoutSaved.hx
+shared/events/ProjectClosed.hx
+shared/events/ProjectClosing.hx
+shared/events/ProjectLoaded.hx
+shared/events/RecentProjectsUpdated.hx
+shared/events/RendererChanged.hx
+shared/events/ResourceOpened.hx
+shared/events/ViewOpened.hx
+shared/extensions/ArrayExt.hx
+shared/extensions/DateExt.hx
+shared/extensions/StringExt.hx
+shared/types/EventBusImpl.hx
+shared/types/IEventBus.hx
+shared/types/NonEmptyArray.hx
+shared/types/Option.hx
+shared/types/Result.hx
+shared/utils/AsyncUtils.hx
+shared/utils/JsonUtils.hx
+shared/utils/PathUtils.hx
 </directory_structure>
 
 <files>
@@ -1077,6 +1045,13 @@ package hide.domain.exceptions;
 package hide.domain.exceptions;
 </file>
 
+<file path="domain/services/IAppInfo.hx">
+package hide.domain.services;
+interface IAppInfo {
+    var version(get, never):String;
+}
+</file>
+
 <file path="domain/services/IClipboardService.hx">
 package hide.domain.services;
 </file>
@@ -1110,6 +1085,14 @@ interface IElement {
      * Возвращает родительский элемент (если есть).
      */
     function getParent():Null<IElement>;
+}
+</file>
+
+<file path="domain/services/IFileDialog.hx">
+package hide.domain.services;
+import tink.core.Future;
+interface IFileDialog {
+    function showOpen(options:Dynamic):Future<String>;
 }
 </file>
 
@@ -1200,6 +1183,13 @@ interface ILayoutEngine extends Service{
     function registerView(type:String, factory:IViewFactory):Void;
 
 
+}
+</file>
+
+<file path="domain/services/IPlatform.hx">
+package hide.domain.services;
+interface IPlatform {
+    function getAppArgs():Array<String>;
 }
 </file>
 
@@ -1393,9 +1383,38 @@ package hide.infrastructure.di;
 import hx.injection.ServiceCollection;
 import hide.shared.types.IEventBus;
 import hide.shared.types.EventBusImpl;
+
+// Domain
 import hide.domain.services.IFileSystem;
+import hide.domain.services.IWindowManager;
+import hide.domain.services.ILayoutEngine;
+import hide.domain.services.IAppInfo;
+import hide.domain.services.IPlatform;
+import hide.domain.services.IFileDialog;
+
+// Infrastructure (Electron)
+#if electron
 import hide.infrastructure.platform.electron.ElectronFileSystemAdapter;
-// ... импорты всех ваших сервисов и use-case-ов
+import hide.infrastructure.platform.electron.ElectronWindowAdapter;
+// Добавьте заглушки для остальных, если их еще нет
+#end
+
+// Application
+import hide.application.services.WindowService;
+import hide.application.services.MenuService;
+import hide.application.services.PluginManager;
+import hide.application.services.ViewRegistry;
+import hide.application.services.PluginRegistry;
+
+// Commands (Use Cases)
+import hide.application.commands.LoadProjectUseCase;
+import hide.application.commands.SetFullscreenUseCase;
+import hide.application.commands.SaveLayoutUseCase;
+import hide.application.commands.CloseProjectUseCase;
+import hide.application.commands.OpenViewUseCase;
+
+// Presentation
+import hide.presentation.Ide;
 
 // Подключаем extension-методы для красивого синтаксиса (addSingleton и т.д.)
 using hx.injection.ServiceExtensions;
@@ -1410,10 +1429,12 @@ class AppModule {
         // 1. Инфраструктура (Платформенно-зависимые реализации)
         #if electron
         collection.addSingleton(IFileSystem, ElectronFileSystemAdapter);
-        // collection.addSingleton(IWindowManager, ElectronWindowAdapter);
+        collection.addSingleton(IWindowManager, ElectronWindowAdapter);
+        // TODO: Добавить ElectronPlatformAdapter, ElectronFileDialogAdapter и IAppInfoAdapter
         #elseif nw
         // collection.addSingleton(IFileSystem, NwFileSystemAdapter);
         #else
+        // Временные заглушки для веб-версии или тестов
         // collection.addSingleton(IFileSystem, StubFileSystemAdapter);
         #end
 
@@ -1620,6 +1641,290 @@ extern class Tab {
 	dynamic function onClose() : Bool;
 
 }
+</file>
+
+<file path="infrastructure/external/GoldenLayoutAdapter.hx">
+package hide.infrastructure.external;
+
+import hide.application.services.ViewRegistry;
+import golden.*;
+import hide.domain.services.ILayoutEngine;
+import hide.domain.services.IViewFactory;
+import hide.domain.valueobjects.LayoutState;
+import hide.domain.valueobjects.DisplayPosition;
+import hide.shared.types.IEventBus;
+import hide.shared.events.LayoutChanged;
+import js.html.Element;
+
+class GoldenLayoutAdapter implements ILayoutEngine {
+    private var layout:Layout;
+    private var container:Element;
+    private var eventBus:IEventBus;
+    
+    // ✅ 1. Инициализация Map
+    private var viewFactories:Map<String, IViewFactory>; 
+    private var onLayoutChangedCallbacks:Array<Void->Void>;
+    private var viewRegistry:ViewRegistry;
+
+    public function new(container:Element, eventBus:IEventBus, viewRegistry:ViewRegistry) {
+        this.container = container;
+        this.eventBus = eventBus;
+        this.viewRegistry = viewRegistry;
+        this.viewFactories = new Map(); // ✅ ИСПРАВЛЕНО: Создаем Map
+        this.onLayoutChangedCallbacks = [];
+
+        // ✅ 3. Подписываемся на новые регистрации в ViewRegistry
+        // Когда плагин вызовет viewRegistry.registerViewFactory, сработает этот коллбэк
+        viewRegistry.setFactoryRegistrationCallback(registerView);
+    }
+
+    public function init(state:LayoutState):Void {
+        // ✅ 2. Обработка "Пустого старта"
+        var contentData = state.content;
+        if (contentData == null || contentData.length == 0) {
+            contentData = createDefaultSkeleton().content;
+        }
+
+        var config = toGoldenConfig(contentData);
+        config.settings ??= {};
+        config.settings.reorderEnabled = true;
+        config.settings.showPopoutIcon = false;
+        config.settings.showMaximiseIcon = true;
+
+        layout = new Layout(config, container.get(0));
+
+        // Регистрация ВСЕХ существующих фабрик из ViewRegistry ПЕРЕД init()
+        for (type => factory in viewFactories) {
+            registerComponentInLayout(type, factory);
+        }
+
+        layout.init();
+        
+        layout.on('stateChanged', _ -> {
+            eventBus.publish(new LayoutChanged({}));
+            for (cb in onLayoutChangedCallbacks) cb();
+        });
+    }
+
+    public function open(componentName:String, state:Dynamic, ?position:DisplayPosition):Void {
+        if (layout == null) throw "Layout not initialized";
+
+        var config:Config.ItemConfig = {
+            type: Component,
+            componentName: componentName,
+            componentState: state
+        };
+
+        // ✅ 2. Безопасное получение или создание контейнера
+        var targetContainer = getOrInitTarget(position);
+        targetContainer.addChild(config);
+    }
+
+    public function save():LayoutState {
+        var config = layout.toConfig();
+        return {
+            content: fromGoldenConfig(config.content),
+            fullScreen: null
+        };
+    }
+
+    public function dispose():Void {
+        if (layout != null) {
+            layout.destroy();
+            layout = null;
+        }
+        onLayoutChangedCallbacks = [];
+    }
+
+    public function onLayoutChanged(callback:Void->Void):Void {
+        onLayoutChangedCallbacks.push(callback);
+    }
+
+    public function registerView(type:String, factory:IViewFactory):Void {
+        viewFactories.set(type, factory);
+        
+        // Если Layout уже инициализирован (плагин загрузился на лету), регистрируем сразу
+        if (layout != null && layout.isInitialised) {
+            registerComponentInLayout(type, factory);
+        }
+    }
+
+    // === Вспомогательные методы ===
+
+    private function registerComponentInLayout(type:String, factory:IViewFactory):Void {
+        layout.registerComponent(type, function(glContainer, state) {
+            var element = new HtmlElement(glContainer.getElement());
+            factory.create(element, state);
+        });
+    }
+
+    /**
+     * Создает дефолтную структуру окон, если её нет.
+     */
+    private function createDefaultSkeleton():Config {
+        return {
+            content: [{
+                type: Row,
+                content: [
+                    { type: Stack, id: "left", width: 20 },      
+                    { type: Column, id: "middle-column", width: 60, content: [
+                        { type: Stack, id: "center" },            
+                        { type: Stack, id: "bottom", height: 30 } 
+                    ]},
+                    { type: Stack, id: "right", width: 20 }      
+                ]
+            }],
+            settings: {}
+        };
+    }
+
+    /**
+     * Находит контейнер по позиции или создает его, если он был удален пользователем.
+     * Это критически важно для IDE!
+     */
+    private function getOrInitTarget(position:DisplayPosition):ContentItem {
+        if (layout.root == null) return layout.root;
+
+        var targetId = switch position {
+            case Left: "left";
+            case Center: "center";
+            case Bottom: "bottom";
+            case Right: "right";
+            case MiddleColumnInternal: "middle-column";
+            case null: null;
+        };
+
+        if (targetId == null) return layout.root;
+
+        // 1. Пытаемся найти существующий
+        var items = layout.root.getItemsById(targetId);
+        if (items.length > 0) return items[0];
+
+        // 2. Создаем недостающий (упрощенная логика для основных зон)
+        var rootRow = layout.root.contentItems[0];
+        if (rootRow == null || rootRow.type != Row) {
+            // Если корень не Row, добавляем в корень
+            var newStack:Config.ItemConfig = { type: Stack, id: targetId };
+            layout.root.addChild(newStack);
+            return layout.root.getItemsById(targetId)[0];
+        }
+
+        switch position {
+            case Left:
+                // Вставляем в начало корневого Row
+                rootRow.addChild({ type: Stack, id: "left", width: 20 }, 0);
+            
+            case Right:
+                // Вставляем в конец корневого Row
+                rootRow.addChild({ type: Stack, id: "right", width: 20 });
+
+            case Center | Bottom | MiddleColumnInternal:
+                // Ищем или создаем "middle-column"
+                var middleItems = layout.root.getItemsById("middle-column");
+                var middleCol:ContentItem = middleItems.length > 0 ? middleItems[0] : null;
+
+                if (middleCol == null) {
+                    // Создаем Column посередине (индекс 1, между left и right)
+                    rootRow.addChild({ type: Column, id: "middle-column", isClosable: false }, 1);
+                    middleCol = layout.root.getItemsById("middle-column")[0];
+                }
+
+                if (position == Center) {
+                    middleCol.addChild({ type: Stack, id: "center" }, 0);
+                } else if (position == Bottom) {
+                    middleCol.addChild({ type: Stack, id: "bottom" });
+                }
+            
+            default:
+                return layout.root;
+        }
+
+        // Возвращаем свеже созданный
+        return layout.root.getItemsById(targetId)[0];
+    }
+
+    // === Маппинг JSON (без изменений) ===
+    private function toGoldenConfig(stateContent:Array<Dynamic>):Config {
+        return {
+            content: [for (item in stateContent) toGoldenItem(item)],
+            settings: { reorderEnabled: true, constrainDragToHeader: true, showPopoutIcon: false, showMaximiseIcon: true }
+        };
+    }
+
+    private function toGoldenItem(item:Dynamic):Config.ItemConfig {
+        return {
+            type: item.type,
+            componentName: item.componentName,
+            componentState: item.componentState,
+            content: item.content != null ? [for (i in item.content) toGoldenItem(i)] : null,
+            id: item.id,
+            width: item.width,
+            height: item.height
+        };
+    }
+
+    private function fromGoldenConfig(items:Array<Config.ItemConfig>):Array<Dynamic> {
+        return [for (item in items) fromGoldenItem(item)];
+    }
+
+    private function fromGoldenItem(item:Config.ItemConfig):Dynamic {
+        return {
+            type: item.type,
+            componentName: item.componentName,
+            componentState: item.componentState,
+            content: item.content != null ? [for (i in item.content) fromGoldenItem(i)] : null,
+            id: item.id,
+            width: item.width,
+            height: item.height
+        };
+    }
+}
+</file>
+
+<file path="infrastructure/external/HeapsEngineAdapter.hx">
+package hide.infrastructure.external;
+</file>
+
+<file path="infrastructure/external/HtmlElement.hx">
+// hide/infrastructure/external/HtmlElement.hx
+
+package hide.infrastructure.external;
+
+import hide.domain.services.IElement;
+import js.html.Element;
+
+class HtmlElement implements IElement {
+    private var element:Element;
+
+    public function new(element:Element) {
+        this.element = element;
+    }
+
+    public function setInnerHtml(html:String):Void {
+        element.innerHtml = html;
+    }
+
+    public function appendChild(child:IElement):Void {
+        element.appendChild(cast child.element);
+    }
+
+    public function addEventListener(event:String, handler:Dynamic->Void):Void {
+        element.addEventListener(event, handler);
+    }
+
+    public function getParent():Null<IElement> {
+        if (element.parentElement == null) return null;
+        return new HtmlElement(element.parentElement);
+    }
+
+    public function getElement():Element {
+        return element;
+    }
+}
+</file>
+
+<file path="infrastructure/external/jQueryElementAdapter.hx">
+package hide.infrastructure.external;
 </file>
 
 <file path="infrastructure/external/monaco/KeyCode.hx">
@@ -1928,6 +2233,10 @@ abstract Todo(Dynamic) {
 }
 </file>
 
+<file path="infrastructure/external/MonacoEditorAdapter.hx">
+package hide.infrastructure.external;
+</file>
+
 <file path="infrastructure/external/nw/App.hx">
 package nw;
 
@@ -2083,294 +2392,6 @@ extern class Window {
 	public static function open( url : String, ?params : {?new_instance:Bool,?inject_js_start:String,?inject_js_end:String,?id:String}, ?callb:Window->Void ) : Void;
 
 }
-</file>
-
-<file path="infrastructure/external/GoldenLayoutAdapter.hx">
-package hide.infrastructure.external;
-
-import hide.application.services.ViewRegistry;
-import golden.*;
-import hide.domain.services.ILayoutEngine;
-import hide.domain.services.IViewFactory;
-import hide.domain.valueobjects.LayoutState;
-import hide.domain.valueobjects.DisplayPosition;
-import hide.shared.types.IEventBus;
-import hide.shared.events.LayoutChanged;
-import js.html.Element;
-
-class GoldenLayoutAdapter implements ILayoutEngine {
-    private var layout:Layout;
-    private var container:Element;
-    private var eventBus:IEventBus;
-    
-    // ✅ 1. Инициализация Map
-    private var viewFactories:Map<String, IViewFactory>; 
-    private var onLayoutChangedCallbacks:Array<Void->Void>;
-    private var viewRegistry:ViewRegistry;
-
-    public function new(container:Element, eventBus:IEventBus, viewRegistry:ViewRegistry) {
-        this.container = container;
-        this.eventBus = eventBus;
-        this.viewRegistry = viewRegistry;
-        this.viewFactories = new Map(); // ✅ ИСПРАВЛЕНО: Создаем Map
-        this.onLayoutChangedCallbacks = [];
-
-        // ✅ 3. Подписываемся на новые регистрации в ViewRegistry
-        // Когда плагин вызовет viewRegistry.registerViewFactory, сработает этот коллбэк
-        viewRegistry.setFactoryRegistrationCallback(registerView);
-    }
-
-    public function init(state:LayoutState):Void {
-        // ✅ 2. Обработка "Пустого старта"
-        var contentData = state.content;
-        if (contentData == null || contentData.length == 0) {
-            contentData = createDefaultSkeleton().content;
-        }
-
-        var config = toGoldenConfig(contentData);
-        config.settings ??= {};
-        config.settings.reorderEnabled = true;
-        config.settings.showPopoutIcon = false;
-        config.settings.showMaximiseIcon = true;
-
-        layout = new Layout(config, container.get(0));
-
-        // Регистрация ВСЕХ существующих фабрик из ViewRegistry ПЕРЕД init()
-        for (type => factory in viewFactories) {
-            registerComponentInLayout(type, factory);
-        }
-
-        layout.init();
-        
-        layout.on('stateChanged', _ -> {
-            eventBus.publish(new LayoutChanged({}));
-            for (cb in onLayoutChangedCallbacks) cb();
-        });
-    }
-
-    public function open(componentName:String, state:Dynamic, ?position:DisplayPosition):Void {
-        if (layout == null) throw "Layout not initialized";
-
-        var config:Config.ItemConfig = {
-            type: Component,
-            componentName: componentName,
-            componentState: state
-        };
-
-        // ✅ 2. Безопасное получение или создание контейнера
-        var targetContainer = getOrInitTarget(position);
-        targetContainer.addChild(config);
-    }
-
-    public function save():LayoutState {
-        var config = layout.toConfig();
-        return {
-            content: fromGoldenConfig(config.content),
-            fullScreen: null
-        };
-    }
-
-    public function dispose():Void {
-        if (layout != null) {
-            layout.destroy();
-            layout = null;
-        }
-        onLayoutChangedCallbacks = [];
-    }
-
-    public function onLayoutChanged(callback:Void->Void):Void {
-        onLayoutChangedCallbacks.push(callback);
-    }
-
-    public function registerView(type:String, factory:IViewFactory):Void {
-        viewFactories.set(type, factory);
-        
-        // Если Layout уже инициализирован (плагин загрузился на лету), регистрируем сразу
-        if (layout != null && layout.isInitialised) {
-            registerComponentInLayout(type, factory);
-        }
-    }
-
-    // === Вспомогательные методы ===
-
-    private function registerComponentInLayout(type:String, factory:IViewFactory):Void {
-        layout.registerComponent(type, function(glContainer, state) {
-            var element = new HtmlElement(glContainer.getElement());
-            factory.create(element, state);
-        });
-    }
-
-    /**
-     * Создает дефолтную структуру окон, если её нет.
-     */
-    private function createDefaultSkeleton():Config {
-        return {
-            content: [{
-                type: Row,
-                content: [
-                    { type: Stack, id: "left", width: 20 },      
-                    { type: Column, id: "middle-column", width: 60, content: [
-                        { type: Stack, id: "center" },            
-                        { type: Stack, id: "bottom", height: 30 } 
-                    ]},
-                    { type: Stack, id: "right", width: 20 }      
-                ]
-            }],
-            settings: {}
-        };
-    }
-
-    /**
-     * Находит контейнер по позиции или создает его, если он был удален пользователем.
-     * Это критически важно для IDE!
-     */
-    private function getOrInitTarget(position:DisplayPosition):ContentItem {
-        if (layout.root == null) return layout.root;
-
-        var targetId = switch position {
-            case Left: "left";
-            case Center: "center";
-            case Bottom: "bottom";
-            case Right: "right";
-            case MiddleColumnInternal: "middle-column";
-            case null: null;
-        };
-
-        if (targetId == null) return layout.root;
-
-        // 1. Пытаемся найти существующий
-        var items = layout.root.getItemsById(targetId);
-        if (items.length > 0) return items[0];
-
-        // 2. Создаем недостающий (упрощенная логика для основных зон)
-        var rootRow = layout.root.contentItems[0];
-        if (rootRow == null || rootRow.type != Row) {
-            // Если корень не Row, добавляем в корень
-            var newStack:Config.ItemConfig = { type: Stack, id: targetId };
-            layout.root.addChild(newStack);
-            return layout.root.getItemsById(targetId)[0];
-        }
-
-        switch position {
-            case Left:
-                // Вставляем в начало корневого Row
-                rootRow.addChild({ type: Stack, id: "left", width: 20 }, 0);
-            
-            case Right:
-                // Вставляем в конец корневого Row
-                rootRow.addChild({ type: Stack, id: "right", width: 20 });
-
-            case Center | Bottom | MiddleColumnInternal:
-                // Ищем или создаем "middle-column"
-                var middleItems = layout.root.getItemsById("middle-column");
-                var middleCol:ContentItem = middleItems.length > 0 ? middleItems[0] : null;
-
-                if (middleCol == null) {
-                    // Создаем Column посередине (индекс 1, между left и right)
-                    rootRow.addChild({ type: Column, id: "middle-column", isClosable: false }, 1);
-                    middleCol = layout.root.getItemsById("middle-column")[0];
-                }
-
-                if (position == Center) {
-                    middleCol.addChild({ type: Stack, id: "center" }, 0);
-                } else if (position == Bottom) {
-                    middleCol.addChild({ type: Stack, id: "bottom" });
-                }
-            
-            default:
-                return layout.root;
-        }
-
-        // Возвращаем свеже созданный
-        return layout.root.getItemsById(targetId)[0];
-    }
-
-    // === Маппинг JSON (без изменений) ===
-    private function toGoldenConfig(stateContent:Array<Dynamic>):Config {
-        return {
-            content: [for (item in stateContent) toGoldenItem(item)],
-            settings: { reorderEnabled: true, constrainDragToHeader: true, showPopoutIcon: false, showMaximiseIcon: true }
-        };
-    }
-
-    private function toGoldenItem(item:Dynamic):Config.ItemConfig {
-        return {
-            type: item.type,
-            componentName: item.componentName,
-            componentState: item.componentState,
-            content: item.content != null ? [for (i in item.content) toGoldenItem(i)] : null,
-            id: item.id,
-            width: item.width,
-            height: item.height
-        };
-    }
-
-    private function fromGoldenConfig(items:Array<Config.ItemConfig>):Array<Dynamic> {
-        return [for (item in items) fromGoldenItem(item)];
-    }
-
-    private function fromGoldenItem(item:Config.ItemConfig):Dynamic {
-        return {
-            type: item.type,
-            componentName: item.componentName,
-            componentState: item.componentState,
-            content: item.content != null ? [for (i in item.content) fromGoldenItem(i)] : null,
-            id: item.id,
-            width: item.width,
-            height: item.height
-        };
-    }
-}
-</file>
-
-<file path="infrastructure/external/HeapsEngineAdapter.hx">
-package hide.infrastructure.external;
-</file>
-
-<file path="infrastructure/external/HtmlElement.hx">
-// hide/infrastructure/external/HtmlElement.hx
-
-package hide.infrastructure.external;
-
-import hide.domain.services.IElement;
-import js.html.Element;
-
-class HtmlElement implements IElement {
-    private var element:Element;
-
-    public function new(element:Element) {
-        this.element = element;
-    }
-
-    public function setInnerHtml(html:String):Void {
-        element.innerHtml = html;
-    }
-
-    public function appendChild(child:IElement):Void {
-        element.appendChild(cast child.element);
-    }
-
-    public function addEventListener(event:String, handler:Dynamic->Void):Void {
-        element.addEventListener(event, handler);
-    }
-
-    public function getParent():Null<IElement> {
-        if (element.parentElement == null) return null;
-        return new HtmlElement(element.parentElement);
-    }
-
-    public function getElement():Element {
-        return element;
-    }
-}
-</file>
-
-<file path="infrastructure/external/jQueryElementAdapter.hx">
-package hide.infrastructure.external;
-</file>
-
-<file path="infrastructure/external/MonacoEditorAdapter.hx">
-package hide.infrastructure.external;
 </file>
 
 <file path="infrastructure/persistence/FileSystemRepository.hx">
@@ -4781,50 +4802,6 @@ package hide.presentation.controllers;
 package hide.presentation.controllers;
 </file>
 
-<file path="presentation/styles/CssVariables.hx">
-package hide.presentation.styles;
-</file>
-
-<file path="presentation/styles/Theme.hx">
-package hide.presentation.styles;
-</file>
-
-<file path="presentation/ui/Dialog.hx">
-package hide.presentation.ui;
-</file>
-
-<file path="presentation/ui/Element.hx">
-package hide.presentation.ui;
-</file>
-
-<file path="presentation/ui/MenuBuilder.hx">
-package hide.presentation.ui;
-</file>
-
-<file path="presentation/ui/StatusBar.hx">
-package hide.presentation.ui;
-</file>
-
-<file path="presentation/ui/View.hx">
-package hide.presentation.ui;
-</file>
-
-<file path="presentation/views/CdbTableView.hx">
-package hide.presentation.views;
-</file>
-
-<file path="presentation/views/ModelView.hx">
-package hide.presentation.views;
-</file>
-
-<file path="presentation/views/PrefabView.hx">
-package hide.presentation.views;
-</file>
-
-<file path="presentation/views/ScriptEditorView.hx">
-package hide.presentation.views;
-</file>
-
 <file path="presentation/Ide.hx">
 package hide.presentation;
 
@@ -4888,18 +4865,18 @@ class Ide {
     private var _projectLoadedUnsub:CallbackLink;
     private var _errorUnsub:CallbackLink;
     private var _layoutChangedUnsub:CallbackLink;
-
+    private var _projectClosedUnsub:CallbackLink; // <-- ДОБАВИТЬ ЭТО
     // === Сервисы ===
-    private var windowService:WindowService,
-    private var menuService:MenuService,
-    private var loadProjectUseCase:LoadProjectUseCase,
-    private var setFullscreenUseCase:SetFullscreenUseCase,
-    private var saveLayoutUseCase:SaveLayoutUseCase,
-    private var closeProjectUseCase:CloseProjectUseCase,
-    private var openViewUseCase:OpenViewUseCase,
-    private var viewRegistry:ViewRegistry,
-    private var pluginManager:PluginManager,
-    private var eventBus:IEventBus // Для подписок
+    private var windowService:WindowService;
+    private var menuService:MenuService;
+    private var loadProjectUseCase:LoadProjectUseCase;
+    private var setFullscreenUseCase:SetFullscreenUseCase;
+    private var saveLayoutUseCase:SaveLayoutUseCase;
+    private var closeProjectUseCase:CloseProjectUseCase;
+    private var openViewUseCase:OpenViewUseCase;
+    private var viewRegistry:ViewRegistry;
+    private var pluginManager:PluginManager;
+    private var eventBus:IEventBus; // Для подписок
 
     /**
      * Конструктор. Принимает уже сконфигурированный `ServiceContainer`.
@@ -4937,7 +4914,7 @@ class Ide {
 
         // Инициализация UI
         statusBar = new StatusBar(Element.byId("status-bar"));
-        views = new Map();
+        views = new Arra<ViewDto>();
 
         // Подписка на события
         _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded,onProjectLoadedHandler);
@@ -5084,6 +5061,7 @@ class Ide {
     }
 
     private function startup():Void {
+        trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
         // Инициализация меню из шаблона (данные, а не nw.Menu)
         //var menuTemplate = menuService.buildFromHtml(Element.byId("mainmenu").html());
         // Регистрация обработчиков кликов (в UI-рендере или здесь)
@@ -5101,15 +5079,56 @@ class Ide {
 
     // === Ресурсоосвобождение (для dispose) ===
     public function dispose():Void {
-        if (_projectLoadedLink != null) _projectLoadedLink.cancel();
-        if (_errorLink != null) _errorLink.cancel();
-        _projectLoadedUnsub();
-        _errorUnsub();
-        _layoutChangedUnsub();
-        _projectClosedUnsub();
-        // views.clear(), statusBar.dispose(), и т.д.
+        if (_projectLoadedUnsub != null) _projectLoadedUnsub.cancel();
+        if (_errorUnsub != null) _errorUnsub.cancel();
+        if (_layoutChangedUnsub != null) _projectClosedUnsub.cancel(); // Исправьте на _layoutChangedUnsub.cancel()
+        if (_projectClosedUnsub != null) _projectClosedUnsub.cancel();
     }
 }
+</file>
+
+<file path="presentation/styles/CssVariables.hx">
+package hide.presentation.styles;
+</file>
+
+<file path="presentation/styles/Theme.hx">
+package hide.presentation.styles;
+</file>
+
+<file path="presentation/ui/Dialog.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/Element.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/MenuBuilder.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/StatusBar.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/View.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/views/CdbTableView.hx">
+package hide.presentation.views;
+</file>
+
+<file path="presentation/views/ModelView.hx">
+package hide.presentation.views;
+</file>
+
+<file path="presentation/views/PrefabView.hx">
+package hide.presentation.views;
+</file>
+
+<file path="presentation/views/ScriptEditorView.hx">
+package hide.presentation.views;
 </file>
 
 <file path="shared/events/ErrorOccurred.hx">
@@ -5300,6 +5319,27 @@ interface IEventBus {
 }
 </file>
 
+<file path="plugins.json">
+{
+  "plugins": [
+    {
+      "name": "ConsolePlugin",
+      "class": "plugins.ConsolePlugin",
+      "enabled": true,
+      "config": {
+        "defaultLogLevel": "info"
+      }
+    },
+    {
+      "name": "TerminalPlugin",
+      "class": "plugins.TerminalPlugin",
+      "enabled": false,
+      "config": {}
+    }
+  ]
+}
+</file>
+
 <file path="plugins/console/ConsoleViewFactory.hx">
 // plugins/console/ConsoleViewFactory.hx
 
@@ -5349,27 +5389,6 @@ package shared.utils;
 
 <file path="shared/utils/PathUtils.hx">
 package shared.utils;
-</file>
-
-<file path="plugins.json">
-{
-  "plugins": [
-    {
-      "name": "ConsolePlugin",
-      "class": "plugins.ConsolePlugin",
-      "enabled": true,
-      "config": {
-        "defaultLogLevel": "info"
-      }
-    },
-    {
-      "name": "TerminalPlugin",
-      "class": "plugins.TerminalPlugin",
-      "enabled": false,
-      "config": {}
-    }
-  ]
-}
 </file>
 
 <file path="plugins/console/ConsoleView.hx">

@@ -244,3 +244,41 @@ class AutoWindow {
         return result;
     }
 }
+
+/* === JS ===
+// main.js (Electron Main Process)
+const { app, ipcMain, dialog } = require('electron');
+const fs = require('fs');
+
+// Dialog handlers
+ipcMain.handle('dialog:showOpen', async (event, options) => {
+    return await dialog.showOpenDialog(options);
+});
+
+ipcMain.handle('dialog:showSave', async (event, options) => {
+    return await dialog.showSaveDialog(options);
+});
+
+ipcMain.handle('dialog:showDirectory', async (event, options) => {
+    return await dialog.showOpenDialog(options);
+});
+
+// File system handlers
+ipcMain.handle('fs:readText', async (event, path) => {
+    try {
+        const content = fs.readFileSync(path, 'utf-8');
+        return { content };
+    } catch (err) {
+        return { error: err.message };
+    }
+});
+
+ipcMain.handle('fs:writeText', async (event, path, content) => {
+    try {
+        fs.writeFileSync(path, content, 'utf-8');
+        return { success: true };
+    } catch (err) {
+        return { error: err.message };
+    }
+});
+*/

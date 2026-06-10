@@ -37,7 +37,15 @@ class Project {
     public function getResourcesByType(type:ResourceType):Array<Resource> {
         return [for (r in resources) if (r.type == type) r];
     }
-    
+    public static function fromJson(json:String):Project {
+        var data = haxe.Json.parse(json);
+        return new Project(
+            data.id != null ? data.id : "unknown",
+            data.name != null ? data.name : "Unnamed Project",
+            new FilePath(data.rootPath)
+        );
+    }
     public function get_isDirty():Bool return _isDirty;
     public function markSaved():Void _isDirty = false;
+
 }
