@@ -1,13 +1,15 @@
 // hide/shared/types/IEventBus.hx
 
 package hide.shared.types;
-import tink.core.CallbackLink;
+import tink.core.*;
+import hx.injection.Service;
+using tink.CoreApi;
 /**
  * Общий интерфейс для EventBus.
  * Используется во всех слоях (domain, application, presentation).
  * Предоставляет публикацию и подписку на события.
  */
-interface IEventBus {
+interface IEventBus extends Service {
     /**
      * Подписка на событие.
      * @param eventClass Класс события (нужен для определения типа в рантайме)

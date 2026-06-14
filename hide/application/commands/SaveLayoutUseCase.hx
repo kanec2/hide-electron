@@ -6,8 +6,8 @@ import hide.domain.services.ILayoutEngine;
 import hide.shared.types.IEventBus;
 import hide.shared.events.LayoutSaved;
 import hide.domain.valueobjects.LayoutState;
-
-class SaveLayoutUseCase {
+import hx.injection.*;
+class SaveLayoutUseCase implements Service {
     private var layoutEngine:ILayoutEngine;
     private var eventBus:IEventBus;
 
@@ -19,6 +19,6 @@ class SaveLayoutUseCase {
     public function execute():Void {
         var state:LayoutState = layoutEngine.save(); // ← получаем состояние
         // ИСПРАВЛЕНО: передаем реальное состояние, а не пустой объект {}
-        eventBus.publish(new LayoutSaved(state)); 
+        eventBus.publish(LayoutSaved,new LayoutSaved(state)); 
     }
 }

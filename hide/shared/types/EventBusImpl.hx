@@ -1,32 +1,39 @@
-// hide/shared/types/EventBusImpl.hx
 package hide.shared.types;
-import tink.core.Signal;
-import tink.core.CallbackLink;
+
+import tink.core.*;
+using tink.CoreApi;
+
 class EventBusImpl implements IEventBus {
-    // Храним сигналы по имени класса. Используем Dynamic, так как дженерики в Haxe стираются в рантайме.
-    private var signals:Map<String, Signal<Dynamic>> = [];
+    private var handlers: Map<String, Array<Dynamic->Void>> = [];
 
     public function new() {}
 
-    public function subscribe<T>(eventClass:Class<T>, handler:T->Void):CallbackLink {
+    public function subscribe<T>(eventClass: Class<T>, handler: T->Void): CallbackLink {
         var typeName = Type.getClassName(eventClass);
-        
-        if (!signals.exists(typeName)) {
-            // Создаем новый сигнал для этого типа события
-            signals.set(typeName, cast new Signal<Dynamic>());
+        var list = handlers.get(typeName);
+        if (list == null) {
+            list = [];
+            handlers.set(typeName, list);
         }
-
-        var signal = signals.get(typeName);
-        // Приводим handler к Dynamic->Void, чтобы Signal мог его принять
-        return signal.handle(cast handler);
+        
+        var typedHandler: Dynamic->Void = cast handler;
+        list.push(typedHandler);
+        
+        // Возвращаем функцию отписки, которая автоматически приводится к CallbackLink (Void->Void)
+        return function() {
+            list.remove(typedHandler);
+        };
     }
 
-    public function publish<T>(eventClass:Class<T>, event:T):Void {
+    public function publish<T>(eventClass: Class<T>, event: T): Void {
         var typeName = Type.getClassName(eventClass);
-        
-        if (signals.exists(typeName)) {
-            var signal = signals.get(typeName);
-            signal.trigger(cast event);
+        var list = handlers.get(typeName);
+        if (list != null) {
+            // Копируем массив, чтобы отписка во время итерации не сломала цикл
+            var snapshot = list.copy();
+            for (h in snapshot) {
+                h(cast event);
+            }
         }
     }
 }

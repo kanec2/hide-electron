@@ -4,8 +4,9 @@ package hide.application.services;
 
 import hide.domain.services.IViewFactory;
 import hide.application.dto.ViewDto;
-
-class ViewRegistry {
+import hx.injection.*;
+import Lambda;
+class ViewRegistry implements Service {
     private var views:Array<ViewDto> = [];
     private var viewFactories:Map<String, IViewFactory> = [];
     private var onFactoryRegistered:Null<String->IViewFactory->Void>;
@@ -37,7 +38,7 @@ class ViewRegistry {
     }
 
     public function find(name:String):Null<ViewDto> {
-        return views.find(v -> v.name == name);
+        return Lambda.find(views, function(v) return v.name == name);
     }
 
     public function all():Array<ViewDto> {

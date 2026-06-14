@@ -2,7 +2,7 @@ package hide.domain.services;
 
 typedef PluginConfig = {
     name:String,
-    class:String,
+    className:String,
     enabled:Bool,
     ?config:Dynamic
 }

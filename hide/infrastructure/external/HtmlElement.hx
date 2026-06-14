@@ -1,5 +1,3 @@
-// hide/infrastructure/external/HtmlElement.hx
-
 package hide.infrastructure.external;
 
 import hide.domain.services.IElement;
@@ -7,17 +5,26 @@ import js.html.Element;
 
 class HtmlElement implements IElement {
     private var element:Element;
-
-    public function new(element:Element) {
-        this.element = element;
+    
+    public function new(element:Dynamic) {
+        // GoldenLayout возвращает JQuery, нужно получить raw element
+        if (Std.is(element, Element)) {
+            this.element = cast element;
+        } else if (Reflect.hasField(element, "get")) {
+            // Это JQuery
+            this.element = cast element.get(0);
+        } else {
+            this.element = cast element;
+        }
     }
 
     public function setInnerHtml(html:String):Void {
-        element.innerHtml = html;
+        element.innerHTML = html;  // ← innerHTML (заглавные)
     }
 
     public function appendChild(child:IElement):Void {
-        element.appendChild(cast child.element);
+        var childHtml:HtmlElement = cast child;  // ← каст к HtmlElement
+        element.appendChild(childHtml.element);
     }
 
     public function addEventListener(event:String, handler:Dynamic->Void):Void {

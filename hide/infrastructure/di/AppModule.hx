@@ -53,6 +53,7 @@ class AppModule {
         collection.addSingleton(IFileSystem, ElectronFileSystemAdapter);
         collection.addSingleton(IFileDialog, ElectronFileDialogAdapter);
         collection.addSingleton(IWindowManager, ElectronWindowAdapter);
+        collection.addSingleton(IPlatform, ElectronPlatformAdapter);
         // TODO: Добавить ElectronPlatformAdapter, ElectronFileDialogAdapter и IAppInfoAdapter
         #elseif nw
         // collection.addSingleton(IFileSystem, NwFileSystemAdapter);
@@ -78,9 +79,9 @@ class AppModule {
         collection.addTransient(SetFullscreenUseCase);
         collection.addTransient(SaveLayoutUseCase);
         collection.addTransient(CloseProjectUseCase);
-        collection.addTransient(AddRecentProjectUseCase);
-        collection.addTransient(ClearRecentProjectsUseCase);
-        collection.addTransient(SetRendererUseCase);
+       // collection.addTransient(AddRecentProjectUseCase);
+        //collection.addTransient(ClearRecentProjectsUseCase);
+        //collection.addTransient(SetRendererUseCase);
 
         // 5. Регистрация самого главного класса
         collection.addSingleton(Ide);

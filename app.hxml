@@ -1,6 +1,8 @@
 -js app.js
 -main hide.presentation.Ide
 -lib electron
+-lib tink_core
+-lib haxe-injection
 -dce full
 --debug
 -D no-deprecation-warnings

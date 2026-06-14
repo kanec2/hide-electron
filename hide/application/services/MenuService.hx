@@ -2,8 +2,9 @@ package hide.application.services;
 
 import hide.domain.services.IClipboardService;
 import hide.domain.enums.MenuItemType;
-import hide.application.dto.MenuItemDto;
-
+import hide.application.dto.MenuItem;
+import hide.application.dto.ViewDto;  // ← Добавляем импорт ViewDto
+import hx.injection.*;
 /**
  * Сервис для работы с меню.
  * Работает с данными (MenuItemDto), а не с нативными объектами.
@@ -13,10 +14,11 @@ import hide.application.dto.MenuItemDto;
  * - Глобальные идентификаторы (`data-id`) и обработчики
  * - Сериализация для IPC и сохранения в конфиг
  */
-class MenuService {
+class MenuService implements Service {
     private var handlers:Map<String, Void->Void> = [];
     private var menuItems:Array<MenuItem> = [];
 
+    public function new(){}
     public function onItemClick(id:String, handler:Void->Void):Void {
         handlers[id] = handler;
     }
@@ -30,21 +32,28 @@ class MenuService {
     }
 
     public function buildFromHtml(html:String):MenuTemplate {
-        var dom = new haxe.xml.Fast(Xml.parse(html));
+        var xml = Xml.parse(html);
         var items = [];
 
-        for (item in dom.node.querySelectorAll("item")) {
-            var id = item.att.id;
-            var label = item.node.firstChild().data;
-            items.push({ id: id, label: label });
+        // Правильный способ обхода XML в Haxe
+        for (node in xml.elements()) {
+            if (node.nodeName == "item") {
+                var id = node.get("id");
+                var label = node.firstChild() != null ? node.firstChild().nodeValue : "";
+                items.push({ 
+                    id: id, 
+                    label: label, 
+                    icon: null  // ← Добавляем icon (обязательное поле в MenuItem)
+                });
+            }
         }
 
         return { items: items };
     }
 
     public function addItem(id:String, label:String, ?icon:String):Void {
-    menuItems.push({ id: id, label: label, icon: icon });
-}
+        menuItems.push({ id: id, label: label, icon: icon });
+    }
 
     public function addViewMenu(view:ViewDto):Void {
         var id = "view.${view.name}";

@@ -1,4 +1,5 @@
 package hide.domain.services;
-interface IPlatform {
-    function getAppArgs():Array<String>;
+import hx.injection.Service;
+interface IPlatform extends Service {
+    function getAppArgs(): Array<String>;
 }

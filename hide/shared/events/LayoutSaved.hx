@@ -1,5 +1,10 @@
-// hide/shared/events/LayoutSaved.hx
-
 package hide.shared.events;
 
-class LayoutSaved { public function new() {} }
+import hide.domain.valueobjects.LayoutState;
+
+class LayoutSaved {
+    public var state:LayoutState;
+    public function new(state:LayoutState) {
+        this.state = state;
+    }
+}

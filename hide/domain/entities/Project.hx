@@ -17,7 +17,7 @@ class Project {
     public function new(id:String, name:String, rootPath:FilePath) {
         this.id = id;
         this.name = name;
-        this.rootPath = rootPath.validate() ? rootPath : throw 'Invalid path: $rootPath';
+        this.rootPath = rootPath.isValid() ? rootPath : throw 'Invalid path: $rootPath';
         this.resources = new Map();
         this._isDirty = false;
     }

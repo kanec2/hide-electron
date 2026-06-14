@@ -1,4 +1,5 @@
 package hide.domain.services;
-interface IAppInfo {
-    var version(get, never):String;
+import hx.injection.Service;
+interface IAppInfo extends Service {
+    var version(get, never): String;
 }

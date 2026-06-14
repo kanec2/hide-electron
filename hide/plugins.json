@@ -2,7 +2,7 @@
   "plugins": [
     {
       "name": "ConsolePlugin",
-      "class": "plugins.ConsolePlugin",
+      "className": "plugins.ConsolePlugin",
       "enabled": true,
       "config": {
         "defaultLogLevel": "info"
@@ -10,7 +10,7 @@
     },
     {
       "name": "TerminalPlugin",
-      "class": "plugins.TerminalPlugin",
+      "className": "plugins.TerminalPlugin",
       "enabled": false,
       "config": {}
     }

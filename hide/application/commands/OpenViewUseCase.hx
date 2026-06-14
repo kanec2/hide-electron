@@ -7,8 +7,8 @@ import hide.domain.services.ILayoutEngine;
 import hide.domain.valueobjects.DisplayPosition;
 import hide.application.services.ViewRegistry;
 import js.html.Element;
-
-class OpenViewUseCase {
+import hx.injection.*;
+class OpenViewUseCase implements Service {
     private var layoutEngine:ILayoutEngine;
     private var viewRegistry:ViewRegistry;
 

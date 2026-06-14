@@ -3,7 +3,7 @@
 package hide.shared.events;
 
 class FullscreenChanged {
-    public enabled:Bool;
+    public var enabled:Bool;
     public function new(enabled:Bool) {
         this.enabled = enabled;
     }

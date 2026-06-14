@@ -1,8 +1,9 @@
 package hide.application.services;
 import hide.domain.services.ILayoutEngine;
 import hide.domain.valueobjects.DisplayPosition; // <-- ДОБАВИТЬ
+import hx.injection.*;
 // hide/application/services/LayoutHistoryService.hx
-class LayoutHistoryService {
+class LayoutHistoryService implements Service {
     private var history:Array<{name:String, state:Dynamic}> = [];
     private var layoutEngine:ILayoutEngine;
 

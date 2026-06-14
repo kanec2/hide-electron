@@ -1,10 +1,10 @@
 // hide/domain/valueobjects/FilePath.hx (Рекомендуемая реализация)
 package hide.domain.valueobjects;
-
+using StringTools;
 @:forward
 abstract FilePath(String) from String to String {
     public function new(path:String) {
-        if (path == null || path.trim() == "") {
+        if (path == null || StringTools.trim(path) == "") {  // ← StringTools.trim
             throw "FilePath cannot be null or empty";
         }
         // Здесь можно добавить нормализацию: path = path.replace("\\", "/");
@@ -12,6 +12,6 @@ abstract FilePath(String) from String to String {
     }
 
     public function isValid():Bool {
-        return this.length > 0; // Упрощенная проверка
+        return this != null && this.length > 0;
     }
 }

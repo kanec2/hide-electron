@@ -6,8 +6,8 @@ import hide.domain.services.ILayoutEngine;
 import hide.shared.types.IEventBus;
 import hide.shared.events.ProjectClosing;
 import hide.shared.events.ProjectClosed;
-
-class CloseProjectUseCase {
+import hx.injection.*;
+class CloseProjectUseCase implements Service {
     private var layoutEngine:ILayoutEngine;
     private var eventBus:IEventBus;
 
@@ -18,12 +18,12 @@ class CloseProjectUseCase {
 
     public function execute():Void {
         // 1. Публикуем ProjectClosing
-        eventBus.publish(new ProjectClosing());
+        eventBus.publish(ProjectClosing, new ProjectClosing());
 
         // 2. Сохраняем текущий layout
         layoutEngine.save();
 
         // 3. Публикуем ProjectClosed
-        eventBus.publish(new ProjectClosed());
+        eventBus.publish(ProjectClosed, new ProjectClosed());
     }
 }

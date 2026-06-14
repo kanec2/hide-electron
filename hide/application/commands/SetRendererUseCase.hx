@@ -4,8 +4,8 @@ package hide.application.commands;
 
 import hide.shared.types.IEventBus;
 import hide.shared.events.RendererChanged;
-
-class SetRendererUseCase {
+import hx.injection.*;
+class SetRendererUseCase implements Service {
     private var eventBus:IEventBus;
 
     public function new(eventBus:IEventBus) {

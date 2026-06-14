@@ -5,8 +5,8 @@ package hide.application.commands;
 import hide.application.services.MenuService;
 import hide.shared.types.IEventBus;
 import hide.shared.events.RecentProjectsUpdated;
-
-class ClearRecentProjectsUseCase {
+import hx.injection.*;
+class ClearRecentProjectsUseCase implements Service {
     private var menuService:MenuService;
     private var eventBus:IEventBus;
 

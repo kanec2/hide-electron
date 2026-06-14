@@ -2,4 +2,6 @@
 
 package hide.shared.events;
 
-class ProjectClosed { public function new() {} }
+class ProjectClosed {
+    public function new() {}
+}

@@ -3,10 +3,12 @@ package hide.application.services;
 import hide.shared.types.IEventBus;
 import hide.domain.services.IPlugin;
 import hide.domain.services.IFileSystem;
-import hide.shared.types.FilePath;
+import hide.domain.valueobjects.FilePath;
+import hide.domain.services.PluginsConfig; // ← ДОБАВИТЬ
+import hide.domain.services.PluginConfig;  // ← ДОБАВИТЬ (на случай, если тоже понадобится)
 import haxe.Json;
-
-class PluginManager {
+import hx.injection.*;
+class PluginManager implements Service {
     private var registry:PluginRegistry;
     private var viewRegistry:ViewRegistry;
     private var eventBus:IEventBus;
@@ -59,7 +61,7 @@ class PluginManager {
     }
 
     private function loadPlugin(pluginConfig:PluginConfig):Null<IPlugin> {
-        var className = pluginConfig.class;
+        var className = pluginConfig.className;
         var pluginClass = Type.resolveClass(className);
         
         if (pluginClass == null) {
@@ -69,7 +71,7 @@ class PluginManager {
 
         try {
             // ✅ Передаем ВСЕ зависимости в конструктор плагина
-            var args = [viewRegistry, eventBus, pluginConfig.config != null ? pluginConfig.config : {}];
+            var args:Array<Dynamic> = [viewRegistry, eventBus, pluginConfig.config != null ? pluginConfig.config : {}];
             var plugin = Type.createInstance(pluginClass, args);
 
             if (!Std.is(plugin, IPlugin)) {

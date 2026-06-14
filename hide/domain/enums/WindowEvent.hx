@@ -14,4 +14,6 @@ enum WindowEvent {
     Minimize;
     Restore;
     Close;
+    FullscreenEnter;  // ← ДОБАВИТЬ
+    FullscreenLeave;  // ← ДОБАВИТЬ
 }

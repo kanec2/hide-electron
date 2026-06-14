@@ -2,7 +2,7 @@
 
 package hide.shared.events;
 class RendererChanged {
-    public rendererName:String;
+    public var rendererName:String;
     public function new(rendererName:String) {
         this.rendererName = rendererName;
     }

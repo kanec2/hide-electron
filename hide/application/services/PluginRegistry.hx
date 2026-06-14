@@ -3,14 +3,14 @@
 package hide.application.services;
 
 import hide.domain.services.IPlugin;
-
+import hx.injection.*;
 /**
  * Хранилище активных плагинов.
  * Используется для управления плагинами (enable/disable, reload).
  */
-class PluginRegistry {
+class PluginRegistry implements Service {
     private var plugins:Map<String, IPlugin> = [];
-
+    public function new(){}
     public function add(name:String, plugin:IPlugin):Void {
         if (plugins.exists(name)) throw "Plugin $name already exists";
         plugins.set(name, plugin);
@@ -33,6 +33,8 @@ class PluginRegistry {
     }
 
     public function count():Int {
-        return plugins.length;
+        var count = 0;
+        for (_ in plugins.keys()) count++;
+        return count;
     }
 }

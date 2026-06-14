@@ -5,8 +5,8 @@ package hide.application.commands;
 import hide.application.services.WindowService;
 import hide.shared.types.IEventBus;
 import hide.shared.events.FullscreenChanged;
-
-class SetFullscreenUseCase {
+import hx.injection.*;
+class SetFullscreenUseCase implements Service {
     private var windowService:WindowService;
     private var eventBus:IEventBus;
 
@@ -21,6 +21,6 @@ class SetFullscreenUseCase {
         } else {
             windowService.leaveFullscreen();
         }
-        eventBus.publish(new FullscreenChanged(enabled));
+        eventBus.publish(FullscreenChanged, new FullscreenChanged(enabled));
     }
 }

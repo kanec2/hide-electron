@@ -3,13 +3,13 @@ package hide.application.services;
 import hide.domain.services.IWindowManager;
 import hide.domain.enums.WindowEvent;
 import hide.domain.valueobjects.WindowBounds;
-
+import hx.injection.*;
 /**
  * Сервис управления окном для уровня приложения.
  * Кеширует состояние, транслирует события, скрывает детали платформы.
  * Поддерживает: showDevTools, fullscreen, close handlers, move/resize, focus, title.
  */
-class WindowService {
+class WindowService implements Service {
     private var manager:IWindowManager;
     
     // === Состояние ===
