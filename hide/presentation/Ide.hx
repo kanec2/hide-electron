@@ -22,6 +22,7 @@ import hide.shared.events.LayoutChanged;
 import hide.shared.events.ProjectClosed;
 import hide.shared.types.IEventBus;
 import hide.shared.types.Result;
+import hide.domain.services.ILayoutEngine;
 
 import hx.injection.Service;
 import hx.injection.ServiceCollection;
@@ -50,6 +51,8 @@ class Ide implements Service {
     
     private var windowService:WindowService;
     private var menuService:MenuService;
+    private var layoutEngine:ILayoutEngine;
+
     private var loadProjectUseCase:LoadProjectUseCase;
     private var setFullscreenUseCase:SetFullscreenUseCase;
     //private var saveLayoutUseCase:SaveLayoutUseCase;
@@ -73,7 +76,8 @@ class Ide implements Service {
         pluginManager:PluginManager,
         eventBus:IEventBus,
         fileDialog:IFileDialog,
-        platform:IPlatform
+        platform:IPlatform,
+        layoutEngine:ILayoutEngine
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -87,9 +91,9 @@ class Ide implements Service {
         this.eventBus = eventBus;
         this.fileDialog = fileDialog;
         this.platform = platform;
-        
+        this.layoutEngine = layoutEngine;
         inst = this;
-        views = [];
+        views = viewRegistry.all(); 
         
         for (view in viewRegistry.all()) {
             menuService.addViewMenu(view);
@@ -221,7 +225,25 @@ class Ide implements Service {
     
     private function startup():Void {
         trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
-        
+         // 2. Регистрируем временные заглушки для View (позже заменим на плагины)
+            // ✅ РЕГИСТРАЦИЯ ЗАГЛУШЕК ФАБРИК
+        viewRegistry.registerViewFactory("project", new hide.infrastructure.external.StubProjectFactory());
+        viewRegistry.registerViewFactory("editor", new hide.infrastructure.external.StubEditorFactory());
+        viewRegistry.registerViewFactory("console", new hide.infrastructure.external.StubConsoleFactory());
+        viewRegistry.registerViewFactory("properties", new hide.infrastructure.external.StubPropertiesFactory());
+
+        // 1. Инициализируем GoldenLayout
+        var layoutEl = js.Browser.document.getElementById("golden-layout-root");
+        if (layoutEl != null) {
+            layoutEngine.setContainer(layoutEl);
+            // Инициализируем с пустым состоянием (адаптер сам создаст дефолтный скелет)
+            layoutEngine.init({ content: [], fullScreen: null }); 
+            trace("🎨 GoldenLayout инициализирован.");
+        } else {
+            trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.");
+        }
+       
+    
         var args = platform.getAppArgs();
         var projectFile:Null<String> = null;
         

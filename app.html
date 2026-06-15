@@ -69,9 +69,12 @@
     <img class="logo" id="logo-haxe" src="haxe-logo.svg"/>
     <footer>...</footer>
     
-    <!-- Контейнер для GoldenLayout (обязательно!) -->
-    <div id="main-container" style="position:absolute;top:0;left:0;right:0;bottom:0;"></div>
-    
+    <!-- Контейнер для GoldenLayout (обязательно!)
+    <div id="main-container" style="position:absolute;top:0;left:0;right:0;bottom:0;"></div> -->
+    <div id="golden-layout-root" style="width: 100%; height: calc(100vh - 30px); position: absolute; top: 0; left: 0;"></div>
+<div id="status-bar" style="width: 100%; height: 30px; position: absolute; bottom: 0; left: 0; background: #007acc; color: white; line-height: 30px; padding-left: 10px;">
+    Ready
+</div>
     <!-- XML меню -->
         <xml id="mainmenu">
 	        <menu label="Project" class="project">

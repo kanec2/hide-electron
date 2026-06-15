@@ -1,5 +1,5 @@
-package golden;
-import golden.*;
+package hide.infrastructure.external.golden;
+import hide.infrastructure.external.*;
 
 @:native("GoldenLayout")
 extern class Layout {

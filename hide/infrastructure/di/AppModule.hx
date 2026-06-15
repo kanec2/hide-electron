@@ -18,7 +18,7 @@ import hide.infrastructure.platform.electron.ElectronFileSystemAdapter;
 import hide.infrastructure.platform.electron.*;
 // Добавьте заглушки для остальных, если их еще нет
 #end
-
+import hide.infrastructure.external.GoldenLayoutAdapter;
 // Application
 import hide.application.services.WindowService;
 import hide.application.services.MenuService;
@@ -61,7 +61,8 @@ class AppModule {
         // Временные заглушки для веб-версии или тестов
         // collection.addSingleton(IFileSystem, StubFileSystemAdapter);
         #end
-
+        // ✅ РЕГИСТРАЦИЯ LAYOUT ENGINE
+        collection.addSingleton(ILayoutEngine, GoldenLayoutAdapter);
         // 2. Ядро и Shared-типы
         collection.addSingleton(IEventBus, EventBusImpl);
         collection.addSingleton(ViewRegistry);

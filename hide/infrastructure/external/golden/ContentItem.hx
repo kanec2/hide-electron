@@ -1,11 +1,12 @@
-package golden;
-import golden.*;
+package hide.infrastructure.external.golden;
+import hide.infrastructure.external.*;
 extern class ContentItem {
 
 	var type : Config.ItemType;
 	var parent : ContentItem;
 	var contentItems : Array<ContentItem>;
-	var element : js.jquery.JQuery;
+   // var element : js.jquery.JQuery;
+    var element : Dynamic; // ← СТАЛО
 	var childElementContainer : Container;
 	var config : Config.ItemConfig;
 	var header : Header;

@@ -384,6 +384,7 @@ hide_application_services_PluginRegistry.prototype = {
 	,__class__: hide_application_services_PluginRegistry
 };
 var hide_application_services_ViewRegistry = function() {
+	this.viewFactories = new haxe_ds_StringMap();
 	this.views = [];
 	this.add({ name : "editor", label : "Редактор", description : "Открыть редактор кода", icon : "fa-code", defaultState : { }});
 	this.add({ name : "project", label : "Проект", description : "Показать дерево проекта", icon : "fa-folder", defaultState : { }});
@@ -392,7 +393,16 @@ $hxClasses["hide.application.services.ViewRegistry"] = hide_application_services
 hide_application_services_ViewRegistry.__name__ = "hide.application.services.ViewRegistry";
 hide_application_services_ViewRegistry.__interfaces__ = [hx_injection_Service];
 hide_application_services_ViewRegistry.prototype = {
-	add: function(view) {
+	setFactoryRegistrationCallback: function(cb) {
+		this.onFactoryRegistered = cb;
+	}
+	,registerViewFactory: function(name,factory) {
+		this.viewFactories.h[name] = factory;
+		if(this.onFactoryRegistered != null) {
+			this.onFactoryRegistered(name,factory);
+		}
+	}
+	,add: function(view) {
 		if(this.find(view.name) != null) {
 			throw haxe_Exception.thrown("View already exists: ${view.name}");
 		}
@@ -504,6 +514,12 @@ hide_domain_exceptions_FileNotFoundError.__super__ = haxe_Exception;
 hide_domain_exceptions_FileNotFoundError.prototype = $extend(haxe_Exception.prototype,{
 	__class__: hide_domain_exceptions_FileNotFoundError
 });
+var hide_domain_services_IElement = function() { };
+$hxClasses["hide.domain.services.IElement"] = hide_domain_services_IElement;
+hide_domain_services_IElement.__name__ = "hide.domain.services.IElement";
+hide_domain_services_IElement.prototype = {
+	__class__: hide_domain_services_IElement
+};
 var hide_domain_services_IFileDialog = function() { };
 $hxClasses["hide.domain.services.IFileDialog"] = hide_domain_services_IFileDialog;
 hide_domain_services_IFileDialog.__name__ = "hide.domain.services.IFileDialog";
@@ -518,6 +534,13 @@ hide_domain_services_IFileSystem.__interfaces__ = [hx_injection_Service];
 hide_domain_services_IFileSystem.prototype = {
 	__class__: hide_domain_services_IFileSystem
 };
+var hide_domain_services_ILayoutEngine = function() { };
+$hxClasses["hide.domain.services.ILayoutEngine"] = hide_domain_services_ILayoutEngine;
+hide_domain_services_ILayoutEngine.__name__ = "hide.domain.services.ILayoutEngine";
+hide_domain_services_ILayoutEngine.__interfaces__ = [hx_injection_Service];
+hide_domain_services_ILayoutEngine.prototype = {
+	__class__: hide_domain_services_ILayoutEngine
+};
 var hide_domain_services_IPlatform = function() { };
 $hxClasses["hide.domain.services.IPlatform"] = hide_domain_services_IPlatform;
 hide_domain_services_IPlatform.__name__ = "hide.domain.services.IPlatform";
@@ -530,6 +553,13 @@ $hxClasses["hide.domain.services.IPlugin"] = hide_domain_services_IPlugin;
 hide_domain_services_IPlugin.__name__ = "hide.domain.services.IPlugin";
 hide_domain_services_IPlugin.prototype = {
 	__class__: hide_domain_services_IPlugin
+};
+var hide_domain_services_IViewFactory = function() { };
+$hxClasses["hide.domain.services.IViewFactory"] = hide_domain_services_IViewFactory;
+hide_domain_services_IViewFactory.__name__ = "hide.domain.services.IViewFactory";
+hide_domain_services_IViewFactory.__interfaces__ = [hx_injection_Service];
+hide_domain_services_IViewFactory.prototype = {
+	__class__: hide_domain_services_IViewFactory
 };
 var hide_domain_services_IWindowManager = function() { };
 $hxClasses["hide.domain.services.IWindowManager"] = hide_domain_services_IWindowManager;
@@ -566,6 +596,7 @@ hide_infrastructure_di_AppModule.configure = function(collection) {
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IFileDialog.__name__,hide_infrastructure_platform_electron_ElectronFileDialogAdapter);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IWindowManager.__name__,hide_infrastructure_platform_electron_ElectronWindowAdapter);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IPlatform.__name__,hide_infrastructure_platform_electron_ElectronPlatformAdapter);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_ILayoutEngine.__name__,hide_infrastructure_external_GoldenLayoutAdapter);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_shared_types_IEventBus.__name__,hide_shared_types_EventBusImpl);
 	var implementation = hide_application_services_ViewRegistry;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
@@ -583,6 +614,199 @@ hide_infrastructure_di_AppModule.configure = function(collection) {
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
 	var implementation = hide_presentation_Ide;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+};
+var hide_infrastructure_external_GoldenLayoutAdapter = function(eventBus,viewRegistry) {
+	this.eventBus = eventBus;
+	this.viewRegistry = viewRegistry;
+	this.viewFactories = new haxe_ds_StringMap();
+	this.onLayoutChangedCallbacks = [];
+	viewRegistry.setFactoryRegistrationCallback($bind(this,this.registerView));
+};
+$hxClasses["hide.infrastructure.external.GoldenLayoutAdapter"] = hide_infrastructure_external_GoldenLayoutAdapter;
+hide_infrastructure_external_GoldenLayoutAdapter.__name__ = "hide.infrastructure.external.GoldenLayoutAdapter";
+hide_infrastructure_external_GoldenLayoutAdapter.__interfaces__ = [hx_injection_Service,hide_domain_services_ILayoutEngine];
+hide_infrastructure_external_GoldenLayoutAdapter.prototype = {
+	setContainer: function(el) {
+		this.container = el;
+	}
+	,init: function(state) {
+		if(this.container == null) {
+			console.log("hide/infrastructure/external/GoldenLayoutAdapter.hx:39:","WARNING: GoldenLayout container not set. Call setContainer() first.");
+			return;
+		}
+		var contentData = state.content;
+		if(contentData == null || contentData.length == 0) {
+			contentData = this.createDefaultSkeleton().content;
+		}
+		var goldenConfig = this.toGoldenConfig({ content : contentData, fullScreen : null});
+		this.layout = new GoldenLayout(goldenConfig,this.container);
+		var h = this.viewFactories.h;
+		var _g_h = h;
+		var _g_keys = Object.keys(h);
+		var _g_length = _g_keys.length;
+		var _g_current = 0;
+		while(_g_current < _g_length) {
+			var key = _g_keys[_g_current++];
+			var _g_key = key;
+			var _g_value = _g_h[key];
+			var type = _g_key;
+			var factory = _g_value;
+			this.registerComponentInLayout(type,factory);
+		}
+		this.layout.init();
+		this.layout.on("stateChanged",$bind(this,this.onStateChanged));
+	}
+	,onStateChanged: function() {
+		this.eventBus.publish(hide_shared_events_LayoutChanged,new hide_shared_events_LayoutChanged());
+		var _g = 0;
+		var _g1 = this.onLayoutChangedCallbacks;
+		while(_g < _g1.length) {
+			var cb = _g1[_g];
+			++_g;
+			cb();
+		}
+	}
+	,registerView: function(type,factory) {
+		this.viewFactories.h[type] = factory;
+		if(this.layout != null && this.layout.isInitialised) {
+			this.registerComponentInLayout(type,factory);
+		}
+	}
+	,registerComponentInLayout: function(type,factory) {
+		this.layout.registerComponent(type,function(glContainer,state) {
+			var element = new hide_infrastructure_external_HtmlElement(glContainer.getElement());
+			factory.create(element,state);
+		});
+	}
+	,createDefaultSkeleton: function() {
+		return { content : [{ type : "row", componentName : null, componentState : null, id : null, width : null, height : null, content : [{ type : "stack", id : "left", width : 20, componentName : null, componentState : null, height : null, content : null},{ type : "column", id : "middle-column", width : 60, componentName : null, componentState : null, height : null, content : [{ type : "stack", id : "center", componentName : null, componentState : null, width : null, height : null, content : null},{ type : "stack", id : "bottom", height : 30, componentName : null, componentState : null, width : null, content : null}]},{ type : "stack", id : "right", width : 20, componentName : null, componentState : null, height : null, content : null}]}], fullScreen : null};
+	}
+	,toGoldenConfig: function(state) {
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = state.content;
+		while(_g1 < _g2.length) {
+			var item = _g2[_g1];
+			++_g1;
+			_g.push(this.toGoldenItem(item));
+		}
+		return { content : _g, settings : { reorderEnabled : true, constrainDragToHeader : true, showPopoutIcon : false, showMaximiseIcon : true}};
+	}
+	,toGoldenItem: function(item) {
+		var glType;
+		switch(item.type) {
+		case "column":
+			glType = "column";
+			break;
+		case "row":
+			glType = "row";
+			break;
+		case "stack":
+			glType = "stack";
+			break;
+		default:
+			glType = "component";
+		}
+		var item1 = item.componentName;
+		var item2 = item.componentState;
+		var tmp;
+		if(item.content != null) {
+			var _g = [];
+			var _g1 = 0;
+			var _g2 = item.content;
+			while(_g1 < _g2.length) {
+				var i = _g2[_g1];
+				++_g1;
+				_g.push(this.toGoldenItem(i));
+			}
+			tmp = _g;
+		} else {
+			tmp = null;
+		}
+		return { type : glType, componentName : item1, componentState : item2, content : tmp, id : item.id, width : item.width, height : item.height, isClosable : true, title : null, activeItemIndex : null};
+	}
+	,getConstructorArgs: function() {
+		return ["hide.shared.types.IEventBus","hide.application.services.ViewRegistry"];
+	}
+	,__class__: hide_infrastructure_external_GoldenLayoutAdapter
+};
+var hide_infrastructure_external_HtmlElement = function(element) {
+	if(((element) instanceof HTMLElement)) {
+		this.element = element;
+	} else if(Object.prototype.hasOwnProperty.call(element,"get")) {
+		this.element = element.get(0);
+	} else {
+		this.element = element;
+	}
+};
+$hxClasses["hide.infrastructure.external.HtmlElement"] = hide_infrastructure_external_HtmlElement;
+hide_infrastructure_external_HtmlElement.__name__ = "hide.infrastructure.external.HtmlElement";
+hide_infrastructure_external_HtmlElement.__interfaces__ = [hide_domain_services_IElement];
+hide_infrastructure_external_HtmlElement.prototype = {
+	setInnerHtml: function(html) {
+		this.element.innerHTML = html;
+	}
+	,__class__: hide_infrastructure_external_HtmlElement
+};
+var hide_infrastructure_external_StubConsoleFactory = function() {
+};
+$hxClasses["hide.infrastructure.external.StubConsoleFactory"] = hide_infrastructure_external_StubConsoleFactory;
+hide_infrastructure_external_StubConsoleFactory.__name__ = "hide.infrastructure.external.StubConsoleFactory";
+hide_infrastructure_external_StubConsoleFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
+hide_infrastructure_external_StubConsoleFactory.prototype = {
+	create: function(container,state) {
+		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>🖥️ Console</h2>\n                <p>Console output will appear here.</p>\n            </div>\n        ");
+		return null;
+	}
+	,getConstructorArgs: function() {
+		return [];
+	}
+	,__class__: hide_infrastructure_external_StubConsoleFactory
+};
+var hide_infrastructure_external_StubEditorFactory = function() {
+};
+$hxClasses["hide.infrastructure.external.StubEditorFactory"] = hide_infrastructure_external_StubEditorFactory;
+hide_infrastructure_external_StubEditorFactory.__name__ = "hide.infrastructure.external.StubEditorFactory";
+hide_infrastructure_external_StubEditorFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
+hide_infrastructure_external_StubEditorFactory.prototype = {
+	create: function(container,state) {
+		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>📝 Stub Editor</h2>\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\n                <p>Состояние: " + JSON.stringify(state) + "</p>\n            </div>\n        ");
+		return null;
+	}
+	,getConstructorArgs: function() {
+		return [];
+	}
+	,__class__: hide_infrastructure_external_StubEditorFactory
+};
+var hide_infrastructure_external_StubProjectFactory = function() {
+};
+$hxClasses["hide.infrastructure.external.StubProjectFactory"] = hide_infrastructure_external_StubProjectFactory;
+hide_infrastructure_external_StubProjectFactory.__name__ = "hide.infrastructure.external.StubProjectFactory";
+hide_infrastructure_external_StubProjectFactory.__interfaces__ = [hide_domain_services_IViewFactory];
+hide_infrastructure_external_StubProjectFactory.prototype = {
+	create: function(container,state) {
+		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\n                <h2>📁 Project Tree</h2>\n                <ul>\n                    <li>📂 src/</li>\n                    <li>📄 Main.hx</li>\n                    <li>📄 project.json</li>\n                </ul>\n            </div>\n        ");
+		return null;
+	}
+	,getConstructorArgs: function() {
+		return [];
+	}
+	,__class__: hide_infrastructure_external_StubProjectFactory
+};
+var hide_infrastructure_external_StubPropertiesFactory = function() {
+};
+$hxClasses["hide.infrastructure.external.StubPropertiesFactory"] = hide_infrastructure_external_StubPropertiesFactory;
+hide_infrastructure_external_StubPropertiesFactory.__name__ = "hide.infrastructure.external.StubPropertiesFactory";
+hide_infrastructure_external_StubPropertiesFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
+hide_infrastructure_external_StubPropertiesFactory.prototype = {
+	create: function(container,state) {
+		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\n                <h2>⚙️ Properties</h2>\n                <p>Object properties will appear here.</p>\n            </div>\n        ");
+		return null;
+	}
+	,getConstructorArgs: function() {
+		return [];
+	}
+	,__class__: hide_infrastructure_external_StubPropertiesFactory
 };
 var hide_infrastructure_platform_electron_ElectronFileDialogAdapter = function(ipcBridge) {
 	this.ipcBridge = ipcBridge;
@@ -747,7 +971,7 @@ hide_infrastructure_platform_electron_ElectronWindowAdapter.prototype = {
 	}
 	,__class__: hide_infrastructure_platform_electron_ElectronWindowAdapter
 };
-var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,viewRegistry,pluginManager,eventBus,fileDialog,platform) {
+var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,viewRegistry,pluginManager,eventBus,fileDialog,platform,layoutEngine) {
 	var _gthis = this;
 	this.windowService = windowService;
 	this.menuService = menuService;
@@ -758,8 +982,9 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this.eventBus = eventBus;
 	this.fileDialog = fileDialog;
 	this.platform = platform;
+	this.layoutEngine = layoutEngine;
 	hide_presentation_Ide.inst = this;
-	this.views = [];
+	this.views = viewRegistry.all();
 	var _g = 0;
 	var _g1 = viewRegistry.all();
 	while(_g < _g1.length) {
@@ -777,7 +1002,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this._projectLoadedUnsub = eventBus.subscribe(hide_shared_events_ProjectLoaded,$bind(this,this.onProjectLoadedHandler));
 	this._errorUnsub = eventBus.subscribe(hide_shared_events_ErrorOccurred,$bind(this,this.onErrorOccurred));
 	this._layoutChangedUnsub = eventBus.subscribe(hide_shared_events_LayoutChanged,function(e) {
-		console.log("hide/presentation/Ide.hx:106:","Layout changed");
+		console.log("hide/presentation/Ide.hx:110:","Layout changed");
 	});
 	this._projectClosedUnsub = eventBus.subscribe(hide_shared_events_ProjectClosed,function(e) {
 		_gthis._currentProject = null;
@@ -807,7 +1032,7 @@ hide_presentation_Ide.prototype = {
 				var result = _gthis.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._hx_new(path));
 				switch(result._hx_index) {
 				case 0:
-					console.log("hide/presentation/Ide.hx:122:","Project loading initiated successfully.");
+					console.log("hide/presentation/Ide.hx:126:","Project loading initiated successfully.");
 					break;
 				case 1:
 					var err = result.error;
@@ -818,14 +1043,12 @@ hide_presentation_Ide.prototype = {
 		});
 	}
 	,onErrorOccurred: function(event) {
-		console.log("hide/presentation/Ide.hx:131:","UI ERROR [" + event.context + "]: " + Std.string(event.error));
+		console.log("hide/presentation/Ide.hx:135:","UI ERROR [" + event.context + "]: " + Std.string(event.error));
 	}
 	,onProjectLoadedHandler: function(event) {
 		this._currentProject = event.project.name;
-		console.log("hide/presentation/Ide.hx:136:","UI: Project loaded successfully: " + this._currentProject);
+		console.log("hide/presentation/Ide.hx:140:","UI: Project loaded successfully: " + this._currentProject);
 		this.updateWindowTitle();
-		this.openView("project");
-		this.openView("editor");
 	}
 	,onToggleFullscreen: function() {
 		this.setFullscreenUseCase.execute(!this.windowService.isFullscreen);
@@ -862,7 +1085,7 @@ hide_presentation_Ide.prototype = {
 				var path = HxOverrides.substr(id,"project.recents.".length,null);
 				this.onOpenRecent(path);
 			} else {
-				console.log("hide/presentation/Ide.hx:171:","Unknown menu item ID: " + id);
+				console.log("hide/presentation/Ide.hx:175:","Unknown menu item ID: " + id);
 			}
 		}
 	}
@@ -890,11 +1113,11 @@ hide_presentation_Ide.prototype = {
 	}
 	,updateWindowTitle: function() {
 		var title = this._currentProject != null ? "" + this._currentProject + " - HIDE IDE" : "HIDE IDE";
-		console.log("hide/presentation/Ide.hx:198:","Window title updated to: " + title);
+		console.log("hide/presentation/Ide.hx:202:","Window title updated to: " + title);
 		this.windowService.setTitle(title);
 	}
 	,showAboutDialog: function() {
-		console.log("hide/presentation/Ide.hx:203:","HIDE IDE\nVersion 0.1.0");
+		console.log("hide/presentation/Ide.hx:207:","HIDE IDE\nVersion 0.1.0");
 	}
 	,get_currentProjectName: function() {
 		if(this._currentProject != null) {
@@ -904,7 +1127,19 @@ hide_presentation_Ide.prototype = {
 		}
 	}
 	,startup: function() {
-		console.log("hide/presentation/Ide.hx:223:","✅ DI Контейнер успешно инициализирован! Ide создан.");
+		console.log("hide/presentation/Ide.hx:227:","✅ DI Контейнер успешно инициализирован! Ide создан.");
+		this.viewRegistry.registerViewFactory("project",new hide_infrastructure_external_StubProjectFactory());
+		this.viewRegistry.registerViewFactory("editor",new hide_infrastructure_external_StubEditorFactory());
+		this.viewRegistry.registerViewFactory("console",new hide_infrastructure_external_StubConsoleFactory());
+		this.viewRegistry.registerViewFactory("properties",new hide_infrastructure_external_StubPropertiesFactory());
+		var layoutEl = window.document.getElementById("golden-layout-root");
+		if(layoutEl != null) {
+			this.layoutEngine.setContainer(layoutEl);
+			this.layoutEngine.init({ content : [], fullScreen : null});
+			console.log("hide/presentation/Ide.hx:241:","🎨 GoldenLayout инициализирован.");
+		} else {
+			console.log("hide/presentation/Ide.hx:243:","❌ Element #golden-layout-root not found in DOM! Проверьте app.html.");
+		}
 		var args = this.platform.getAppArgs();
 		var projectFile = null;
 		var _g = 0;
@@ -917,12 +1152,10 @@ hide_presentation_Ide.prototype = {
 			}
 		}
 		if(projectFile != null) {
-			console.log("hide/presentation/Ide.hx:238:","📂 Загрузка проекта из аргумента командной строки: " + projectFile);
+			console.log("hide/presentation/Ide.hx:260:","📂 Загрузка проекта из аргумента командной строки: " + projectFile);
 			this.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._hx_new(projectFile));
 		} else {
-			console.log("hide/presentation/Ide.hx:241:","👋 Приложение запущено без проекта.");
-			console.log("hide/presentation/Ide.hx:245:","🔧 Тест: Вызов диалога открытия файла...");
-			this.onMenuOpenProject();
+			console.log("hide/presentation/Ide.hx:263:","👋 Приложение запущено без проекта.");
 		}
 	}
 	,dispose: function() {
@@ -952,7 +1185,7 @@ hide_presentation_Ide.prototype = {
 		}
 	}
 	,getConstructorArgs: function() {
-		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IPlatform"];
+		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine"];
 	}
 	,__class__: hide_presentation_Ide
 };
@@ -987,9 +1220,13 @@ hide_shared_events_FullscreenChanged.__name__ = "hide.shared.events.FullscreenCh
 hide_shared_events_FullscreenChanged.prototype = {
 	__class__: hide_shared_events_FullscreenChanged
 };
-var hide_shared_events_LayoutChanged = function() { };
+var hide_shared_events_LayoutChanged = function() {
+};
 $hxClasses["hide.shared.events.LayoutChanged"] = hide_shared_events_LayoutChanged;
 hide_shared_events_LayoutChanged.__name__ = "hide.shared.events.LayoutChanged";
+hide_shared_events_LayoutChanged.prototype = {
+	__class__: hide_shared_events_LayoutChanged
+};
 var hide_shared_events_ProjectClosed = function() { };
 $hxClasses["hide.shared.events.ProjectClosed"] = hide_shared_events_ProjectClosed;
 hide_shared_events_ProjectClosed.__name__ = "hide.shared.events.ProjectClosed";

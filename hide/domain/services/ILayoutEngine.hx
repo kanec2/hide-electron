@@ -10,6 +10,8 @@ import hx.injection.Service;
  * НЕ зависит от GoldenLayout, HTML или платформы.
  */
 interface ILayoutEngine extends Service{
+    // ✅ ДОБАВИТЬ ЭТУ СТРОКУ
+    function setContainer(el:Dynamic):Void;
     /**
      * Инициализирует layout из сохранённого состояния.
      */

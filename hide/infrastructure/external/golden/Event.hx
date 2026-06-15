@@ -1,4 +1,4 @@
-package golden;
+package hide.infrastructure.external.golden;
 
 typedef Event<T> = {
 	var name : String;

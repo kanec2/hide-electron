@@ -1,10 +1,12 @@
-package golden;
-import golden.*;
+package hide.infrastructure.external.golden;
+import hide.infrastructure.external.*;
 extern class Tab {
 
 	public var isActive : Bool;
 	public var header : Header;
-	public var element : js.jquery.JQuery;
+	// ✅ ЗАМЕНИТЕ ЭТУ СТРОКУ:
+    // public var element : js.jquery.JQuery;
+    public var element : Dynamic; // ← СТАЛО
 
 	dynamic function onClose() : Bool;
 

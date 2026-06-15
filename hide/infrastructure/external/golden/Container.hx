@@ -1,6 +1,6 @@
-package golden;
+package hide.infrastructure.external.golden;
 
-import golden.*;
+import hide.infrastructure.external.*;
 
 extern class Container {
 
@@ -13,7 +13,9 @@ extern class Container {
 	public var layoutManager(default,null) : Layout;
 	public var isHidden(default,null) : Bool;
 
-	public function getElement() : js.jquery.JQuery;
+	// ✅ ЗАМЕНИТЕ ЭТУ СТРОКУ:
+    // public function getElement() : js.jquery.JQuery;
+    public function getElement() : Dynamic; // ← СТАЛО
 
 	public function setTitle( title : String ) : Void;
 	public function setState( state : Dynamic ) : Void;
