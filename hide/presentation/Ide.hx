@@ -52,9 +52,9 @@ class Ide implements Service {
     private var menuService:MenuService;
     private var loadProjectUseCase:LoadProjectUseCase;
     private var setFullscreenUseCase:SetFullscreenUseCase;
-    private var saveLayoutUseCase:SaveLayoutUseCase;
-    private var closeProjectUseCase:CloseProjectUseCase;
-    private var openViewUseCase:OpenViewUseCase;
+    //private var saveLayoutUseCase:SaveLayoutUseCase;
+    //private var closeProjectUseCase:CloseProjectUseCase;
+    //private var openViewUseCase:OpenViewUseCase;
     private var viewRegistry:ViewRegistry;
     private var pluginManager:PluginManager;
     private var eventBus:IEventBus;
@@ -66,9 +66,9 @@ class Ide implements Service {
         menuService:MenuService,
         loadProjectUseCase:LoadProjectUseCase,
         setFullscreenUseCase:SetFullscreenUseCase,
-        saveLayoutUseCase:SaveLayoutUseCase,
-        closeProjectUseCase:CloseProjectUseCase,
-        openViewUseCase:OpenViewUseCase,
+        //saveLayoutUseCase:SaveLayoutUseCase,
+        //closeProjectUseCase:CloseProjectUseCase,
+        //openViewUseCase:OpenViewUseCase,
         viewRegistry:ViewRegistry,
         pluginManager:PluginManager,
         eventBus:IEventBus,
@@ -79,9 +79,9 @@ class Ide implements Service {
         this.menuService = menuService;
         this.loadProjectUseCase = loadProjectUseCase;
         this.setFullscreenUseCase = setFullscreenUseCase;
-        this.saveLayoutUseCase = saveLayoutUseCase;
-        this.closeProjectUseCase = closeProjectUseCase;
-        this.openViewUseCase = openViewUseCase;
+        //this.saveLayoutUseCase = saveLayoutUseCase;
+        //this.closeProjectUseCase = closeProjectUseCase;
+        //this.openViewUseCase = openViewUseCase;
         this.viewRegistry = viewRegistry;
         this.pluginManager = pluginManager;
         this.eventBus = eventBus;
@@ -135,8 +135,8 @@ class Ide implements Service {
         _currentProject = event.project.name;
         trace("UI: Project loaded successfully: " + _currentProject);
         updateWindowTitle();
-        openView("project");
-        openView("editor");
+        //openView("project");
+        //openView("editor");
     }
     
     public function onToggleFullscreen():Void {
@@ -145,11 +145,11 @@ class Ide implements Service {
     }
     
     public function onLayoutSave():Void {
-        saveLayoutUseCase.execute();
+        //saveLayoutUseCase.execute();
     }
     
     public function onCloseProject():Void {
-        closeProjectUseCase.execute();
+        //closeProjectUseCase.execute();
     }
     
     public function onMenuItemClick(id:String):Void {
@@ -186,7 +186,7 @@ class Ide implements Service {
             default: DisplayPosition.Center;
         };
         
-        openViewUseCase.execute(view.name, view.defaultState, position);
+        //openViewUseCase.execute(view.name, view.defaultState, position);
     }
     
     private function onOpenRecent(path:String):Void {
@@ -223,8 +223,23 @@ class Ide implements Service {
         trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
         
         var args = platform.getAppArgs();
-        if (args.length > 0) {
-            loadProjectUseCase.execute(new FilePath(args[0]));
+        var projectFile:Null<String> = null;
+        
+        // Electron передает много внутренних флагов. Ищем первый аргумент, 
+        // который НЕ начинается с '-' и не является пустой строкой.
+        for (arg in args) {
+            if (arg != "" && !StringTools.startsWith(arg, "-") && !StringTools.startsWith(arg, "chrome://")) {
+                projectFile = arg;
+                break;
+            }
+        }
+
+        if (projectFile != null) {
+            trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile);
+            loadProjectUseCase.execute(new FilePath(projectFile));
+        } else {
+            trace("👋 Приложение запущено без проекта.");
+
         }
     }
     

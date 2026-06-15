@@ -1,11 +1,15 @@
 import electron.main.Menu;
-import haxe.io.Path;
 import electron.main.App;
 import electron.main.BrowserWindow;
 import electron.main.IpcMain;
-
+import electron.main.Dialog;
+import electron.IpcMainEvent;
+import js.node.Fs;
+import js.node.Path;
 import sys.io.File;
 import haxe.Json;
+
+
 
 
 // Electron предоставляет __dirname в main процессе
@@ -72,7 +76,7 @@ class AutoWindow {
     /** Чтение секции "window" из package.json */
     static function loadPackageConfig():AutoWindowConfig {
         try {
-            var pkgPath = Path.join([__dirname, "package.json"]);
+            var pkgPath = Path.join(__dirname, "package.json");
             var pkg:Dynamic = Json.parse(File.getContent(pkgPath));
             var win:Dynamic = pkg.window != null ? pkg.window : {};
             
@@ -116,7 +120,7 @@ class AutoWindow {
             }
         };
 
-        if (cfg.icon != null) opts.icon = Path.join([__dirname, cfg.icon]);
+        if (cfg.icon != null) opts.icon = Path.join(__dirname, cfg.icon);
         if (cfg.x != null && cfg.y != null) { opts.x = cfg.x; opts.y = cfg.y; }
 
         window = new BrowserWindow(opts);
@@ -151,89 +155,42 @@ class AutoWindow {
         });
     }
 
-    static function setupIpc():Void {
-        IpcMain.on("app:quit", function(_) { App.quit(); });
-        IpcMain.on("app:reload", function(_) { if (window != null) window.reload(); });
-        IpcMain.on("app:clearCache", function(event) {
-            window.webContents.session.clearCache().then(function(_) {
-                event.reply("app:clearCache:done");
-            });
-        });
-        // В AutoWindow.setupIpc():
-
-        IpcMain.on("window:open", function(event:Dynamic, data:Dynamic) {
-            var url : String = data.url;
-            
-            // 👇 Если это суб-вью — НЕ создаём новое окно!
-            // Суб-вью обрабатываются внутри главного окна через GoldenLayout
-            if (url.indexOf("?subView=") != -1) {
-                trace("[AutoWindow] ⚠️ Sub-view request (handled by GoldenLayout): " + url);
-                
-                // Опционально: отправляем событие обратно в renderer для локальной обработки
-                event.sender.send("window:open:subview", { url: url });
-                return;
-            }
-            
-            // Для настоящих новых окон (если они нужны) — создаём как раньше
-            // ... код создания BrowserWindow для диалогов, настроек и т.п. ...
-        });
-        // 👇 НОВОЕ: Сборка меню из Renderer
-        IpcMain.on("menu:build", function(event, menuData:Dynamic) {
-            trace("[AutoWindow] 📥 Received menu data");
-            
-            var template = processMenuTemplate(cast menuData, event.sender);
-            var menu = Menu.buildFromTemplate(template);
-            Menu.setApplicationMenu(menu);
-            
-            trace("[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
-        });
-
-        // 👇 НОВОЕ: Открытие дочерних окон (для openSubView из Ide.hx)
-        IpcMain.on("window:open", function(event:Dynamic, data:Dynamic) {
-            var opts:Dynamic = {
-                width: data.options.width != null ? data.options.width : 800,
-                height: data.options.height != null ? data.options.height : 600,
-                title: data.options.title != null ? data.options.title : "Hide",
-                parent: window, // Делаем окно дочерним главного
-                #if mac
-                type: 'panel', // На macOS: нет иконки в доке
-                #end
-                webPreferences: {
-                    nodeIntegration: true,
-                    contextIsolation: false,
-                    enableRemoteModule: true
-                }
-            };
-            
-            var child = new BrowserWindow(opts);
-            child.loadFile(data.url);
-            
-            #if debug
-            child.webContents.openDevTools({ mode: "detach" });
-            #end
-        });
+    /**
+     * Рекурсивно создает директорию, если она не существует.
+     * Обходит ограничение hxnodejs на параметр { recursive: true }
+     */
+    static function ensureDirectoryExists(dir:String):Void {
+        if (dir == null || dir == "") return;
+        if (Fs.existsSync(dir)) return;
+        
+        // Рекурсивно создаем родительскую директорию
+        ensureDirectoryExists(Path.dirname(dir));
+        
+        // Создаем текущую директорию
+        Fs.mkdirSync(dir);
     }
 
-    // Рекурсивно добавляет click-обработчики к пунктам меню
     static function processMenuTemplate(items:Array<Dynamic>, sender:Dynamic):Array<Dynamic> {
+        if (items == null) return [];
+        
         var result = [];
-    
         for (item in items) {
-            // Пропускаем пустые элементы
-            if (item.label == null) continue;
+            // 跳过无效项（但保留 separator）
+            if (item.label == null && item.type != "separator") continue;
             
             var processed:Dynamic = {
                 label: item.label,
                 type: item.type != null ? item.type : null,
-                enabled: item.enabled != false, // по умолчанию true
+                enabled: item.enabled != false, // 默认 true
                 submenu: item.submenu != null ? processMenuTemplate(item.submenu, sender) : null
             };
             
-            // Если есть команда — добавляем click-обработчик
+            // 如果有 id，说明是可点击的菜单项，注入 click 处理
             if (item.id != null) {
-                var itemId:String = item.id; // замыкание для цикла
+                var itemId:String = item.id; // 闭包捕获当前 id
                 processed.click = function(menuItem:Dynamic, browserWindow:Dynamic, event:Dynamic) {
                     trace("[AutoWindow] 🖱 Click: '" + itemId + "'");
+                    // 将点击事件发回 Renderer 进程
                     sender.send("menu:click", { id: itemId });
                 };
             }
@@ -242,6 +199,144 @@ class AutoWindow {
         }
         
         return result;
+    }
+    static function setupIpc():Void {
+        // === Базовые команды приложения ===
+        IpcMain.on("app:quit", function(event:IpcMainEvent) { 
+            App.quit(); 
+        });
+        
+        IpcMain.on("app:reload", function(event:IpcMainEvent) { 
+            if (window != null) window.reload(); 
+        });
+
+        // === Файловая система (синхронные вызовы через sendSync) ===
+        IpcMain.on("fs:exists", function(event:IpcMainEvent, filePath:String) {
+            try {
+                event.returnValue = Fs.existsSync(filePath);
+            } catch (e:Dynamic) {
+                event.returnValue = false;
+            }
+        });
+
+        IpcMain.on("fs:readText", function(event:IpcMainEvent, filePath:String) {
+            try {
+                if (!Fs.existsSync(filePath)) {
+                    event.returnValue = { error: "File not found" };
+                } else {
+                    var content = Fs.readFileSync(filePath, { encoding: "utf-8" });
+                    event.returnValue = { content: content };
+                }
+            } catch (e:Dynamic) {
+                event.returnValue = { error: Std.string(e) };
+            }
+        });
+
+        IpcMain.on("fs:writeText", function(event:IpcMainEvent, data:Dynamic) {
+            try {
+                var dir = Path.dirname(data.path);
+                if (!Fs.existsSync(dir)) {
+                   // Fs.mkdirSync(dir, { recursive: true });
+                   ensureDirectoryExists(dir);
+                }
+                Fs.writeFileSync(data.path, data.content, { encoding: "utf-8" });
+                event.returnValue = {};
+            } catch (e:Dynamic) {
+                event.returnValue = { error: Std.string(e) };
+            }
+        });
+
+        IpcMain.on("fs:listFiles", function(event:IpcMainEvent, data:Dynamic) {
+            try {
+                var files:Array<String> = [];
+                function scan(dir:String) {
+                    var entries = Fs.readdirSync(dir);
+                    for (entry in entries) {
+                        var fullPath = Path.join(dir, entry);
+                        var stat = Fs.statSync(fullPath);
+                        if (stat.isDirectory() && data.recursive) {
+                            scan(fullPath);
+                        } else if (stat.isFile()) {
+                            files.push(fullPath);
+                        }
+                    }
+                }
+                if (Fs.existsSync(data.path)) {
+                    scan(data.path);
+                }
+                event.returnValue = { files: files };
+            } catch (e:Dynamic) {
+                event.returnValue = { error: Std.string(e) };
+            }
+        });
+
+        IpcMain.on("app:getAppDataPath", function(event:IpcMainEvent) {
+            event.returnValue = App.getPath("userData");
+        });
+
+        // === Диалоги (асинхронные вызовы через invoke) ===
+        IpcMain.handle("dialog:showOpen", function(event:Dynamic, options:Dynamic) {
+            return Dialog.showOpenDialog(window, options);
+        });
+
+        IpcMain.handle("dialog:showSave", function(event:Dynamic, options:Dynamic) {
+            return Dialog.showSaveDialog(window, options);
+        });
+
+        IpcMain.handle("dialog:showDirectory", function(event:Dynamic, options:Dynamic) {
+            options.properties = ["openDirectory", "createDirectory"];
+            return Dialog.showOpenDialog(window, options);
+        });
+
+        // === Управление окном ===
+        IpcMain.on("window:setTitle", function(event:IpcMainEvent, title:String) {
+            if (window != null) window.setTitle(title);
+            event.returnValue = null;
+        });
+
+        IpcMain.on("window:enterFullscreen", function(event:IpcMainEvent) {
+            if (window != null) window.setFullScreen(true);
+            event.returnValue = null;
+        });
+
+        IpcMain.on("window:leaveFullscreen", function(event:IpcMainEvent) {
+            if (window != null) window.setFullScreen(false);
+            event.returnValue = null;
+        });
+
+        // === Меню (существующий код) ===
+        IpcMain.on("menu:build", function(event:IpcMainEvent, menuData:Dynamic) {
+            trace("[AutoWindow] 📥 Received menu data");
+            var template = processMenuTemplate(cast menuData, event.sender);
+            var menu = Menu.buildFromTemplate(template);
+            Menu.setApplicationMenu(menu);
+            trace("[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
+        });
+
+        // === Открытие окон ===
+        IpcMain.on("window:open", function(event:IpcMainEvent, data:Dynamic) {
+            var url:String = data.url;
+            
+            if (url.indexOf("?subView=") != -1) {
+                trace("[AutoWindow] ⚠️ Sub-view request: " + url);
+                event.sender.send("window:open:subview", { url: url });
+                return;
+            }
+            
+            var opts:Dynamic = {
+                width: data.options.width != null ? data.options.width : 800,
+                height: data.options.height != null ? data.options.height : 600,
+                title: data.options.title != null ? data.options.title : "Hide",
+                parent: window,
+                webPreferences: {
+                    nodeIntegration: true,
+                    contextIsolation: false
+                }
+            };
+            
+            var child = new BrowserWindow(opts);
+            child.loadFile(url);
+        });
     }
 }
 

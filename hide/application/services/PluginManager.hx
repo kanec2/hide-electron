@@ -20,14 +20,15 @@ class PluginManager implements Service {
         registry:PluginRegistry,
         viewRegistry:ViewRegistry,
         eventBus:IEventBus,
-        fileSystem:IFileSystem,
-        ?configPathStr:String = "plugins.json"
+        fileSystem:IFileSystem
     ) {
         this.registry = registry;
         this.viewRegistry = viewRegistry;
         this.eventBus = eventBus;
         this.fileSystem = fileSystem;
-        this.configPath = new FilePath(configPathStr);
+            // Значение по умолчанию задается напрямую внутри класса
+        this.configPath = new FilePath("plugins.json"); 
+        //this.configPath = new FilePath(configPathStr);
         loadConfig();
     }
 

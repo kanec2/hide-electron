@@ -15,7 +15,7 @@ import hide.domain.services.IFileDialog;
 // Infrastructure (Electron)
 #if electron
 import hide.infrastructure.platform.electron.ElectronFileSystemAdapter;
-import hide.infrastructure.platform.electron.ElectronWindowAdapter;
+import hide.infrastructure.platform.electron.*;
 // Добавьте заглушки для остальных, если их еще нет
 #end
 
@@ -74,11 +74,11 @@ class AppModule {
 
         // 4. Use Cases (Transient, чтобы каждый вызов был чистым, 
         // или Singleton, если они полностью stateless и тяжелые)
-        collection.addTransient(LoadProjectUseCase);
-        collection.addTransient(OpenViewUseCase);
-        collection.addTransient(SetFullscreenUseCase);
-        collection.addTransient(SaveLayoutUseCase);
-        collection.addTransient(CloseProjectUseCase);
+        collection.addSingleton(LoadProjectUseCase);
+        //collection.addSingleton(OpenViewUseCase);
+        collection.addSingleton(SetFullscreenUseCase);
+        //collection.addSingleton(SaveLayoutUseCase);
+        //collection.addSingleton(CloseProjectUseCase);
        // collection.addTransient(AddRecentProjectUseCase);
         //collection.addTransient(ClearRecentProjectsUseCase);
         //collection.addTransient(SetRendererUseCase);
