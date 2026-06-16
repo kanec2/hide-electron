@@ -43,5 +43,5 @@ interface ILayoutEngine extends Service{
      */
     function registerView(type:String, factory:IViewFactory):Void;
 
-
+    function updateSize(width:Int, height:Int):Void;
 }

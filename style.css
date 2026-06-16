@@ -216,3 +216,12 @@ header, main, footer, .logo, #system-version, #node-version, #electron-version, 
 .main-menu-bar .submenu {
     -webkit-app-region: no-drag;
 }
+#golden-layout-root {
+    width: 100% !important;
+    height: calc(100vh - 60px) !important;
+}
+
+#golden-layout-root .lm_goldenlayout {
+    width: 100% !important;
+    height: 100% !important;
+}

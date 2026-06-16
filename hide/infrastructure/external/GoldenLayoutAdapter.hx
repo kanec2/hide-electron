@@ -76,7 +76,11 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
         var targetContainer = getOrInitTarget(position);
         targetContainer.addChild(config);
     }
-
+    public function updateSize(width:Int, height:Int):Void {
+        if (layout != null && layout.isInitialised) {
+            layout.updateSize(width, height);
+        }
+    }
     public function save():LayoutState {
         var config = layout.toConfig();
         return {

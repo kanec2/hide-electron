@@ -217,6 +217,34 @@ haxe_Log.trace = function(v,infos) {
 		console.log(str);
 	}
 };
+var haxe_Timer = function(time_ms) {
+	var me = this;
+	this.id = setInterval(function() {
+		me.run();
+	},time_ms);
+};
+$hxClasses["haxe.Timer"] = haxe_Timer;
+haxe_Timer.__name__ = "haxe.Timer";
+haxe_Timer.delay = function(f,time_ms) {
+	var t = new haxe_Timer(time_ms);
+	t.run = function() {
+		t.stop();
+		f();
+	};
+	return t;
+};
+haxe_Timer.prototype = {
+	stop: function() {
+		if(this.id == null) {
+			return;
+		}
+		clearInterval(this.id);
+		this.id = null;
+	}
+	,run: function() {
+	}
+	,__class__: haxe_Timer
+};
 var haxe_ValueException = function(value,previous,native) {
 	haxe_Exception.call(this,String(value),previous,native);
 	this.value = value;
@@ -809,6 +837,11 @@ hide_infrastructure_external_GoldenLayoutAdapter.prototype = {
 		var targetContainer = this.getOrInitTarget(position);
 		targetContainer.addChild(config);
 	}
+	,updateSize: function(width,height) {
+		if(this.layout != null && this.layout.isInitialised) {
+			this.layout.updateSize(width,height);
+		}
+	}
 	,registerView: function(type,factory) {
 		this.viewFactories.h[type] = factory;
 		if(this.layout != null && this.layout.isInitialised) {
@@ -1337,6 +1370,7 @@ hide_presentation_Ide.prototype = {
 		}
 	}
 	,startup: function() {
+		var _gthis = this;
 		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 231, className : "hide.presentation.Ide", methodName : "startup"});
 		this.viewRegistry.registerViewFactory("project",new hide_infrastructure_external_StubProjectFactory());
 		this.viewRegistry.registerViewFactory("editor",new hide_infrastructure_external_StubEditorFactory());
@@ -1362,6 +1396,16 @@ hide_presentation_Ide.prototype = {
 		}
 		var args = this.platform.getAppArgs();
 		var projectFile = null;
+		this._resizeHandler = function(_) {
+			haxe_Timer.delay(function() {
+				var layoutEl = window.document.getElementById("golden-layout-root");
+				if(layoutEl != null) {
+					var rect = layoutEl.getBoundingClientRect();
+					_gthis.layoutEngine.updateSize(rect.width | 0,rect.height | 0);
+				}
+			},100);
+		};
+		window.addEventListener("resize",this._resizeHandler);
 		var _g = 0;
 		while(_g < args.length) {
 			var arg = args[_g];
@@ -1372,10 +1416,10 @@ hide_presentation_Ide.prototype = {
 			}
 		}
 		if(projectFile != null) {
-			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 278, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 289, className : "hide.presentation.Ide", methodName : "startup"});
 			this.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._new(projectFile));
 		} else {
-			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 281, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 292, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 	}
 	,dispose: function() {
@@ -1408,6 +1452,10 @@ hide_presentation_Ide.prototype = {
 		}
 		if(this.windowController != null) {
 			this.windowController.dispose();
+		}
+		if(this._resizeHandler != null) {
+			window.removeEventListener("resize",this._resizeHandler);
+			this._resizeHandler = null;
 		}
 	}
 	,get_eventBus: function() {

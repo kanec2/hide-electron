@@ -45,7 +45,7 @@ using Lambda;
 @:expose
 class Ide implements Service {
     public static var inst(default, null):Ide;
-    
+    private var _resizeHandler:Null<js.html.Event->Void>;
     private var views:Array<ViewDto>;
     private var statusBar:StatusBar;
     
@@ -264,7 +264,18 @@ class Ide implements Service {
 
         var args = platform.getAppArgs();
         var projectFile:Null<String> = null;
-        
+        // ✅ Подписка на resize окна через js.Browser
+        _resizeHandler = function(_) {
+            haxe.Timer.delay(function() {
+                var layoutEl = js.Browser.document.getElementById("golden-layout-root");
+                if (layoutEl != null) {
+                    var rect = layoutEl.getBoundingClientRect();
+                    layoutEngine.updateSize(Std.int(rect.width), Std.int(rect.height));
+                }
+            }, 100); // Небольшая задержка для стабильности
+        };
+
+        js.Browser.window.addEventListener("resize", _resizeHandler);
         // Electron передает много внутренних флагов. Ищем первый аргумент, 
         // который НЕ начинается с '-' и не является пустой строкой.
         for (arg in args) {
@@ -294,6 +305,11 @@ class Ide implements Service {
         }
         if (windowController != null) {
             windowController.dispose();
+        }
+        // ✅ Отписка от resize
+        if (_resizeHandler != null) {
+            js.Browser.window.removeEventListener("resize", _resizeHandler);
+            _resizeHandler = null;
         }
     }
     public function get_eventBus():IEventBus return eventBus;
