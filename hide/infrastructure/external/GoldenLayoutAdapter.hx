@@ -70,7 +70,7 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
             type: Component,
             componentName: componentName,
             componentState: state,
-            content: null, id: null, width: null, height: null, isClosable: true, title: null, activeItemIndex: null
+            content: [], id: null, width: null, height: null, isClosable: true, title: componentName, activeItemIndex: null
         };
 
         var targetContainer = getOrInitTarget(position);
@@ -157,30 +157,37 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
         if (targetId == null) return layout.root;
 
         var items = layout.root.getItemsById(targetId);
-        if (items.length > 0) return items[0];
+        if (items.length > 0) {
+            var target = items[0];
+            // ✅ ЗАЩИТА: если у существующего контейнера content == null, инициализируем
+            if (target.config.content == null) {
+                target.config.content = [];
+            }
+            return target;
+        }
 
         var rootRow = layout.root.contentItems[0];
         if (rootRow == null || rootRow.type != Row) {
-            layout.root.addChild({ type: Stack, id: targetId, componentName: null, componentState: null, content: null, width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
+            layout.root.addChild({ type: Stack, id: targetId, componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
             return layout.root.getItemsById(targetId)[0];
         }
 
         switch position {
-            case Left: rootRow.addChild({ type: Stack, id: "left", width: 20, componentName: null, componentState: null, content: null, height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
-            case Right: rootRow.addChild({ type: Stack, id: "right", width: 20, componentName: null, componentState: null, content: null, height: null, isClosable: true, title: null, activeItemIndex: null });
+            case Left: rootRow.addChild({ type: Stack, id: "left", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
+            case Right: rootRow.addChild({ type: Stack, id: "right", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null });
             case Center | Bottom | MiddleColumnInternal:
                 var middleItems = layout.root.getItemsById("middle-column");
                 var middleCol:ContentItem = middleItems.length > 0 ? middleItems[0] : null;
 
                 if (middleCol == null) {
-                    rootRow.addChild({ type: Column, id: "middle-column", isClosable: false, componentName: null, componentState: null, content: null, width: null, height: null, title: null, activeItemIndex: null }, 1);
+                    rootRow.addChild({ type: Column, id: "middle-column", isClosable: false, componentName: null, componentState: null, content: [], width: null, height: null, title: null, activeItemIndex: null }, 1);
                     middleCol = layout.root.getItemsById("middle-column")[0];
                 }
 
                 if (position == Center) {
-                    middleCol.addChild({ type: Stack, id: "center", componentName: null, componentState: null, content: null, width: null, height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
+                    middleCol.addChild({ type: Stack, id: "center", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
                 } else if (position == Bottom) {
-                    middleCol.addChild({ type: Stack, id: "bottom", componentName: null, componentState: null, content: null, width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
+                    middleCol.addChild({ type: Stack, id: "bottom", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
                 }
             default:
         }

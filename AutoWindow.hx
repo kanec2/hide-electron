@@ -6,7 +6,6 @@ import electron.main.Dialog;
 import electron.IpcMainEvent;
 import js.node.Fs;
 import js.node.Path;
-import sys.io.File;
 import haxe.Json;
 
 
@@ -77,7 +76,7 @@ class AutoWindow {
     static function loadPackageConfig():AutoWindowConfig {
         try {
             var pkgPath = Path.join(__dirname, "package.json");
-            var pkg:Dynamic = Json.parse(File.getContent(pkgPath));
+            var pkg:Dynamic = Json.parse(sys.io.File.getContent(pkgPath));
             var win:Dynamic = pkg.window != null ? pkg.window : {};
             
             return {
@@ -297,6 +296,21 @@ class AutoWindow {
 
         IpcMain.on("window:enterFullscreen", function(event:IpcMainEvent) {
             if (window != null) window.setFullScreen(true);
+            event.returnValue = null;
+        });
+
+        IpcMain.on("window:maximize", function (event:IpcMainEvent) {
+            if (window != null) window.maximize();
+            event.returnValue = null;
+        });
+        
+        IpcMain.on("window:minimize", function (event:IpcMainEvent) {
+            if (window != null) window.minimize();
+            event.returnValue = null;
+        });
+
+        IpcMain.on("window:unmaximize", function (event:IpcMainEvent) {
+            if (window != null) window.unmaximize();
             event.returnValue = null;
         });
 

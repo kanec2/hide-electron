@@ -69,16 +69,16 @@
         position: relative;  /* ← ДОБАВЛЕНО */
         z-index: 1000;       /* ← ДОБАВЛЕНО: меню поверх GoldenLayout */
     ">
-        <div id="main-menu" style="-webkit-app-region: no-drag; flex: 1;"></div>
+        <div id="main-menu" style="flex: 1;"></div>
         
         <div style="-webkit-app-region: no-drag; position: absolute; left: 50%; transform: translateX(-50%); font-size: 12px; color: #ccc;">
             HIDE IDE
         </div>
 
         <div id="window-controls" style="-webkit-app-region: no-drag; display: flex; height: 100%;">
-            <div class="window-btn" style="width: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer;">─</div>
-            <div class="window-btn" style="width: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer;">□</div>
-            <div class="window-btn" style="width: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #e81123; color: white;">✕</div>
+            <div class="window-btn" id="btn-minimize" style="width: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer;">─</div>
+            <div class="window-btn" id="btn-maximize" style="width: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer;">□</div>
+            <div class="window-btn" id="btn-close" style="width: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #e81123; color: white;">✕</div>
         </div>
     </div>
 

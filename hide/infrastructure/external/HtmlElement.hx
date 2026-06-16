@@ -8,12 +8,20 @@ class HtmlElement implements IElement {
     
     public function new(element:Dynamic) {
         // GoldenLayout возвращает JQuery, нужно получить raw element
-        if (Std.is(element, Element)) {
+        if (element == null) {
+            // Fallback на случай, если передан null
+            this.element = js.Browser.document.createElement("div");
+        } else if (element.nodeType != null) {
+            // Это уже "голый" DOM-элемент (наиболее вероятный сценарий в GL v2/v3)
             this.element = cast element;
-        } else if (Reflect.hasField(element, "get")) {
-            // Это JQuery
+        } else if (element.length != null && element[0] != null) {
+            // Это jQuery-подобный объект (массив с элементами)
+            this.element = cast element[0];
+        } else if (Reflect.hasField(element, "get") && Reflect.isFunction(element.get)) {
+            // У объекта есть метод .get() (классический jQuery)
             this.element = cast element.get(0);
         } else {
+            // Попытка прямого каста как последняя надеждa
             this.element = cast element;
         }
     }

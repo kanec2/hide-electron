@@ -33,7 +33,9 @@ class ElectronWindowAdapter implements IWindowManager {
     public function maximize():Void { 
         ipcBridge.invokeSync("window:maximize"); 
     }
-
+    public function minimize():Void {
+        ipcBridge.invokeSync("window:minimize");
+    }
     public function unmaximize():Void { 
         ipcBridge.invokeSync("window:unmaximize"); 
     }

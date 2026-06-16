@@ -1,0 +1,7 @@
+# @install: lix --silent download "gh://github.com/massive-oss/haxe-react#187847cf08dcacec3b4c6c1120d6521639dae175" into react/1.12.0/github/187847cf08dcacec3b4c6c1120d6521639dae175
+-lib html-entities
+-cp ${HAXE_LIBCACHE}/react/1.12.0/github/187847cf08dcacec3b4c6c1120d6521639dae175/src/lib
+-D react=1.12.0
+--macro react.ReactTypeMacro.setFlags()
+--macro react.jsx.JsxStaticMacro.addHook()
+--macro addGlobalMetadata('', '@:build(react.jsx.JsxStaticMacro.build())')

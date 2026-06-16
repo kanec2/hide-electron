@@ -2,6 +2,7 @@
 -main hide.presentation.Ide
 -lib electron
 -lib tink_core
+-lib react 
 -lib haxe-injection
 -dce full
 --debug

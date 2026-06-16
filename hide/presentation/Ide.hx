@@ -1,5 +1,6 @@
 package hide.presentation;
 
+import hide.presentation.controllers.WindowController;
 import hide.application.services.MenuService;
 import hide.application.services.WindowService;
 import hide.application.services.PluginManager;
@@ -70,7 +71,7 @@ class Ide implements Service {
     private var eventBus:IEventBus;
     private var fileDialog:IFileDialog;
     private var platform:IPlatform;
-    
+    private var windowController:WindowController;
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -85,7 +86,8 @@ class Ide implements Service {
         fileDialog:IFileDialog,
         platform:IPlatform,
         layoutEngine:ILayoutEngine,
-        menuController:MenuController
+        menuController:MenuController,
+        windowController:WindowController
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -101,6 +103,7 @@ class Ide implements Service {
         this.platform = platform;
         this.layoutEngine = layoutEngine;
         this.menuController = menuController;
+        this.windowController = windowController;
         inst = this;
         views = viewRegistry.all(); 
         
@@ -137,6 +140,8 @@ class Ide implements Service {
     }
     
     public function onMenuOpenProject():Void {
+        layoutEngine.open("welcome", {}, DisplayPosition.Center);
+        /*
         fileDialog.showOpen({ filters: [{ name: "Project Files", extensions: ["json", "hide"] }] })
         .handle(function(path:Null<String>) {
             if (path != null) {
@@ -148,7 +153,7 @@ class Ide implements Service {
                         statusBar.setError('Failed to load project: $err');
                 }
             }
-        });
+        });*/
     }
     
     private function onErrorOccurred(event:ErrorOccurred):Void {
@@ -230,7 +235,14 @@ class Ide implements Service {
         viewRegistry.registerViewFactory("editor", new hide.infrastructure.external.StubEditorFactory());
         viewRegistry.registerViewFactory("console", new hide.infrastructure.external.StubConsoleFactory());
         viewRegistry.registerViewFactory("properties", new hide.infrastructure.external.StubPropertiesFactory());
-
+        // ✅ РЕГИСТРАЦИЯ REACT-ФАБРИК
+        viewRegistry.registerViewFactory(
+            "welcome",
+            new hide.infrastructure.ui.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.WelcomePanel)
+        );
+        windowController.init();
+        trace("🪟 WindowController инициализирован");
         // 1. Инициализируем GoldenLayout
         var layoutEl = js.Browser.document.getElementById("golden-layout-root");
         if (layoutEl != null) {
@@ -261,7 +273,7 @@ class Ide implements Service {
                 break;
             }
         }
-
+        
         if (projectFile != null) {
             trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile);
             loadProjectUseCase.execute(new FilePath(projectFile));
@@ -280,5 +292,13 @@ class Ide implements Service {
         if (menuController != null) {
             menuController.dispose();
         }
+        if (windowController != null) {
+            windowController.dispose();
+        }
     }
+    public function get_eventBus():IEventBus return eventBus;
+    public function get_windowService():WindowService return windowService;
+    public function get_menuService():MenuService return menuService;
+    public function get_viewRegistry():ViewRegistry return viewRegistry;
+    public function get_layoutEngine():ILayoutEngine return layoutEngine;
 }

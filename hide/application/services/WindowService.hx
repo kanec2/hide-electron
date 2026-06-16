@@ -33,7 +33,7 @@ class WindowService implements Service {
     public function blur():Void { manager.blur(); isFocused = false; }
     public function setTitle(title:String):Void { manager.setTitle(title); }
     public function getTitle():String return manager.getTitle();
-
+    public function minimize():Void { manager.minimize(); }
     // --- Фуллскрин (NW.js-совместимый) ---
     public function enterFullscreen():Void {
         manager.enterFullscreen();

@@ -175,3 +175,44 @@ header, main, footer, .logo, #system-version, #node-version, #electron-version, 
     margin: 4px 0;
     pointer-events: none;
 }
+
+/* Делаем панель меню перетаскиваемой */
+.main-menu-bar {
+    -webkit-app-region: drag;
+    user-select: none;
+    cursor: default;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 10px;
+    margin: 0;
+    list-style: none;
+}
+
+/* Кнопки меню НЕ перетаскиваются, чтобы клики работали */
+.main-menu-bar .menu-button {
+    -webkit-app-region: no-drag;
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: #ccc;
+    padding: 5px 12px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.main-menu-bar .menu-button:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Элементы списка */
+.main-menu-bar .menu-item {
+    position: relative;
+}
+
+/* Подменю тоже не перетаскивается */
+.main-menu-bar .submenu {
+    -webkit-app-region: no-drag;
+}

@@ -12,6 +12,7 @@ interface IWindowManager extends Service{
     function moveTo(x:Int, y:Int):Void;
     function maximize():Void;
     function unmaximize():Void;
+    function minimize():Void; // ← ДОБАВИТЬ
     function focus():Void;
     function blur():Void;
     function setTitle(title:String):Void;
