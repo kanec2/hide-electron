@@ -33,6 +33,7 @@ import hide.application.commands.SaveLayoutUseCase;
 import hide.application.commands.CloseProjectUseCase;
 import hide.application.commands.OpenViewUseCase;
 
+import hide.presentation.controllers.MenuController;
 // Presentation
 import hide.presentation.Ide;
 
@@ -72,7 +73,8 @@ class AppModule {
         collection.addSingleton(WindowService);
         collection.addSingleton(MenuService);
         collection.addSingleton(PluginManager);
-
+        // ✅ РЕГИСТРИРУЕМ КОНТРОЛЛЕР МЕНЮ
+        collection.addSingleton(MenuController);    
         // 4. Use Cases (Transient, чтобы каждый вызов был чистым, 
         // или Singleton, если они полностью stateless и тяжелые)
         collection.addSingleton(LoadProjectUseCase);

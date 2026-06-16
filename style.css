@@ -30,3 +30,148 @@ body {
 header, main, footer, .logo, #system-version, #node-version, #electron-version, #haxe-version {
     display: none !important;
 }
+
+/* =========================================
+   VS Code Style Menu System
+   ========================================= */
+
+:root {
+    --vscode-menu-bg: #252526;
+    --vscode-menu-border: #454545;
+    --vscode-menu-fg: #cccccc;
+    --vscode-menu-hover-bg: #094771; /* Синий при наведении */
+    --vscode-menu-hover-fg: #ffffff;
+    --vscode-menu-disabled-fg: #858585;
+    --vscode-menubar-bg: #3c3c3c;
+    --vscode-menubar-hover-bg: #505050;
+    --vscode-separator-bg: #454545;
+}
+
+/* 1. Верхняя горизонтальная панель (Menubar) */
+.main-menu-bar {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background-color: var(--vscode-menubar-bg);
+    color: var(--vscode-menu-fg);
+    height: 30px; /* Стандартная высота строки заголовка VS Code */
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+    font-size: 13px;
+    user-select: none; /* Запрет выделения текста, как в нативном приложении */
+}
+
+/* Элементы верхнего уровня (File, Edit, View...) */
+.main-menu-bar > .menu-item {
+    position: relative;
+    height: 100%;
+    display: flex;
+    align-items: center;
+}
+
+.main-menu-bar > .menu-item > .menu-button {
+    background: none;
+    border: none;
+    color: inherit;
+    padding: 0 10px;
+    height: 100%;
+    cursor: default;
+    font-family: inherit;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.main-menu-bar > .menu-item > .menu-button:hover,
+.main-menu-bar > .menu-item:hover > .menu-button {
+    background-color: var(--vscode-menubar-hover-bg);
+    color: var(--vscode-menu-hover-fg);
+}
+
+/* 2. Выпадающее подменю (Dropdown) */
+.submenu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background-color: var(--vscode-menu-bg);
+    border: 1px solid var(--vscode-menu-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    min-width: 220px;
+    z-index: 1000;
+    border-radius: 0 0 4px 4px; /* Легкое скругление снизу */
+}
+
+/* Показываем подменю при наведении на родительский элемент верхнего уровня */
+.main-menu-bar > .menu-item.has-submenu:hover > .submenu {
+    display: block;
+}
+
+/* Элементы внутри выпадающего меню */
+.submenu .menu-item {
+    position: relative;
+    padding: 0;
+}
+
+.submenu .menu-button {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--vscode-menu-fg);
+    padding: 4px 20px; /* Больше отступов по бокам */
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between; /* Чтобы разнести текст и хоткей */
+    align-items: center;
+    gap: 16px;
+    text-align: left;
+}
+
+.submenu .menu-button:hover {
+    background-color: var(--vscode-menu-hover-bg);
+    color: var(--vscode-menu-hover-fg);
+}
+
+/* Иконки в меню (фиксированная ширина для ровного выравнивания текста) */
+.menu-button .fa, .menu-button i {
+    width: 16px;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* Горячие клавиши (справа) */
+.menu-shortcut {
+    color: var(--vscode-menu-fg);
+    font-size: 12px;
+    margin-left: auto; /* Прижимает вправо */
+}
+
+.submenu .menu-button:hover .menu-shortcut {
+    color: var(--vscode-menu-hover-fg);
+}
+
+/* Отключенные пункты */
+.menu-item.disabled .menu-button {
+    color: var(--vscode-menu-disabled-fg);
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.menu-item.disabled .menu-button:hover {
+    background-color: transparent;
+    color: var(--vscode-menu-disabled-fg);
+}
+
+/* Разделители */
+.separator {
+    height: 1px;
+    background-color: var(--vscode-separator-bg);
+    margin: 4px 0;
+    pointer-events: none;
+}

@@ -112,7 +112,8 @@ class AutoWindow {
             width: cfg.width, height: cfg.height,
             minWidth: cfg.minWidth, minHeight: cfg.minHeight,
             title: cfg.title, show: false, // Показываем после ready-to-show
-            frame: cfg.frame,
+            frame: false,
+            titleBarStyle: 'hidden',
             webPreferences: {
                 nodeIntegration: true,
                 contextIsolation: false,

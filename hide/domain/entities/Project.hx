@@ -37,13 +37,18 @@ class Project {
     public function getResourcesByType(type:ResourceType):Array<Resource> {
         return [for (r in resources) if (r.type == type) r];
     }
-    public static function fromJson(json:String):Project {
+    public static function fromJson(json:String, filePath:FilePath):Project {
         var data = haxe.Json.parse(json);
-        return new Project(
-            data.id != null ? data.id : "unknown",
-            data.name != null ? data.name : "Unnamed Project",
-            new FilePath(data.rootPath)
-        );
+        // Валидация обязательных полей
+        if (data.name == null || StringTools.trim(data.name) == "") {
+            throw "Invalid project file: missing or empty 'name' field";
+        }
+        var id = data.id != null ? Std.string(data.id) : Std.string(Date.now().getTime());
+        // Если в JSON есть rootPath, используем его, иначе берем путь к самому файлу
+        var pathStr = data.rootPath != null ? data.rootPath : filePath.toString();
+        var finalPath = new FilePath(pathStr);
+
+        return new Project(id, data.name, finalPath);
     }
     public function get_isDirty():Bool return _isDirty;
     public function markSaved():Void _isDirty = false;

@@ -8,6 +8,9 @@ import hide.domain.services.IFileDialog;
 import hide.domain.services.IPlatform;
 import hide.domain.services.IAppInfo;
 import hide.presentation.ui.StatusBar;
+import hide.presentation.controllers.MenuController;
+
+
 import hide.application.commands.LoadProjectUseCase;
 import hide.application.commands.SetFullscreenUseCase;
 import hide.application.commands.SaveLayoutUseCase;
@@ -16,12 +19,16 @@ import hide.application.commands.OpenViewUseCase;
 import hide.application.dto.ViewDto;
 import hide.domain.valueobjects.DisplayPosition;
 import hide.domain.valueobjects.FilePath;
+
 import hide.shared.events.ProjectLoaded;
 import hide.shared.events.ErrorOccurred;
 import hide.shared.events.LayoutChanged;
 import hide.shared.events.ProjectClosed;
+import hide.shared.events.RecentProjectsUpdated;
+
 import hide.shared.types.IEventBus;
 import hide.shared.types.Result;
+
 import hide.domain.services.ILayoutEngine;
 
 import hx.injection.Service;
@@ -52,7 +59,7 @@ class Ide implements Service {
     private var windowService:WindowService;
     private var menuService:MenuService;
     private var layoutEngine:ILayoutEngine;
-
+    private var menuController:MenuController;
     private var loadProjectUseCase:LoadProjectUseCase;
     private var setFullscreenUseCase:SetFullscreenUseCase;
     //private var saveLayoutUseCase:SaveLayoutUseCase;
@@ -77,7 +84,8 @@ class Ide implements Service {
         eventBus:IEventBus,
         fileDialog:IFileDialog,
         platform:IPlatform,
-        layoutEngine:ILayoutEngine
+        layoutEngine:ILayoutEngine,
+        menuController:MenuController
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -92,10 +100,20 @@ class Ide implements Service {
         this.fileDialog = fileDialog;
         this.platform = platform;
         this.layoutEngine = layoutEngine;
+        this.menuController = menuController;
         inst = this;
         views = viewRegistry.all(); 
         
+        menuService.onItemClick("project.open", onMenuOpenProject);
+        menuService.onItemClick("view.fullscreen", onToggleFullscreen);
+        menuService.onItemClick("layout.save", onLayoutSave);
+        menuService.onItemClick("project.close", onCloseProject);
+        menuService.onItemClick("help.about", showAboutDialog);
+        menuService.onItemClick("app.exit", function() {
+            js.Browser.window.close();
+        });
         for (view in viewRegistry.all()) {
+            trace(view.name);
             menuService.addViewMenu(view);
             menuService.onItemClick("view." + view.name, function() openView(view.name));
         }
@@ -103,6 +121,8 @@ class Ide implements Service {
         // Используем js.Browser.document вместо Element.byId
         var statusEl = js.Browser.document.getElementById("status-bar");
         statusBar = new StatusBar(statusEl);
+
+
         
         _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded, onProjectLoadedHandler);
         _errorUnsub = eventBus.subscribe(ErrorOccurred, onErrorOccurred);
@@ -154,27 +174,6 @@ class Ide implements Service {
     
     public function onCloseProject():Void {
         //closeProjectUseCase.execute();
-    }
-    
-    public function onMenuItemClick(id:String):Void {
-        switch id {
-            case "project.open": onMenuOpenProject();
-            case "view.fullscreen": onToggleFullscreen();
-            case "layout.save": onLayoutSave();
-            case "project.close": onCloseProject();
-            case "help.about": showAboutDialog();
-            case "view.editor": openView("editor");
-            case "view.project": openView("project");
-            default:
-                // Pattern matching со строковой интерполяцией не работает в Haxe!
-                // Используем startsWith
-                if (StringTools.startsWith(id, "project.recents.")) {
-                    var path = id.substr("project.recents.".length);
-                    onOpenRecent(path);
-                } else {
-                    trace("Unknown menu item ID: " + id);
-                }
-        }
     }
     
     private function openView(viewName:String):Void {
@@ -243,7 +242,14 @@ class Ide implements Service {
             trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.");
         }
        
-    
+        var menuContainer = js.Browser.document.getElementById("main-menu");
+        if (menuContainer != null) {
+            menuController.setContainer(cast menuContainer);
+            trace("📋 MenuController инициализирован с DOM-контейнером.");
+        } else {
+            trace("⚠️ Контейнер #main-menu не найден в DOM!");
+        }
+
         var args = platform.getAppArgs();
         var projectFile:Null<String> = null;
         
@@ -270,5 +276,9 @@ class Ide implements Service {
         if (_errorUnsub != null) _errorUnsub.cancel();
         if (_layoutChangedUnsub != null) _layoutChangedUnsub.cancel();
         if (_projectClosedUnsub != null) _projectClosedUnsub.cancel();
+        // ✅ Очищаем ресурсы контроллера меню
+        if (menuController != null) {
+            menuController.dispose();
+        }
     }
 }

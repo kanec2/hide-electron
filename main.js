@@ -95,7 +95,7 @@ AutoWindow.applyDefaults = function() {
 	}
 };
 AutoWindow.createWindow = function() {
-	var opts = { width : AutoWindow.cfg.width, height : AutoWindow.cfg.height, minWidth : AutoWindow.cfg.minWidth, minHeight : AutoWindow.cfg.minHeight, title : AutoWindow.cfg.title, show : false, frame : AutoWindow.cfg.frame, webPreferences : { nodeIntegration : true, contextIsolation : false, enableRemoteModule : true}};
+	var opts = { width : AutoWindow.cfg.width, height : AutoWindow.cfg.height, minWidth : AutoWindow.cfg.minWidth, minHeight : AutoWindow.cfg.minHeight, title : AutoWindow.cfg.title, show : false, frame : false, titleBarStyle : "hidden", webPreferences : { nodeIntegration : true, contextIsolation : false, enableRemoteModule : true}};
 	if(AutoWindow.cfg.icon != null) {
 		opts.icon = js_node_Path.join(__dirname,AutoWindow.cfg.icon);
 	}
@@ -156,7 +156,7 @@ AutoWindow.processMenuTemplate = function(items,sender) {
 			var itemId = [item.id];
 			processed.click = (function(itemId) {
 				return function(menuItem,browserWindow,event) {
-					console.log("AutoWindow.hx:192:","[AutoWindow] 🖱 Click: '" + itemId[0] + "'");
+					console.log("AutoWindow.hx:193:","[AutoWindow] 🖱 Click: '" + itemId[0] + "'");
 					sender.send("menu:click",{ id : itemId[0]});
 				};
 			})(itemId);
@@ -267,16 +267,16 @@ AutoWindow.setupIpc = function() {
 		event.returnValue = null;
 	});
 	electron_main_IpcMain.on("menu:build",function(event,menuData) {
-		console.log("AutoWindow.hx:309:","[AutoWindow] 📥 Received menu data");
+		console.log("AutoWindow.hx:310:","[AutoWindow] 📥 Received menu data");
 		var template = AutoWindow.processMenuTemplate(menuData,event.sender);
 		var menu = electron_main_Menu.buildFromTemplate(template);
 		electron_main_Menu.setApplicationMenu(menu);
-		console.log("AutoWindow.hx:313:","[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
+		console.log("AutoWindow.hx:314:","[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
 	});
 	electron_main_IpcMain.on("window:open",function(event,data) {
 		var url = data.url;
 		if(url.indexOf("?subView=") != -1) {
-			console.log("AutoWindow.hx:321:","[AutoWindow] ⚠️ Sub-view request: " + url);
+			console.log("AutoWindow.hx:322:","[AutoWindow] ⚠️ Sub-view request: " + url);
 			event.sender.send("window:open:subview",{ url : url});
 			return;
 		}

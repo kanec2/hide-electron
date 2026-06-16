@@ -22,7 +22,7 @@
     <link rel="stylesheet" type="text/css" href="libs/spectrum.css"/>
     <link rel="stylesheet" href="libs/monaco/min/vs/editor/editor.main.css"/>
 </head>
-<body>
+<body style="margin: 0; padding: 0; overflow: hidden; background: #1e1e1e; color: #ccc;">
     <!-- 2.1. jQuery — ДО ВСЕХ плагинов -->
     <script>
         (function() {
@@ -59,104 +59,53 @@
         })();
     </script>
     <!-- Ваш HTML-контент без изменений -->
-    <header>...</header>
-    <main>
-        <div id="system-version"></div>
-        <div id="node-version"></div>
-        <div id="electron-version"></div>
-        <div id="haxe-version"></div>
-    </main>
-    <img class="logo" id="logo-haxe" src="haxe-logo.svg"/>
-    <footer>...</footer>
-    
-    <!-- Контейнер для GoldenLayout (обязательно!)
-    <div id="main-container" style="position:absolute;top:0;left:0;right:0;bottom:0;"></div> -->
-    <div id="golden-layout-root" style="width: 100%; height: calc(100vh - 30px); position: absolute; top: 0; left: 0;"></div>
-<div id="status-bar" style="width: 100%; height: 30px; position: absolute; bottom: 0; left: 0; background: #007acc; color: white; line-height: 30px; padding-left: 10px;">
-    Ready
-</div>
-    <!-- XML меню -->
-        <xml id="mainmenu">
-	        <menu label="Project" class="project">
-                <menu label="Open..." class="open"></menu>
-                <menu label="Recently opened">
-                    <div class="recents">
-                        <menu label="Empty" disabled="disabled"></menu>
-                    </div>
-                <separator></separator>
-                <menu label="Clear Recents" class="clear"></menu>
-                </menu>
-                <separator></separator>
-                <menu label="Renderer">
-                    <div class="renderers">
-                    </div>
-                </menu>
-		    <separator></separator>
-            <menu label="Build Files" class="build-files"></menu>
-            <menu label="Clear profile" class="clear-local"></menu>
-            <menu label="Exit" class="exit"></menu>
-        </menu>
-	<menu label="View" class="view">
-		<menu label="Resources" component="hide.view.FileBrowser" state='{"savedLayout": "SingleTree"}' position="content_left"></menu>
-		<menu label="File Browser" component="hide.view.FileBrowser" state='{}'></menu>
-		<menu label="Domkit Studio" component="hide.view.DomkitStudio" state='{}'></menu>
-		<separator></separator>
-		<menu label="About" component="hide.view.About"></menu>
-		<menu label="Debug" class="debug"></menu>
-		<menu label="Editor Gym" component="hide.view.Gym"></menu>
-	</menu>
-	<menu label="Database" class="database">
-		<menu label="View" class="dbView"></menu>
-		<menu label="Custom Types" class="dbCustom"></menu>
-		<menu label="Formulas">
-			<menu label="Enable" type="checkbox" class="dbFormulasEnable"></menu>
-			<menu label="Edit" class="dbFormulas"></menu>
-		</menu>
-		<menu label="Diff">
-			<menu label="Create" class="dbCreateDiff"></menu>
-			<menu label="Load" class="dbLoadDiff"></menu>
-			<menu label="Close" class="dbCloseDiff"></menu>
-		</menu>
-		<menu label="Export Localized Texts" class="dbExport"></menu>
-		<menu label="Import Localized Texts" class="dbImport"></menu>
-		<menu label="Proofreading Mode" type="checkbox" class="dbProofread"></menu>
-		<menu label="Categories" class="dbCategories">
-			<menu label="Show All" class="dbCatShowAll"></menu>
-			<menu label="Hide All" class="dbCatHideAll"></menu>
-		</menu>
-		<separator></separator>
-		<menu label="Enable Compression" class="dbCompress" type="checkbox"></menu>
-	</menu>
-	<menu label="Layout" class="layout">
-		<div class="content">
-		</div>
-		<separator></separator>
-		<menu label="Keep on close" class="autosave" type="checkbox"></menu>
-		<menu label="Save" class="save"></menu>
-		<menu label="Save As..." class="saveas"></menu>
-		<menu label="Manage" class="manage" disabled="disabled"></menu>
-	</menu>
-	<menu label="Tools" class="tools">
-		<menu label="Analysis" class="analysis">
-			<div class="content">
-			</div>
-			<separator></separator>
-			<menu label="Remote console" class="remoteconsole"></menu>
-			<menu label="Memory profiler" class="memprof"></menu>
-			<menu label="DevTools" class="devtools"></menu>
-			<menu label="Gpu mem dump" class="gpudump"></menu>
-		</menu>
-		<menu label="Screen Capture" class="screen-capture"></menu>
-	</menu>
+    <!-- Кастомная панель заголовка (Title Bar) -->
+    <div id="app-titlebar" style="
+        display: flex; 
+        align-items: center; 
+        height: 30px; 
+        background: #3c3c3c; 
+        -webkit-app-region: drag;
+        position: relative;  /* ← ДОБАВЛЕНО */
+        z-index: 1000;       /* ← ДОБАВЛЕНО: меню поверх GoldenLayout */
+    ">
+        <div id="main-menu" style="-webkit-app-region: no-drag; flex: 1;"></div>
+        
+        <div style="-webkit-app-region: no-drag; position: absolute; left: 50%; transform: translateX(-50%); font-size: 12px; color: #ccc;">
+            HIDE IDE
+        </div>
 
-	<menu label="Settings" class="settings">
-		<div class="content">
-		</div>
-		<separator></separator>
-		<menu label="User settings" class="user-settings"></menu>
-		<menu label="Project settings" class="project-settings"></menu>
-	</menu>
-</xml>
+        <div id="window-controls" style="-webkit-app-region: no-drag; display: flex; height: 100%;">
+            <div class="window-btn" style="width: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer;">─</div>
+            <div class="window-btn" style="width: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer;">□</div>
+            <div class="window-btn" style="width: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #e81123; color: white;">✕</div>
+        </div>
+    </div>
+
+    <!-- Контейнер для GoldenLayout — ИСПРАВЛЕНО позиционирование -->
+    <div id="golden-layout-root" style="
+        width: 100%; 
+        height: calc(100vh - 60px);  /* ← 30px titlebar + 30px statusbar */
+        position: absolute; 
+        top: 30px;  /* ← ИСПРАВЛЕНО: начинаем ПОСЛЕ titlebar */
+        left: 0;
+    "></div>
+
+    <div id="status-bar" style="
+        width: 100%; 
+        height: 30px; 
+        position: absolute; 
+        bottom: 0; 
+        left: 0; 
+        background: #007acc; 
+        color: white; 
+        line-height: 30px; 
+        padding-left: 10px;
+        z-index: 1000;  /* ← ДОБАВЛЕНО */
+    ">
+        Ready
+    </div>
+    
         <!-- === 2. JS зависимости — СТРОГИЙ ПОРЯДОК === -->
     
 

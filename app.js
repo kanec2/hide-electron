@@ -128,6 +128,7 @@ haxe_StackItem.__constructs__ = [haxe_StackItem.CFunction,haxe_StackItem.Module,
 var haxe_IMap = function() { };
 $hxClasses["haxe.IMap"] = haxe_IMap;
 haxe_IMap.__name__ = "haxe.IMap";
+haxe_IMap.__isInterface__ = true;
 var haxe_Exception = function(message,previous,native) {
 	Error.call(this,message);
 	this.message = message;
@@ -211,6 +212,7 @@ haxe_iterators_ArrayIterator.prototype = {
 var hx_injection_Service = function() { };
 $hxClasses["hx.injection.Service"] = hx_injection_Service;
 hx_injection_Service.__name__ = "hx.injection.Service";
+hx_injection_Service.__isInterface__ = true;
 hx_injection_Service.prototype = {
 	__class__: hx_injection_Service
 };
@@ -224,15 +226,20 @@ hide_application_commands_LoadProjectUseCase.__interfaces__ = [hx_injection_Serv
 hide_application_commands_LoadProjectUseCase.prototype = {
 	execute: function(projectPath) {
 		try {
+			if(!this.fileSystem.exists(projectPath)) {
+				var msg = "Project file not found: " + projectPath.toString();
+				this.eventBus.publish(hide_shared_events_ErrorOccurred,new hide_shared_events_ErrorOccurred("LoadProjectUseCase",msg));
+				return hide_shared_types_Result.Failure(msg);
+			}
 			var content = this.fileSystem.readText(projectPath);
-			var data = JSON.parse(content);
-			var projectName = data.name != null ? data.name : "Unnamed Project";
-			var project = new hide_domain_entities_Project("id-1",projectName,projectPath);
+			var project = hide_domain_entities_Project.fromJson(content,projectPath);
 			this.eventBus.publish(hide_shared_events_ProjectLoaded,new hide_shared_events_ProjectLoaded(project));
 			return hide_shared_types_Result.Success(project);
 		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			var errorMsg = Std.string(e);
+			var _g1 = haxe_Exception.caught(_g);
+			var _g2 = _g1.unwrap();
+			var e = _g1;
+			var errorMsg = "Failed to load project: " + e.get_message();
 			this.eventBus.publish(hide_shared_events_ErrorOccurred,new hide_shared_events_ErrorOccurred("LoadProjectUseCase",errorMsg));
 			return hide_shared_types_Result.Failure(errorMsg);
 		}
@@ -264,8 +271,9 @@ hide_application_commands_SetFullscreenUseCase.prototype = {
 	,__class__: hide_application_commands_SetFullscreenUseCase
 };
 var hide_application_services_MenuService = function() {
-	this.menuItems = [];
+	this.menuStructure = [];
 	this.handlers = new haxe_ds_StringMap();
+	this.menuStructure = hide_presentation_config_MenuConfig.getBaseMenu();
 };
 $hxClasses["hide.application.services.MenuService"] = hide_application_services_MenuService;
 hide_application_services_MenuService.__name__ = "hide.application.services.MenuService";
@@ -274,12 +282,50 @@ hide_application_services_MenuService.prototype = {
 	onItemClick: function(id,handler) {
 		this.handlers.h[id] = handler;
 	}
-	,addItem: function(id,label,icon) {
-		this.menuItems.push({ id : id, label : label, icon : icon});
+	,trigger: function(id) {
+		if(Object.prototype.hasOwnProperty.call(this.handlers.h,id)) {
+			this.handlers.h[id]();
+		} else {
+			console.log("hide/application/services/MenuService.hx:34:","[MenuService] No handler registered for menu item: " + id);
+		}
+	}
+	,getMenuStructure: function() {
+		return this.menuStructure;
 	}
 	,addViewMenu: function(view) {
-		var id = "view.${view.name}";
-		this.addItem(id,view.label,view.icon);
+		var viewMenu = this.findMenuItemById("view");
+		if(viewMenu == null || viewMenu.children == null) {
+			return;
+		}
+		var id = "view." + view.name;
+		var _g = 0;
+		var _g1 = viewMenu.children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(child.id == id) {
+				return;
+			}
+		}
+		viewMenu.children.push({ id : id, label : view.label, icon : view.icon, data : { viewName : view.name}});
+	}
+	,findMenuItemById: function(id,items) {
+		var searchIn = items != null ? items : this.menuStructure;
+		var _g = 0;
+		while(_g < searchIn.length) {
+			var item = searchIn[_g];
+			++_g;
+			if(item.id == id) {
+				return item;
+			}
+			if(item.type == hide_domain_enums_MenuItemType.Submenu && item.children != null) {
+				var found = this.findMenuItemById(id,item.children);
+				if(found != null) {
+					return found;
+				}
+			}
+		}
+		return null;
 	}
 	,getConstructorArgs: function() {
 		return [];
@@ -485,12 +531,28 @@ var hide_domain_entities_Project = function(id,name,rootPath) {
 };
 $hxClasses["hide.domain.entities.Project"] = hide_domain_entities_Project;
 hide_domain_entities_Project.__name__ = "hide.domain.entities.Project";
+hide_domain_entities_Project.fromJson = function(json,filePath) {
+	var data = JSON.parse(json);
+	if(data.name == null || StringTools.trim(data.name) == "") {
+		throw haxe_Exception.thrown("Invalid project file: missing or empty 'name' field");
+	}
+	var id = data.id != null ? Std.string(data.id) : Std.string(new Date().getTime());
+	var pathStr = data.rootPath != null ? data.rootPath : filePath.toString();
+	var finalPath = hide_domain_valueobjects_FilePath._hx_new(pathStr);
+	return new hide_domain_entities_Project(id,data.name,finalPath);
+};
 hide_domain_entities_Project.prototype = {
 	__class__: hide_domain_entities_Project
 };
 var hide_domain_entities_Resource = function() { };
 $hxClasses["hide.domain.entities.Resource"] = hide_domain_entities_Resource;
 hide_domain_entities_Resource.__name__ = "hide.domain.entities.Resource";
+var hide_domain_enums_MenuItemType = $hxEnums["hide.domain.enums.MenuItemType"] = { __ename__:true,__constructs__:null
+	,Normal: {_hx_name:"Normal",_hx_index:0,__enum__:"hide.domain.enums.MenuItemType",toString:$estr}
+	,Separator: {_hx_name:"Separator",_hx_index:1,__enum__:"hide.domain.enums.MenuItemType",toString:$estr}
+	,Submenu: {_hx_name:"Submenu",_hx_index:2,__enum__:"hide.domain.enums.MenuItemType",toString:$estr}
+};
+hide_domain_enums_MenuItemType.__constructs__ = [hide_domain_enums_MenuItemType.Normal,hide_domain_enums_MenuItemType.Separator,hide_domain_enums_MenuItemType.Submenu];
 var hide_domain_enums_WindowEvent = $hxEnums["hide.domain.enums.WindowEvent"] = { __ename__:true,__constructs__:null
 	,Focus: {_hx_name:"Focus",_hx_index:0,__enum__:"hide.domain.enums.WindowEvent",toString:$estr}
 	,Blur: {_hx_name:"Blur",_hx_index:1,__enum__:"hide.domain.enums.WindowEvent",toString:$estr}
@@ -517,12 +579,14 @@ hide_domain_exceptions_FileNotFoundError.prototype = $extend(haxe_Exception.prot
 var hide_domain_services_IElement = function() { };
 $hxClasses["hide.domain.services.IElement"] = hide_domain_services_IElement;
 hide_domain_services_IElement.__name__ = "hide.domain.services.IElement";
+hide_domain_services_IElement.__isInterface__ = true;
 hide_domain_services_IElement.prototype = {
 	__class__: hide_domain_services_IElement
 };
 var hide_domain_services_IFileDialog = function() { };
 $hxClasses["hide.domain.services.IFileDialog"] = hide_domain_services_IFileDialog;
 hide_domain_services_IFileDialog.__name__ = "hide.domain.services.IFileDialog";
+hide_domain_services_IFileDialog.__isInterface__ = true;
 hide_domain_services_IFileDialog.__interfaces__ = [hx_injection_Service];
 hide_domain_services_IFileDialog.prototype = {
 	__class__: hide_domain_services_IFileDialog
@@ -530,6 +594,7 @@ hide_domain_services_IFileDialog.prototype = {
 var hide_domain_services_IFileSystem = function() { };
 $hxClasses["hide.domain.services.IFileSystem"] = hide_domain_services_IFileSystem;
 hide_domain_services_IFileSystem.__name__ = "hide.domain.services.IFileSystem";
+hide_domain_services_IFileSystem.__isInterface__ = true;
 hide_domain_services_IFileSystem.__interfaces__ = [hx_injection_Service];
 hide_domain_services_IFileSystem.prototype = {
 	__class__: hide_domain_services_IFileSystem
@@ -537,6 +602,7 @@ hide_domain_services_IFileSystem.prototype = {
 var hide_domain_services_ILayoutEngine = function() { };
 $hxClasses["hide.domain.services.ILayoutEngine"] = hide_domain_services_ILayoutEngine;
 hide_domain_services_ILayoutEngine.__name__ = "hide.domain.services.ILayoutEngine";
+hide_domain_services_ILayoutEngine.__isInterface__ = true;
 hide_domain_services_ILayoutEngine.__interfaces__ = [hx_injection_Service];
 hide_domain_services_ILayoutEngine.prototype = {
 	__class__: hide_domain_services_ILayoutEngine
@@ -544,6 +610,7 @@ hide_domain_services_ILayoutEngine.prototype = {
 var hide_domain_services_IPlatform = function() { };
 $hxClasses["hide.domain.services.IPlatform"] = hide_domain_services_IPlatform;
 hide_domain_services_IPlatform.__name__ = "hide.domain.services.IPlatform";
+hide_domain_services_IPlatform.__isInterface__ = true;
 hide_domain_services_IPlatform.__interfaces__ = [hx_injection_Service];
 hide_domain_services_IPlatform.prototype = {
 	__class__: hide_domain_services_IPlatform
@@ -551,12 +618,14 @@ hide_domain_services_IPlatform.prototype = {
 var hide_domain_services_IPlugin = function() { };
 $hxClasses["hide.domain.services.IPlugin"] = hide_domain_services_IPlugin;
 hide_domain_services_IPlugin.__name__ = "hide.domain.services.IPlugin";
+hide_domain_services_IPlugin.__isInterface__ = true;
 hide_domain_services_IPlugin.prototype = {
 	__class__: hide_domain_services_IPlugin
 };
 var hide_domain_services_IViewFactory = function() { };
 $hxClasses["hide.domain.services.IViewFactory"] = hide_domain_services_IViewFactory;
 hide_domain_services_IViewFactory.__name__ = "hide.domain.services.IViewFactory";
+hide_domain_services_IViewFactory.__isInterface__ = true;
 hide_domain_services_IViewFactory.__interfaces__ = [hx_injection_Service];
 hide_domain_services_IViewFactory.prototype = {
 	__class__: hide_domain_services_IViewFactory
@@ -564,6 +633,7 @@ hide_domain_services_IViewFactory.prototype = {
 var hide_domain_services_IWindowManager = function() { };
 $hxClasses["hide.domain.services.IWindowManager"] = hide_domain_services_IWindowManager;
 hide_domain_services_IWindowManager.__name__ = "hide.domain.services.IWindowManager";
+hide_domain_services_IWindowManager.__isInterface__ = true;
 hide_domain_services_IWindowManager.__interfaces__ = [hx_injection_Service];
 hide_domain_services_IWindowManager.prototype = {
 	__class__: hide_domain_services_IWindowManager
@@ -608,6 +678,8 @@ hide_infrastructure_di_AppModule.configure = function(collection) {
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
 	var implementation = hide_application_services_PluginManager;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_presentation_controllers_MenuController;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
 	var implementation = hide_application_commands_LoadProjectUseCase;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
 	var implementation = hide_application_commands_SetFullscreenUseCase;
@@ -636,7 +708,8 @@ hide_infrastructure_external_GoldenLayoutAdapter.prototype = {
 		}
 		var contentData = state.content;
 		if(contentData == null || contentData.length == 0) {
-			contentData = this.createDefaultSkeleton().content;
+			var defaultState = this.createDefaultSkeleton();
+			contentData = defaultState.content;
 		}
 		var goldenConfig = this.toGoldenConfig({ content : contentData, fullScreen : null});
 		this.layout = new GoldenLayout(goldenConfig,this.container);
@@ -755,7 +828,7 @@ hide_infrastructure_external_StubConsoleFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubConsoleFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubConsoleFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>🖥️ Console</h2>\n                <p>Console output will appear here.</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>🖥️ Console</h2>\r\n                <p>Console output will appear here.</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -770,7 +843,7 @@ hide_infrastructure_external_StubEditorFactory.__name__ = "hide.infrastructure.e
 hide_infrastructure_external_StubEditorFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubEditorFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>📝 Stub Editor</h2>\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\n                <p>Состояние: " + JSON.stringify(state) + "</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>📝 Stub Editor</h2>\r\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\r\n                <p>Состояние: " + JSON.stringify(state) + "</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -785,7 +858,7 @@ hide_infrastructure_external_StubProjectFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubProjectFactory.__interfaces__ = [hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubProjectFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\n                <h2>📁 Project Tree</h2>\n                <ul>\n                    <li>📂 src/</li>\n                    <li>📄 Main.hx</li>\n                    <li>📄 project.json</li>\n                </ul>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\r\n                <h2>📁 Project Tree</h2>\r\n                <ul>\r\n                    <li>📂 src/</li>\r\n                    <li>📄 Main.hx</li>\r\n                    <li>📄 project.json</li>\r\n                </ul>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -800,7 +873,7 @@ hide_infrastructure_external_StubPropertiesFactory.__name__ = "hide.infrastructu
 hide_infrastructure_external_StubPropertiesFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubPropertiesFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\n                <h2>⚙️ Properties</h2>\n                <p>Object properties will appear here.</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\r\n                <h2>⚙️ Properties</h2>\r\n                <p>Object properties will appear here.</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -971,7 +1044,7 @@ hide_infrastructure_platform_electron_ElectronWindowAdapter.prototype = {
 	}
 	,__class__: hide_infrastructure_platform_electron_ElectronWindowAdapter
 };
-var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,viewRegistry,pluginManager,eventBus,fileDialog,platform,layoutEngine) {
+var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,viewRegistry,pluginManager,eventBus,fileDialog,platform,layoutEngine,menuController) {
 	var _gthis = this;
 	this.windowService = windowService;
 	this.menuService = menuService;
@@ -983,13 +1056,23 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this.fileDialog = fileDialog;
 	this.platform = platform;
 	this.layoutEngine = layoutEngine;
+	this.menuController = menuController;
 	hide_presentation_Ide.inst = this;
 	this.views = viewRegistry.all();
+	menuService.onItemClick("project.open",$bind(this,this.onMenuOpenProject));
+	menuService.onItemClick("view.fullscreen",$bind(this,this.onToggleFullscreen));
+	menuService.onItemClick("layout.save",$bind(this,this.onLayoutSave));
+	menuService.onItemClick("project.close",$bind(this,this.onCloseProject));
+	menuService.onItemClick("help.about",$bind(this,this.showAboutDialog));
+	menuService.onItemClick("app.exit",function() {
+		window.close();
+	});
 	var _g = 0;
 	var _g1 = viewRegistry.all();
 	while(_g < _g1.length) {
 		var view = [_g1[_g]];
 		++_g;
+		console.log("hide/presentation/Ide.hx:116:",view[0].name);
 		menuService.addViewMenu(view[0]);
 		menuService.onItemClick("view." + view[0].name,(function(view) {
 			return function() {
@@ -1002,7 +1085,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this._projectLoadedUnsub = eventBus.subscribe(hide_shared_events_ProjectLoaded,$bind(this,this.onProjectLoadedHandler));
 	this._errorUnsub = eventBus.subscribe(hide_shared_events_ErrorOccurred,$bind(this,this.onErrorOccurred));
 	this._layoutChangedUnsub = eventBus.subscribe(hide_shared_events_LayoutChanged,function(e) {
-		console.log("hide/presentation/Ide.hx:110:","Layout changed");
+		console.log("hide/presentation/Ide.hx:130:","Layout changed");
 	});
 	this._projectClosedUnsub = eventBus.subscribe(hide_shared_events_ProjectClosed,function(e) {
 		_gthis._currentProject = null;
@@ -1032,7 +1115,7 @@ hide_presentation_Ide.prototype = {
 				var result = _gthis.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._hx_new(path));
 				switch(result._hx_index) {
 				case 0:
-					console.log("hide/presentation/Ide.hx:126:","Project loading initiated successfully.");
+					console.log("hide/presentation/Ide.hx:146:","Project loading initiated successfully.");
 					break;
 				case 1:
 					var err = result.error;
@@ -1043,11 +1126,11 @@ hide_presentation_Ide.prototype = {
 		});
 	}
 	,onErrorOccurred: function(event) {
-		console.log("hide/presentation/Ide.hx:135:","UI ERROR [" + event.context + "]: " + Std.string(event.error));
+		console.log("hide/presentation/Ide.hx:155:","UI ERROR [" + event.context + "]: " + Std.string(event.error));
 	}
 	,onProjectLoadedHandler: function(event) {
 		this._currentProject = event.project.name;
-		console.log("hide/presentation/Ide.hx:140:","UI: Project loaded successfully: " + this._currentProject);
+		console.log("hide/presentation/Ide.hx:160:","UI: Project loaded successfully: " + this._currentProject);
 		this.updateWindowTitle();
 	}
 	,onToggleFullscreen: function() {
@@ -1085,7 +1168,7 @@ hide_presentation_Ide.prototype = {
 				var path = HxOverrides.substr(id,"project.recents.".length,null);
 				this.onOpenRecent(path);
 			} else {
-				console.log("hide/presentation/Ide.hx:175:","Unknown menu item ID: " + id);
+				console.log("hide/presentation/Ide.hx:195:","Unknown menu item ID: " + id);
 			}
 		}
 	}
@@ -1113,11 +1196,11 @@ hide_presentation_Ide.prototype = {
 	}
 	,updateWindowTitle: function() {
 		var title = this._currentProject != null ? "" + this._currentProject + " - HIDE IDE" : "HIDE IDE";
-		console.log("hide/presentation/Ide.hx:202:","Window title updated to: " + title);
+		console.log("hide/presentation/Ide.hx:222:","Window title updated to: " + title);
 		this.windowService.setTitle(title);
 	}
 	,showAboutDialog: function() {
-		console.log("hide/presentation/Ide.hx:207:","HIDE IDE\nVersion 0.1.0");
+		console.log("hide/presentation/Ide.hx:227:","HIDE IDE\nVersion 0.1.0");
 	}
 	,get_currentProjectName: function() {
 		if(this._currentProject != null) {
@@ -1127,7 +1210,7 @@ hide_presentation_Ide.prototype = {
 		}
 	}
 	,startup: function() {
-		console.log("hide/presentation/Ide.hx:227:","✅ DI Контейнер успешно инициализирован! Ide создан.");
+		console.log("hide/presentation/Ide.hx:247:","✅ DI Контейнер успешно инициализирован! Ide создан.");
 		this.viewRegistry.registerViewFactory("project",new hide_infrastructure_external_StubProjectFactory());
 		this.viewRegistry.registerViewFactory("editor",new hide_infrastructure_external_StubEditorFactory());
 		this.viewRegistry.registerViewFactory("console",new hide_infrastructure_external_StubConsoleFactory());
@@ -1136,9 +1219,16 @@ hide_presentation_Ide.prototype = {
 		if(layoutEl != null) {
 			this.layoutEngine.setContainer(layoutEl);
 			this.layoutEngine.init({ content : [], fullScreen : null});
-			console.log("hide/presentation/Ide.hx:241:","🎨 GoldenLayout инициализирован.");
+			console.log("hide/presentation/Ide.hx:261:","🎨 GoldenLayout инициализирован.");
 		} else {
-			console.log("hide/presentation/Ide.hx:243:","❌ Element #golden-layout-root not found in DOM! Проверьте app.html.");
+			console.log("hide/presentation/Ide.hx:263:","❌ Element #golden-layout-root not found in DOM! Проверьте app.html.");
+		}
+		var menuContainer = window.document.getElementById("main-menu");
+		if(menuContainer != null) {
+			this.menuController.setContainer(menuContainer);
+			console.log("hide/presentation/Ide.hx:269:","📋 MenuController инициализирован с DOM-контейнером.");
+		} else {
+			console.log("hide/presentation/Ide.hx:271:","⚠️ Контейнер #main-menu не найден в DOM!");
 		}
 		var args = this.platform.getAppArgs();
 		var projectFile = null;
@@ -1152,10 +1242,10 @@ hide_presentation_Ide.prototype = {
 			}
 		}
 		if(projectFile != null) {
-			console.log("hide/presentation/Ide.hx:260:","📂 Загрузка проекта из аргумента командной строки: " + projectFile);
+			console.log("hide/presentation/Ide.hx:287:","📂 Загрузка проекта из аргумента командной строки: " + projectFile);
 			this.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._hx_new(projectFile));
 		} else {
-			console.log("hide/presentation/Ide.hx:263:","👋 Приложение запущено без проекта.");
+			console.log("hide/presentation/Ide.hx:290:","👋 Приложение запущено без проекта.");
 		}
 	}
 	,dispose: function() {
@@ -1183,11 +1273,122 @@ hide_presentation_Ide.prototype = {
 				this1.cancel();
 			}
 		}
+		if(this.menuController != null) {
+			this.menuController.dispose();
+		}
 	}
 	,getConstructorArgs: function() {
-		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine"];
+		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController"];
 	}
 	,__class__: hide_presentation_Ide
+};
+var hide_presentation_config_MenuConfig = function() { };
+$hxClasses["hide.presentation.config.MenuConfig"] = hide_presentation_config_MenuConfig;
+hide_presentation_config_MenuConfig.__name__ = "hide.presentation.config.MenuConfig";
+hide_presentation_config_MenuConfig.getBaseMenu = function() {
+	return [{ id : "file", label : "File", type : hide_domain_enums_MenuItemType.Submenu, children : [{ id : "project.open", label : "Open Project...", icon : "folder-open"},{ id : "sep_file_1", label : "", type : hide_domain_enums_MenuItemType.Separator},{ id : "project.recents", label : "Recent Projects", type : hide_domain_enums_MenuItemType.Submenu, children : []},{ id : "sep_file_2", label : "", type : hide_domain_enums_MenuItemType.Separator},{ id : "project.close", label : "Close Project", enabled : false},{ id : "sep_file_3", label : "", type : hide_domain_enums_MenuItemType.Separator},{ id : "app.exit", label : "Exit"}]},{ id : "view", label : "View", type : hide_domain_enums_MenuItemType.Submenu, children : [{ id : "view.fullscreen", label : "Toggle Fullscreen", icon : "expand"}]},{ id : "layout", label : "Layout", type : hide_domain_enums_MenuItemType.Submenu, children : [{ id : "layout.save", label : "Save Layout"},{ id : "layout.reset", label : "Reset Layout"}]},{ id : "help", label : "Help", type : hide_domain_enums_MenuItemType.Submenu, children : [{ id : "help.about", label : "About HIDE IDE"}]}];
+};
+var hide_presentation_controllers_MenuController = function(menuService,eventBus) {
+	this.menuService = menuService;
+	this.eventBus = eventBus;
+};
+$hxClasses["hide.presentation.controllers.MenuController"] = hide_presentation_controllers_MenuController;
+hide_presentation_controllers_MenuController.__name__ = "hide.presentation.controllers.MenuController";
+hide_presentation_controllers_MenuController.__interfaces__ = [hx_injection_Service];
+hide_presentation_controllers_MenuController.prototype = {
+	setContainer: function(el) {
+		var _gthis = this;
+		this.container = el;
+		this.render();
+		this.attachEvents();
+		this.recentProjectsUnsub = this.eventBus.subscribe(hide_shared_events_RecentProjectsUpdated,function(e) {
+			_gthis.render();
+		});
+	}
+	,render: function() {
+		if(this.container == null) {
+			return;
+		}
+		this.container.innerHTML = "";
+		var menuEl = hide_presentation_ui_MenuBuilder.build(this.menuService.getMenuStructure());
+		this.container.appendChild(menuEl);
+		this.container.style.display = "block";
+	}
+	,attachEvents: function() {
+		var _gthis = this;
+		if(this.container == null) {
+			return;
+		}
+		this.container.addEventListener("click",function(e) {
+			var target = js_Boot.__cast(e.target , HTMLElement);
+			var btn = target.closest("button[data-menu-id]");
+			if(btn != null) {
+				var id = btn.getAttribute("data-menu-id");
+				var parentLi = js_Boot.__cast(btn.parentNode , HTMLElement);
+				if(id != null && id != "" && parentLi.className.indexOf("disabled") == -1) {
+					_gthis.menuService.trigger(id);
+				}
+			}
+		});
+	}
+	,dispose: function() {
+		if(this.recentProjectsUnsub != null) {
+			var this1 = this.recentProjectsUnsub;
+			if(this1 != null) {
+				this1.cancel();
+			}
+		}
+	}
+	,getConstructorArgs: function() {
+		return ["hide.application.services.MenuService","hide.shared.types.IEventBus"];
+	}
+	,__class__: hide_presentation_controllers_MenuController
+};
+var hide_presentation_ui_MenuBuilder = function() { };
+$hxClasses["hide.presentation.ui.MenuBuilder"] = hide_presentation_ui_MenuBuilder;
+hide_presentation_ui_MenuBuilder.__name__ = "hide.presentation.ui.MenuBuilder";
+hide_presentation_ui_MenuBuilder.build = function(items) {
+	var ul = window.document.createElement("ul");
+	ul.className = "main-menu-bar";
+	var _g = 0;
+	while(_g < items.length) {
+		var item = items[_g];
+		++_g;
+		ul.appendChild(hide_presentation_ui_MenuBuilder.createMenuItem(item));
+	}
+	return ul;
+};
+hide_presentation_ui_MenuBuilder.createMenuItem = function(item) {
+	var li = window.document.createElement("li");
+	li.className = "menu-item";
+	if(item.enabled == false) {
+		li.className += " disabled";
+	}
+	if(item.type == hide_domain_enums_MenuItemType.Separator) {
+		li.className += " separator";
+		return li;
+	}
+	var btn = window.document.createElement("button");
+	btn.className = "menu-button";
+	btn.setAttribute("data-menu-id",item.id);
+	var iconHtml = item.icon != null ? "<i class=\"fa fa-" + item.icon + "\"></i>" : "";
+	var shortcutHtml = item.shortcut != null ? "<span class=\"menu-shortcut\">" + item.shortcut + "</span>" : "";
+	btn.innerHTML = iconHtml + (" <span style=\"flex:1\">" + item.label + "</span> ") + shortcutHtml;
+	li.appendChild(btn);
+	if(item.type == hide_domain_enums_MenuItemType.Submenu && item.children != null && item.children.length > 0) {
+		li.className += " has-submenu";
+		var subUl = window.document.createElement("ul");
+		subUl.className = "submenu";
+		var _g = 0;
+		var _g1 = item.children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			subUl.appendChild(hide_presentation_ui_MenuBuilder.createMenuItem(child));
+		}
+		li.appendChild(subUl);
+	}
+	return li;
 };
 var hide_presentation_ui_StatusBar = function(element) {
 	this.element = element;
@@ -1238,9 +1439,13 @@ hide_shared_events_ProjectLoaded.__name__ = "hide.shared.events.ProjectLoaded";
 hide_shared_events_ProjectLoaded.prototype = {
 	__class__: hide_shared_events_ProjectLoaded
 };
+var hide_shared_events_RecentProjectsUpdated = function() { };
+$hxClasses["hide.shared.events.RecentProjectsUpdated"] = hide_shared_events_RecentProjectsUpdated;
+hide_shared_events_RecentProjectsUpdated.__name__ = "hide.shared.events.RecentProjectsUpdated";
 var hide_shared_types_IEventBus = function() { };
 $hxClasses["hide.shared.types.IEventBus"] = hide_shared_types_IEventBus;
 hide_shared_types_IEventBus.__name__ = "hide.shared.types.IEventBus";
+hide_shared_types_IEventBus.__isInterface__ = true;
 hide_shared_types_IEventBus.__interfaces__ = [hx_injection_Service];
 hide_shared_types_IEventBus.prototype = {
 	__class__: hide_shared_types_IEventBus
@@ -1291,6 +1496,7 @@ hide_shared_types_Result.__constructs__ = [hide_shared_types_Result.Success,hide
 var hx_injection_Destructable = function() { };
 $hxClasses["hx.injection.Destructable"] = hx_injection_Destructable;
 hx_injection_Destructable.__name__ = "hx.injection.Destructable";
+hx_injection_Destructable.__isInterface__ = true;
 var hx_injection_InternalServiceType = $hxEnums["hx.injection.InternalServiceType"] = { __ename__:true,__constructs__:null
 	,Singleton: ($_=function(implementation) { return {_hx_index:0,implementation:implementation,__enum__:"hx.injection.InternalServiceType",toString:$estr,__params__:function(){ return [this.implementation];}}; },$_._hx_name="Singleton",$_)
 	,Transient: ($_=function(implementation) { return {_hx_index:1,implementation:implementation,__enum__:"hx.injection.InternalServiceType",toString:$estr,__params__:function(){ return [this.implementation];}}; },$_._hx_name="Transient",$_)
@@ -1352,6 +1558,7 @@ hx_injection_ServiceConfig.prototype = {
 var hx_injection_ServiceGroup = function() { };
 $hxClasses["hx.injection.ServiceGroup"] = hx_injection_ServiceGroup;
 hx_injection_ServiceGroup.__name__ = "hx.injection.ServiceGroup";
+hx_injection_ServiceGroup.__isInterface__ = true;
 hx_injection_ServiceGroup.prototype = {
 	__class__: hx_injection_ServiceGroup
 };
@@ -1688,8 +1895,58 @@ js_Boot.__interfLoop = function(cc,cl) {
 	}
 	return js_Boot.__interfLoop(cc.__super__,cl);
 };
+js_Boot.__instanceof = function(o,cl) {
+	if(cl == null) {
+		return false;
+	}
+	switch(cl) {
+	case Array:
+		return ((o) instanceof Array);
+	case Bool:
+		return typeof(o) == "boolean";
+	case Dynamic:
+		return o != null;
+	case Float:
+		return typeof(o) == "number";
+	case Int:
+		return typeof(o) == "number" && ((o | 0) === o);
+	case String:
+		return typeof(o) == "string";
+	default:
+		if(o != null) {
+			if(typeof(cl) == "function") {
+				if(js_Boot.__downcastCheck(o,cl)) {
+					return true;
+				}
+			} else if(typeof(cl) == "object" && js_Boot.__isNativeObj(cl)) {
+				if(((o) instanceof cl)) {
+					return true;
+				}
+			}
+		} else {
+			return false;
+		}
+		if(cl == Class ? o.__name__ != null : false) {
+			return true;
+		}
+		if(cl == Enum ? o.__ename__ != null : false) {
+			return true;
+		}
+		return o.__enum__ != null ? $hxEnums[o.__enum__] == cl : false;
+	}
+};
+js_Boot.__downcastCheck = function(o,cl) {
+	return ((o) instanceof cl) || cl.__isInterface__ && js_Boot.__interfLoop(js_Boot.getClass(o),cl);
+};
 js_Boot.__implements = function(o,iface) {
 	return js_Boot.__interfLoop(js_Boot.getClass(o),iface);
+};
+js_Boot.__cast = function(o,t) {
+	if(o == null || js_Boot.__instanceof(o,t)) {
+		return o;
+	} else {
+		throw haxe_Exception.thrown("Cannot cast " + Std.string(o) + " to " + Std.string(t));
+	}
 };
 js_Boot.__nativeClassName = function(o) {
 	var name = js_Boot.__toStr.call(o).slice(8,-1);
@@ -1697,6 +1954,9 @@ js_Boot.__nativeClassName = function(o) {
 		return null;
 	}
 	return name;
+};
+js_Boot.__isNativeObj = function(o) {
+	return js_Boot.__nativeClassName(o) != null;
 };
 js_Boot.__resolveNativeClass = function(name) {
 	return $global[name];
@@ -1719,6 +1979,7 @@ tink_core_Callback.defer = function(f) {
 var tink_core_LinkObject = function() { };
 $hxClasses["tink.core.LinkObject"] = tink_core_LinkObject;
 tink_core_LinkObject.__name__ = "tink.core.LinkObject";
+tink_core_LinkObject.__isInterface__ = true;
 tink_core_LinkObject.prototype = {
 	__class__: tink_core_LinkObject
 };
@@ -1763,9 +2024,11 @@ tink_core__$Callback_ListCell.prototype = {
 var tink_core_Disposable = function() { };
 $hxClasses["tink.core.Disposable"] = tink_core_Disposable;
 tink_core_Disposable.__name__ = "tink.core.Disposable";
+tink_core_Disposable.__isInterface__ = true;
 var tink_core_OwnedDisposable = function() { };
 $hxClasses["tink.core.OwnedDisposable"] = tink_core_OwnedDisposable;
 tink_core_OwnedDisposable.__name__ = "tink.core.OwnedDisposable";
+tink_core_OwnedDisposable.__isInterface__ = true;
 tink_core_OwnedDisposable.__interfaces__ = [tink_core_Disposable];
 var tink_core_SimpleDisposable = function(dispose) {
 	this.disposeHandlers = [];
@@ -2009,12 +2272,14 @@ tink_core__$Future_FutureObject.prototype = {
 var tink_core__$Lazy_Computable = function() { };
 $hxClasses["tink.core._Lazy.Computable"] = tink_core__$Lazy_Computable;
 tink_core__$Lazy_Computable.__name__ = "tink.core._Lazy.Computable";
+tink_core__$Lazy_Computable.__isInterface__ = true;
 tink_core__$Lazy_Computable.prototype = {
 	__class__: tink_core__$Lazy_Computable
 };
 var tink_core__$Lazy_LazyObject = function() { };
 $hxClasses["tink.core._Lazy.LazyObject"] = tink_core__$Lazy_LazyObject;
 tink_core__$Lazy_LazyObject.__name__ = "tink.core._Lazy.LazyObject";
+tink_core__$Lazy_LazyObject.__isInterface__ = true;
 tink_core__$Lazy_LazyObject.__interfaces__ = [tink_core__$Lazy_Computable];
 tink_core__$Lazy_LazyObject.prototype = {
 	__class__: tink_core__$Lazy_LazyObject
@@ -2270,6 +2535,14 @@ Object.defineProperty(String.prototype,"__class__",{ value : $hxClasses["String"
 String.__name__ = "String";
 $hxClasses["Array"] = Array;
 Array.__name__ = "Array";
+Date.prototype.__class__ = $hxClasses["Date"] = Date;
+Date.__name__ = "Date";
+var Int = { };
+var Dynamic = { };
+var Float = Number;
+var Bool = Boolean;
+var Class = { };
+var Enum = { };
 js_Boot.__toStr = ({ }).toString;
 tink_core_Callback.depth = 0;
 tink_core_Future.NEVER_INST = new tink_core__$Future_FutureObject();
