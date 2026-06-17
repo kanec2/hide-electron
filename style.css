@@ -1,227 +1,300 @@
-.lm_goldenlayout {
-    width: 100% !important;
-    height: 100% !important;
-}
-
-.lm_content {
-    background: #1e1e1e;
-    color: #d4d4d4;
-}
-
-.lm_header {
-    background: #2d2d2d;
-}
-
-.lm_tab {
-    background: #2d2d2d;
-    color: #d4d4d4;
-}
-
-.lm_tab.lm_active {
-    background: #1e1e1e;
-}
-body {
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-    background: #1e1e1e;
-}
-
-header, main, footer, .logo, #system-version, #node-version, #electron-version, #haxe-version {
-    display: none !important;
-}
-
 /* =========================================
-   VS Code Style Menu System
+   HIDE IDE - Unity Style Theme
    ========================================= */
 
 :root {
-    --vscode-menu-bg: #252526;
-    --vscode-menu-border: #454545;
-    --vscode-menu-fg: #cccccc;
-    --vscode-menu-hover-bg: #094771; /* Синий при наведении */
-    --vscode-menu-hover-fg: #ffffff;
-    --vscode-menu-disabled-fg: #858585;
-    --vscode-menubar-bg: #3c3c3c;
-    --vscode-menubar-hover-bg: #505050;
-    --vscode-separator-bg: #454545;
+    /* Unity Color Palette */
+    --unity-bg-dark: #383838;
+    --unity-bg-medium: #4a4a4a;
+    --unity-bg-light: #5a5a5a;
+    --unity-text: #d4d4d4;
+    --unity-text-muted: #8a8a8a;
+    --unity-accent: #4a90d9;
+    --unity-border: #2a2a2a;
+    --unity-toolbar-bg: #404040;
+    --unity-panel-bg: #3c3c3c;
+    --unity-header-bg: #4a4a4a;
+    
+    /* Menu Colors */
+    --menu-bg: #3c3c3c;
+    --menu-hover-bg: #505050;
+    --menu-dropdown-bg: #252526;
+    --menu-border: #454545;
+    --menu-hover: #094771;
+    --menu-disabled: #858585;
 }
 
-/* 1. Верхняя горизонтальная панель (Menubar) */
+/* =========================================
+   Base Styles
+   ========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--unity-bg-dark);
+    color: var(--unity-text);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+/* =========================================
+   Title Bar & Menu
+   ========================================= */
+
+#app-titlebar {
+    background: var(--menu-bg);
+    border-bottom: 1px solid var(--unity-border);
+    -webkit-app-region: drag;
+    user-select: none;
+    flex-shrink: 0;
+    height: 30px;
+    display: flex;
+    align-items: center;
+}
+
 .main-menu-bar {
     display: flex;
     list-style: none;
+    padding: 0 10px;
     margin: 0;
-    padding: 0;
-    background-color: var(--vscode-menubar-bg);
-    color: var(--vscode-menu-fg);
-    height: 30px; /* Стандартная высота строки заголовка VS Code */
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-    font-size: 13px;
-    user-select: none; /* Запрет выделения текста, как в нативном приложении */
+    height: 100%;
+    align-items: center;
+    flex: 1;
 }
 
-/* Элементы верхнего уровня (File, Edit, View...) */
-.main-menu-bar > .menu-item {
+.menu-item {
     position: relative;
     height: 100%;
     display: flex;
     align-items: center;
 }
 
-.main-menu-bar > .menu-item > .menu-button {
-    background: none;
+.menu-button {
+    background: transparent;
     border: none;
-    color: inherit;
-    padding: 0 10px;
-    height: 100%;
-    cursor: default;
-    font-family: inherit;
+    color: var(--unity-text);
+    padding: 6px 12px;
+    cursor: pointer;
     font-size: 13px;
     display: flex;
     align-items: center;
     gap: 6px;
+    -webkit-app-region: no-drag;
 }
 
-.main-menu-bar > .menu-item > .menu-button:hover,
-.main-menu-bar > .menu-item:hover > .menu-button {
-    background-color: var(--vscode-menubar-hover-bg);
-    color: var(--vscode-menu-hover-fg);
+.menu-button:hover {
+    background: var(--menu-hover-bg);
 }
 
-/* 2. Выпадающее подменю (Dropdown) */
+.menu-button .fa,
+.menu-button i {
+    width: 16px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.menu-shortcut {
+    color: var(--unity-text-muted);
+    font-size: 12px;
+    margin-left: auto;
+}
+
+/* Dropdown Menu */
 .submenu {
     display: none;
     position: absolute;
     top: 100%;
     left: 0;
-    background-color: var(--vscode-menu-bg);
-    border: 1px solid var(--vscode-menu-border);
+    background-color: var(--menu-dropdown-bg);
+    border: 1px solid var(--menu-border);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
     list-style: none;
     margin: 0;
     padding: 4px 0;
     min-width: 220px;
     z-index: 1000;
-    border-radius: 0 0 4px 4px; /* Легкое скругление снизу */
+    border-radius: 0 0 4px 4px;
+    -webkit-app-region: no-drag;
 }
 
-/* Показываем подменю при наведении на родительский элемент верхнего уровня */
-.main-menu-bar > .menu-item.has-submenu:hover > .submenu {
+.menu-item.has-submenu:hover > .submenu {
     display: block;
-}
-
-/* Элементы внутри выпадающего меню */
-.submenu .menu-item {
-    position: relative;
-    padding: 0;
 }
 
 .submenu .menu-button {
     width: 100%;
-    background: none;
-    border: none;
-    color: var(--vscode-menu-fg);
-    padding: 4px 20px; /* Больше отступов по бокам */
-    cursor: pointer;
-    font-family: inherit;
-    font-size: 13px;
-    display: flex;
-    justify-content: space-between; /* Чтобы разнести текст и хоткей */
-    align-items: center;
-    gap: 16px;
-    text-align: left;
+    padding: 4px 20px;
+    justify-content: space-between;
 }
 
 .submenu .menu-button:hover {
-    background-color: var(--vscode-menu-hover-bg);
-    color: var(--vscode-menu-hover-fg);
+    background-color: var(--menu-hover);
+    color: white;
 }
 
-/* Иконки в меню (фиксированная ширина для ровного выравнивания текста) */
-.menu-button .fa, .menu-button i {
-    width: 16px;
-    text-align: center;
-    font-size: 14px;
-}
-
-/* Горячие клавиши (справа) */
-.menu-shortcut {
-    color: var(--vscode-menu-fg);
-    font-size: 12px;
-    margin-left: auto; /* Прижимает вправо */
-}
-
-.submenu .menu-button:hover .menu-shortcut {
-    color: var(--vscode-menu-hover-fg);
-}
-
-/* Отключенные пункты */
 .menu-item.disabled .menu-button {
-    color: var(--vscode-menu-disabled-fg);
+    color: var(--menu-disabled);
     cursor: not-allowed;
     pointer-events: none;
 }
 
-.menu-item.disabled .menu-button:hover {
-    background-color: transparent;
-    color: var(--vscode-menu-disabled-fg);
-}
-
-/* Разделители */
 .separator {
     height: 1px;
-    background-color: var(--vscode-separator-bg);
+    background-color: var(--menu-border);
     margin: 4px 0;
     pointer-events: none;
 }
 
-/* Делаем панель меню перетаскиваемой */
-.main-menu-bar {
-    -webkit-app-region: drag;
-    user-select: none;
-    cursor: default;
-    height: 100%;
+/* =========================================
+   Toolbar
+   ========================================= */
+
+#main-toolbar {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    padding: 0 10px;
-    margin: 0;
-    list-style: none;
+    padding: 4px 8px;
+    background: var(--unity-toolbar-bg);
+    border-bottom: 1px solid var(--unity-border);
+    height: 36px;
+    flex-shrink: 0;
 }
 
-/* Кнопки меню НЕ перетаскиваются, чтобы клики работали */
-.main-menu-bar .menu-button {
-    -webkit-app-region: no-drag;
+.toolbar-group {
+    display: flex;
+    gap: 4px;
+}
+
+.toolbar-group.right {
+    margin-left: auto;
+}
+
+.toolbar-button {
+    background: var(--unity-bg-medium);
+    border: 1px solid var(--unity-border);
+    color: var(--unity-text);
+    padding: 4px 12px;
     cursor: pointer;
-    background: transparent;
-    border: none;
-    color: #ccc;
-    padding: 5px 12px;
-    font-size: 13px;
+    font-size: 14px;
+    border-radius: 3px;
+    transition: background 0.15s;
+}
+
+.toolbar-button:hover {
+    background: var(--unity-bg-light);
+}
+
+.toolbar-select {
+    background: var(--unity-bg-medium);
+    border: 1px solid var(--unity-border);
+    color: var(--unity-text);
+    padding: 4px 8px;
+    border-radius: 3px;
+}
+
+/* =========================================
+   GoldenLayout Borders & Splitters
+   ========================================= */
+
+/* Глобальный box-sizing: обязательно для корректных рамок */
+* { 
+    box-sizing: border-box; 
+}
+
+/* === 1. Границы панелей === */
+
+/* Рамка вокруг содержимого панели */
+.lm_content {
+    background: var(--unity-panel-bg) !important; /* #3c3c3c - чуть светлее фона */
+    border: 1px solid #111 !important; /* Жесткая темная рамка */
+    border-top: none !important; /* Стыкуется с заголовком */
+}
+
+/* Рамка заголовка панели (вкладок) */
+.lm_header {
+    background: var(--unity-header-bg) !important; /* #4a4a4a */
+    border: 1px solid #111 !important;
+    border-bottom: none !important; /* Стыкуется с контентом */
+    border-right: 1px solid #111 !important; /* Вертикальное разделение между заголовками */
+}
+
+/* === 2. Активная вкладка (должна сливаться с контентом) === */
+.lm_tab.lm_active {
+    background: var(--unity-panel-bg) !important; /* Цвет контента */
+    border-bottom: 1px solid var(--unity-panel-bg) !important; /* Скрываем линию снизу */
+    border-top: 2px solid var(--unity-accent) !important; /* Синяя полоска сверху (акцент) */
+    color: #fff !important;
+}
+
+/* === 3. Разделители (Splitters) === */
+/* Делаем их черными линиями, которые становятся синими при наведении */
+.lm_splitter {
+    background: #111 !important; 
+    z-index: 10;
+}
+
+.lm_splitter:hover {
+    background: var(--unity-accent) !important; /* Синий при наведении (#4a90d9) */
+}
+
+/* === 4. Текст и иконки === */
+.lm_tab {
+    background: var(--unity-header-bg) !important;
+    color: var(--unity-text-muted) !important;
+    border-right: 1px solid #111 !important; /* Граница между вкладками */
+}
+/* =========================================
+   Status Bar
+   ========================================= */
+
+#status-bar {
+    background: var(--unity-accent);
+    color: white;
+    padding: 0 10px;
+    font-size: 12px;
+    height: 30px;
     display: flex;
     align-items: center;
-    gap: 6px;
+    flex-shrink: 0;
+    z-index: 1000;
 }
 
-.main-menu-bar .menu-button:hover {
-    background: rgba(255, 255, 255, 0.1);
+/* =========================================
+   Unity Panel Styles
+   ========================================= */
+
+.unity-panel {
+    background: var(--unity-panel-bg);
+    height: 100%;
+    overflow: auto;
 }
 
-/* Элементы списка */
-.main-menu-bar .menu-item {
-    position: relative;
+.unity-panel-header {
+    background: var(--unity-header-bg);
+    font-weight: bold;
+    font-size: 12px;
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--unity-border);
 }
 
-/* Подменю тоже не перетаскивается */
-.main-menu-bar .submenu {
-    -webkit-app-region: no-drag;
-}
-#golden-layout-root {
-    width: 100% !important;
-    height: calc(100vh - 60px) !important;
-}
+/* =========================================
+   Hide Legacy Elements
+   ========================================= */
 
-#golden-layout-root .lm_goldenlayout {
-    width: 100% !important;
-    height: 100% !important;
+header,
+main,
+footer,
+.logo,
+#system-version,
+#node-version,
+#electron-version,
+#haxe-version {
+    display: none !important;
 }

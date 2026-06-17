@@ -1,5 +1,6 @@
 package hide.infrastructure.di;
 
+import hide.presentation.controllers.ToolbarController;
 import hx.injection.ServiceCollection;
 import hide.shared.types.IEventBus;
 import hide.shared.types.EventBusImpl;
@@ -77,6 +78,7 @@ class AppModule {
         // ✅ РЕГИСТРИРУЕМ КОНТРОЛЛЕР МЕНЮ
         collection.addSingleton(MenuController);    
         collection.addSingleton(WindowController);
+        collection.addSingleton(ToolbarController);  
         // 4. Use Cases (Transient, чтобы каждый вызов был чистым, 
         // или Singleton, если они полностью stateless и тяжелые)
         collection.addSingleton(LoadProjectUseCase);

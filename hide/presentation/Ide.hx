@@ -1,5 +1,6 @@
 package hide.presentation;
 
+import hide.presentation.controllers.ToolbarController;
 import hide.presentation.controllers.WindowController;
 import hide.application.services.MenuService;
 import hide.application.services.WindowService;
@@ -72,6 +73,7 @@ class Ide implements Service {
     private var fileDialog:IFileDialog;
     private var platform:IPlatform;
     private var windowController:WindowController;
+    private var toolbarController:ToolbarController;
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -87,7 +89,8 @@ class Ide implements Service {
         platform:IPlatform,
         layoutEngine:ILayoutEngine,
         menuController:MenuController,
-        windowController:WindowController
+        windowController:WindowController,
+        toolbarController:ToolbarController
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -104,6 +107,7 @@ class Ide implements Service {
         this.layoutEngine = layoutEngine;
         this.menuController = menuController;
         this.windowController = windowController;
+        this.toolbarController = toolbarController;
         inst = this;
         views = viewRegistry.all(); 
         
@@ -231,18 +235,46 @@ class Ide implements Service {
         trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
          // 2. Регистрируем временные заглушки для View (позже заменим на плагины)
             // ✅ РЕГИСТРАЦИЯ ЗАГЛУШЕК ФАБРИК
+            // ✅ РЕГИСТРАЦИЯ UNITY-LIKE VIEW
+        viewRegistry.registerViewFactory("scene", new hide.infrastructure.external.StubSceneFactory());
+        viewRegistry.registerViewFactory("game", new hide.infrastructure.external.StubGameFactory());
+        //viewRegistry.registerViewFactory("hierarchy", new hide.infrastructure.external.StubHierarchyFactory());
+        //viewRegistry.registerViewFactory("inspector", new hide.infrastructure.external.StubInspectorFactory());
         viewRegistry.registerViewFactory("project", new hide.infrastructure.external.StubProjectFactory());
+        
         viewRegistry.registerViewFactory("editor", new hide.infrastructure.external.StubEditorFactory());
         viewRegistry.registerViewFactory("console", new hide.infrastructure.external.StubConsoleFactory());
         viewRegistry.registerViewFactory("properties", new hide.infrastructure.external.StubPropertiesFactory());
         // ✅ РЕГИСТРАЦИЯ REACT-ФАБРИК
+
+        // ✅ РЕГИСТРАЦИЯ INSPECTOR
+        viewRegistry.registerViewFactory(
+            "inspector",
+            new hide.infrastructure.ui.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.InspectorPanel)
+        );
+        viewRegistry.registerViewFactory(
+            "hierarchy",
+            new hide.infrastructure.ui.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.HierarchyPanel)
+        );
         viewRegistry.registerViewFactory(
             "welcome",
             new hide.infrastructure.ui.ReactViewFactory()
                 .withComponent(hide.presentation.ui.react.components.WelcomePanel)
         );
+
         windowController.init();
         trace("🪟 WindowController инициализирован");
+
+        // ✅ ИНИЦИАЛИЗАЦИЯ TOOLBAR
+        var toolbarEl = js.Browser.document.getElementById("main-toolbar");
+        if (toolbarEl != null) {
+            // ToolbarController уже в DI, получаем его
+            
+            toolbarController.setContainer(cast toolbarEl);
+            trace("🔧 Toolbar инициализирован");
+        }
         // 1. Инициализируем GoldenLayout
         var layoutEl = js.Browser.document.getElementById("golden-layout-root");
         if (layoutEl != null) {

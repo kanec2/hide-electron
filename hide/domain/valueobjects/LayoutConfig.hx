@@ -8,4 +8,5 @@ typedef LayoutConfig = {
     var id:Null<String>;
     var width:Null<Int>;
     var height:Null<Int>;
+    var ?title:Null<String>;  // ← ДОБАВИТЬ
 }

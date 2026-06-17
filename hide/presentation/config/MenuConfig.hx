@@ -34,7 +34,14 @@ class MenuConfig {
                 label: "View",
                 type: Submenu,
                 children: [
-                    { id: "view.fullscreen", label: "Toggle Fullscreen", icon: "expand" }
+                    { id: "view.scene", label: "Scene", icon: "film" },
+                    { id: "view.game", label: "Game", icon: "gamepad" },
+                    { id: "view.hierarchy", label: "Hierarchy", icon: "sitemap" },
+                    { id: "view.inspector", label: "Inspector", icon: "info-circle" },
+                    { id: "view.project", label: "Project", icon: "folder" },
+                    { id: "view.console", label: "Console", icon: "terminal" },
+                    { id: "sep_view_1", label: "", type: Separator },
+                    { id: "view.fullscreen", label: "Toggle Fullscreen", icon: "expand", shortcut: "F11" }
                     // Динамические пункты (Console, Editor и т.д.) 
                     // добавляются через MenuService.injectViews()
                 ]

@@ -22,7 +22,16 @@
     <link rel="stylesheet" type="text/css" href="libs/spectrum.css"/>
     <link rel="stylesheet" href="libs/monaco/min/vs/editor/editor.main.css"/>
 </head>
-<body style="margin: 0; padding: 0; overflow: hidden; background: #1e1e1e; color: #ccc;">
+<body style="
+    margin: 0; 
+    padding: 0; 
+    overflow: hidden; 
+    background: #1e1e1e; 
+    color: #ccc;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+">
     <!-- 2.1. jQuery — ДО ВСЕХ плагинов -->
     <script>
         (function() {
@@ -66,8 +75,7 @@
         height: 30px; 
         background: #3c3c3c; 
         -webkit-app-region: drag;
-        position: relative;  /* ← ДОБАВЛЕНО */
-        z-index: 1000;       /* ← ДОБАВЛЕНО: меню поверх GoldenLayout */
+        flex-shrink: 0;
     ">
         <div id="main-menu" style="flex: 1;"></div>
         
@@ -80,33 +88,34 @@
             <div class="window-btn" id="btn-maximize" style="width: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer;">□</div>
             <div class="window-btn" id="btn-close" style="width: 46px; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #e81123; color: white;">✕</div>
         </div>
+        
     </div>
-
+    <!-- Unity-style Toolbar -->
+    <div id="main-toolbar" style="
+        height: 36px;
+        background: #2a2a2a;
+        border-bottom: 1px solid #1a1a1a;
+        flex-shrink: 0;
+    "></div>
     <!-- Контейнер для GoldenLayout — ИСПРАВЛЕНО позиционирование -->
     <div id="golden-layout-root" style="
-        width: 100%; 
-        height: calc(100vh - 60px);  /* ← 30px titlebar + 30px statusbar */
-        position: absolute; 
-        top: 30px;  /* ← ИСПРАВЛЕНО: начинаем ПОСЛЕ titlebar */
-        left: 0;
+        flex: 1;           /* ← Занимает всё доступное пространство */
         overflow: hidden;
+        position: relative; /* ← Важно для Golden Layout */
     "></div>
 
+    <!-- Status Bar -->
     <div id="status-bar" style="
-        width: 100%; 
         height: 30px; 
-        position: absolute; 
-        bottom: 0; 
-        left: 0; 
         background: #007acc; 
         color: white; 
         line-height: 30px; 
         padding-left: 10px;
-        z-index: 1000;  /* ← ДОБАВЛЕНО */
+        flex-shrink: 0;    /* ← Не сжимается */
     ">
         Ready
     </div>
-    
+    <!-- Scripts... -->
         <!-- === 2. JS зависимости — СТРОГИЙ ПОРЯДОК === -->
     
 

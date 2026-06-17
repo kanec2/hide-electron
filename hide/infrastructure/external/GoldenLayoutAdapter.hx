@@ -119,27 +119,140 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
     }
 
     /**
- * Создает дефолтную структуру окон, если её нет.
- * Возвращает доменный тип LayoutState, а не golden.Config.
- */
+     * Создает дефолтную структуру окон, если её нет.
+     * Возвращает доменный тип LayoutState, а не golden.Config.
+     */
     private function createDefaultSkeleton():LayoutState {
         return {
             content: [{
                 type: "row",
                 componentName: null,
                 componentState: null,
-                id: null,
+                id: "content_root",
                 width: null,
                 height: null,
                 content: [
-                    { type: "stack", id: "left", width: 20, componentName: null, componentState: null, height: null, content: null },      
-                    { type: "column", id: "middle-column", width: 60, componentName: null, componentState: null, height: null,
-                    content: [
-                        { type: "stack", id: "center", componentName: null, componentState: null, width: null, height: null, content: null },            
-                        { type: "stack", id: "bottom", height: 30, componentName: null, componentState: null, width: null, content: null } 
-                    ]
+                    // === ЛЕВАЯ КОЛОНКА: Hierarchy (20%) ===
+                    {
+                        type: "stack",
+                        id: "left",
+                        width: 20,
+                        componentName: null,  // ← null для stack
+                        componentState: null,
+                        height: null,
+                        content: [            // ← ДОБАВЛЯЕМ дочерний компонент!
+                            {
+                                type: "component",
+                                componentName: "hierarchy",
+                                componentState: {},
+                                title: "Hierarchy",
+                                id: "hierarchy-tab",
+                                content: [],
+                                width: null,
+                                height: null
+                            }
+                        ],
+                        title: "Hierarchy"
                     },
-                    { type: "stack", id: "right", width: 20, componentName: null, componentState: null, height: null, content: null }      
+                    
+                    // === ЦЕНТРАЛЬНАЯ КОЛОНКА (55%) ===
+                    {
+                        type: "column",
+                        id: "middle-column",
+                        width: 55,
+                        componentName: null,
+                        componentState: null,
+                        height: null,
+                        content: [
+                            // Верх: Scene + Game (табы)
+                            {
+                                type: "stack",
+                                id: "center",
+                                componentName: null,
+                                componentState: null,
+                                width: null,
+                                height: 70,
+                                content: [    // ← ДОБАВЛЯЕМ Scene и Game
+                                    {
+                                        type: "component",
+                                        componentName: "scene",
+                                        componentState: {},
+                                        title: "Scene",
+                                        id: "scene-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    },
+                                    {
+                                        type: "component",
+                                        componentName: "game",
+                                        componentState: {},
+                                        title: "Game",
+                                        id: "game-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    }
+                                ],
+                                title: "Scene"
+                            },
+                            // Низ: Project + Console (табы)
+                            {
+                                type: "stack",
+                                id: "bottom",
+                                componentName: null,
+                                componentState: null,
+                                width: null,
+                                height: 30,
+                                content: [    // ← ДОБАВЛЯЕМ Project и Console
+                                    {
+                                        type: "component",
+                                        componentName: "project",
+                                        componentState: {},
+                                        title: "Project",
+                                        id: "project-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    },
+                                    {
+                                        type: "component",
+                                        componentName: "console",
+                                        componentState: { logLevel: "info" },
+                                        title: "Console",
+                                        id: "console-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    }
+                                ],
+                                title: "Project"
+                            }
+                        ]
+                    },
+                    
+                    // === ПРАВАЯ КОЛОНКА: Inspector (25%) ===
+                    {
+                        type: "stack",
+                        id: "right",
+                        width: 25,
+                        componentName: null,
+                        componentState: null,
+                        height: null,
+                        content: [            // ← ДОБАВЛЯЕМ дочерний компонент!
+                            {
+                                type: "component",
+                                componentName: "inspector",
+                                componentState: {},
+                                title: "Inspector",
+                                id: "inspector-tab",
+                                content: [],
+                                width: null,
+                                height: null
+                            }
+                        ],
+                        title: "Inspector"
+                    }
                 ]
             }],
             fullScreen: null
@@ -208,6 +321,7 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
     }
 
     // ✅ ИСПРАВЛЕНИЕ: Явная типизация аргумента
+    // hide/infrastructure/external/GoldenLayoutAdapter.hx
     private function toGoldenItem(item:LayoutConfig):hide.infrastructure.external.golden.Config.ItemConfig {
         var glType = switch item.type {
             case "row": ItemType.Row;
@@ -219,13 +333,12 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
             type: glType,
             componentName: item.componentName,
             componentState: item.componentState,
-            // ✅ ИСПРАВЛЕНИЕ: item.content теперь типизирован, итерация разрешена
             content: item.content != null ? [for (i in item.content) toGoldenItem(i)] : null,
             id: item.id,
             width: item.width,
             height: item.height,
             isClosable: true,
-            title: null,
+            title: item.title,          // ← ИЗМЕНЕНО: было null
             activeItemIndex: null
         };
     }
@@ -235,6 +348,7 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
         return [for (item in items) fromGoldenItem(item)];
     }
 
+    // hide/infrastructure/external/GoldenLayoutAdapter.hx
     private function fromGoldenItem(item:ItemConfig):LayoutConfig {
         var typeStr = switch item.type {
             case Row: "row";
@@ -249,7 +363,8 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
             content: item.content != null ? [for (i in item.content) fromGoldenItem(i)] : null,
             id: item.id,
             width: item.width,
-            height: item.height
+            height: item.height,
+            title: item.title           // ← ДОБАВИТЬ
         };
-            }
+    }
 }

@@ -88,6 +88,7 @@ domain/
   services/
     IAppInfo.hx
     IClipboardService.hx
+    IDomAccess.hx
     IElement.hx
     IFileDialog.hx
     IFileSystem.hx
@@ -174,6 +175,11 @@ infrastructure/
     web/
       BrowserWindowAdapter.hx
       LocalStorageAdapter.hx
+  ui/
+    ReactElement.hx
+    ReactRoot.hx
+    ReactViewFactory.hx
+  BrowserDomAccess.hx
 legacy/
   Extension.hx
   Ide.hx
@@ -189,10 +195,18 @@ presentation/
     DragDropController.hx
     KeyboardController.hx
     MenuController.hx
+    ToolbarController.hx
+    WindowController.hx
   styles/
     CssVariables.hx
     Theme.hx
   ui/
+    react/
+      components/
+        WelcomePanel.hx
+      hooks/
+        UseService.hx
+      BaseReactComponent.hx
     Dialog.hx
     Element.hx
     MenuBuilder.hx
@@ -931,7 +945,7 @@ class WindowService implements Service {
     public function blur():Void { manager.blur(); isFocused = false; }
     public function setTitle(title:String):Void { manager.setTitle(title); }
     public function getTitle():String return manager.getTitle();
-
+    public function minimize():Void { manager.minimize(); }
     // --- Фуллскрин (NW.js-совместимый) ---
     public function enterFullscreen():Void {
         manager.enterFullscreen();
@@ -1179,6 +1193,18 @@ interface IAppInfo extends Service {
 package hide.domain.services;
 </file>
 
+<file path="domain/services/IDomAccess.hx">
+package hide.domain.services;
+
+import hx.injection.Service;
+
+interface IDomAccess extends Service {
+    function getElementById(id:String):Dynamic;
+    function addWindowEventListener(event:String, handler:Dynamic->Void):Void;
+    function removeWindowEventListener(event:String, handler:Dynamic->Void):Void;
+}
+</file>
+
 <file path="domain/services/IElement.hx">
 // hide/domain/services/IElement.hx
 
@@ -1306,7 +1332,7 @@ interface ILayoutEngine extends Service{
      */
     function registerView(type:String, factory:IViewFactory):Void;
 
-
+    function updateSize(width:Int, height:Int):Void;
 }
 </file>
 
@@ -1377,6 +1403,7 @@ interface IWindowManager extends Service{
     function moveTo(x:Int, y:Int):Void;
     function maximize():Void;
     function unmaximize():Void;
+    function minimize():Void; // ← ДОБАВИТЬ
     function focus():Void;
     function blur():Void;
     function setTitle(title:String):Void;
@@ -1539,6 +1566,7 @@ import hide.application.commands.CloseProjectUseCase;
 import hide.application.commands.OpenViewUseCase;
 
 import hide.presentation.controllers.MenuController;
+import hide.presentation.controllers.WindowController;
 // Presentation
 import hide.presentation.Ide;
 
@@ -1580,6 +1608,7 @@ class AppModule {
         collection.addSingleton(PluginManager);
         // ✅ РЕГИСТРИРУЕМ КОНТРОЛЛЕР МЕНЮ
         collection.addSingleton(MenuController);    
+        collection.addSingleton(WindowController);
         // 4. Use Cases (Transient, чтобы каждый вызов был чистым, 
         // или Singleton, если они полностью stateless и тяжелые)
         collection.addSingleton(LoadProjectUseCase);
@@ -2316,13 +2345,17 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
             type: Component,
             componentName: componentName,
             componentState: state,
-            content: null, id: null, width: null, height: null, isClosable: true, title: null, activeItemIndex: null
+            content: [], id: null, width: null, height: null, isClosable: true, title: componentName, activeItemIndex: null
         };
 
         var targetContainer = getOrInitTarget(position);
         targetContainer.addChild(config);
     }
-
+    public function updateSize(width:Int, height:Int):Void {
+        if (layout != null && layout.isInitialised) {
+            layout.updateSize(width, height);
+        }
+    }
     public function save():LayoutState {
         var config = layout.toConfig();
         return {
@@ -2374,14 +2407,61 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
                 width: null,
                 height: null,
                 content: [
-                    { type: "stack", id: "left", width: 20, componentName: null, componentState: null, height: null, content: null },      
-                    { type: "column", id: "middle-column", width: 60, componentName: null, componentState: null, height: null,
-                    content: [
-                        { type: "stack", id: "center", componentName: null, componentState: null, width: null, height: null, content: null },            
-                        { type: "stack", id: "bottom", height: 30, componentName: null, componentState: null, width: null, content: null } 
-                    ]
+                    // Левая панель: Hierarchy (20%)
+                    { 
+                        type: "stack", 
+                        id: "left", 
+                        width: 20, 
+                        componentName: "hierarchy",
+                        componentState: {},
+                        height: null, 
+                        content: [],
+                        title: "Hierarchy"
                     },
-                    { type: "stack", id: "right", width: 20, componentName: null, componentState: null, height: null, content: null }      
+                    // Центральная колонка: Scene/Game + Project/Console
+                    { 
+                        type: "column", 
+                        id: "middle-column", 
+                        width: 55, 
+                        componentName: null, 
+                        componentState: null, 
+                        height: null,
+                        content: [
+                            // Верхняя часть: Scene View + Game View (tabs)
+                            { 
+                                type: "stack", 
+                                id: "center", 
+                                componentName: "scene_view",
+                                componentState: {},
+                                width: null, 
+                                height: 70, 
+                                content: [],
+                                title: "Scene"
+                            },
+                            // Нижняя часть: Project + Console (tabs)
+                            { 
+                                type: "stack", 
+                                id: "bottom", 
+                                componentName: "project",
+                                componentState: {},
+                                width: null, 
+                                height: 30, 
+                                content: [],
+                                title: "Project"
+                            }
+                        ]
+                    },
+                    // Правая панель: Inspector (25%)
+                    { 
+                        type: "stack", 
+                        id: "right", 
+                        width: 25, 
+                        componentName: "inspector",
+                        componentState: {},
+                        height: null, 
+                        content: [],
+                        title: "Inspector"
+                    }
                 ]
             }],
             fullScreen: null
@@ -2403,30 +2483,37 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
         if (targetId == null) return layout.root;
 
         var items = layout.root.getItemsById(targetId);
-        if (items.length > 0) return items[0];
+        if (items.length > 0) {
+            var target = items[0];
+            // ✅ ЗАЩИТА: если у существующего контейнера content == null, инициализируем
+            if (target.config.content == null) {
+                target.config.content = [];
+            }
+            return target;
+        }
 
         var rootRow = layout.root.contentItems[0];
         if (rootRow == null || rootRow.type != Row) {
-            layout.root.addChild({ type: Stack, id: targetId, componentName: null, componentState: null, content: null, width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
+            layout.root.addChild({ type: Stack, id: targetId, componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
             return layout.root.getItemsById(targetId)[0];
         }
 
         switch position {
-            case Left: rootRow.addChild({ type: Stack, id: "left", width: 20, componentName: null, componentState: null, content: null, height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
-            case Right: rootRow.addChild({ type: Stack, id: "right", width: 20, componentName: null, componentState: null, content: null, height: null, isClosable: true, title: null, activeItemIndex: null });
+            case Left: rootRow.addChild({ type: Stack, id: "left", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
+            case Right: rootRow.addChild({ type: Stack, id: "right", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null });
             case Center | Bottom | MiddleColumnInternal:
                 var middleItems = layout.root.getItemsById("middle-column");
                 var middleCol:ContentItem = middleItems.length > 0 ? middleItems[0] : null;
 
                 if (middleCol == null) {
-                    rootRow.addChild({ type: Column, id: "middle-column", isClosable: false, componentName: null, componentState: null, content: null, width: null, height: null, title: null, activeItemIndex: null }, 1);
+                    rootRow.addChild({ type: Column, id: "middle-column", isClosable: false, componentName: null, componentState: null, content: [], width: null, height: null, title: null, activeItemIndex: null }, 1);
                     middleCol = layout.root.getItemsById("middle-column")[0];
                 }
 
                 if (position == Center) {
-                    middleCol.addChild({ type: Stack, id: "center", componentName: null, componentState: null, content: null, width: null, height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
+                    middleCol.addChild({ type: Stack, id: "center", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
                 } else if (position == Bottom) {
-                    middleCol.addChild({ type: Stack, id: "bottom", componentName: null, componentState: null, content: null, width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
+                    middleCol.addChild({ type: Stack, id: "bottom", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
                 }
             default:
         }
@@ -2505,12 +2592,20 @@ class HtmlElement implements IElement {
     
     public function new(element:Dynamic) {
         // GoldenLayout возвращает JQuery, нужно получить raw element
-        if (Std.is(element, Element)) {
+        if (element == null) {
+            // Fallback на случай, если передан null
+            this.element = js.Browser.document.createElement("div");
+        } else if (element.nodeType != null) {
+            // Это уже "голый" DOM-элемент (наиболее вероятный сценарий в GL v2/v3)
             this.element = cast element;
-        } else if (Reflect.hasField(element, "get")) {
-            // Это JQuery
+        } else if (element.length != null && element[0] != null) {
+            // Это jQuery-подобный объект (массив с элементами)
+            this.element = cast element[0];
+        } else if (Reflect.hasField(element, "get") && Reflect.isFunction(element.get)) {
+            // У объекта есть метод .get() (классический jQuery)
             this.element = cast element.get(0);
         } else {
+            // Попытка прямого каста как последняя надеждa
             this.element = cast element;
         }
     }
@@ -2918,7 +3013,9 @@ class ElectronWindowAdapter implements IWindowManager {
     public function maximize():Void { 
         ipcBridge.invokeSync("window:maximize"); 
     }
-
+    public function minimize():Void {
+        ipcBridge.invokeSync("window:minimize");
+    }
     public function unmaximize():Void { 
         ipcBridge.invokeSync("window:unmaximize"); 
     }
@@ -3034,6 +3131,201 @@ package hide.infrastructure.platform.web;
 
 <file path="infrastructure/platform/web/LocalStorageAdapter.hx">
 package hide.infrastructure.platform.web;
+</file>
+
+<file path="infrastructure/ui/ReactElement.hx">
+package hide.infrastructure.ui;
+
+import hide.domain.services.IElement;
+import js.html.Element;
+import react.React;
+import react.ReactComponent;
+
+/**
+ * React-ориентированная реализация IElement.
+ * Вместо setInnerHtml использует React-рендеринг.
+ */
+class ReactElement implements IElement {
+    private var element:Element;
+    private var root:ReactRoot;
+    
+    public function new(element:Element) {
+        this.element = element;
+        this.root = new ReactRoot(element);
+    }
+    
+    /**
+     * Рендерит React-компонент вместо установки HTML.
+     */
+    public function renderComponent(component:ReactComponent):Void {
+        root.render(component);
+    }
+    
+    // === Реализация IElement (для совместимости) ===
+    
+    public function setInnerHtml(html:String):Void {
+        element.innerHTML = html;
+    }
+    
+    public function appendChild(child:IElement):Void {
+        var childHtml:ReactElement = cast child;
+        element.appendChild(childHtml.element);
+    }
+    
+    public function addEventListener(event:String, handler:Dynamic->Void):Void {
+        element.addEventListener(event, handler);
+    }
+    
+    public function getParent():Null<IElement> {
+        if (element.parentElement == null) return null;
+        return new ReactElement(element.parentElement);
+    }
+    
+    public function getElement():Element return element;
+    
+    public function unmount():Void {
+        root.unmount();
+    }
+}
+</file>
+
+<file path="infrastructure/ui/ReactRoot.hx">
+package hide.infrastructure.ui;
+
+import react.ReactDOM;
+import react.ReactComponent;
+import js.html.Element;
+
+/**
+ * Обёртка над React Root.
+ * Управляет жизненным циклом React-компонента внутри DOM-узла.
+ */
+class ReactRoot {
+    private var domNode:Element;
+    private var root:Dynamic; // react-dom/client.Root
+    private var isMounted:Bool = false;
+    
+    public function new(domNode:Element) {
+        this.domNode = domNode;
+    }
+    
+    /**
+     * Рендерит React-компонент в DOM-узел.
+     */
+    public function render(component:ReactComponent):Void {
+        if (root == null) {
+            // React 18+ API: createRoot
+            var ReactDOMClient = untyped require('react-dom/client');
+            root = ReactDOMClient.createRoot(domNode);
+        }
+        
+        root.render(component);
+        isMounted = true;
+    }
+    
+    /**
+     * Размонтирует компонент и освобождает ресурсы.
+     */
+    public function unmount():Void {
+        if (root != null && isMounted) {
+            root.unmount();
+            isMounted = false;
+        }
+    }
+    
+    public function get_isMounted():Bool return isMounted;
+}
+</file>
+
+<file path="infrastructure/ui/ReactViewFactory.hx">
+package hide.infrastructure.ui;
+
+import hide.domain.services.IViewFactory;
+import hide.domain.services.IElement;
+import hide.infrastructure.external.HtmlElement;
+import react.React;
+import react.ReactComponent;
+import hx.injection.Service;
+import react.ReactDOM;
+/**
+ * Фабрика, которая рендерит React-компонент в контейнер.
+ * Используется для интеграции React-UI с GoldenLayout.
+ */
+class ReactViewFactory implements IViewFactory implements Service {
+    private var componentClass:Class<ReactComponent>;
+    private var defaultProps:Dynamic;
+    
+    // ✅ Конструктор без параметров для DI
+    public function new() {
+        this.defaultProps = {};
+    }
+    
+    // ✅ Метод для настройки фабрики (Fluent API)
+    public function withComponent(componentClass:Class<ReactComponent>, ?defaultProps:Dynamic):ReactViewFactory {
+        this.componentClass = componentClass;
+        this.defaultProps = defaultProps != null ? defaultProps : {};
+        return this;
+    }
+    
+    public function create(container:IElement, state:Dynamic):Dynamic {
+        if (componentClass == null) {
+            throw "ReactViewFactory: componentClass not set. Call withComponent() first.";
+        }
+        // 1. Получаем реальный DOM-элемент
+        var htmlElement:HtmlElement = cast container;
+        var domNode = htmlElement.getElement();
+        // ✅ ЗАЩИТА: Проверяем, что domNode действительно является DOM-элементом
+        if (domNode == null || domNode.nodeType == null) {
+            trace("⚠️ CRITICAL: domNode is invalid! Type: ", js.Lib.typeof(domNode), " Value: ", domNode);
+            // Создаём запасной div, чтобы приложение не упало, и мы могли увидеть ошибку в UI
+            domNode = js.Browser.document.createElement("div");
+            domNode.innerHTML = "<div style='color:red; padding:10px;'>Error: Invalid DOM container for React</div>";
+        }
+        // 2. Создаём React Root
+        var reactRoot = new ReactRoot(domNode);
+        
+        // 3. Формируем пропсы: состояние + коллбэки
+        // ✅ ИСПРАВЛЕНО: пропсы — это просто анонимный объект Haxe
+        var props = {
+            initialState: state,
+            defaultProps: defaultProps,
+            onUnmount: function() {}
+        };
+        
+        // 4. Рендерим компонент
+        // ✅ ИСПРАВЛЕНО: правильный порядок аргументов для haxe-react
+        var reactElement:Dynamic = React.createElement(componentClass, props);
+        // Монтирование через react-dom
+        //var ReactDOM = untyped require("react-dom");
+        ReactDOM.render(reactElement, domNode);
+        
+        // 5. Возвращаем root для возможности размонтирования
+        return reactRoot;
+    }
+}
+</file>
+
+<file path="infrastructure/BrowserDomAccess.hx">
+package hide.infrastructure;
+
+import hide.domain.services.IDomAccess;
+import hx.injection.Service;
+
+class BrowserDomAccess implements IDomAccess implements Service {
+    public function new() {}
+    
+    public function getElementById(id:String):Dynamic {
+        return js.Browser.document.getElementById(id);
+    }
+    
+    public function addWindowEventListener(event:String, handler:Dynamic->Void):Void {
+        js.Browser.window.addEventListener(event, handler);
+    }
+    
+    public function removeWindowEventListener(event:String, handler:Dynamic->Void):Void {
+        js.Browser.window.removeEventListener(event, handler);
+    }
+}
 </file>
 
 <file path="legacy/Extension.hx">
@@ -5361,12 +5653,376 @@ class MenuController implements Service {
 }
 </file>
 
+<file path="presentation/controllers/ToolbarController.hx">
+package hide.presentation.controllers;
+
+import hide.application.services.MenuService;
+import hide.shared.types.IEventBus;
+import js.html.Element;
+import hx.injection.Service;
+
+class ToolbarController implements Service {
+    private var menuService:MenuService;
+    private var eventBus:IEventBus;
+    private var container:Null<Element>;
+    private var isPlaying:Bool = false;
+    
+    public function new(menuService:MenuService, eventBus:IEventBus) {
+        this.menuService = menuService;
+        this.eventBus = eventBus;
+    }
+    
+    public function setContainer(el:Element):Void {
+        this.container = el;
+        render();
+        attachEvents();
+    }
+    
+    private function render():Void {
+        if (container == null) return;
+        
+        container.innerHTML = '';
+        
+        // Левая группа: Play/Pause/Step
+        var playGroup = js.Browser.document.createElement('div');
+        playGroup.className = 'toolbar-group';
+        
+        var playBtn = createToolbarButton('▶', 'play', 'Play');
+        var pauseBtn = createToolbarButton('⏸', 'pause', 'Pause');
+        var stepBtn = createToolbarButton('⏭', 'step', 'Step');
+        
+        playGroup.appendChild(playBtn);
+        playGroup.appendChild(pauseBtn);
+        playGroup.appendChild(stepBtn);
+        
+        // Правая группа: Layout selector, Account
+        var rightGroup = js.Browser.document.createElement('div');
+        rightGroup.className = 'toolbar-group right';
+        
+        var layoutSelect = js.Browser.document.createElement('select');
+        layoutSelect.className = 'toolbar-select';
+        layoutSelect.innerHTML = '
+            <option value="default">Default</option>
+            <option value="wide">Wide</option>
+            <option value="tall">Tall</option>
+        ';
+        rightGroup.appendChild(layoutSelect);
+        
+        container.appendChild(playGroup);
+        container.appendChild(rightGroup);
+    }
+    
+    private function createToolbarButton(icon:String, action:String, title:String):Element {
+        var btn = js.Browser.document.createElement('button');
+        btn.className = 'toolbar-button';
+        btn.setAttribute('data-action', action);
+        btn.title = title;
+        btn.innerHTML = icon;
+        return btn;
+    }
+    
+    private function attachEvents():Void {
+        if (container == null) return;
+        
+        container.addEventListener('click', function(e:js.html.MouseEvent) {
+            var target = cast(e.target, js.html.Element);
+            var btn = target.closest('button[data-action]');
+            
+            if (btn != null) {
+                var action = btn.getAttribute('data-action');
+                switch (action) {
+                    case 'play':
+                        isPlaying = !isPlaying;
+                        btn.innerHTML = isPlaying ? '⏸' : '▶';
+                        trace('Play mode: ' + isPlaying);
+                    case 'pause':
+                        trace('Pause');
+                    case 'step':
+                        trace('Step');
+                    default:
+                }
+            }
+        });
+    }
+    
+    public function dispose():Void {}
+}
+</file>
+
+<file path="presentation/controllers/WindowController.hx">
+package hide.presentation.controllers;
+
+import hide.application.services.WindowService;
+import hide.shared.types.IEventBus;
+import hide.shared.events.FullscreenChanged;
+import js.html.Element;
+import tink.core.*;
+import hx.injection.Service;
+
+using tink.CoreApi;
+
+class WindowController implements Service {
+    private var windowService:WindowService;
+    private var eventBus:IEventBus;
+    
+    private var btnMinimize:Null<Element>;
+    private var btnMaximize:Null<Element>;
+    private var btnClose:Null<Element>;
+    
+    private var fullscreenUnsub:CallbackLink;
+    
+    public function new(windowService:WindowService, eventBus:IEventBus) {
+        this.windowService = windowService;
+        this.eventBus = eventBus;
+    }
+    
+    public function init():Void {
+        btnMinimize = js.Browser.document.getElementById("btn-minimize");
+        btnMaximize = js.Browser.document.getElementById("btn-maximize");
+        btnClose = js.Browser.document.getElementById("btn-close");
+        
+        attachEvents();
+        subscribeToEvents();
+        updateMaximizeIcon();
+    }
+    
+    private function attachEvents():Void {
+        if (btnMinimize != null) {
+            btnMinimize.addEventListener("click", function(_) {
+                windowService.minimize();
+            });
+        }
+        
+        if (btnMaximize != null) {
+            btnMaximize.addEventListener("click", function(_) {
+                if (windowService.isMaximized) {
+                    windowService.unmaximize();
+                } else {
+                    windowService.maximize();
+                }
+            });
+        }
+        
+        if (btnClose != null) {
+            btnClose.addEventListener("click", function(_) {
+                // Для закрытия используем прямой вызов, 
+                // так как WindowService не должен закрывать сам себя
+                js.Browser.window.close();
+            });
+        }
+    }
+    
+    private function subscribeToEvents():Void {
+        // Подписываемся на события изменения состояния окна
+        fullscreenUnsub = eventBus.subscribe(FullscreenChanged, function(e:FullscreenChanged) {
+            updateMaximizeIcon();
+        });
+        
+        // Также подписываемся на события напрямую от WindowService
+        windowService.on(hide.domain.enums.WindowEvent.Maximize, function(_) {
+            updateMaximizeIcon();
+        });
+        
+        windowService.on(hide.domain.enums.WindowEvent.Restore, function(_) {
+            updateMaximizeIcon();
+        });
+        
+        windowService.on(hide.domain.enums.WindowEvent.Unmaximize, function(_) {
+            updateMaximizeIcon();
+        });
+    }
+    
+    private function updateMaximizeIcon():Void {
+        if (btnMaximize != null) {
+            btnMaximize.textContent = windowService.isMaximized ? "❐" : "□";
+        }
+    }
+    
+    public function dispose():Void {
+        if (fullscreenUnsub != null) {
+            fullscreenUnsub.cancel();
+        }
+    }
+}
+</file>
+
 <file path="presentation/styles/CssVariables.hx">
 package hide.presentation.styles;
 </file>
 
 <file path="presentation/styles/Theme.hx">
 package hide.presentation.styles;
+</file>
+
+<file path="presentation/ui/react/components/WelcomePanel.hx">
+package hide.presentation.ui.react.components;
+
+import react.ReactComponent;
+import react.ReactMacro.jsx;
+import hide.presentation.ui.react.BaseReactComponent;
+import hide.presentation.ui.react.hooks.UseService;
+import hide.shared.events.ProjectLoaded;
+import hide.shared.events.RecentProjectsUpdated;
+
+typedef WelcomeProps = {
+    var initialState:Dynamic;
+    var onUnmount:Void->Void;
+}
+
+typedef WelcomeState = {
+    var currentProject:Null<String>;
+    var recentProjects:Array<String>;
+}
+
+/**
+ * Приветственная панель с информацией о проекте.
+ * Демонстрирует интеграцию с EventBus.
+ */
+class WelcomePanel extends BaseReactComponent<WelcomeProps, WelcomeState> {
+    
+    public function new() {
+        super();
+        state = {
+            currentProject: null,
+            recentProjects: []
+        };
+    }
+    
+    override function componentDidMount():Void {
+        var eventBus = UseService.eventBus();
+        
+        // Подписываемся на загрузку проекта
+        subscribe(eventBus, ProjectLoaded, function(e:ProjectLoaded) {
+            setState(function(oldState) {
+                return {
+                    currentProject: e.project.name,
+                    recentProjects: oldState.recentProjects // Сохраняем остальные поля
+                };
+            });
+        });
+        
+        // Подписываемся на обновление списка недавних проектов
+        subscribe(eventBus, RecentProjectsUpdated, function(e:RecentProjectsUpdated) {
+            setState(function(oldState) {
+                return {
+                    currentProject: oldState.currentProject,
+                    recentProjects: e.recentProjects
+                };
+            });
+        });
+    }
+    
+    override function render():ReactElement {
+        // ✅ ИСПРАВЛЕНО: выносим логику в переменные типа ReactElement
+        // Обратите внимание: внутри jsx('...') используется {state.currentProject}, а не ${state.currentProject}
+        var projectInfo:ReactElement = if (state.currentProject != null) {
+            jsx('<div className="project-info">📂 Открыт проект: <b>{state.currentProject}</b></div>');
+        } else {
+            jsx('<div className="no-project">Проект не открыт. Используйте File → Open Project</div>');
+        };
+        
+        var recentList:ReactElement = if (state.recentProjects.length > 0) {
+            // Генерируем массив JSX-элементов
+            var items = [for (p in state.recentProjects) jsx('<li key="{p}">{p}</li>')];
+            jsx('
+                <div className="recent-projects">
+                    <h3>Недавние проекты:</h3>
+                    <ul>{items}</ul>
+                </div>
+            ');
+        } else {
+            jsx('<div className="no-recent">Нет недавних проектов</div>');
+        };
+        
+        // ✅ ИСПРАВЛЕНО: style теперь передаётся как анонимный объект через {{ }}
+        return jsx('
+            <div className="welcome-panel" style={{padding: "20px", color: "#ccc"}}>
+                <h1>👋 Добро пожаловать в HIDE IDE</h1>
+                {projectInfo}
+                {recentList}
+                <div className="hint" style={{marginTop: "20px", opacity: 0.7}}>
+                    Используйте меню View для открытия панелей
+                </div>
+            </div>
+        ');
+    }
+}
+</file>
+
+<file path="presentation/ui/react/hooks/UseService.hx">
+package hide.presentation.ui.react.hooks;
+
+import hide.presentation.Ide;
+import hide.application.services.WindowService;
+import hide.application.services.MenuService;
+import hide.application.services.ViewRegistry;
+import hide.application.services.PluginManager;
+import hide.shared.types.IEventBus;
+import hide.domain.services.ILayoutEngine;
+
+/**
+ * Статический доступ к сервисам из React-компонентов.
+ * Использует глобальный инстанс Ide как Service Locator.
+ */
+class UseService {
+    public static function eventBus():IEventBus {
+        return Ide.inst.get_eventBus();
+    }
+    
+    public static function windowService():WindowService {
+        return Ide.inst.get_windowService();
+    }
+    
+    public static function menuService():MenuService {
+        return Ide.inst.get_menuService();
+    }
+    
+    public static function viewRegistry():ViewRegistry {
+        return Ide.inst.get_viewRegistry();
+    }
+    
+    public static function layoutEngine():ILayoutEngine {
+        return Ide.inst.get_layoutEngine();
+    }
+}
+</file>
+
+<file path="presentation/ui/react/BaseReactComponent.hx">
+package hide.presentation.ui.react;
+
+import react.ReactComponent;
+import hide.shared.types.IEventBus;
+import tink.core.*;
+import react.ReactMacro.jsx;
+using tink.CoreApi;
+/**
+ * Базовый React-компонент с интеграцией в Haxe-сервисы.
+ * Автоматически отписывается от событий при unmount.
+ */
+class BaseReactComponent<P, S> extends ReactComponentOfPropsAndState<P, S> {
+    private var subscriptions:Array<CallbackLink> = [];
+    
+    /**
+     * Подписывает компонент на событие EventBus.
+     * Автоматически отписывается при unmount.
+     */
+    private function subscribe<T>(eventBus:IEventBus, eventClass:Class<T>, handler:T->Void):Void {
+        var link = eventBus.subscribe(eventClass, handler);
+        subscriptions.push(link);
+    }
+    // ✅ ДОБАВЛЕНО: Базовый render, чтобы удовлетворить компилятор
+    override function render():ReactElement {
+        return jsx('<div></div>');
+    }
+    override function componentWillUnmount():Void {
+        // Отписываемся от всех событий
+        for (link in subscriptions) {
+            link.cancel();
+        }
+        subscriptions = [];
+        super.componentWillUnmount();
+    }
+}
 </file>
 
 <file path="presentation/ui/Dialog.hx">
@@ -5490,6 +6146,7 @@ package hide.presentation.views;
 <file path="presentation/Ide.hx">
 package hide.presentation;
 
+import hide.presentation.controllers.WindowController;
 import hide.application.services.MenuService;
 import hide.application.services.WindowService;
 import hide.application.services.PluginManager;
@@ -5534,7 +6191,7 @@ using Lambda;
 @:expose
 class Ide implements Service {
     public static var inst(default, null):Ide;
-    
+    private var _resizeHandler:Null<js.html.Event->Void>;
     private var views:Array<ViewDto>;
     private var statusBar:StatusBar;
     
@@ -5560,7 +6217,7 @@ class Ide implements Service {
     private var eventBus:IEventBus;
     private var fileDialog:IFileDialog;
     private var platform:IPlatform;
-    
+    private var windowController:WindowController;
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -5575,7 +6232,8 @@ class Ide implements Service {
         fileDialog:IFileDialog,
         platform:IPlatform,
         layoutEngine:ILayoutEngine,
-        menuController:MenuController
+        menuController:MenuController,
+        windowController:WindowController
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -5591,6 +6249,7 @@ class Ide implements Service {
         this.platform = platform;
         this.layoutEngine = layoutEngine;
         this.menuController = menuController;
+        this.windowController = windowController;
         inst = this;
         views = viewRegistry.all(); 
         
@@ -5627,6 +6286,8 @@ class Ide implements Service {
     }
     
     public function onMenuOpenProject():Void {
+        layoutEngine.open("welcome", {}, DisplayPosition.Center);
+        /*
         fileDialog.showOpen({ filters: [{ name: "Project Files", extensions: ["json", "hide"] }] })
         .handle(function(path:Null<String>) {
             if (path != null) {
@@ -5638,7 +6299,7 @@ class Ide implements Service {
                         statusBar.setError('Failed to load project: $err');
                 }
             }
-        });
+        });*/
     }
     
     private function onErrorOccurred(event:ErrorOccurred):Void {
@@ -5720,7 +6381,14 @@ class Ide implements Service {
         viewRegistry.registerViewFactory("editor", new hide.infrastructure.external.StubEditorFactory());
         viewRegistry.registerViewFactory("console", new hide.infrastructure.external.StubConsoleFactory());
         viewRegistry.registerViewFactory("properties", new hide.infrastructure.external.StubPropertiesFactory());
-
+        // ✅ РЕГИСТРАЦИЯ REACT-ФАБРИК
+        viewRegistry.registerViewFactory(
+            "welcome",
+            new hide.infrastructure.ui.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.WelcomePanel)
+        );
+        windowController.init();
+        trace("🪟 WindowController инициализирован");
         // 1. Инициализируем GoldenLayout
         var layoutEl = js.Browser.document.getElementById("golden-layout-root");
         if (layoutEl != null) {
@@ -5742,7 +6410,18 @@ class Ide implements Service {
 
         var args = platform.getAppArgs();
         var projectFile:Null<String> = null;
-        
+        // ✅ Подписка на resize окна через js.Browser
+        _resizeHandler = function(_) {
+            haxe.Timer.delay(function() {
+                var layoutEl = js.Browser.document.getElementById("golden-layout-root");
+                if (layoutEl != null) {
+                    var rect = layoutEl.getBoundingClientRect();
+                    layoutEngine.updateSize(Std.int(rect.width), Std.int(rect.height));
+                }
+            }, 100); // Небольшая задержка для стабильности
+        };
+
+        js.Browser.window.addEventListener("resize", _resizeHandler);
         // Electron передает много внутренних флагов. Ищем первый аргумент, 
         // который НЕ начинается с '-' и не является пустой строкой.
         for (arg in args) {
@@ -5751,7 +6430,7 @@ class Ide implements Service {
                 break;
             }
         }
-
+        
         if (projectFile != null) {
             trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile);
             loadProjectUseCase.execute(new FilePath(projectFile));
@@ -5770,7 +6449,20 @@ class Ide implements Service {
         if (menuController != null) {
             menuController.dispose();
         }
+        if (windowController != null) {
+            windowController.dispose();
+        }
+        // ✅ Отписка от resize
+        if (_resizeHandler != null) {
+            js.Browser.window.removeEventListener("resize", _resizeHandler);
+            _resizeHandler = null;
+        }
     }
+    public function get_eventBus():IEventBus return eventBus;
+    public function get_windowService():WindowService return windowService;
+    public function get_menuService():MenuService return menuService;
+    public function get_viewRegistry():ViewRegistry return viewRegistry;
+    public function get_layoutEngine():ILayoutEngine return layoutEngine;
 }
 </file>
 
