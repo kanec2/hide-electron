@@ -33,6 +33,8 @@ import hide.shared.types.Result;
 
 import hide.domain.services.ILayoutEngine;
 
+import hide.engine.domain.services.ISceneService;
+
 import hx.injection.Service;
 import hx.injection.ServiceCollection;
 import hx.injection.ServiceProvider;
@@ -73,6 +75,7 @@ class Ide implements Service {
     private var platform:IPlatform;
     private var windowController:WindowController;
     private var toolbarController:ToolbarController;
+    private var sceneService:ISceneService;
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -89,7 +92,8 @@ class Ide implements Service {
         layoutEngine:ILayoutEngine,
         menuController:MenuController,
         windowController:WindowController,
-        toolbarController:ToolbarController
+        toolbarController:ToolbarController,
+        sceneService:ISceneService
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -107,6 +111,7 @@ class Ide implements Service {
         this.menuController = menuController;
         this.windowController = windowController;
         this.toolbarController = toolbarController;
+        this.sceneService = sceneService;
         inst = this;
         views = viewRegistry.all(); 
         
@@ -338,4 +343,5 @@ class Ide implements Service {
     public function get_menuService():MenuService return menuService;
     public function get_viewRegistry():ViewRegistry return viewRegistry;
     public function get_layoutEngine():ILayoutEngine return layoutEngine;
+    public function get_sceneService():ISceneService return sceneService;
 }

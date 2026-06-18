@@ -26,6 +26,7 @@ import hide.application.services.PluginManager;
 import hide.application.services.ViewRegistry;
 import hide.application.services.PluginRegistry;
 
+//import hide.application.integration.SceneEditorService;
 // Commands (Use Cases)
 import hide.application.commands.LoadProjectUseCase;
 import hide.application.commands.SetFullscreenUseCase;
@@ -75,7 +76,7 @@ class AppModule {
         collection.addSingleton(PluginManager);
         
         // === 6. Мост между IDE и движком ===
-        //collection.addSingleton(SceneEditorService);
+//        collection.addSingleton(SceneEditorService);
         
         // === 7. Controllers ===
         collection.addSingleton(MenuController);

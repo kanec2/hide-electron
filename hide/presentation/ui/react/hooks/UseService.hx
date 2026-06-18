@@ -7,7 +7,7 @@ import hide.application.services.ViewRegistry;
 import hide.application.services.PluginManager;
 import hide.shared.types.IEventBus;
 import hide.domain.services.ILayoutEngine;
-
+import hide.engine.domain.services.ISceneService;
 /**
  * Статический доступ к сервисам из React-компонентов.
  * Использует глобальный инстанс Ide как Service Locator.
@@ -31,5 +31,9 @@ class UseService {
     
     public static function layoutEngine():ILayoutEngine {
         return Ide.inst.get_layoutEngine();
+    }
+
+    public static function sceneService():ISceneService {
+        return Ide.inst.get_sceneService();
     }
 }

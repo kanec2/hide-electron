@@ -739,7 +739,11 @@ var hide_engine_domain_entities_SceneComponent = function() { };
 $hxClasses["hide.engine.domain.entities.SceneComponent"] = hide_engine_domain_entities_SceneComponent;
 hide_engine_domain_entities_SceneComponent.__name__ = "hide.engine.domain.entities.SceneComponent";
 hide_engine_domain_entities_SceneComponent.__isInterface__ = true;
+hide_engine_domain_entities_SceneComponent.prototype = {
+	__class__: hide_engine_domain_entities_SceneComponent
+};
 var hide_engine_domain_entities_MeshRenderer = function(meshPath,materialPath) {
+	this.name = "MeshRenderer";
 	this.id = Std.string(new Date().getTime());
 	this.meshPath = meshPath;
 	this.materialPath = materialPath;
@@ -757,6 +761,7 @@ var hide_engine_domain_entities_Rigidbody = function(mass,useGravity) {
 	if(mass == null) {
 		mass = 1;
 	}
+	this.name = "Rigidbody";
 	this.id = Std.string(new Date().getTime());
 	this.mass = mass;
 	this.useGravity = useGravity;
@@ -782,8 +787,33 @@ hide_engine_domain_entities_SceneObject.prototype = {
 		child.parent = this;
 		this.children.push(child);
 	}
+	,getComponent: function(type) {
+		var _g = 0;
+		var _g1 = this.components;
+		while(_g < _g1.length) {
+			var c = _g1[_g];
+			++_g;
+			if(js_Boot.__instanceof(c,type)) {
+				return c;
+			}
+		}
+		return null;
+	}
 	,addComponent: function(component) {
 		this.components.push(component);
+	}
+	,removeComponent: function(componentId) {
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = this.components;
+		while(_g1 < _g2.length) {
+			var c = _g2[_g1];
+			++_g1;
+			if(c.id != componentId) {
+				_g.push(c);
+			}
+		}
+		this.components = _g;
 	}
 	,__class__: hide_engine_domain_entities_SceneObject
 };
@@ -835,11 +865,17 @@ $hxClasses["hide.engine.domain.services.IEngineEventBus"] = hide_engine_domain_s
 hide_engine_domain_services_IEngineEventBus.__name__ = "hide.engine.domain.services.IEngineEventBus";
 hide_engine_domain_services_IEngineEventBus.__isInterface__ = true;
 hide_engine_domain_services_IEngineEventBus.__interfaces__ = [hx_injection_Service];
+hide_engine_domain_services_IEngineEventBus.prototype = {
+	__class__: hide_engine_domain_services_IEngineEventBus
+};
 var hide_engine_domain_services_ISceneService = function() { };
 $hxClasses["hide.engine.domain.services.ISceneService"] = hide_engine_domain_services_ISceneService;
 hide_engine_domain_services_ISceneService.__name__ = "hide.engine.domain.services.ISceneService";
 hide_engine_domain_services_ISceneService.__isInterface__ = true;
 hide_engine_domain_services_ISceneService.__interfaces__ = [hx_injection_Service];
+hide_engine_domain_services_ISceneService.prototype = {
+	__class__: hide_engine_domain_services_ISceneService
+};
 var hide_engine_infrastructure_EngineEventBusImpl = function() {
 	this.objectSelectedCallbacks = [];
 	this.objectChangedCallbacks = [];
@@ -849,7 +885,25 @@ $hxClasses["hide.engine.infrastructure.EngineEventBusImpl"] = hide_engine_infras
 hide_engine_infrastructure_EngineEventBusImpl.__name__ = "hide.engine.infrastructure.EngineEventBusImpl";
 hide_engine_infrastructure_EngineEventBusImpl.__interfaces__ = [hx_injection_Service,hide_engine_domain_services_IEngineEventBus];
 hide_engine_infrastructure_EngineEventBusImpl.prototype = {
-	getConstructorArgs: function() {
+	emitObjectChanged: function(id) {
+		var snapshot = this.objectChangedCallbacks.slice();
+		var _g = 0;
+		while(_g < snapshot.length) {
+			var cb = snapshot[_g];
+			++_g;
+			cb(id);
+		}
+	}
+	,emitSceneChanged: function() {
+		var snapshot = this.sceneChangedCallbacks.slice();
+		var _g = 0;
+		while(_g < snapshot.length) {
+			var cb = snapshot[_g];
+			++_g;
+			cb();
+		}
+	}
+	,getConstructorArgs: function() {
 		return [];
 	}
 	,__class__: hide_engine_infrastructure_EngineEventBusImpl
@@ -890,6 +944,31 @@ hide_engine_infrastructure_SceneServiceImpl.prototype = {
 			++_g;
 			this.indexObject(child);
 		}
+	}
+	,getRoot: function() {
+		return this.root;
+	}
+	,getObject: function(id) {
+		return this.objectIndex.h[id];
+	}
+	,getSelected: function() {
+		if(this.selectedId != null) {
+			return this.objectIndex.h[this.selectedId];
+		} else {
+			return null;
+		}
+	}
+	,setTransform: function(id,transform) {
+		var obj = this.getObject(id);
+		if(obj == null) {
+			return;
+		}
+		obj.transform = transform;
+		this.notifyChanged(id);
+	}
+	,notifyChanged: function(id) {
+		this.eventBus.emitObjectChanged(id);
+		this.eventBus.emitSceneChanged();
 	}
 	,getConstructorArgs: function() {
 		return ["hide.engine.domain.services.IEngineEventBus"];
@@ -1122,7 +1201,7 @@ hide_infrastructure_external_StubConsoleFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubConsoleFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubConsoleFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>🖥️ Console</h2>\r\n                <p>Console output will appear here.</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>🖥️ Console</h2>\n                <p>Console output will appear here.</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1137,7 +1216,7 @@ hide_infrastructure_external_StubEditorFactory.__name__ = "hide.infrastructure.e
 hide_infrastructure_external_StubEditorFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubEditorFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>📝 Stub Editor</h2>\r\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\r\n                <p>Состояние: " + JSON.stringify(state) + "</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>📝 Stub Editor</h2>\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\n                <p>Состояние: " + JSON.stringify(state) + "</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1152,7 +1231,7 @@ hide_infrastructure_external_StubGameFactory.__name__ = "hide.infrastructure.ext
 hide_infrastructure_external_StubGameFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubGameFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\r\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\r\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\r\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\r\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\r\n                    Resolution: 1920×1080 | Stats: OFF\r\n                </div>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\n                    Resolution: 1920×1080 | Stats: OFF\n                </div>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1167,7 +1246,7 @@ hide_infrastructure_external_StubProjectFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubProjectFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubProjectFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\r\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\r\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\r\n                </div>\r\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\r\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\r\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                            ▼ 📁 Assets\r\n                        </div>\r\n                        <div style='padding-left:16px;'>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Materials\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Prefabs\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scenes\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scripts\r\n                            </div>\r\n                            <div style='padding-left:16px;'>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                📁 Textures\r\n                            </div>\r\n                        </div>\r\n                    </div>\r\n                </div>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\n                </div>\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                            ▼ 📁 Assets\n                        </div>\n                        <div style='padding-left:16px;'>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Materials\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Prefabs\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scenes\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scripts\n                            </div>\n                            <div style='padding-left:16px;'>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                📁 Textures\n                            </div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1182,7 +1261,7 @@ hide_infrastructure_external_StubPropertiesFactory.__name__ = "hide.infrastructu
 hide_infrastructure_external_StubPropertiesFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubPropertiesFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\r\n                <h2>⚙️ Properties</h2>\r\n                <p>Object properties will appear here.</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\n                <h2>⚙️ Properties</h2>\n                <p>Object properties will appear here.</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1197,7 +1276,7 @@ hide_infrastructure_external_StubSceneFactory.__name__ = "hide.infrastructure.ex
 hide_infrastructure_external_StubSceneFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubSceneFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\r\n                <div style='font-size:48px; margin-bottom:20px;'>🎬</div>\r\n                <h2 style='margin:0; color:#fff;'>Scene View</h2>\r\n                <p style='color:#aaa; margin-top:10px;'>3D viewport will appear here</p>\r\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px;'>\r\n                    <div>📷 Camera: Main Camera</div>\r\n                    <div>🎯 Gizmos: ON</div>\r\n                    <div>💡 Lighting: Baked</div>\r\n                </div>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\n                <div style='font-size:48px; margin-bottom:20px;'>🎬</div>\n                <h2 style='margin:0; color:#fff;'>Scene View</h2>\n                <p style='color:#aaa; margin-top:10px;'>3D viewport will appear here</p>\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px;'>\n                    <div>📷 Camera: Main Camera</div>\n                    <div>🎯 Gizmos: ON</div>\n                    <div>💡 Lighting: Baked</div>\n                </div>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1355,7 +1434,7 @@ hide_infrastructure_platform_electron_ElectronWindowAdapter.prototype = {
 	}
 	,__class__: hide_infrastructure_platform_electron_ElectronWindowAdapter
 };
-var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,viewRegistry,pluginManager,eventBus,fileDialog,platform,layoutEngine,menuController,windowController,toolbarController) {
+var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,viewRegistry,pluginManager,eventBus,fileDialog,platform,layoutEngine,menuController,windowController,toolbarController,sceneService) {
 	var _gthis = this;
 	this.windowService = windowService;
 	this.menuService = menuService;
@@ -1370,6 +1449,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this.menuController = menuController;
 	this.windowController = windowController;
 	this.toolbarController = toolbarController;
+	this.sceneService = sceneService;
 	hide_presentation_Ide.inst = this;
 	this.views = viewRegistry.all();
 	menuService.onItemClick("project.open",$bind(this,this.onMenuOpenProject));
@@ -1385,7 +1465,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	while(_g < _g1.length) {
 		var view = [_g1[_g]];
 		++_g;
-		haxe_Log.trace(view[0].name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 122, className : "hide.presentation.Ide", methodName : "new"});
+		haxe_Log.trace(view[0].name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 127, className : "hide.presentation.Ide", methodName : "new"});
 		menuService.addViewMenu(view[0]);
 		menuService.onItemClick("view." + view[0].name,(function(view) {
 			return function() {
@@ -1398,7 +1478,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this._projectLoadedUnsub = eventBus.subscribe(hide_shared_events_ProjectLoaded,$bind(this,this.onProjectLoadedHandler));
 	this._errorUnsub = eventBus.subscribe(hide_shared_events_ErrorOccurred,$bind(this,this.onErrorOccurred));
 	this._layoutChangedUnsub = eventBus.subscribe(hide_shared_events_LayoutChanged,function(e) {
-		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 136, className : "hide.presentation.Ide", methodName : "new"});
+		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 141, className : "hide.presentation.Ide", methodName : "new"});
 	});
 	this._projectClosedUnsub = eventBus.subscribe(hide_shared_events_ProjectClosed,function(e) {
 		_gthis._currentProject = null;
@@ -1415,11 +1495,11 @@ hide_presentation_Ide.prototype = {
 		this.layoutEngine.open("welcome",{ },hide_domain_valueobjects_DisplayPosition.Center);
 	}
 	,onErrorOccurred: function(event) {
-		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 163, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
+		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 168, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
 	}
 	,onProjectLoadedHandler: function(event) {
 		this._currentProject = event.project.name;
-		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 168, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
+		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 173, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
 		this.updateWindowTitle();
 	}
 	,onToggleFullscreen: function() {
@@ -1453,11 +1533,11 @@ hide_presentation_Ide.prototype = {
 	}
 	,updateWindowTitle: function() {
 		var title = this._currentProject != null ? "" + this._currentProject + " - HIDE IDE" : "HIDE IDE";
-		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 209, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
+		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 214, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
 		this.windowService.setTitle(title);
 	}
 	,showAboutDialog: function() {
-		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 214, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
+		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 219, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
 	}
 	,get_currentProjectName: function() {
 		if(this._currentProject != null) {
@@ -1468,7 +1548,7 @@ hide_presentation_Ide.prototype = {
 	}
 	,startup: function() {
 		var _gthis = this;
-		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 224, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 229, className : "hide.presentation.Ide", methodName : "startup"});
 		this.viewRegistry.registerViewFactory("scene",new hide_infrastructure_external_StubSceneFactory());
 		this.viewRegistry.registerViewFactory("game",new hide_infrastructure_external_StubGameFactory());
 		this.viewRegistry.registerViewFactory("project",new hide_infrastructure_external_StubProjectFactory());
@@ -1479,26 +1559,26 @@ hide_presentation_Ide.prototype = {
 		this.viewRegistry.registerViewFactory("hierarchy",new hide_presentation_ui_react_factories_ReactViewFactory().withComponent(hide_presentation_ui_react_components_HierarchyPanel));
 		this.viewRegistry.registerViewFactory("welcome",new hide_presentation_ui_react_factories_ReactViewFactory().withComponent(hide_presentation_ui_react_components_WelcomePanel));
 		this.windowController.init();
-		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 257, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 262, className : "hide.presentation.Ide", methodName : "startup"});
 		var toolbarEl = window.document.getElementById("main-toolbar");
 		if(toolbarEl != null) {
 			this.toolbarController.setContainer(toolbarEl);
-			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 265, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 270, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var layoutEl = window.document.getElementById("golden-layout-root");
 		if(layoutEl != null) {
 			this.layoutEngine.setContainer(layoutEl);
 			this.layoutEngine.init({ content : [], fullScreen : null});
-			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 273, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 278, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 275, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 280, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var menuContainer = window.document.getElementById("main-menu");
 		if(menuContainer != null) {
 			this.menuController.setContainer(menuContainer);
-			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 281, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 286, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 283, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 288, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var args = this.platform.getAppArgs();
 		var projectFile = null;
@@ -1522,10 +1602,10 @@ hide_presentation_Ide.prototype = {
 			}
 		}
 		if(projectFile != null) {
-			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 310, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 315, className : "hide.presentation.Ide", methodName : "startup"});
 			this.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._new(projectFile));
 		} else {
-			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 313, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 318, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 	}
 	,dispose: function() {
@@ -1579,8 +1659,11 @@ hide_presentation_Ide.prototype = {
 	,get_layoutEngine: function() {
 		return this.layoutEngine;
 	}
+	,get_sceneService: function() {
+		return this.sceneService;
+	}
 	,getConstructorArgs: function() {
-		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController","hide.presentation.controllers.WindowController","hide.presentation.controllers.ToolbarController"];
+		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController","hide.presentation.controllers.WindowController","hide.presentation.controllers.ToolbarController","hide.engine.domain.services.ISceneService"];
 	}
 	,__class__: hide_presentation_Ide
 };
@@ -1925,25 +2008,30 @@ hide_presentation_ui_react_BaseReactComponent.prototype = $extend(React_Componen
 });
 var hide_presentation_ui_react_components_HierarchyPanel = function() {
 	hide_presentation_ui_react_BaseReactComponent.call(this);
-	this.state = { objects : [{ id : "scene", name : "SampleScene", icon : "🎬", expanded : true, children : [{ id : "camera", name : "Main Camera", icon : "📷", children : []},{ id : "light", name : "Directional Light", icon : "💡", children : []},{ id : "player", name : "Player", icon : "", children : [{ id : "mesh", name : "MeshRenderer", icon : "🎨", children : []},{ id : "rigidbody", name : "Rigidbody", icon : "⚙️", children : []}]},{ id : "ground", name : "Ground", icon : "", children : []}]}], selectedId : "player"};
+	this.state = { root : null, selectedId : null};
 };
 $hxClasses["hide.presentation.ui.react.components.HierarchyPanel"] = hide_presentation_ui_react_components_HierarchyPanel;
 hide_presentation_ui_react_components_HierarchyPanel.__name__ = "hide.presentation.ui.react.components.HierarchyPanel";
 hide_presentation_ui_react_components_HierarchyPanel.__super__ = hide_presentation_ui_react_BaseReactComponent;
 hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_presentation_ui_react_BaseReactComponent.prototype,{
-	render: function() {
-		var tmp = React.createElement("input",{ type : "text", style : { background : "transparent", border : "none", color : "#fff", outline : "none", width : "80%"}, placeholder : "Search..."});
-		var tmp1 = React.createElement("div",{ style : { padding : "4px 8px", background : "#2a2a2a", borderRadius : "3px", marginBottom : "8px"}},"🔍 ",tmp);
-		var _g = [];
-		var _g1 = 0;
-		var _g2 = this.state.objects;
-		while(_g1 < _g2.length) {
-			var obj = _g2[_g1];
-			++_g1;
-			_g.push(this.renderObject(obj,0));
+	componentDidMount: function() {
+		var _gthis = this;
+		var scene = hide_presentation_ui_react_hooks_UseService.sceneService();
+		var eventBus = hide_presentation_ui_react_hooks_UseService.eventBus();
+		this.setState({ root : scene.getRoot(), selectedId : null});
+		this.subscribe(eventBus,hide_shared_events_ObjectChanged,function(_) {
+			_gthis.setState({ root : scene.getRoot(), selectedId : _gthis.state.selectedId});
+		});
+		this.subscribe(eventBus,hide_shared_events_ObjectSelected,function(e) {
+			_gthis.setState({ root : _gthis.state.root, selectedId : e.objectId});
+		});
+	}
+	,render: function() {
+		if(this.state.root == null) {
+			return React.createElement("div",{ style : { padding : "10px", color : "#888"}},"No scene loaded");
 		}
-		var tmp = React.createElement("div",{ },_g);
-		return React.createElement("div",{ style : { padding : "10px", color : "#d4d4d4", background : "#383838", height : "100%", fontFamily : "sans-serif", fontSize : "13px"}},tmp1,tmp);
+		var tmp = this.renderObject(this.state.root,0);
+		return React.createElement("div",{ style : { padding : "10px", color : "#d4d4d4", background : "#383838", height : "100%", fontFamily : "sans-serif", fontSize : "13px"}},tmp);
 	}
 	,renderObject: function(obj,depth) {
 		var isSelected = this.state.selectedId == obj.id;
@@ -1951,12 +2039,12 @@ hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_pr
 		var paddingLeft = depth * 16;
 		var rowStyle = { padding : "3px 8px", paddingLeft : paddingLeft + 8 + "px", cursor : "pointer", borderRadius : "3px", background : isSelected ? "#2d5c8a" : "transparent"};
 		var childrenList;
-		if(obj.expanded && hasChildren) {
-			var children = obj.children;
+		if(hasChildren) {
 			var _g = [];
 			var _g1 = 0;
-			while(_g1 < children.length) {
-				var child = children[_g1];
+			var _g2 = obj.children;
+			while(_g1 < _g2.length) {
+				var child = _g2[_g1];
 				++_g1;
 				_g.push(this.renderObject(child,depth + 1));
 			}
@@ -1969,83 +2057,181 @@ hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_pr
 		var tmp = function() {
 			_g.handleSelect(id);
 		};
-		return React.createElement("div",{ key : obj.id},React.createElement("div",{ style : rowStyle, onClick : tmp},hasChildren ? obj.expanded ? "▼ " : "▶ " : "  ",obj.icon," ",obj.name),childrenList);
+		return React.createElement("div",{ key : obj.id},React.createElement("div",{ style : rowStyle, onClick : tmp},hasChildren ? "▼ " : "  ","🎭 ",obj.name),childrenList);
 	}
 	,handleSelect: function(id) {
-		this.setState({ selectedId : id, objects : this.state.objects});
+		this.setState({ root : this.state.root, selectedId : id});
+		hide_presentation_ui_react_hooks_UseService.eventBus().publish(hide_shared_events_ObjectSelected,new hide_shared_events_ObjectSelected(id));
 	}
 	,__class__: hide_presentation_ui_react_components_HierarchyPanel
 });
 var hide_presentation_ui_react_components_InspectorPanel = function() {
 	hide_presentation_ui_react_BaseReactComponent.call(this);
-	this.state = { selectedObject : null, components : []};
+	this.state = { selectedObject : null, version : 0};
 };
 $hxClasses["hide.presentation.ui.react.components.InspectorPanel"] = hide_presentation_ui_react_components_InspectorPanel;
 hide_presentation_ui_react_components_InspectorPanel.__name__ = "hide.presentation.ui.react.components.InspectorPanel";
 hide_presentation_ui_react_components_InspectorPanel.__super__ = hide_presentation_ui_react_BaseReactComponent;
 hide_presentation_ui_react_components_InspectorPanel.prototype = $extend(hide_presentation_ui_react_BaseReactComponent.prototype,{
 	componentDidMount: function() {
-		var transformFields = [{ label : "Position", x : 0, y : 1.5, z : 0},{ label : "Rotation", x : 0, y : 0, z : 0},{ label : "Scale", x : 1, y : 1, z : 1}];
-		var meshRendererFields = [{ label : "Mesh", value : "Player.mesh"},{ label : "Material", value : "Default-Diffuse"}];
-		var rigidbodyFields = [{ label : "Mass", value : 1},{ label : "Gravity", value : true, type : "checkbox"}];
-		var componentsData = [{ name : "Transform", fields : transformFields},{ name : "Mesh Renderer", fields : meshRendererFields},{ name : "Rigidbody", fields : rigidbodyFields}];
-		this.setState({ selectedObject : { name : "Player", tag : "Player"}, components : componentsData});
+		var _gthis = this;
+		var eventBus = hide_presentation_ui_react_hooks_UseService.eventBus();
+		var scene = hide_presentation_ui_react_hooks_UseService.sceneService();
+		this.subscribe(eventBus,hide_shared_events_ObjectSelected,function(e) {
+			var obj = e.objectId != null ? scene.getObject(e.objectId) : null;
+			_gthis.setState({ selectedObject : obj, version : _gthis.state.version + 1});
+		});
+		this.subscribe(eventBus,hide_shared_events_ObjectChanged,function(e) {
+			if(_gthis.state.selectedObject != null && _gthis.state.selectedObject.id == e.objectId) {
+				var fresh = scene.getObject(e.objectId);
+				_gthis.setState({ selectedObject : fresh, version : _gthis.state.version + 1});
+			}
+		});
+		var current = scene.getSelected();
+		if(current != null) {
+			this.setState({ selectedObject : current, version : this.state.version + 1});
+		}
 	}
 	,render: function() {
+		var _gthis = this;
+		var obj = this.state.selectedObject;
 		var header;
-		if(this.state.selectedObject != null) {
-			var header1 = React.createElement("input",{ type : "checkbox", defaultChecked : true});
-			var header2 = React.createElement("b",{ style : { color : "#fff"}}," ",this.state.selectedObject.name);
-			var header3 = React.createElement("span",{ style : { marginLeft : "auto", color : "#888", fontSize : "11px"}},"Tag: ",this.state.selectedObject.tag);
+		if(obj != null) {
+			var header1 = React.createElement("input",{ type : "checkbox", onChange : function(_) {
+				_gthis.toggleActive(obj.id);
+			}, defaultChecked : obj.isActive});
+			var header2 = React.createElement("b",{ style : { color : "#fff"}},obj.name);
+			var header3 = React.createElement("span",{ style : { marginLeft : "auto", color : "#888", fontSize : "11px"}},"id: ",obj.id);
 			var header4 = React.createElement("div",{ style : { display : "flex", alignItems : "center", gap : "8px"}},header1,header2,header3);
 			header = React.createElement("div",{ style : { padding : "8px", background : "#2a2a2a", borderRadius : "3px", marginBottom : "8px"}},header4);
 		} else {
 			header = React.createElement("div",{ style : { padding : "20px", textAlign : "center", color : "#888"}},"No object selected");
 		}
-		var _g = [];
-		var _g1 = 0;
-		var _g2 = this.state.components;
-		while(_g1 < _g2.length) {
-			var comp = _g2[_g1];
-			++_g1;
-			_g.push(this.renderComponent(comp));
+		var componentsList;
+		if(obj != null) {
+			var componentsList1 = this.renderTransform(obj);
+			var _g = [];
+			var _g1 = 0;
+			var _g2 = obj.components;
+			while(_g1 < _g2.length) {
+				var c = _g2[_g1];
+				++_g1;
+				_g.push(this.renderComponent(obj.id,c));
+			}
+			var componentsList2 = React.createElement("button",{ style : { background : "#4a4a4a", color : "#fff", border : "1px solid #555", padding : "4px 12px", borderRadius : "3px", cursor : "pointer"}},"Add Component");
+			var componentsList3 = React.createElement("div",{ style : { marginTop : "10px", textAlign : "center"}},componentsList2);
+			componentsList = React.createElement("div",{ style : { overflowY : "auto", maxHeight : "calc(100% - 60px)"}},componentsList1,_g,componentsList3);
+		} else {
+			componentsList = React.createElement("div",{ });
 		}
-		var componentsList = React.createElement("button",{ style : { background : "#4a4a4a", color : "#fff", border : "1px solid #555", padding : "4px 12px", borderRadius : "3px", cursor : "pointer"}},"Add Component");
-		var componentsList1 = React.createElement("div",{ style : { marginTop : "10px", textAlign : "center"}},componentsList);
-		var componentsList = React.createElement("div",{ style : { overflowY : "auto", maxHeight : "calc(100% - 60px)"}},_g,componentsList1);
 		return React.createElement("div",{ style : { padding : "10px", color : "#d4d4d4", background : "#383838", height : "100%", fontFamily : "sans-serif", fontSize : "13px"}},header,componentsList);
 	}
-	,renderComponent: function(comp) {
-		var fields = comp.fields;
-		var tmp = { key : comp.name, style : { background : "#2a2a2a", borderRadius : "3px", marginBottom : "6px"}};
-		var tmp1 = React.createElement("div",{ style : { padding : "6px 8px", background : "#3a3a3a", fontWeight : "bold", borderBottom : "1px solid #222"}},"🔽 ",comp.name);
-		var _g = [];
-		var _g1 = 0;
-		while(_g1 < fields.length) {
-			var field = fields[_g1];
-			++_g1;
-			_g.push(this.renderField(field));
-		}
-		return React.createElement("div",tmp,tmp1,React.createElement("div",{ style : { padding : "8px"}},_g));
+	,renderTransform: function(obj) {
+		var _gthis = this;
+		var t = obj.transform;
+		var tmp = React.createElement("div",{ style : { padding : "6px 8px", background : "#3a3a3a", fontWeight : "bold", borderBottom : "1px solid #222"}},"🔽 Transform");
+		var tmp1 = this.renderVector3("Position",t.x,t.y,t.z,function(x,y,z) {
+			_gthis.setTransform(obj.id,x,y,z,t.rotX,t.rotY,t.rotZ,t.scaleX,t.scaleY,t.scaleZ);
+		});
+		var tmp2 = this.renderVector3("Rotation",t.rotX,t.rotY,t.rotZ,function(x,y,z) {
+			_gthis.setTransform(obj.id,t.x,t.y,t.z,x,y,z,t.scaleX,t.scaleY,t.scaleZ);
+		});
+		var tmp3 = this.renderVector3("Scale",t.scaleX,t.scaleY,t.scaleZ,function(x,y,z) {
+			_gthis.setTransform(obj.id,t.x,t.y,t.z,t.rotX,t.rotY,t.rotZ,x,y,z);
+		});
+		var tmp4 = React.createElement("div",{ style : { padding : "8px"}},tmp1,tmp2,tmp3);
+		return React.createElement("div",{ style : { background : "#2a2a2a", borderRadius : "3px", marginBottom : "6px"}},tmp,tmp4);
 	}
-	,renderField: function(field) {
-		var type = field.type != null ? field.type : "input";
-		switch(type) {
-		case "checkbox":
-			var tmp = React.createElement("span",{ style : { width : "60px", color : "#aaa"}},field.label);
-			var tmp1 = React.createElement("input",{ type : "checkbox", defaultChecked : field.value});
-			return React.createElement("div",{ style : { display : "flex", gap : "4px", marginBottom : "4px"}},tmp,tmp1);
-		case "vector3":
-			var tmp = React.createElement("span",{ style : { width : "60px", color : "#aaa"}},field.label);
-			var tmp1 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, defaultValue : field.x});
-			var tmp2 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, defaultValue : field.y});
-			var tmp3 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, defaultValue : field.z});
-			return React.createElement("div",{ style : { display : "flex", gap : "4px", marginBottom : "4px"}},tmp,tmp1,tmp2,tmp3);
+	,renderComponent: function(objId,comp) {
+		var _gthis = this;
+		var c = js_Boot.getClass(comp);
+		switch(c.__name__) {
+		case "hide.engine.domain.entities.MeshRenderer":
+			var m = comp;
+			var tmp = { key : comp.id, style : { background : "#2a2a2a", borderRadius : "3px", marginBottom : "6px"}};
+			var tmp1 = React.createElement("div",{ style : { padding : "6px 8px", background : "#3a3a3a", fontWeight : "bold", borderBottom : "1px solid #222"}},"🔽 Mesh Renderer");
+			var tmp2 = this.renderStringField("Mesh",m.meshPath,function(v) {
+				_gthis.setMesh(objId,v,m.materialPath);
+			});
+			var tmp3 = this.renderStringField("Material",m.materialPath,function(v) {
+				_gthis.setMesh(objId,m.meshPath,v);
+			});
+			return React.createElement("div",tmp,tmp1,React.createElement("div",{ style : { padding : "8px"}},tmp2,tmp3));
+		case "hide.engine.domain.entities.Rigidbody":
+			var r = comp;
+			var tmp = { key : comp.id, style : { background : "#2a2a2a", borderRadius : "3px", marginBottom : "6px"}};
+			var tmp1 = React.createElement("div",{ style : { padding : "6px 8px", background : "#3a3a3a", fontWeight : "bold", borderBottom : "1px solid #222"}},"🔽 Rigidbody");
+			var tmp2 = this.renderNumberField("Mass",r.mass,function(v) {
+				_gthis.setRigidbody(objId,v,r.useGravity);
+			});
+			var tmp3 = React.createElement("span",{ style : { width : "60px", color : "#aaa"}},"Gravity");
+			var tmp4 = React.createElement("input",{ type : "checkbox", onChange : function(_) {
+				_gthis.setRigidbody(objId,r.mass,!r.useGravity);
+			}, defaultChecked : r.useGravity});
+			var tmp5 = React.createElement("div",{ style : { display : "flex", gap : "4px", marginBottom : "4px"}},tmp3,tmp4);
+			return React.createElement("div",tmp,tmp1,React.createElement("div",{ style : { padding : "8px"}},tmp2,tmp5));
 		default:
-			var tmp = React.createElement("span",{ style : { width : "60px", color : "#aaa"}},field.label);
-			var tmp1 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, defaultValue : field.value});
-			return React.createElement("div",{ style : { display : "flex", gap : "4px", marginBottom : "4px"}},tmp,tmp1);
+			return React.createElement("div",{ key : comp.id, style : { background : "#2a2a2a", borderRadius : "3px", marginBottom : "6px", padding : "8px", color : "#888"}},"Unknown component: ",comp.name);
 		}
+	}
+	,renderVector3: function(label,x,y,z,onChange) {
+		var tmp = React.createElement("span",{ style : { width : "60px", color : "#aaa"}},label);
+		var tmp1 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, onBlur : function(e) {
+			onChange(parseFloat(e.target.value),y,z);
+		}, defaultValue : x});
+		var tmp2 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, onBlur : function(e) {
+			onChange(x,parseFloat(e.target.value),z);
+		}, defaultValue : y});
+		var tmp3 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, onBlur : function(e) {
+			onChange(x,y,parseFloat(e.target.value));
+		}, defaultValue : z});
+		return React.createElement("div",{ style : { display : "flex", gap : "4px", marginBottom : "4px"}},tmp,tmp1,tmp2,tmp3);
+	}
+	,renderStringField: function(label,value,onChange) {
+		var tmp = React.createElement("span",{ style : { width : "60px", color : "#aaa"}},label);
+		var tmp1 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, onBlur : function(e) {
+			onChange(e.target.value);
+		}, defaultValue : value});
+		return React.createElement("div",{ style : { display : "flex", gap : "4px", marginBottom : "4px"}},tmp,tmp1);
+	}
+	,renderNumberField: function(label,value,onChange) {
+		var tmp = React.createElement("span",{ style : { width : "60px", color : "#aaa"}},label);
+		var tmp1 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, onBlur : function(e) {
+			onChange(parseFloat(e.target.value));
+		}, defaultValue : value});
+		return React.createElement("div",{ style : { display : "flex", gap : "4px", marginBottom : "4px"}},tmp,tmp1);
+	}
+	,setTransform: function(objId,px,py,pz,rx,ry,rz,sx,sy,sz) {
+		hide_presentation_ui_react_hooks_UseService.sceneService().setTransform(objId,new hide_engine_domain_entities_Transform(px,py,pz,rx,ry,rz,sx,sy,sz));
+	}
+	,setMesh: function(objId,meshPath,matPath) {
+		var obj = hide_presentation_ui_react_hooks_UseService.sceneService().getObject(objId);
+		if(obj == null) {
+			return;
+		}
+		obj.removeComponent(obj.getComponent(hide_engine_domain_entities_MeshRenderer).id);
+		obj.addComponent(new hide_engine_domain_entities_MeshRenderer(meshPath,matPath));
+		hide_presentation_ui_react_hooks_UseService.eventBus().publish(hide_shared_events_ObjectChanged,new hide_shared_events_ObjectChanged(objId));
+	}
+	,setRigidbody: function(objId,mass,gravity) {
+		var obj = hide_presentation_ui_react_hooks_UseService.sceneService().getObject(objId);
+		if(obj == null) {
+			return;
+		}
+		var old = obj.getComponent(hide_engine_domain_entities_Rigidbody);
+		if(old != null) {
+			obj.removeComponent(old.id);
+		}
+		obj.addComponent(new hide_engine_domain_entities_Rigidbody(mass,gravity));
+		hide_presentation_ui_react_hooks_UseService.eventBus().publish(hide_shared_events_ObjectChanged,new hide_shared_events_ObjectChanged(objId));
+	}
+	,toggleActive: function(objId) {
+		var obj = hide_presentation_ui_react_hooks_UseService.sceneService().getObject(objId);
+		if(obj == null) {
+			return;
+		}
+		obj.isActive = !obj.isActive;
+		hide_presentation_ui_react_hooks_UseService.eventBus().publish(hide_shared_events_ObjectChanged,new hide_shared_events_ObjectChanged(objId));
 	}
 	,__class__: hide_presentation_ui_react_components_InspectorPanel
 });
@@ -2151,6 +2337,9 @@ hide_presentation_ui_react_hooks_UseService.__name__ = "hide.presentation.ui.rea
 hide_presentation_ui_react_hooks_UseService.eventBus = function() {
 	return hide_presentation_Ide.inst.get_eventBus();
 };
+hide_presentation_ui_react_hooks_UseService.sceneService = function() {
+	return hide_presentation_Ide.inst.get_sceneService();
+};
 var hide_shared_events_ErrorOccurred = function(context,error) {
 	this.context = context;
 	this.error = error;
@@ -2174,6 +2363,22 @@ $hxClasses["hide.shared.events.LayoutChanged"] = hide_shared_events_LayoutChange
 hide_shared_events_LayoutChanged.__name__ = "hide.shared.events.LayoutChanged";
 hide_shared_events_LayoutChanged.prototype = {
 	__class__: hide_shared_events_LayoutChanged
+};
+var hide_shared_events_ObjectChanged = function(objectId) {
+	this.objectId = objectId;
+};
+$hxClasses["hide.shared.events.ObjectChanged"] = hide_shared_events_ObjectChanged;
+hide_shared_events_ObjectChanged.__name__ = "hide.shared.events.ObjectChanged";
+hide_shared_events_ObjectChanged.prototype = {
+	__class__: hide_shared_events_ObjectChanged
+};
+var hide_shared_events_ObjectSelected = function(objectId) {
+	this.objectId = objectId;
+};
+$hxClasses["hide.shared.events.ObjectSelected"] = hide_shared_events_ObjectSelected;
+hide_shared_events_ObjectSelected.__name__ = "hide.shared.events.ObjectSelected";
+hide_shared_events_ObjectSelected.prototype = {
+	__class__: hide_shared_events_ObjectSelected
 };
 var hide_shared_events_ProjectClosed = function() { };
 $hxClasses["hide.shared.events.ProjectClosed"] = hide_shared_events_ProjectClosed;
