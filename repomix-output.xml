@@ -40,212 +40,188 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
-application/
-  commands/
-    AddRecentProjectUseCase.hx
-    BuildProjectUseCase.hx
-    ClearRecentProjectsUseCase.hx
-    CloseProjectUseCase.hx
-    ExportDatabaseUseCase.hx
-    LoadProjectUseCase.hx
-    OpenResourceUseCase.hx
-    OpenViewUseCase.hx
-    SaveLayoutUseCase.hx
-    SetFullscreenUseCase.hx
-    SetRendererUseCase.hx
-  dto/
-    MenuItem.hx
-    ResourceMetadataDto.hx
-    ViewDto.hx
-    WindowBoundsDto.hx
-  services/
-    ClipboardService.hx
-    LayoutHistoryService.hx
-    MenuService.hx
-    PluginManager.hx
-    PluginRegistry.hx
-    ProjectService.hx
-    ResourceService.hx
-    ViewRegistry.hx
-    WindowService.hx
-domain/
-  entities/
-    Database.hx
-    LayoutConfig.hx
-    Project.hx
-    Resource.hx
-    UserSettings.hx
-  enums/
-    MenuItemType.hx
-    ResourceType.hx
-    ViewType.hx
-    WindowEvent.hx
-  exceptions/
-    FileNotFoundError.hx
-    InvalidConfigError.hx
-    ProjectLoadError.hx
-    ResourceNotFoundError.hx
-  services/
-    IAppInfo.hx
-    IClipboardService.hx
-    IDomAccess.hx
-    IElement.hx
-    IFileDialog.hx
-    IFileSystem.hx
-    ILayoutEngine.hx
-    IPlatform.hx
-    IPlugin.hx
-    IResourceLoader.hx
-    IViewFactory.hx
-    IWindowManager.hx
-    PluginConfig.hx
-    PluginsConfig.hx
-  valueobjects/
-    DisplayPosition.hx
-    FilePath.hx
-    LayoutConfig.hx
-    LayoutState.hx
-    ResourceId.hx
-    ScreenBounds.hx
-    WindowBounds.hx
-infrastructure/
-  config/
-    PackageJsonLoader.hx
-    ProjectConfigParser.hx
-    UserSettingsLoader.hx
-  di/
-    AppModule.hx
-  external/
-    golden/
-      Config.hx
-      Container.hx
-      ContentItem.hx
-      Event.hx
-      Header.hx
-      Layout.hx
-      Tab.hx
-    monaco/
-      KeyCode.hx
-      KeyMod.hx
-      Languages.hx
-      MarkdownString.hx
-      Model.hx
-      ModelDeltaDecoration.hx
-      Position.hx
-      Range.hx
-      ScriptEditor.hx
-      Todo.hx
-    nw/
-      App.hx
-      Clipboard.hx
-      Menu.hx
-      MenuItem.hx
-      Screen.hx
-      Window.hx
-    GoldenLayoutAdapter.hx
-    HeapsEngineAdapter.hx
-    HtmlElement.hx
-    jQueryElementAdapter.hx
-    MonacoEditorAdapter.hx
-    StubConsoleFactory.hx
-    StubEditorFactory.hx
-    StubProjectFactory.hx
-    StubPropertiesFactory.hx
-  persistence/
-    FileSystemRepository.hx
-    LocalStorageRepository.hx
-    MemoryRepository.hx
-  platform/
-    electron/
-      ElectronClipboardAdapter.hx
-      ElectronFileDialogAdapter.hx
-      ElectronFileSystemAdapter.hx
-      ElectronIpcBridge.hx
-      ElectronPlatformAdapter.hx
-      ElectronScreenAdapter.hx
-      ElectronShortcutAdapter.hx
-      ElectronWindowAdapter.hx
-    nwjs/
-      NwClipboardAdapter.hx
-      NwFileSystemAdapter.hx
-      NwIpcBridge.hx
-      NwScreenAdapter.hx
-      NwShortcutAdapter.hx
-      NwWindowAdapter.hx
-    web/
-      BrowserWindowAdapter.hx
-      LocalStorageAdapter.hx
-  ui/
-    ReactElement.hx
-    ReactRoot.hx
-    ReactViewFactory.hx
-  BrowserDomAccess.hx
-legacy/
-  Extension.hx
-  Ide.hx
-plugins/
-  console/
-    ConsoleView.hx
-    ConsoleViewFactory.hx
-  ConsolePlugin.hx
-presentation/
-  config/
-    MenuConfig.hx
-  controllers/
-    DragDropController.hx
-    KeyboardController.hx
-    MenuController.hx
-    ToolbarController.hx
-    WindowController.hx
-  styles/
-    CssVariables.hx
-    Theme.hx
-  ui/
-    react/
-      components/
-        WelcomePanel.hx
-      hooks/
-        UseService.hx
-      BaseReactComponent.hx
-    Dialog.hx
-    Element.hx
-    MenuBuilder.hx
-    StatusBar.hx
-    View.hx
-  views/
-    CdbTableView.hx
-    ModelView.hx
-    PrefabView.hx
-    ScriptEditorView.hx
-  Ide.hx
-shared/
-  events/
-    ErrorOccurred.hx
-    FullscreenChanged.hx
-    LayoutChanged.hx
-    LayoutSaved.hx
-    ProjectClosed.hx
-    ProjectClosing.hx
-    ProjectLoaded.hx
-    RecentProjectsUpdated.hx
-    RendererChanged.hx
-    ResourceOpened.hx
-    ViewOpened.hx
-  extensions/
-    ArrayExt.hx
-    DateExt.hx
-    StringExt.hx
-  types/
-    EventBusImpl.hx
-    IEventBus.hx
-    NonEmptyArray.hx
-    Option.hx
-    Result.hx
-  utils/
-    AsyncUtils.hx
-    JsonUtils.hx
-    PathUtils.hx
+application/commands/AddRecentProjectUseCase.hx
+application/commands/BuildProjectUseCase.hx
+application/commands/ClearRecentProjectsUseCase.hx
+application/commands/CloseProjectUseCase.hx
+application/commands/ExportDatabaseUseCase.hx
+application/commands/LoadProjectUseCase.hx
+application/commands/OpenResourceUseCase.hx
+application/commands/OpenViewUseCase.hx
+application/commands/SaveLayoutUseCase.hx
+application/commands/SetFullscreenUseCase.hx
+application/commands/SetRendererUseCase.hx
+application/dto/MenuItem.hx
+application/dto/ResourceMetadataDto.hx
+application/dto/ViewDto.hx
+application/dto/WindowBoundsDto.hx
+application/services/ClipboardService.hx
+application/services/LayoutHistoryService.hx
+application/services/MenuService.hx
+application/services/PluginManager.hx
+application/services/PluginRegistry.hx
+application/services/ProjectService.hx
+application/services/ResourceService.hx
+application/services/ViewRegistry.hx
+application/services/WindowService.hx
+bridge/SceneEditorService.hx
+domain/entities/Database.hx
+domain/entities/LayoutConfig.hx
+domain/entities/Project.hx
+domain/entities/Resource.hx
+domain/entities/UserSettings.hx
+domain/enums/MenuItemType.hx
+domain/enums/ResourceType.hx
+domain/enums/ViewType.hx
+domain/enums/WindowEvent.hx
+domain/exceptions/FileNotFoundError.hx
+domain/exceptions/InvalidConfigError.hx
+domain/exceptions/ProjectLoadError.hx
+domain/exceptions/ResourceNotFoundError.hx
+domain/services/IAppInfo.hx
+domain/services/IClipboardService.hx
+domain/services/IDomAccess.hx
+domain/services/IElement.hx
+domain/services/IFileDialog.hx
+domain/services/IFileSystem.hx
+domain/services/ILayoutEngine.hx
+domain/services/IPlatform.hx
+domain/services/IPlugin.hx
+domain/services/IResourceLoader.hx
+domain/services/IViewFactory.hx
+domain/services/IWindowManager.hx
+domain/services/PluginConfig.hx
+domain/services/PluginsConfig.hx
+domain/valueobjects/DisplayPosition.hx
+domain/valueobjects/FilePath.hx
+domain/valueobjects/LayoutConfig.hx
+domain/valueobjects/LayoutState.hx
+domain/valueobjects/ResourceId.hx
+domain/valueobjects/ScreenBounds.hx
+domain/valueobjects/WindowBounds.hx
+engine/domain/entities/MeshRenderer.hx
+engine/domain/entities/Rigidbody.hx
+engine/domain/entities/SceneComponent.hx
+engine/domain/entities/SceneObject.hx
+engine/domain/entities/Transform.hx
+engine/domain/services/ISceneService.hx
+engine/infrastructure/SceneServiceImpl.hx
+infrastructure/BrowserDomAccess.hx
+infrastructure/config/PackageJsonLoader.hx
+infrastructure/config/ProjectConfigParser.hx
+infrastructure/config/UserSettingsLoader.hx
+infrastructure/di/AppModule.hx
+infrastructure/external/golden/Config.hx
+infrastructure/external/golden/Container.hx
+infrastructure/external/golden/ContentItem.hx
+infrastructure/external/golden/Event.hx
+infrastructure/external/golden/Header.hx
+infrastructure/external/golden/Layout.hx
+infrastructure/external/golden/Tab.hx
+infrastructure/external/GoldenLayoutAdapter.hx
+infrastructure/external/HeapsEngineAdapter.hx
+infrastructure/external/HtmlElement.hx
+infrastructure/external/jQueryElementAdapter.hx
+infrastructure/external/monaco/KeyCode.hx
+infrastructure/external/monaco/KeyMod.hx
+infrastructure/external/monaco/Languages.hx
+infrastructure/external/monaco/MarkdownString.hx
+infrastructure/external/monaco/Model.hx
+infrastructure/external/monaco/ModelDeltaDecoration.hx
+infrastructure/external/monaco/Position.hx
+infrastructure/external/monaco/Range.hx
+infrastructure/external/monaco/ScriptEditor.hx
+infrastructure/external/monaco/Todo.hx
+infrastructure/external/MonacoEditorAdapter.hx
+infrastructure/external/nw/App.hx
+infrastructure/external/nw/Clipboard.hx
+infrastructure/external/nw/Menu.hx
+infrastructure/external/nw/MenuItem.hx
+infrastructure/external/nw/Screen.hx
+infrastructure/external/nw/Window.hx
+infrastructure/external/StubConsoleFactory.hx
+infrastructure/external/StubEditorFactory.hx
+infrastructure/external/StubGameFactory.hx
+infrastructure/external/StubHierarchyFactory.hx
+infrastructure/external/StubInspectorFactory.hx
+infrastructure/external/StubProjectFactory.hx
+infrastructure/external/StubPropertiesFactory.hx
+infrastructure/external/StubSceneFactory.hx
+infrastructure/persistence/FileSystemRepository.hx
+infrastructure/persistence/LocalStorageRepository.hx
+infrastructure/persistence/MemoryRepository.hx
+infrastructure/platform/electron/ElectronClipboardAdapter.hx
+infrastructure/platform/electron/ElectronFileDialogAdapter.hx
+infrastructure/platform/electron/ElectronFileSystemAdapter.hx
+infrastructure/platform/electron/ElectronIpcBridge.hx
+infrastructure/platform/electron/ElectronPlatformAdapter.hx
+infrastructure/platform/electron/ElectronScreenAdapter.hx
+infrastructure/platform/electron/ElectronShortcutAdapter.hx
+infrastructure/platform/electron/ElectronWindowAdapter.hx
+infrastructure/platform/nwjs/NwClipboardAdapter.hx
+infrastructure/platform/nwjs/NwFileSystemAdapter.hx
+infrastructure/platform/nwjs/NwIpcBridge.hx
+infrastructure/platform/nwjs/NwScreenAdapter.hx
+infrastructure/platform/nwjs/NwShortcutAdapter.hx
+infrastructure/platform/nwjs/NwWindowAdapter.hx
+infrastructure/platform/web/BrowserWindowAdapter.hx
+infrastructure/platform/web/LocalStorageAdapter.hx
+infrastructure/ui/ReactElement.hx
+infrastructure/ui/ReactRoot.hx
+infrastructure/ui/ReactViewFactory.hx
+legacy/Extension.hx
+legacy/Ide.hx
 plugins.json
+plugins/console/ConsoleView.hx
+plugins/console/ConsoleViewFactory.hx
+plugins/ConsolePlugin.hx
+presentation/config/MenuConfig.hx
+presentation/controllers/DragDropController.hx
+presentation/controllers/KeyboardController.hx
+presentation/controllers/MenuController.hx
+presentation/controllers/ToolbarController.hx
+presentation/controllers/WindowController.hx
+presentation/Ide.hx
+presentation/styles/CssVariables.hx
+presentation/styles/Theme.hx
+presentation/ui/Dialog.hx
+presentation/ui/Element.hx
+presentation/ui/MenuBuilder.hx
+presentation/ui/react/BaseReactComponent.hx
+presentation/ui/react/components/HierarchyPanel.hx
+presentation/ui/react/components/InspectorPanel.hx
+presentation/ui/react/components/WelcomePanel.hx
+presentation/ui/react/hooks/UseService.hx
+presentation/ui/StatusBar.hx
+presentation/ui/View.hx
+presentation/views/CdbTableView.hx
+presentation/views/ModelView.hx
+presentation/views/PrefabView.hx
+presentation/views/ScriptEditorView.hx
+shared/events/ErrorOccurred.hx
+shared/events/FullscreenChanged.hx
+shared/events/LayoutChanged.hx
+shared/events/LayoutSaved.hx
+shared/events/ObjectChanged.hx
+shared/events/ObjectSelected.hx
+shared/events/ProjectClosed.hx
+shared/events/ProjectClosing.hx
+shared/events/ProjectLoaded.hx
+shared/events/RecentProjectsUpdated.hx
+shared/events/RendererChanged.hx
+shared/events/ResourceOpened.hx
+shared/events/ViewOpened.hx
+shared/extensions/ArrayExt.hx
+shared/extensions/DateExt.hx
+shared/extensions/StringExt.hx
+shared/types/EventBusImpl.hx
+shared/types/IEventBus.hx
+shared/types/NonEmptyArray.hx
+shared/types/Option.hx
+shared/types/Result.hx
+shared/utils/AsyncUtils.hx
+shared/utils/JsonUtils.hx
+shared/utils/PathUtils.hx
 </directory_structure>
 
 <files>
@@ -1010,6 +986,63 @@ class WindowService implements Service {
 }
 </file>
 
+<file path="bridge/SceneEditorService.hx">
+package hide.bridge;
+
+import hide.engine.domain.services.ISceneService;
+import hide.engine.domain.entities.SceneObject;
+import hide.engine.domain.entities.Transform;
+import hide.engine.domain.entities.SceneComponent;
+import hide.shared.types.IEventBus;
+import hide.shared.events.ObjectSelected;
+import hide.shared.events.ObjectChanged;
+import hx.injection.Service;
+
+/**
+Мост между IDE и Engine.
+Синхронизирует состояние между UI и движком.
+*/
+class SceneEditorService implements Service {
+    private var sceneService:ISceneService;
+    private var eventBus:IEventBus;
+
+    public function new(sceneService:ISceneService, eventBus:IEventBus) {
+        this.sceneService = sceneService;
+        this.eventBus = eventBus;
+        
+        // Синхронизация: клик в Hierarchy → выделение в Engine
+        eventBus.subscribe(ObjectSelected, function(e:ObjectSelected) {
+            if (e.objectId != null) {
+                sceneService.select(e.objectId);
+            } else {
+                sceneService.deselect();
+            }
+        });
+    }
+
+    public function getSceneService():ISceneService {
+        return sceneService;
+    }
+
+    public function getRoot():SceneObject {
+        return sceneService.getRoot();
+    }
+
+    public function getSelected():Null<SceneObject> {
+        return sceneService.getSelected();
+    }
+
+    public function selectObject(id:String):Void {
+        eventBus.publish(ObjectSelected, new ObjectSelected(id));
+    }
+
+    public function updateTransform(id:String, transform:Transform):Void {
+        sceneService.setTransform(id, transform);
+        eventBus.publish(ObjectChanged, new ObjectChanged(id));
+    }
+}
+</file>
+
 <file path="domain/entities/Database.hx">
 package hide.domain.entities;
 </file>
@@ -1482,6 +1515,7 @@ typedef LayoutConfig = {
     var id:Null<String>;
     var width:Null<Int>;
     var height:Null<Int>;
+    var ?title:Null<String>;  // ← ДОБАВИТЬ
 }
 </file>
 
@@ -1517,6 +1551,353 @@ typedef WindowBounds = {
 }
 </file>
 
+<file path="engine/domain/entities/MeshRenderer.hx">
+package hide.engine.domain.entities;
+
+class MeshRenderer implements SceneComponent {
+    public var id:String;
+    public var name = "MeshRenderer";
+    public var meshPath:String;
+    public var materialPath:String;
+    
+    public function new(meshPath:String, materialPath:String) {
+        this.id = Std.string(Date.now().getTime());
+        this.meshPath = meshPath;
+        this.materialPath = materialPath;
+    }
+    
+    public function clone():SceneComponent {
+        return new MeshRenderer(meshPath, materialPath);
+    }
+}
+</file>
+
+<file path="engine/domain/entities/Rigidbody.hx">
+package hide.engine.domain.entities;
+
+class Rigidbody implements SceneComponent {
+    public var id:String;
+    public var name = "Rigidbody";
+    public var mass:Float;
+    public var useGravity:Bool;
+    
+    public function new(mass:Float = 1, useGravity:Bool = true) {
+        this.id = Std.string(Date.now().getTime());
+        this.mass = mass;
+        this.useGravity = useGravity;
+    }
+    
+    public function clone():SceneComponent {
+        return new Rigidbody(mass, useGravity);
+    }
+}
+</file>
+
+<file path="engine/domain/entities/SceneComponent.hx">
+// hide/domain/entities/SceneComponent.hx
+package hide.engine.domain.entities;
+
+/**
+Базовый интерфейс для компонентов (MeshRenderer, Rigidbody, Light и т.д.)
+*/
+interface SceneComponent {
+    var id:String;
+    var name:String;
+    function clone():SceneComponent;
+}
+</file>
+
+<file path="engine/domain/entities/SceneObject.hx">
+package hide.engine.domain.entities;
+
+/**
+Сущность объекта сцены
+*/
+class SceneObject {
+    public final id:String;
+    public var name:String;
+    public var transform:Transform;
+    public var components:Array<SceneComponent>;
+    public var parent:Null<SceneObject>;
+    public var children:Array<SceneObject>;
+    public var isActive:Bool;
+
+    public function new(id:String, name:String) {
+        this.id = id;
+        this.name = name;
+        this.transform = new Transform();
+        this.components = [];
+        this.children = [];
+        this.isActive = true;
+    }
+
+    public function addChild(child:SceneObject):Void {
+        child.parent = this;
+        children.push(child);
+    }
+
+    public function removeChild(child:SceneObject):Void {
+        child.parent = null;
+        children.remove(child);
+    }
+
+    public function getComponent<T:SceneComponent>(type:Class<T>):Null<T> {
+        for (c in components) {
+            if (Std.isOfType(c, type)) return cast c;
+        }
+        return null;
+    }
+
+    public function addComponent(component:SceneComponent):Void {
+        components.push(component);
+    }
+
+    public function removeComponent(componentId:String):Void {
+        components = [for (c in components) if (c.id != componentId) c];
+    }
+}
+</file>
+
+<file path="engine/domain/entities/Transform.hx">
+// hide/domain/entities/Transform.hx
+package hide.engine.domain.entities;
+
+/**
+Значение-объект (Value Object). Неизменяемый.
+Для изменения — создаём новый экземпляр.
+*/
+class Transform {
+    public final x:Float;
+    public final y:Float;
+    public final z:Float;
+    public final rotX:Float;
+    public final rotY:Float;
+    public final rotZ:Float;
+    public final scaleX:Float;
+    public final scaleY:Float;
+    public final scaleZ:Float;
+
+    public function new(
+        x:Float = 0, y:Float = 0, z:Float = 0,
+        rotX:Float = 0, rotY:Float = 0, rotZ:Float = 0,
+        scaleX:Float = 1, scaleY:Float = 1, scaleZ:Float = 1
+    ) {
+        this.x = x; this.y = y; this.z = z;
+        this.rotX = rotX; this.rotY = rotY; this.rotZ = rotZ;
+        this.scaleX = scaleX; this.scaleY = scaleY; this.scaleZ = scaleZ;
+    }
+
+    public function withPosition(x:Float, y:Float, z:Float):Transform {
+        return new Transform(x, y, z, rotX, rotY, rotZ, scaleX, scaleY, scaleZ);
+    }
+
+    public function withRotation(x:Float, y:Float, z:Float):Transform {
+        return new Transform(x, y, z, x, y, z, scaleX, scaleY, scaleZ);
+    }
+
+    public function withScale(x:Float, y:Float, z:Float):Transform {
+        return new Transform(x, y, z, rotX, rotY, rotZ, x, y, z);
+    }
+}
+</file>
+
+<file path="engine/domain/services/ISceneService.hx">
+// hide/domain/services/ISceneService.hx
+package hide.engine.domain.services;
+
+import hide.engine.domain.entities.SceneComponent;
+import hide.engine.domain.entities.SceneObject;
+import hide.engine.domain.entities.Transform;
+import hx.injection.Service;
+
+/**
+Доменный порт для управления сценой.
+НЕ знает ни про UI, ни про рендер (Heaps/Three.js).
+*/
+interface ISceneService extends Service {
+    // Запросы (Queries)
+    function getRoot():SceneObject;
+    function getObject(id:String):Null<SceneObject>;
+    function getSelected():Null<SceneObject>;
+    function getAll():Array<SceneObject>;
+
+    // Команды (Commands)
+    function select(id:String):Void;
+    function deselect():Void;
+    function rename(id:String, newName:String):Void;
+    function setTransform(id:String, transform:Transform):Void;
+    function addComponent(id:String, component:SceneComponent):Void;
+    function removeComponent(id:String, componentId:String):Void;
+
+    // События
+    function onObjectSelected(callback:String->Void):Void;
+    function onObjectChanged(callback:String->Void):Void;
+    function onSceneChanged(callback:Void->Void):Void;
+}
+</file>
+
+<file path="engine/infrastructure/SceneServiceImpl.hx">
+package hide.engine.infrastructure;
+
+import hide.engine.domain.services.ISceneService;
+import hide.engine.domain.entities.SceneObject;
+import hide.engine.domain.entities.Transform;
+import hide.engine.domain.entities.SceneComponent;
+import hide.engine.domain.entities.MeshRenderer;
+import hide.engine.domain.entities.Rigidbody;
+import hide.shared.types.IEventBus;
+import hide.shared.events.ObjectSelected;
+import hide.shared.events.ObjectChanged;
+import hx.injection.Service;
+
+class SceneServiceImpl implements ISceneService implements Service {
+    private var root:SceneObject;
+    private var selectedId:Null<String>;
+    private var eventBus:IEventBus;
+    private var objectIndex:Map<String, SceneObject>;
+
+    private var onObjectSelectedCallbacks:Array<String->Void>;
+    private var onObjectChangedCallbacks:Array<String->Void>;
+    private var onSceneChangedCallbacks:Array<Void->Void>;
+
+    public function new(eventBus:IEventBus) {
+        this.eventBus = eventBus;
+        this.objectIndex = new Map();
+        this.onObjectSelectedCallbacks = [];
+        this.onObjectChangedCallbacks = [];
+        this.onSceneChangedCallbacks = [];
+        
+        root = createSampleScene();
+    }
+
+    private function createSampleScene():SceneObject {
+        var scene = new SceneObject("scene", "SampleScene");
+        
+        var camera = new SceneObject("camera", "Main Camera");
+        
+        var light = new SceneObject("light", "Directional Light");
+        
+        var player = new SceneObject("player", "Player");
+        player.transform = new Transform(0, 1.5, 0);
+        player.addComponent(new MeshRenderer("Player.mesh", "Default-Diffuse"));
+        player.addComponent(new Rigidbody(1, true));
+        
+        var ground = new SceneObject("ground", "Ground");
+        ground.transform = new Transform(0, 0, 0);
+        ground.addComponent(new MeshRenderer("Ground.mesh", "Ground-Material"));
+        
+        scene.addChild(camera);
+        scene.addChild(light);
+        scene.addChild(player);
+        scene.addChild(ground);
+        
+        indexObject(scene);
+        
+        return scene;
+    }
+
+    private function indexObject(obj:SceneObject):Void {
+        objectIndex.set(obj.id, obj);
+        for (child in obj.children) indexObject(child);
+    }
+
+    public function getRoot():SceneObject return root;
+    
+    public function getObject(id:String):Null<SceneObject> {
+        return objectIndex.get(id);
+    }
+    
+    public function getSelected():Null<SceneObject> {
+        return selectedId != null ? objectIndex.get(selectedId) : null;
+    }
+    
+    public function getAll():Array<SceneObject> {
+        return [for (obj in objectIndex) obj];
+    }
+
+    public function select(id:String):Void {
+        if (!objectIndex.exists(id)) return;
+        selectedId = id;
+        eventBus.publish(ObjectSelected, new ObjectSelected(id));
+        for (cb in onObjectSelectedCallbacks) cb(id);
+    }
+
+    public function deselect():Void {
+        selectedId = null;
+        eventBus.publish(ObjectSelected, new ObjectSelected(null));
+    }
+
+    public function rename(id:String, newName:String):Void {
+        var obj = getObject(id);
+        if (obj == null) return;
+        obj.name = newName;
+        notifyChanged(id);
+    }
+
+    public function setTransform(id:String, transform:Transform):Void {
+        var obj = getObject(id);
+        if (obj == null) return;
+        obj.transform = transform;
+        notifyChanged(id);
+    }
+
+    public function addComponent(id:String, component:SceneComponent):Void {
+        var obj = getObject(id);
+        if (obj == null) return;
+        obj.addComponent(component);
+        notifyChanged(id);
+    }
+
+    public function removeComponent(id:String, componentId:String):Void {
+        var obj = getObject(id);
+        if (obj == null) return;
+        obj.removeComponent(componentId);
+        notifyChanged(id);
+    }
+
+    public function onObjectSelected(callback:String->Void):Void {
+        onObjectSelectedCallbacks.push(callback);
+    }
+
+    public function onObjectChanged(callback:String->Void):Void {
+        onObjectChangedCallbacks.push(callback);
+    }
+
+    public function onSceneChanged(callback:Void->Void):Void {
+        onSceneChangedCallbacks.push(callback);
+    }
+
+    private function notifyChanged(id:String):Void {
+        eventBus.publish(ObjectChanged, new ObjectChanged(id));
+        for (cb in onObjectChangedCallbacks) cb(id);
+        for (cb in onSceneChangedCallbacks) cb();
+    }
+}
+</file>
+
+<file path="infrastructure/BrowserDomAccess.hx">
+package hide.infrastructure;
+
+import hide.domain.services.IDomAccess;
+import hx.injection.Service;
+
+class BrowserDomAccess implements IDomAccess implements Service {
+    public function new() {}
+    
+    public function getElementById(id:String):Dynamic {
+        return js.Browser.document.getElementById(id);
+    }
+    
+    public function addWindowEventListener(event:String, handler:Dynamic->Void):Void {
+        js.Browser.window.addEventListener(event, handler);
+    }
+    
+    public function removeWindowEventListener(event:String, handler:Dynamic->Void):Void {
+        js.Browser.window.removeEventListener(event, handler);
+    }
+}
+</file>
+
 <file path="infrastructure/config/PackageJsonLoader.hx">
 package hide.infrastructure.config;
 </file>
@@ -1532,6 +1913,7 @@ package hide.infrastructure.config;
 <file path="infrastructure/di/AppModule.hx">
 package hide.infrastructure.di;
 
+import hide.presentation.controllers.ToolbarController;
 import hx.injection.ServiceCollection;
 import hide.shared.types.IEventBus;
 import hide.shared.types.EventBusImpl;
@@ -1609,6 +1991,7 @@ class AppModule {
         // ✅ РЕГИСТРИРУЕМ КОНТРОЛЛЕР МЕНЮ
         collection.addSingleton(MenuController);    
         collection.addSingleton(WindowController);
+        collection.addSingleton(ToolbarController);  
         // 4. Use Cases (Transient, чтобы каждый вызов был чистым, 
         // или Singleton, если они полностью stateless и тяжелые)
         collection.addSingleton(LoadProjectUseCase);
@@ -1807,6 +2190,440 @@ extern class Tab {
 	dynamic function onClose() : Bool;
 
 }
+</file>
+
+<file path="infrastructure/external/GoldenLayoutAdapter.hx">
+package hide.infrastructure.external;
+
+import hide.application.services.ViewRegistry;
+import hide.infrastructure.external.golden.*;
+import hide.domain.services.ILayoutEngine;
+import hide.domain.services.IViewFactory;
+import hide.domain.valueobjects.LayoutConfig;
+import hide.domain.valueobjects.LayoutState;
+import hide.domain.valueobjects.DisplayPosition;
+import hide.shared.types.IEventBus;
+import hide.shared.events.LayoutChanged;
+import js.html.Element;
+import hx.injection.Service;
+import hide.infrastructure.external.golden.Config.ItemConfig;
+import hide.infrastructure.external.golden.Config.ItemType;
+class GoldenLayoutAdapter implements ILayoutEngine implements Service {
+   private var layout:Layout;
+    private var container:Dynamic; // Принимает js.html.Element или jQuery
+    private var eventBus:IEventBus;
+    private var viewFactories:Map<String, IViewFactory>; 
+    private var onLayoutChangedCallbacks:Array<Void->Void>;
+    private var viewRegistry:ViewRegistry;
+
+    public function new(eventBus:IEventBus, viewRegistry:ViewRegistry) {
+        this.eventBus = eventBus;
+        this.viewRegistry = viewRegistry;
+        this.viewFactories = new Map();
+        this.onLayoutChangedCallbacks = [];
+
+        viewRegistry.setFactoryRegistrationCallback(registerView);
+    }
+
+    public function setContainer(el:Dynamic):Void {
+        this.container = el;
+    }
+
+    public function init(state:LayoutState):Void {
+        if (container == null) {
+            trace("WARNING: GoldenLayout container not set. Call setContainer() first.");
+            return;
+        }
+
+        var contentData = state.content;
+        if (contentData == null || contentData.length == 0) {
+            var defaultState = createDefaultSkeleton();
+            contentData = defaultState.content;
+        }
+
+        var goldenConfig = toGoldenConfig({ content: contentData, fullScreen: null });
+
+        // ✅ ИСПРАВЛЕНИЕ: передаем container напрямую (или cast, если это jQuery), без .get(0)
+        layout = new Layout(goldenConfig, cast container);
+
+        for (type => factory in viewFactories) {
+            registerComponentInLayout(type, factory);
+        }
+
+        layout.init();
+        
+        layout.on('stateChanged', onStateChanged);
+    }
+    private function onStateChanged ():Void {
+        eventBus.publish(LayoutChanged,new LayoutChanged());
+        for (cb in onLayoutChangedCallbacks) cb();
+    }
+    public function open(componentName:String, state:Dynamic, ?position:DisplayPosition):Void {
+        if (layout == null) throw "Layout not initialized";
+
+        var config:ItemConfig = {
+            type: Component,
+            componentName: componentName,
+            componentState: state,
+            content: [], id: null, width: null, height: null, isClosable: true, title: componentName, activeItemIndex: null
+        };
+
+        var targetContainer = getOrInitTarget(position);
+        targetContainer.addChild(config);
+    }
+    public function updateSize(width:Int, height:Int):Void {
+        if (layout != null && layout.isInitialised) {
+            layout.updateSize(width, height);
+        }
+    }
+    public function save():LayoutState {
+        var config = layout.toConfig();
+        return {
+            // ✅ ИСПРАВЛЕНИЕ: fromGoldenConfig теперь возвращает правильный тип
+            content: fromGoldenConfig(config.content),
+            fullScreen: null
+        };
+    }
+
+    public function dispose():Void {
+        if (layout != null) {
+            layout.destroy();
+            layout = null;
+        }
+        onLayoutChangedCallbacks = [];
+    }
+
+    public function onLayoutChanged(callback:Void->Void):Void {
+        onLayoutChangedCallbacks.push(callback);
+    }
+
+    public function registerView(type:String, factory:IViewFactory):Void {
+        viewFactories.set(type, factory);
+        if (layout != null && layout.isInitialised) {
+            registerComponentInLayout(type, factory);
+        }
+    }
+
+    // === Вспомогательные методы ===
+
+    private function registerComponentInLayout(type:String, factory:IViewFactory):Void {
+        layout.registerComponent(type, function(glContainer, state) {
+            var element = new HtmlElement(glContainer.getElement());
+            factory.create(element, state);
+        });
+    }
+
+    /**
+     * Создает дефолтную структуру окон, если её нет.
+     * Возвращает доменный тип LayoutState, а не golden.Config.
+     */
+    private function createDefaultSkeleton():LayoutState {
+        return {
+            content: [{
+                type: "row",
+                componentName: null,
+                componentState: null,
+                id: "content_root",
+                width: null,
+                height: null,
+                content: [
+                    // === ЛЕВАЯ КОЛОНКА: Hierarchy (20%) ===
+                    {
+                        type: "stack",
+                        id: "left",
+                        width: 20,
+                        componentName: null,  // ← null для stack
+                        componentState: null,
+                        height: null,
+                        content: [            // ← ДОБАВЛЯЕМ дочерний компонент!
+                            {
+                                type: "component",
+                                componentName: "hierarchy",
+                                componentState: {},
+                                title: "Hierarchy",
+                                id: "hierarchy-tab",
+                                content: [],
+                                width: null,
+                                height: null
+                            }
+                        ],
+                        title: "Hierarchy"
+                    },
+                    
+                    // === ЦЕНТРАЛЬНАЯ КОЛОНКА (55%) ===
+                    {
+                        type: "column",
+                        id: "middle-column",
+                        width: 55,
+                        componentName: null,
+                        componentState: null,
+                        height: null,
+                        content: [
+                            // Верх: Scene + Game (табы)
+                            {
+                                type: "stack",
+                                id: "center",
+                                componentName: null,
+                                componentState: null,
+                                width: null,
+                                height: 70,
+                                content: [    // ← ДОБАВЛЯЕМ Scene и Game
+                                    {
+                                        type: "component",
+                                        componentName: "scene",
+                                        componentState: {},
+                                        title: "Scene",
+                                        id: "scene-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    },
+                                    {
+                                        type: "component",
+                                        componentName: "game",
+                                        componentState: {},
+                                        title: "Game",
+                                        id: "game-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    }
+                                ],
+                                title: "Scene"
+                            },
+                            // Низ: Project + Console (табы)
+                            {
+                                type: "stack",
+                                id: "bottom",
+                                componentName: null,
+                                componentState: null,
+                                width: null,
+                                height: 30,
+                                content: [    // ← ДОБАВЛЯЕМ Project и Console
+                                    {
+                                        type: "component",
+                                        componentName: "project",
+                                        componentState: {},
+                                        title: "Project",
+                                        id: "project-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    },
+                                    {
+                                        type: "component",
+                                        componentName: "console",
+                                        componentState: { logLevel: "info" },
+                                        title: "Console",
+                                        id: "console-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    }
+                                ],
+                                title: "Project"
+                            }
+                        ]
+                    },
+                    
+                    // === ПРАВАЯ КОЛОНКА: Inspector (25%) ===
+                    {
+                        type: "stack",
+                        id: "right",
+                        width: 25,
+                        componentName: null,
+                        componentState: null,
+                        height: null,
+                        content: [            // ← ДОБАВЛЯЕМ дочерний компонент!
+                            {
+                                type: "component",
+                                componentName: "inspector",
+                                componentState: {},
+                                title: "Inspector",
+                                id: "inspector-tab",
+                                content: [],
+                                width: null,
+                                height: null
+                            }
+                        ],
+                        title: "Inspector"
+                    }
+                ]
+            }],
+            fullScreen: null
+        };
+    }
+
+    private function getOrInitTarget(position:DisplayPosition):ContentItem {
+        if (layout.root == null) return layout.root;
+
+        var targetId = switch position {
+            case Left: "left";
+            case Center: "center";
+            case Bottom: "bottom";
+            case Right: "right";
+            case MiddleColumnInternal: "middle-column";
+            case null: null;
+        };
+
+        if (targetId == null) return layout.root;
+
+        var items = layout.root.getItemsById(targetId);
+        if (items.length > 0) {
+            var target = items[0];
+            // ✅ ЗАЩИТА: если у существующего контейнера content == null, инициализируем
+            if (target.config.content == null) {
+                target.config.content = [];
+            }
+            return target;
+        }
+
+        var rootRow = layout.root.contentItems[0];
+        if (rootRow == null || rootRow.type != Row) {
+            layout.root.addChild({ type: Stack, id: targetId, componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
+            return layout.root.getItemsById(targetId)[0];
+        }
+
+        switch position {
+            case Left: rootRow.addChild({ type: Stack, id: "left", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
+            case Right: rootRow.addChild({ type: Stack, id: "right", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null });
+            case Center | Bottom | MiddleColumnInternal:
+                var middleItems = layout.root.getItemsById("middle-column");
+                var middleCol:ContentItem = middleItems.length > 0 ? middleItems[0] : null;
+
+                if (middleCol == null) {
+                    rootRow.addChild({ type: Column, id: "middle-column", isClosable: false, componentName: null, componentState: null, content: [], width: null, height: null, title: null, activeItemIndex: null }, 1);
+                    middleCol = layout.root.getItemsById("middle-column")[0];
+                }
+
+                if (position == Center) {
+                    middleCol.addChild({ type: Stack, id: "center", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
+                } else if (position == Bottom) {
+                    middleCol.addChild({ type: Stack, id: "bottom", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
+                }
+            default:
+        }
+        return layout.root.getItemsById(targetId)[0];
+    }
+
+    // === Строгий Маппинг JSON ===
+    
+    private function toGoldenConfig(state:LayoutState):Config {
+        return {
+            content: [for (item in state.content) toGoldenItem(item)],
+            settings: { reorderEnabled: true, constrainDragToHeader: true, showPopoutIcon: false, showMaximiseIcon: true }
+        };
+    }
+
+    // ✅ ИСПРАВЛЕНИЕ: Явная типизация аргумента
+    // hide/infrastructure/external/GoldenLayoutAdapter.hx
+    private function toGoldenItem(item:LayoutConfig):hide.infrastructure.external.golden.Config.ItemConfig {
+        var glType = switch item.type {
+            case "row": ItemType.Row;
+            case "column": ItemType.Column;
+            case "stack": ItemType.Stack;
+            default: ItemType.Component;
+        };
+        return {
+            type: glType,
+            componentName: item.componentName,
+            componentState: item.componentState,
+            content: item.content != null ? [for (i in item.content) toGoldenItem(i)] : null,
+            id: item.id,
+            width: item.width,
+            height: item.height,
+            isClosable: true,
+            title: item.title,          // ← ИЗМЕНЕНО: было null
+            activeItemIndex: null
+        };
+    }
+
+    // ✅ ИСПРАВЛЕНИЕ: Возвращаем правильный доменный тип
+    private function fromGoldenConfig(items:Array<ItemConfig>):Array<LayoutConfig> {
+        return [for (item in items) fromGoldenItem(item)];
+    }
+
+    // hide/infrastructure/external/GoldenLayoutAdapter.hx
+    private function fromGoldenItem(item:ItemConfig):LayoutConfig {
+        var typeStr = switch item.type {
+            case Row: "row";
+            case Column: "column";
+            case Stack: "stack";
+            case Component: "component";
+        };
+        return {
+            type: typeStr,
+            componentName: item.componentName,
+            componentState: item.componentState,
+            content: item.content != null ? [for (i in item.content) fromGoldenItem(i)] : null,
+            id: item.id,
+            width: item.width,
+            height: item.height,
+            title: item.title           // ← ДОБАВИТЬ
+        };
+    }
+}
+</file>
+
+<file path="infrastructure/external/HeapsEngineAdapter.hx">
+package hide.infrastructure.external;
+</file>
+
+<file path="infrastructure/external/HtmlElement.hx">
+package hide.infrastructure.external;
+
+import hide.domain.services.IElement;
+import js.html.Element;
+
+class HtmlElement implements IElement {
+    private var element:Element;
+    
+    public function new(element:Dynamic) {
+        // GoldenLayout возвращает JQuery, нужно получить raw element
+        if (element == null) {
+            // Fallback на случай, если передан null
+            this.element = js.Browser.document.createElement("div");
+        } else if (element.nodeType != null) {
+            // Это уже "голый" DOM-элемент (наиболее вероятный сценарий в GL v2/v3)
+            this.element = cast element;
+        } else if (element.length != null && element[0] != null) {
+            // Это jQuery-подобный объект (массив с элементами)
+            this.element = cast element[0];
+        } else if (Reflect.hasField(element, "get") && Reflect.isFunction(element.get)) {
+            // У объекта есть метод .get() (классический jQuery)
+            this.element = cast element.get(0);
+        } else {
+            // Попытка прямого каста как последняя надеждa
+            this.element = cast element;
+        }
+    }
+
+    public function setInnerHtml(html:String):Void {
+        element.innerHTML = html;  // ← innerHTML (заглавные)
+    }
+
+    public function appendChild(child:IElement):Void {
+        var childHtml:HtmlElement = cast child;  // ← каст к HtmlElement
+        element.appendChild(childHtml.element);
+    }
+
+    public function addEventListener(event:String, handler:Dynamic->Void):Void {
+        element.addEventListener(event, handler);
+    }
+
+    public function getParent():Null<IElement> {
+        if (element.parentElement == null) return null;
+        return new HtmlElement(element.parentElement);
+    }
+
+    public function getElement():Element {
+        return element;
+    }
+}
+</file>
+
+<file path="infrastructure/external/jQueryElementAdapter.hx">
+package hide.infrastructure.external;
 </file>
 
 <file path="infrastructure/external/monaco/KeyCode.hx">
@@ -2115,6 +2932,10 @@ abstract Todo(Dynamic) {
 }
 </file>
 
+<file path="infrastructure/external/MonacoEditorAdapter.hx">
+package hide.infrastructure.external;
+</file>
+
 <file path="infrastructure/external/nw/App.hx">
 package nw;
 
@@ -2272,376 +3093,6 @@ extern class Window {
 }
 </file>
 
-<file path="infrastructure/external/GoldenLayoutAdapter.hx">
-package hide.infrastructure.external;
-
-import hide.application.services.ViewRegistry;
-import hide.infrastructure.external.golden.*;
-import hide.domain.services.ILayoutEngine;
-import hide.domain.services.IViewFactory;
-import hide.domain.valueobjects.LayoutConfig;
-import hide.domain.valueobjects.LayoutState;
-import hide.domain.valueobjects.DisplayPosition;
-import hide.shared.types.IEventBus;
-import hide.shared.events.LayoutChanged;
-import js.html.Element;
-import hx.injection.Service;
-import hide.infrastructure.external.golden.Config.ItemConfig;
-import hide.infrastructure.external.golden.Config.ItemType;
-class GoldenLayoutAdapter implements ILayoutEngine implements Service {
-   private var layout:Layout;
-    private var container:Dynamic; // Принимает js.html.Element или jQuery
-    private var eventBus:IEventBus;
-    private var viewFactories:Map<String, IViewFactory>; 
-    private var onLayoutChangedCallbacks:Array<Void->Void>;
-    private var viewRegistry:ViewRegistry;
-
-    public function new(eventBus:IEventBus, viewRegistry:ViewRegistry) {
-        this.eventBus = eventBus;
-        this.viewRegistry = viewRegistry;
-        this.viewFactories = new Map();
-        this.onLayoutChangedCallbacks = [];
-
-        viewRegistry.setFactoryRegistrationCallback(registerView);
-    }
-
-    public function setContainer(el:Dynamic):Void {
-        this.container = el;
-    }
-
-    public function init(state:LayoutState):Void {
-        if (container == null) {
-            trace("WARNING: GoldenLayout container not set. Call setContainer() first.");
-            return;
-        }
-
-        var contentData = state.content;
-        if (contentData == null || contentData.length == 0) {
-            var defaultState = createDefaultSkeleton();
-            contentData = defaultState.content;
-        }
-
-        var goldenConfig = toGoldenConfig({ content: contentData, fullScreen: null });
-
-        // ✅ ИСПРАВЛЕНИЕ: передаем container напрямую (или cast, если это jQuery), без .get(0)
-        layout = new Layout(goldenConfig, cast container);
-
-        for (type => factory in viewFactories) {
-            registerComponentInLayout(type, factory);
-        }
-
-        layout.init();
-        
-        layout.on('stateChanged', onStateChanged);
-    }
-    private function onStateChanged ():Void {
-        eventBus.publish(LayoutChanged,new LayoutChanged());
-        for (cb in onLayoutChangedCallbacks) cb();
-    }
-    public function open(componentName:String, state:Dynamic, ?position:DisplayPosition):Void {
-        if (layout == null) throw "Layout not initialized";
-
-        var config:ItemConfig = {
-            type: Component,
-            componentName: componentName,
-            componentState: state,
-            content: [], id: null, width: null, height: null, isClosable: true, title: componentName, activeItemIndex: null
-        };
-
-        var targetContainer = getOrInitTarget(position);
-        targetContainer.addChild(config);
-    }
-    public function updateSize(width:Int, height:Int):Void {
-        if (layout != null && layout.isInitialised) {
-            layout.updateSize(width, height);
-        }
-    }
-    public function save():LayoutState {
-        var config = layout.toConfig();
-        return {
-            // ✅ ИСПРАВЛЕНИЕ: fromGoldenConfig теперь возвращает правильный тип
-            content: fromGoldenConfig(config.content),
-            fullScreen: null
-        };
-    }
-
-    public function dispose():Void {
-        if (layout != null) {
-            layout.destroy();
-            layout = null;
-        }
-        onLayoutChangedCallbacks = [];
-    }
-
-    public function onLayoutChanged(callback:Void->Void):Void {
-        onLayoutChangedCallbacks.push(callback);
-    }
-
-    public function registerView(type:String, factory:IViewFactory):Void {
-        viewFactories.set(type, factory);
-        if (layout != null && layout.isInitialised) {
-            registerComponentInLayout(type, factory);
-        }
-    }
-
-    // === Вспомогательные методы ===
-
-    private function registerComponentInLayout(type:String, factory:IViewFactory):Void {
-        layout.registerComponent(type, function(glContainer, state) {
-            var element = new HtmlElement(glContainer.getElement());
-            factory.create(element, state);
-        });
-    }
-
-    /**
- * Создает дефолтную структуру окон, если её нет.
- * Возвращает доменный тип LayoutState, а не golden.Config.
- */
-    private function createDefaultSkeleton():LayoutState {
-        return {
-            content: [{
-                type: "row",
-                componentName: null,
-                componentState: null,
-                id: null,
-                width: null,
-                height: null,
-                content: [
-                    // Левая панель: Hierarchy (20%)
-                    { 
-                        type: "stack", 
-                        id: "left", 
-                        width: 20, 
-                        componentName: "hierarchy",
-                        componentState: {},
-                        height: null, 
-                        content: [],
-                        title: "Hierarchy"
-                    },
-                    // Центральная колонка: Scene/Game + Project/Console
-                    { 
-                        type: "column", 
-                        id: "middle-column", 
-                        width: 55, 
-                        componentName: null, 
-                        componentState: null, 
-                        height: null,
-                        content: [
-                            // Верхняя часть: Scene View + Game View (tabs)
-                            { 
-                                type: "stack", 
-                                id: "center", 
-                                componentName: "scene_view",
-                                componentState: {},
-                                width: null, 
-                                height: 70, 
-                                content: [],
-                                title: "Scene"
-                            },
-                            // Нижняя часть: Project + Console (tabs)
-                            { 
-                                type: "stack", 
-                                id: "bottom", 
-                                componentName: "project",
-                                componentState: {},
-                                width: null, 
-                                height: 30, 
-                                content: [],
-                                title: "Project"
-                            }
-                        ]
-                    },
-                    // Правая панель: Inspector (25%)
-                    { 
-                        type: "stack", 
-                        id: "right", 
-                        width: 25, 
-                        componentName: "inspector",
-                        componentState: {},
-                        height: null, 
-                        content: [],
-                        title: "Inspector"
-                    }
-                ]
-            }],
-            fullScreen: null
-        };
-    }
-
-    private function getOrInitTarget(position:DisplayPosition):ContentItem {
-        if (layout.root == null) return layout.root;
-
-        var targetId = switch position {
-            case Left: "left";
-            case Center: "center";
-            case Bottom: "bottom";
-            case Right: "right";
-            case MiddleColumnInternal: "middle-column";
-            case null: null;
-        };
-
-        if (targetId == null) return layout.root;
-
-        var items = layout.root.getItemsById(targetId);
-        if (items.length > 0) {
-            var target = items[0];
-            // ✅ ЗАЩИТА: если у существующего контейнера content == null, инициализируем
-            if (target.config.content == null) {
-                target.config.content = [];
-            }
-            return target;
-        }
-
-        var rootRow = layout.root.contentItems[0];
-        if (rootRow == null || rootRow.type != Row) {
-            layout.root.addChild({ type: Stack, id: targetId, componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
-            return layout.root.getItemsById(targetId)[0];
-        }
-
-        switch position {
-            case Left: rootRow.addChild({ type: Stack, id: "left", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
-            case Right: rootRow.addChild({ type: Stack, id: "right", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null });
-            case Center | Bottom | MiddleColumnInternal:
-                var middleItems = layout.root.getItemsById("middle-column");
-                var middleCol:ContentItem = middleItems.length > 0 ? middleItems[0] : null;
-
-                if (middleCol == null) {
-                    rootRow.addChild({ type: Column, id: "middle-column", isClosable: false, componentName: null, componentState: null, content: [], width: null, height: null, title: null, activeItemIndex: null }, 1);
-                    middleCol = layout.root.getItemsById("middle-column")[0];
-                }
-
-                if (position == Center) {
-                    middleCol.addChild({ type: Stack, id: "center", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
-                } else if (position == Bottom) {
-                    middleCol.addChild({ type: Stack, id: "bottom", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
-                }
-            default:
-        }
-        return layout.root.getItemsById(targetId)[0];
-    }
-
-    // === Строгий Маппинг JSON ===
-    
-    private function toGoldenConfig(state:LayoutState):Config {
-        return {
-            content: [for (item in state.content) toGoldenItem(item)],
-            settings: { reorderEnabled: true, constrainDragToHeader: true, showPopoutIcon: false, showMaximiseIcon: true }
-        };
-    }
-
-    // ✅ ИСПРАВЛЕНИЕ: Явная типизация аргумента
-    private function toGoldenItem(item:LayoutConfig):hide.infrastructure.external.golden.Config.ItemConfig {
-        var glType = switch item.type {
-            case "row": ItemType.Row;
-            case "column": ItemType.Column;
-            case "stack": ItemType.Stack;
-            default: ItemType.Component;
-        };
-        return {
-            type: glType,
-            componentName: item.componentName,
-            componentState: item.componentState,
-            // ✅ ИСПРАВЛЕНИЕ: item.content теперь типизирован, итерация разрешена
-            content: item.content != null ? [for (i in item.content) toGoldenItem(i)] : null,
-            id: item.id,
-            width: item.width,
-            height: item.height,
-            isClosable: true,
-            title: null,
-            activeItemIndex: null
-        };
-    }
-
-    // ✅ ИСПРАВЛЕНИЕ: Возвращаем правильный доменный тип
-    private function fromGoldenConfig(items:Array<ItemConfig>):Array<LayoutConfig> {
-        return [for (item in items) fromGoldenItem(item)];
-    }
-
-    private function fromGoldenItem(item:ItemConfig):LayoutConfig {
-        var typeStr = switch item.type {
-            case Row: "row";
-            case Column: "column";
-            case Stack: "stack";
-            case Component: "component";
-        };
-        return {
-            type: typeStr,
-            componentName: item.componentName,
-            componentState: item.componentState,
-            content: item.content != null ? [for (i in item.content) fromGoldenItem(i)] : null,
-            id: item.id,
-            width: item.width,
-            height: item.height
-        };
-            }
-}
-</file>
-
-<file path="infrastructure/external/HeapsEngineAdapter.hx">
-package hide.infrastructure.external;
-</file>
-
-<file path="infrastructure/external/HtmlElement.hx">
-package hide.infrastructure.external;
-
-import hide.domain.services.IElement;
-import js.html.Element;
-
-class HtmlElement implements IElement {
-    private var element:Element;
-    
-    public function new(element:Dynamic) {
-        // GoldenLayout возвращает JQuery, нужно получить raw element
-        if (element == null) {
-            // Fallback на случай, если передан null
-            this.element = js.Browser.document.createElement("div");
-        } else if (element.nodeType != null) {
-            // Это уже "голый" DOM-элемент (наиболее вероятный сценарий в GL v2/v3)
-            this.element = cast element;
-        } else if (element.length != null && element[0] != null) {
-            // Это jQuery-подобный объект (массив с элементами)
-            this.element = cast element[0];
-        } else if (Reflect.hasField(element, "get") && Reflect.isFunction(element.get)) {
-            // У объекта есть метод .get() (классический jQuery)
-            this.element = cast element.get(0);
-        } else {
-            // Попытка прямого каста как последняя надеждa
-            this.element = cast element;
-        }
-    }
-
-    public function setInnerHtml(html:String):Void {
-        element.innerHTML = html;  // ← innerHTML (заглавные)
-    }
-
-    public function appendChild(child:IElement):Void {
-        var childHtml:HtmlElement = cast child;  // ← каст к HtmlElement
-        element.appendChild(childHtml.element);
-    }
-
-    public function addEventListener(event:String, handler:Dynamic->Void):Void {
-        element.addEventListener(event, handler);
-    }
-
-    public function getParent():Null<IElement> {
-        if (element.parentElement == null) return null;
-        return new HtmlElement(element.parentElement);
-    }
-
-    public function getElement():Element {
-        return element;
-    }
-}
-</file>
-
-<file path="infrastructure/external/jQueryElementAdapter.hx">
-package hide.infrastructure.external;
-</file>
-
-<file path="infrastructure/external/MonacoEditorAdapter.hx">
-package hide.infrastructure.external;
-</file>
-
 <file path="infrastructure/external/StubConsoleFactory.hx">
 package hide.infrastructure.external;
 
@@ -2687,25 +3138,209 @@ class StubEditorFactory implements IViewFactory implements Service {
 }
 </file>
 
-<file path="infrastructure/external/StubProjectFactory.hx">
+<file path="infrastructure/external/StubGameFactory.hx">
+// hide/infrastructure/external/StubGameFactory.hx
 package hide.infrastructure.external;
-
 import hide.domain.services.IViewFactory;
 import hide.domain.services.IElement;
 import hx.injection.Service;
 
-class StubProjectFactory implements IViewFactory {
+class StubGameFactory implements IViewFactory implements Service {
     public function new() {}
-    
     public function create(container:IElement, state:Dynamic):Dynamic {
         container.setInnerHtml("
-            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>
-                <h2>📁 Project Tree</h2>
-                <ul>
-                    <li>📂 src/</li>
-                    <li>📄 Main.hx</li>
-                    <li>📄 project.json</li>
-                </ul>
+            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>
+                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>
+                <h2 style='margin:0; color:#fff;'>Game View</h2>
+                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>
+                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>
+                    Resolution: 1920×1080 | Stats: OFF
+                </div>
+            </div>
+        ");
+        return null;
+    }
+}
+</file>
+
+<file path="infrastructure/external/StubHierarchyFactory.hx">
+// hide/infrastructure/external/StubHierarchyFactory.hx
+package hide.infrastructure.external;
+import hide.domain.services.IViewFactory;
+import hide.domain.services.IElement;
+import hx.injection.Service;
+
+class StubHierarchyFactory implements IViewFactory implements Service {
+    public function new() {}
+    public function create(container:IElement, state:Dynamic):Dynamic {
+        container.setInnerHtml("
+            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>
+                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>
+                    🔍 <input type='text' placeholder='Search...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>
+                </div>
+                <div style='padding:4px 8px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                    ▼ 🎬 <b>SampleScene</b>
+                </div>
+                <div style='padding-left:20px;'>
+                    <div style='padding:3px 8px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                        ▼ 📷 Main Camera
+                    </div>
+                    <div style='padding:3px 8px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                        💡 Directional Light
+                    </div>
+                    <div style='padding:3px 8px; cursor:pointer; border-radius:3px; background:#2d5c8a;' >
+                        🎭 Player
+                    </div>
+                    <div style='padding-left:20px;'>
+                        <div style='padding:3px 8px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                            🎨 MeshRenderer
+                        </div>
+                        <div style='padding:3px 8px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                            🎮 Rigidbody
+                        </div>
+                    </div>
+                    <div style='padding:3px 8px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                        🧱 Ground
+                    </div>
+                </div>
+            </div>
+        ");
+        return null;
+    }
+}
+</file>
+
+<file path="infrastructure/external/StubInspectorFactory.hx">
+// hide/infrastructure/external/StubInspectorFactory.hx
+package hide.infrastructure.external;
+import hide.domain.services.IViewFactory;
+import hide.domain.services.IElement;
+import hx.injection.Service;
+
+class StubInspectorFactory implements IViewFactory implements Service {
+    public function new() {}
+    public function create(container:IElement, state:Dynamic):Dynamic {
+        container.setInnerHtml("
+            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px; overflow-y:auto;'>
+                <div style='padding:8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>
+                    <div style='display:flex; align-items:center; gap:8px;'>
+                        <input type='checkbox' checked/>
+                        <b style='color:#fff;'>🎭 Player</b>
+                        <span style='margin-left:auto; color:#888; font-size:11px;'>Tag: Player</span>
+                    </div>
+                </div>
+                
+                <div style='background:#2a2a2a; border-radius:3px; margin-bottom:6px;'>
+                    <div style='padding:6px 8px; background:#3a3a3a; font-weight:bold; border-bottom:1px solid #222;'>
+                        🔽 Transform
+                    </div>
+                    <div style='padding:8px;'>
+                        <div style='display:flex; gap:4px; margin-bottom:4px;'>
+                            <span style='width:60px; color:#aaa;'>Position</span>
+                            <input value='0' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                            <input value='1.5' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                            <input value='0' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                        </div>
+                        <div style='display:flex; gap:4px; margin-bottom:4px;'>
+                            <span style='width:60px; color:#aaa;'>Rotation</span>
+                            <input value='0' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                            <input value='0' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                            <input value='0' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                        </div>
+                        <div style='display:flex; gap:4px;'>
+                            <span style='width:60px; color:#aaa;'>Scale</span>
+                            <input value='1' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                            <input value='1' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                            <input value='1' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style='background:#2a2a2a; border-radius:3px; margin-bottom:6px;'>
+                    <div style='padding:6px 8px; background:#3a3a3a; font-weight:bold; border-bottom:1px solid #222;'>
+                        🔽 Mesh Renderer
+                    </div>
+                    <div style='padding:8px;'>
+                        <div style='display:flex; gap:4px; margin-bottom:4px;'>
+                            <span style='width:60px; color:#aaa;'>Mesh</span>
+                            <input value='Player.mesh' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                        </div>
+                        <div style='display:flex; gap:4px;'>
+                            <span style='width:60px; color:#aaa;'>Material</span>
+                            <input value='Default-Diffuse' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style='background:#2a2a2a; border-radius:3px;'>
+                    <div style='padding:6px 8px; background:#3a3a3a; font-weight:bold; border-bottom:1px solid #222;'>
+                        🔽 Rigidbody
+                    </div>
+                    <div style='padding:8px;'>
+                        <div style='display:flex; gap:4px; margin-bottom:4px;'>
+                            <span style='width:60px; color:#aaa;'>Mass</span>
+                            <input value='1' style='flex:1; background:#1a1a1a; border:1px solid #555; color:#fff; padding:2px 4px; border-radius:2px;'/>
+                        </div>
+                        <div style='display:flex; gap:4px;'>
+                            <span style='width:60px; color:#aaa;'>Gravity</span>
+                            <input type='checkbox' checked/>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style='margin-top:10px; text-align:center;'>
+                    <button style='background:#4a4a4a; color:#fff; border:1px solid #555; padding:4px 12px; border-radius:3px; cursor:pointer;'>Add Component</button>
+                </div>
+            </div>
+        ");
+        return null;
+    }
+}
+</file>
+
+<file path="infrastructure/external/StubProjectFactory.hx">
+// hide/infrastructure/external/StubProjectFactory.hx (улучшаем существующий)
+package hide.infrastructure.external;
+import hide.domain.services.IViewFactory;
+import hide.domain.services.IElement;
+import hx.injection.Service;
+
+class StubProjectFactory implements IViewFactory implements Service {
+    public function new() {}
+    public function create(container:IElement, state:Dynamic):Dynamic {
+        container.setInnerHtml("
+            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>
+                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>
+                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>
+                </div>
+                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>
+                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>
+                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                            ▼ 📁 Assets
+                        </div>
+                        <div style='padding-left:16px;'>
+                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                                ▼ 📁 Materials
+                            </div>
+                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                                ▼ 📁 Prefabs
+                            </div>
+                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                                ▼ 📁 Scenes
+                            </div>
+                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                                ▼ 📁 Scripts
+                            </div>
+                            <div style='padding-left:16px;'>
+                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>
+                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>
+                            </div>
+                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>
+                                📁 Textures
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         ");
         return null;
@@ -2728,6 +3363,33 @@ class StubPropertiesFactory implements IViewFactory implements Service {
             <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>
                 <h2>⚙️ Properties</h2>
                 <p>Object properties will appear here.</p>
+            </div>
+        ");
+        return null;
+    }
+}
+</file>
+
+<file path="infrastructure/external/StubSceneFactory.hx">
+// hide/infrastructure/external/StubSceneFactory.hx
+package hide.infrastructure.external;
+import hide.domain.services.IViewFactory;
+import hide.domain.services.IElement;
+import hx.injection.Service;
+
+class StubSceneFactory implements IViewFactory implements Service {
+    public function new() {}
+    public function create(container:IElement, state:Dynamic):Dynamic {
+        container.setInnerHtml("
+            <div style='padding:20px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>
+                <div style='font-size:48px; margin-bottom:20px;'>🎬</div>
+                <h2 style='margin:0; color:#fff;'>Scene View</h2>
+                <p style='color:#aaa; margin-top:10px;'>3D viewport will appear here</p>
+                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px;'>
+                    <div>📷 Camera: Main Camera</div>
+                    <div>🎯 Gizmos: ON</div>
+                    <div>💡 Lighting: Baked</div>
+                </div>
             </div>
         ");
         return null;
@@ -3301,29 +3963,6 @@ class ReactViewFactory implements IViewFactory implements Service {
         
         // 5. Возвращаем root для возможности размонтирования
         return reactRoot;
-    }
-}
-</file>
-
-<file path="infrastructure/BrowserDomAccess.hx">
-package hide.infrastructure;
-
-import hide.domain.services.IDomAccess;
-import hx.injection.Service;
-
-class BrowserDomAccess implements IDomAccess implements Service {
-    public function new() {}
-    
-    public function getElementById(id:String):Dynamic {
-        return js.Browser.document.getElementById(id);
-    }
-    
-    public function addWindowEventListener(event:String, handler:Dynamic->Void):Void {
-        js.Browser.window.addEventListener(event, handler);
-    }
-    
-    public function removeWindowEventListener(event:String, handler:Dynamic->Void):Void {
-        js.Browser.window.removeEventListener(event, handler);
     }
 }
 </file>
@@ -5544,7 +6183,14 @@ class MenuConfig {
                 label: "View",
                 type: Submenu,
                 children: [
-                    { id: "view.fullscreen", label: "Toggle Fullscreen", icon: "expand" }
+                    { id: "view.scene", label: "Scene", icon: "film" },
+                    { id: "view.game", label: "Game", icon: "gamepad" },
+                    { id: "view.hierarchy", label: "Hierarchy", icon: "sitemap" },
+                    { id: "view.inspector", label: "Inspector", icon: "info-circle" },
+                    { id: "view.project", label: "Project", icon: "folder" },
+                    { id: "view.console", label: "Console", icon: "terminal" },
+                    { id: "sep_view_1", label: "", type: Separator },
+                    { id: "view.fullscreen", label: "Toggle Fullscreen", icon: "expand", shortcut: "F11" }
                     // Динамические пункты (Console, Editor и т.д.) 
                     // добавляются через MenuService.injectViews()
                 ]
@@ -5654,8 +6300,8 @@ class MenuController implements Service {
 </file>
 
 <file path="presentation/controllers/ToolbarController.hx">
+// hide/presentation/controllers/ToolbarController.hx (полная замена)
 package hide.presentation.controllers;
-
 import hide.application.services.MenuService;
 import hide.shared.types.IEventBus;
 import js.html.Element;
@@ -5666,85 +6312,114 @@ class ToolbarController implements Service {
     private var eventBus:IEventBus;
     private var container:Null<Element>;
     private var isPlaying:Bool = false;
+    private var isPaused:Bool = false;
     
     public function new(menuService:MenuService, eventBus:IEventBus) {
         this.menuService = menuService;
         this.eventBus = eventBus;
     }
-    
+
     public function setContainer(el:Element):Void {
         this.container = el;
         render();
         attachEvents();
     }
-    
+
     private function render():Void {
         if (container == null) return;
-        
         container.innerHTML = '';
+        container.style.cssText = 'display:flex; align-items:center; justify-content:center; gap:8px; padding:6px 12px; background:#2a2a2a; border-bottom:1px solid #1a1a1a; height:36px;';
         
-        // Левая группа: Play/Pause/Step
-        var playGroup = js.Browser.document.createElement('div');
-        playGroup.className = 'toolbar-group';
+        // === ЛЕВАЯ ГРУППА ===
+        var leftGroup = createGroup();
+        leftGroup.appendChild(createToolButton('📁', 'assets', 'Project Browser'));
+        leftGroup.appendChild(createToolButton('🎬', 'scene', 'Scene View'));
+        container.appendChild(leftGroup);
         
-        var playBtn = createToolbarButton('▶', 'play', 'Play');
-        var pauseBtn = createToolbarButton('⏸', 'pause', 'Pause');
-        var stepBtn = createToolbarButton('⏭', 'step', 'Step');
+        // === ЦЕНТРАЛЬНАЯ ГРУППА: Play Controls ===
+        var centerGroup = createGroup();
+        centerGroup.style.cssText = 'display:flex; align-items:center; gap:4px; background:#1a1a1a; padding:4px 8px; border-radius:4px;';
         
-        playGroup.appendChild(playBtn);
-        playGroup.appendChild(pauseBtn);
-        playGroup.appendChild(stepBtn);
+        var playBtn = createPlayButton('▶', 'play', 'Play (Ctrl+P)');
+        var pauseBtn = createToolButton('⏸', 'pause', 'Pause (Ctrl+Shift+P)');
+        pauseBtn.style.opacity = '0.5';
+        var stepBtn = createToolButton('⏭', 'step', 'Step (Ctrl+Alt+P)');
+        stepBtn.style.opacity = '0.5';
         
-        // Правая группа: Layout selector, Account
-        var rightGroup = js.Browser.document.createElement('div');
-        rightGroup.className = 'toolbar-group right';
+        centerGroup.appendChild(playBtn);
+        centerGroup.appendChild(pauseBtn);
+        centerGroup.appendChild(stepBtn);
+        container.appendChild(centerGroup);
         
-        var layoutSelect = js.Browser.document.createElement('select');
-        layoutSelect.className = 'toolbar-select';
-        layoutSelect.innerHTML = '
-            <option value="default">Default</option>
-            <option value="wide">Wide</option>
-            <option value="tall">Tall</option>
-        ';
-        rightGroup.appendChild(layoutSelect);
-        
-        container.appendChild(playGroup);
+        // === ПРАВАЯ ГРУППА ===
+        var rightGroup = createGroup();
+        rightGroup.style.marginLeft = 'auto';
+        rightGroup.appendChild(createToolButton('🔍', 'search', 'Search'));
+        rightGroup.appendChild(createToolButton('⚙️', 'settings', 'Settings'));
         container.appendChild(rightGroup);
     }
     
-    private function createToolbarButton(icon:String, action:String, title:String):Element {
+    private function createGroup():Element {
+        var g = js.Browser.document.createElement('div');
+        g.style.cssText = 'display:flex; align-items:center; gap:4px;';
+        return g;
+    }
+    
+    private function createToolButton(icon:String, action:String, title:String):Element {
         var btn = js.Browser.document.createElement('button');
-        btn.className = 'toolbar-button';
         btn.setAttribute('data-action', action);
         btn.title = title;
         btn.innerHTML = icon;
+        btn.style.cssText = 'background:transparent; border:none; color:#ccc; font-size:16px; padding:4px 8px; border-radius:3px; cursor:pointer; transition:background 0.15s;';
+        btn.addEventListener('mouseover', function(_) btn.style.background = '#3a3a3a');
+        btn.addEventListener('mouseout', function(_) btn.style.background = 'transparent');
         return btn;
     }
     
+    private function createPlayButton(icon:String, action:String, title:String):Element {
+        var btn = createToolButton(icon, action, title);
+        btn.style.cssText += ' background:#2d5c8a; color:#fff; border-radius:4px;';
+        btn.addEventListener('mouseover', function(_) btn.style.background = '#3a6c9a');
+        btn.addEventListener('mouseout', function(_) btn.style.background = '#2d5c8a');
+        return btn;
+    }
+
     private function attachEvents():Void {
         if (container == null) return;
         
         container.addEventListener('click', function(e:js.html.MouseEvent) {
             var target = cast(e.target, js.html.Element);
             var btn = target.closest('button[data-action]');
+            if (btn == null) return;
             
-            if (btn != null) {
-                var action = btn.getAttribute('data-action');
-                switch (action) {
-                    case 'play':
-                        isPlaying = !isPlaying;
-                        btn.innerHTML = isPlaying ? '⏸' : '▶';
-                        trace('Play mode: ' + isPlaying);
-                    case 'pause':
-                        trace('Pause');
-                    case 'step':
-                        trace('Step');
-                    default:
-                }
+            var action = btn.getAttribute('data-action');
+            switch (action) {
+                case 'play':
+                    isPlaying = !isPlaying;
+                    isPaused = false;
+                    btn.innerHTML = isPlaying ? '⏹' : '▶';
+                    btn.title = isPlaying ? 'Stop (Ctrl+P)' : 'Play (Ctrl+P)';
+                    btn.style.background = isPlaying ? '#8a2d2d' : '#2d5c8a';
+                    trace('▶ Play mode: ' + isPlaying);
+                    // TODO: eventBus.publish(new PlayStateChanged(isPlaying));
+                    
+                case 'pause':
+                    if (!isPlaying) return;
+                    isPaused = !isPaused;
+                    btn.style.opacity = isPaused ? '1' : '0.5';
+                    btn.style.background = isPaused ? '#8a6c2d' : 'transparent';
+                    trace('⏸ Paused: ' + isPaused);
+                    
+                case 'step':
+                    if (!isPlaying || !isPaused) return;
+                    trace('⏭ Step forward');
+                    
+                default:
+                    trace('Toolbar action: ' + action);
             }
         });
     }
-    
+
     public function dispose():Void {}
 }
 </file>
@@ -5846,12 +6521,740 @@ class WindowController implements Service {
 }
 </file>
 
+<file path="presentation/Ide.hx">
+package hide.presentation;
+
+import hide.presentation.controllers.ToolbarController;
+import hide.presentation.controllers.WindowController;
+import hide.application.services.MenuService;
+import hide.application.services.WindowService;
+import hide.application.services.PluginManager;
+import hide.application.services.ViewRegistry;
+import hide.domain.services.IFileDialog;
+import hide.domain.services.IPlatform;
+import hide.domain.services.IAppInfo;
+import hide.presentation.ui.StatusBar;
+import hide.presentation.controllers.MenuController;
+
+
+import hide.application.commands.LoadProjectUseCase;
+import hide.application.commands.SetFullscreenUseCase;
+import hide.application.commands.SaveLayoutUseCase;
+import hide.application.commands.CloseProjectUseCase;
+import hide.application.commands.OpenViewUseCase;
+import hide.application.dto.ViewDto;
+import hide.domain.valueobjects.DisplayPosition;
+import hide.domain.valueobjects.FilePath;
+
+import hide.shared.events.ProjectLoaded;
+import hide.shared.events.ErrorOccurred;
+import hide.shared.events.LayoutChanged;
+import hide.shared.events.ProjectClosed;
+import hide.shared.events.RecentProjectsUpdated;
+
+import hide.shared.types.IEventBus;
+import hide.shared.types.Result;
+
+import hide.domain.services.ILayoutEngine;
+
+import hx.injection.Service;
+import hx.injection.ServiceCollection;
+import hx.injection.ServiceProvider;
+import tink.core.*;
+
+import hide.infrastructure.di.AppModule;
+using tink.CoreApi;
+using hx.injection.ServiceExtensions;
+using Lambda;
+
+@:expose
+class Ide implements Service {
+    public static var inst(default, null):Ide;
+    private var _resizeHandler:Null<js.html.Event->Void>;
+    private var views:Array<ViewDto>;
+    private var statusBar:StatusBar;
+    
+    public var currentProjectName(get, never):String;
+    private var _currentProject:Null<String>;
+    
+    private var _projectLoadedUnsub:CallbackLink;
+    private var _errorUnsub:CallbackLink;
+    private var _layoutChangedUnsub:CallbackLink;
+    private var _projectClosedUnsub:CallbackLink;
+    
+    private var windowService:WindowService;
+    private var menuService:MenuService;
+    private var layoutEngine:ILayoutEngine;
+    private var menuController:MenuController;
+    private var loadProjectUseCase:LoadProjectUseCase;
+    private var setFullscreenUseCase:SetFullscreenUseCase;
+    //private var saveLayoutUseCase:SaveLayoutUseCase;
+    //private var closeProjectUseCase:CloseProjectUseCase;
+    //private var openViewUseCase:OpenViewUseCase;
+    private var viewRegistry:ViewRegistry;
+    private var pluginManager:PluginManager;
+    private var eventBus:IEventBus;
+    private var fileDialog:IFileDialog;
+    private var platform:IPlatform;
+    private var windowController:WindowController;
+    private var toolbarController:ToolbarController;
+    public function new(
+        windowService:WindowService,
+        menuService:MenuService,
+        loadProjectUseCase:LoadProjectUseCase,
+        setFullscreenUseCase:SetFullscreenUseCase,
+        //saveLayoutUseCase:SaveLayoutUseCase,
+        //closeProjectUseCase:CloseProjectUseCase,
+        //openViewUseCase:OpenViewUseCase,
+        viewRegistry:ViewRegistry,
+        pluginManager:PluginManager,
+        eventBus:IEventBus,
+        fileDialog:IFileDialog,
+        platform:IPlatform,
+        layoutEngine:ILayoutEngine,
+        menuController:MenuController,
+        windowController:WindowController,
+        toolbarController:ToolbarController
+    ) {
+        this.windowService = windowService;
+        this.menuService = menuService;
+        this.loadProjectUseCase = loadProjectUseCase;
+        this.setFullscreenUseCase = setFullscreenUseCase;
+        //this.saveLayoutUseCase = saveLayoutUseCase;
+        //this.closeProjectUseCase = closeProjectUseCase;
+        //this.openViewUseCase = openViewUseCase;
+        this.viewRegistry = viewRegistry;
+        this.pluginManager = pluginManager;
+        this.eventBus = eventBus;
+        this.fileDialog = fileDialog;
+        this.platform = platform;
+        this.layoutEngine = layoutEngine;
+        this.menuController = menuController;
+        this.windowController = windowController;
+        this.toolbarController = toolbarController;
+        inst = this;
+        views = viewRegistry.all(); 
+        
+        menuService.onItemClick("project.open", onMenuOpenProject);
+        menuService.onItemClick("view.fullscreen", onToggleFullscreen);
+        menuService.onItemClick("layout.save", onLayoutSave);
+        menuService.onItemClick("project.close", onCloseProject);
+        menuService.onItemClick("help.about", showAboutDialog);
+        menuService.onItemClick("app.exit", function() {
+            js.Browser.window.close();
+        });
+        for (view in viewRegistry.all()) {
+            trace(view.name);
+            menuService.addViewMenu(view);
+            menuService.onItemClick("view." + view.name, function() openView(view.name));
+        }
+        
+        // Используем js.Browser.document вместо Element.byId
+        var statusEl = js.Browser.document.getElementById("status-bar");
+        statusBar = new StatusBar(statusEl);
+
+
+        
+        _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded, onProjectLoadedHandler);
+        _errorUnsub = eventBus.subscribe(ErrorOccurred, onErrorOccurred);
+        _layoutChangedUnsub = eventBus.subscribe(LayoutChanged, function(e:LayoutChanged) {
+            trace("Layout changed");
+        });
+        _projectClosedUnsub = eventBus.subscribe(ProjectClosed, function(e:ProjectClosed) {
+            _currentProject = null;
+            statusBar.showMessage("Project closed");
+            updateWindowTitle();
+        });
+    }
+    
+    public function onMenuOpenProject():Void {
+        layoutEngine.open("welcome", {}, DisplayPosition.Center);
+        /*
+        fileDialog.showOpen({ filters: [{ name: "Project Files", extensions: ["json", "hide"] }] })
+        .handle(function(path:Null<String>) {
+            if (path != null) {
+                var result = loadProjectUseCase.execute(new FilePath(path));
+                switch (result) {
+                    case Success(_):
+                        trace("Project loading initiated successfully.");
+                    case Failure(err):
+                        statusBar.setError('Failed to load project: $err');
+                }
+            }
+        });*/
+    }
+    
+    private function onErrorOccurred(event:ErrorOccurred):Void {
+        trace("UI ERROR [" + event.context + "]: " + event.error);
+    }
+    
+    private function onProjectLoadedHandler(event:ProjectLoaded):Void {
+        _currentProject = event.project.name;
+        trace("UI: Project loaded successfully: " + _currentProject);
+        updateWindowTitle();
+        //openView("project");
+        //openView("editor");
+    }
+    
+    public function onToggleFullscreen():Void {
+        // isFullscreen — это var, а не функция! Убираем скобки
+        setFullscreenUseCase.execute(!windowService.isFullscreen);
+    }
+    
+    public function onLayoutSave():Void {
+        //saveLayoutUseCase.execute();
+    }
+    
+    public function onCloseProject():Void {
+        //closeProjectUseCase.execute();
+    }
+    
+    private function openView(viewName:String):Void {
+        // Используем Lambda.find вместо Array.find
+        var view = Lambda.find(views, function(v) return v.name == viewName);
+        if (view == null) {
+            throw "View not found: " + viewName;
+        }
+        
+        var position = switch viewName {
+            case "editor": DisplayPosition.Center;
+            case "project": DisplayPosition.Left;
+            default: DisplayPosition.Center;
+        };
+        
+        //openViewUseCase.execute(view.name, view.defaultState, position);
+    }
+    
+    private function onOpenRecent(path:String):Void {
+        loadProjectUseCase.execute(new FilePath(path));
+    }
+    
+    private function updateWindowTitle():Void {
+        var title = _currentProject != null ? '$_currentProject - HIDE IDE' : 'HIDE IDE';
+        trace("Window title updated to: " + title);
+        windowService.setTitle(title);
+    }
+    
+    private function showAboutDialog():Void {
+        trace('HIDE IDE\nVersion 0.1.0');
+    }
+    
+    private function get_currentProjectName():String {
+        return _currentProject != null ? _currentProject : "No project";
+    }
+    
+    public static function main():Void {
+        var collection = new ServiceCollection();
+        // Импортируем AppModule явно
+        hide.infrastructure.di.AppModule.configure(collection);
+        
+        var provider = collection.createProvider();
+        var ide = provider.getService(Ide);
+        ide.startup();
+        
+        provider.getService(PluginManager).loadAll();
+    }
+    
+    private function startup():Void {
+        trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
+         // 2. Регистрируем временные заглушки для View (позже заменим на плагины)
+            // ✅ РЕГИСТРАЦИЯ ЗАГЛУШЕК ФАБРИК
+            // ✅ РЕГИСТРАЦИЯ UNITY-LIKE VIEW
+        viewRegistry.registerViewFactory("scene", new hide.infrastructure.external.StubSceneFactory());
+        viewRegistry.registerViewFactory("game", new hide.infrastructure.external.StubGameFactory());
+        //viewRegistry.registerViewFactory("hierarchy", new hide.infrastructure.external.StubHierarchyFactory());
+        //viewRegistry.registerViewFactory("inspector", new hide.infrastructure.external.StubInspectorFactory());
+        viewRegistry.registerViewFactory("project", new hide.infrastructure.external.StubProjectFactory());
+        
+        viewRegistry.registerViewFactory("editor", new hide.infrastructure.external.StubEditorFactory());
+        viewRegistry.registerViewFactory("console", new hide.infrastructure.external.StubConsoleFactory());
+        viewRegistry.registerViewFactory("properties", new hide.infrastructure.external.StubPropertiesFactory());
+        // ✅ РЕГИСТРАЦИЯ REACT-ФАБРИК
+
+        // ✅ РЕГИСТРАЦИЯ INSPECTOR
+        viewRegistry.registerViewFactory(
+            "inspector",
+            new hide.infrastructure.ui.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.InspectorPanel)
+        );
+        viewRegistry.registerViewFactory(
+            "hierarchy",
+            new hide.infrastructure.ui.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.HierarchyPanel)
+        );
+        viewRegistry.registerViewFactory(
+            "welcome",
+            new hide.infrastructure.ui.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.WelcomePanel)
+        );
+
+        windowController.init();
+        trace("🪟 WindowController инициализирован");
+
+        // ✅ ИНИЦИАЛИЗАЦИЯ TOOLBAR
+        var toolbarEl = js.Browser.document.getElementById("main-toolbar");
+        if (toolbarEl != null) {
+            // ToolbarController уже в DI, получаем его
+            
+            toolbarController.setContainer(cast toolbarEl);
+            trace("🔧 Toolbar инициализирован");
+        }
+        // 1. Инициализируем GoldenLayout
+        var layoutEl = js.Browser.document.getElementById("golden-layout-root");
+        if (layoutEl != null) {
+            layoutEngine.setContainer(layoutEl);
+            // Инициализируем с пустым состоянием (адаптер сам создаст дефолтный скелет)
+            layoutEngine.init({ content: [], fullScreen: null }); 
+            trace("🎨 GoldenLayout инициализирован.");
+        } else {
+            trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.");
+        }
+       
+        var menuContainer = js.Browser.document.getElementById("main-menu");
+        if (menuContainer != null) {
+            menuController.setContainer(cast menuContainer);
+            trace("📋 MenuController инициализирован с DOM-контейнером.");
+        } else {
+            trace("⚠️ Контейнер #main-menu не найден в DOM!");
+        }
+
+        var args = platform.getAppArgs();
+        var projectFile:Null<String> = null;
+        // ✅ Подписка на resize окна через js.Browser
+        _resizeHandler = function(_) {
+            haxe.Timer.delay(function() {
+                var layoutEl = js.Browser.document.getElementById("golden-layout-root");
+                if (layoutEl != null) {
+                    var rect = layoutEl.getBoundingClientRect();
+                    layoutEngine.updateSize(Std.int(rect.width), Std.int(rect.height));
+                }
+            }, 100); // Небольшая задержка для стабильности
+        };
+
+        js.Browser.window.addEventListener("resize", _resizeHandler);
+        // Electron передает много внутренних флагов. Ищем первый аргумент, 
+        // который НЕ начинается с '-' и не является пустой строкой.
+        for (arg in args) {
+            if (arg != "" && !StringTools.startsWith(arg, "-") && !StringTools.startsWith(arg, "chrome://")) {
+                projectFile = arg;
+                break;
+            }
+        }
+        
+        if (projectFile != null) {
+            trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile);
+            loadProjectUseCase.execute(new FilePath(projectFile));
+        } else {
+            trace("👋 Приложение запущено без проекта.");
+
+        }
+    }
+    
+    public function dispose():Void {
+        if (_projectLoadedUnsub != null) _projectLoadedUnsub.cancel();
+        if (_errorUnsub != null) _errorUnsub.cancel();
+        if (_layoutChangedUnsub != null) _layoutChangedUnsub.cancel();
+        if (_projectClosedUnsub != null) _projectClosedUnsub.cancel();
+        // ✅ Очищаем ресурсы контроллера меню
+        if (menuController != null) {
+            menuController.dispose();
+        }
+        if (windowController != null) {
+            windowController.dispose();
+        }
+        // ✅ Отписка от resize
+        if (_resizeHandler != null) {
+            js.Browser.window.removeEventListener("resize", _resizeHandler);
+            _resizeHandler = null;
+        }
+    }
+    public function get_eventBus():IEventBus return eventBus;
+    public function get_windowService():WindowService return windowService;
+    public function get_menuService():MenuService return menuService;
+    public function get_viewRegistry():ViewRegistry return viewRegistry;
+    public function get_layoutEngine():ILayoutEngine return layoutEngine;
+}
+</file>
+
 <file path="presentation/styles/CssVariables.hx">
 package hide.presentation.styles;
 </file>
 
 <file path="presentation/styles/Theme.hx">
 package hide.presentation.styles;
+</file>
+
+<file path="presentation/ui/Dialog.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/Element.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/MenuBuilder.hx">
+package hide.presentation.ui;
+
+import hide.application.dto.MenuItem;
+import hide.domain.enums.MenuItemType;
+import js.html.Element;
+
+class MenuBuilder {
+    /**
+     * Строит корневой элемент меню (горизонтальная панель)
+     */
+    public static function build(items:Array<MenuItem>):Element {
+        var ul = js.Browser.document.createElement("ul");
+        ul.className = "main-menu-bar";
+        
+        for (item in items) {
+            ul.appendChild(createMenuItem(item));
+        }
+        
+        return ul;
+    }
+
+    /**
+     * Рекурсивно создает элемент списка <li> и его содержимое
+     */
+    private static function createMenuItem(item:MenuItem):Element {
+        var li = js.Browser.document.createElement("li");
+        li.className = "menu-item";
+        
+        if (item.enabled == false) {
+            li.className += " disabled";
+        }
+
+        // 1. Если это разделитель
+        if (item.type == Separator) {
+            li.className += " separator";
+            return li;
+        }
+
+        // 2. Создаем кликабельный элемент (кнопку)
+        var btn = js.Browser.document.createElement("button");
+        btn.className = "menu-button";
+        btn.setAttribute("data-menu-id", item.id); // Ключ для делегирования событий
+        
+        // Добавляем иконку, если она есть (предполагаем использование FontAwesome или аналога)
+        var iconHtml = item.icon != null ? '<i class="fa fa-${item.icon}"></i>' : '';
+        var shortcutHtml = item.shortcut != null ? '<span class="menu-shortcut">${item.shortcut}</span>' : '';
+
+        // Собираем всё вместе: Иконка + Текст + (Хоткей справа)
+        btn.innerHTML = iconHtml + ' <span style="flex:1">${item.label}</span> ' + shortcutHtml;
+        li.appendChild(btn);
+
+        // 3. Если это подменю, рекурсивно строим его дочерние элементы
+        if (item.type == Submenu && item.children != null && item.children.length > 0) {
+            li.className += " has-submenu";
+            var subUl = js.Browser.document.createElement("ul");
+            subUl.className = "submenu";
+            
+            for (child in item.children) {
+                subUl.appendChild(createMenuItem(child));
+            }
+            
+            li.appendChild(subUl);
+        }
+
+        return li;
+    }
+}
+</file>
+
+<file path="presentation/ui/react/BaseReactComponent.hx">
+package hide.presentation.ui.react;
+
+import react.ReactComponent;
+import hide.shared.types.IEventBus;
+import tink.core.*;
+import react.ReactMacro.jsx;
+using tink.CoreApi;
+/**
+ * Базовый React-компонент с интеграцией в Haxe-сервисы.
+ * Автоматически отписывается от событий при unmount.
+ */
+class BaseReactComponent<P, S> extends ReactComponentOfPropsAndState<P, S> {
+    private var subscriptions:Array<CallbackLink> = [];
+    
+    /**
+     * Подписывает компонент на событие EventBus.
+     * Автоматически отписывается при unmount.
+     */
+    private function subscribe<T>(eventBus:IEventBus, eventClass:Class<T>, handler:T->Void):Void {
+        var link = eventBus.subscribe(eventClass, handler);
+        subscriptions.push(link);
+    }
+    // ✅ ДОБАВЛЕНО: Базовый render, чтобы удовлетворить компилятор
+    override function render():ReactElement {
+        return jsx('<div></div>');
+    }
+    override function componentWillUnmount():Void {
+        // Отписываемся от всех событий
+        for (link in subscriptions) {
+            link.cancel();
+        }
+        subscriptions = [];
+        super.componentWillUnmount();
+    }
+}
+</file>
+
+<file path="presentation/ui/react/components/HierarchyPanel.hx">
+package hide.presentation.ui.react.components;
+
+import react.ReactComponent;
+import react.ReactMacro.jsx;
+import hide.presentation.ui.react.BaseReactComponent;
+
+typedef HierarchyProps = {
+    var initialState: Dynamic;
+    var onUnmount: Void->Void;
+}
+
+typedef HierarchyState = {
+    var objects: Array<Dynamic>;
+    var selectedId: Null<String>;
+}
+
+class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> {
+    public function new() {
+        super();
+        state = {
+            objects: [
+                {
+                    id: "scene",
+                    name: "SampleScene",
+                    icon: "🎬",
+                    expanded: true,
+                    children: [
+                        { id: "camera", name: "Main Camera", icon: "📷", children: [] },
+                        { id: "light", name: "Directional Light", icon: "💡", children: [] },
+                        { 
+                            id: "player", 
+                            name: "Player", 
+                            icon: "",
+                            children: [
+                                { id: "mesh", name: "MeshRenderer", icon: "🎨", children: [] },
+                                { id: "rigidbody", name: "Rigidbody", icon: "⚙️", children: [] }
+                            ]
+                        },
+                        { id: "ground", name: "Ground", icon: "", children: [] }
+                    ]
+                }
+            ],
+            selectedId: "player"
+        };
+    }
+
+    override function render(): ReactElement {
+        return jsx('
+            <div style={{padding: "10px", color: "#d4d4d4", background: "#383838", height: "100%", fontFamily: "sans-serif", fontSize: "13px"}}>
+                <div style={{padding: "4px 8px", background: "#2a2a2a", borderRadius: "3px", marginBottom: "8px"}}>
+                    🔍 <input type="text" placeholder="Search..." style={{background: "transparent", border: "none", color: "#fff", outline: "none", width: "80%"}} />
+                </div>
+                <div>
+                    {[for (obj in state.objects) renderObject(obj, 0)]}
+                </div>
+            </div>
+        ');
+    }
+
+    private function renderObject(obj: Dynamic, depth: Int): ReactElement {
+        var isSelected = state.selectedId == obj.id;
+        var hasChildren = obj.children != null && obj.children.length > 0;
+        var paddingLeft = depth * 16;
+
+        var rowStyle = {
+            padding: "3px 8px",
+            paddingLeft: (paddingLeft + 8) + "px",
+            cursor: "pointer",
+            borderRadius: "3px",
+            background: isSelected ? "#2d5c8a" : "transparent"
+        };
+
+        // ✅ ИСПРАВЛЕНО: выносим children в переменную с явной типизацией
+        var childrenList: ReactElement = if (obj.expanded && hasChildren) {
+            var children: Array<Dynamic> = cast obj.children;
+            jsx('
+                <div>
+                    {[for (child in children) renderObject(child, depth + 1)]}
+                </div>
+            ');
+        } else {
+            jsx('<div></div>');
+        };
+
+        // ✅ ИСПРАВЛЕНО: используем bind вместо => лямбды
+        return jsx('
+            <div key={obj.id}>
+                <div 
+                    style={rowStyle}
+                    onClick={handleSelect.bind(obj.id)}>
+                    {hasChildren ? (obj.expanded ? "▼ " : "▶ ") : "  "}
+                    {obj.icon} {obj.name}
+                </div>
+                {childrenList}
+            </div>
+        ');
+    }
+
+    private function handleSelect(id: String): Void {
+        setState({
+            selectedId: id,
+            objects: state.objects
+        });
+        // TODO: Опубликовать событие ObjectSelected через EventBus
+    }
+}
+</file>
+
+<file path="presentation/ui/react/components/InspectorPanel.hx">
+package hide.presentation.ui.react.components;
+
+import react.ReactComponent;
+import react.ReactMacro.jsx;
+import hide.presentation.ui.react.BaseReactComponent;
+
+typedef InspectorProps = {
+    var initialState: Dynamic;
+    var onUnmount: Void->Void;
+}
+
+typedef InspectorState = {
+    var selectedObject: Null<Dynamic>;
+    var components: Array<Dynamic>;
+}
+
+class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> {
+    public function new() {
+        super();
+        state = {
+            selectedObject: null,
+            components: []
+        };
+    }
+
+    override function componentDidMount(): Void {
+        var transformFields: Array<Dynamic> = [
+            { label: "Position", x: 0, y: 1.5, z: 0 },
+            { label: "Rotation", x: 0, y: 0, z: 0 },
+            { label: "Scale", x: 1, y: 1, z: 1 }
+        ];
+        
+        var meshRendererFields: Array<Dynamic> = [
+            { label: "Mesh", value: "Player.mesh" },
+            { label: "Material", value: "Default-Diffuse" }
+        ];
+        
+        var rigidbodyFields: Array<Dynamic> = [
+            { label: "Mass", value: 1 },
+            { label: "Gravity", value: true, type: "checkbox" }
+        ];
+        
+        var componentsData: Array<Dynamic> = [
+            {
+                name: "Transform",
+                fields: transformFields
+            },
+            {
+                name: "Mesh Renderer",
+                fields: meshRendererFields
+            },
+            {
+                name: "Rigidbody",
+                fields: rigidbodyFields
+            }
+        ];
+        
+        setState({
+            selectedObject: { name: "Player", tag: "Player" },
+            components: componentsData
+        });
+    }
+
+    override function render(): ReactElement {
+        var header: ReactElement = if (state.selectedObject != null) {
+            jsx('
+                <div style={{padding: "8px", background: "#2a2a2a", borderRadius: "3px", marginBottom: "8px"}}>
+                    <div style={{display: "flex", alignItems: "center", gap: "8px"}}>
+                        <input type="checkbox" defaultChecked={true} />
+                        <b style={{color: "#fff"}}> {state.selectedObject.name}</b>
+                        <span style={{marginLeft: "auto", color: "#888", fontSize: "11px"}}>
+                            Tag: {state.selectedObject.tag}
+                        </span>
+                    </div>
+                </div>
+            ');
+        } else {
+            jsx('<div style={{padding: "20px", textAlign: "center", color: "#888"}}>No object selected</div>');
+        };
+
+        var componentsList: ReactElement = jsx('
+            <div style={{overflowY: "auto", maxHeight: "calc(100% - 60px)"}}>
+                {[for (comp in state.components) renderComponent(comp)]}
+                <div style={{marginTop: "10px", textAlign: "center"}}>
+                    <button style={{background: "#4a4a4a", color: "#fff", border: "1px solid #555", padding: "4px 12px", borderRadius: "3px", cursor: "pointer"}}>
+                        Add Component
+                    </button>
+                </div>
+            </div>
+        ');
+
+        return jsx('
+            <div style={{padding: "10px", color: "#d4d4d4", background: "#383838", height: "100%", fontFamily: "sans-serif", fontSize: "13px"}}>
+                {header}
+                {componentsList}
+            </div>
+        ');
+    }
+
+    private function renderComponent(comp: Dynamic): ReactElement {
+        // ✅ ИСПРАВЛЕНО: явная типизация fields
+        var fields: Array<Dynamic> = cast comp.fields;
+        
+        return jsx('
+            <div key={comp.name} style={{background: "#2a2a2a", borderRadius: "3px", marginBottom: "6px"}}>
+                <div style={{padding: "6px 8px", background: "#3a3a3a", fontWeight: "bold", borderBottom: "1px solid #222"}}>
+                    🔽 {comp.name}
+                </div>
+                <div style={{padding: "8px"}}>
+                    {[for (field in fields) renderField(field)]}
+                </div>
+            </div>
+        ');
+    }
+
+    private function renderField(field: Dynamic): ReactElement {
+        var type = field.type != null ? field.type : "input";
+        
+        return switch (type) {
+            case "checkbox":
+                jsx('
+                    <div style={{display: "flex", gap: "4px", marginBottom: "4px"}}>
+                        <span style={{width: "60px", color: "#aaa"}}>{field.label}</span>
+                        <input type="checkbox" defaultChecked={field.value} />
+                    </div>
+                ');
+            case "vector3":
+                jsx('
+                    <div style={{display: "flex", gap: "4px", marginBottom: "4px"}}>
+                        <span style={{width: "60px", color: "#aaa"}}>{field.label}</span>
+                        <input defaultValue={field.x} style={{flex: 1, background: "#1a1a1a", border: "1px solid #555", color: "#fff", padding: "2px 4px", borderRadius: "2px"}} />
+                        <input defaultValue={field.y} style={{flex: 1, background: "#1a1a1a", border: "1px solid #555", color: "#fff", padding: "2px 4px", borderRadius: "2px"}} />
+                        <input defaultValue={field.z} style={{flex: 1, background: "#1a1a1a", border: "1px solid #555", color: "#fff", padding: "2px 4px", borderRadius: "2px"}} />
+                    </div>
+                ');
+            default:
+                jsx('
+                    <div style={{display: "flex", gap: "4px", marginBottom: "4px"}}>
+                        <span style={{width: "60px", color: "#aaa"}}>{field.label}</span>
+                        <input defaultValue={field.value} style={{flex: 1, background: "#1a1a1a", border: "1px solid #555", color: "#fff", padding: "2px 4px", borderRadius: "2px"}} />
+                    </div>
+                ');
+        };
+    }
+}
 </file>
 
 <file path="presentation/ui/react/components/WelcomePanel.hx">
@@ -5987,122 +7390,6 @@ class UseService {
 }
 </file>
 
-<file path="presentation/ui/react/BaseReactComponent.hx">
-package hide.presentation.ui.react;
-
-import react.ReactComponent;
-import hide.shared.types.IEventBus;
-import tink.core.*;
-import react.ReactMacro.jsx;
-using tink.CoreApi;
-/**
- * Базовый React-компонент с интеграцией в Haxe-сервисы.
- * Автоматически отписывается от событий при unmount.
- */
-class BaseReactComponent<P, S> extends ReactComponentOfPropsAndState<P, S> {
-    private var subscriptions:Array<CallbackLink> = [];
-    
-    /**
-     * Подписывает компонент на событие EventBus.
-     * Автоматически отписывается при unmount.
-     */
-    private function subscribe<T>(eventBus:IEventBus, eventClass:Class<T>, handler:T->Void):Void {
-        var link = eventBus.subscribe(eventClass, handler);
-        subscriptions.push(link);
-    }
-    // ✅ ДОБАВЛЕНО: Базовый render, чтобы удовлетворить компилятор
-    override function render():ReactElement {
-        return jsx('<div></div>');
-    }
-    override function componentWillUnmount():Void {
-        // Отписываемся от всех событий
-        for (link in subscriptions) {
-            link.cancel();
-        }
-        subscriptions = [];
-        super.componentWillUnmount();
-    }
-}
-</file>
-
-<file path="presentation/ui/Dialog.hx">
-package hide.presentation.ui;
-</file>
-
-<file path="presentation/ui/Element.hx">
-package hide.presentation.ui;
-</file>
-
-<file path="presentation/ui/MenuBuilder.hx">
-package hide.presentation.ui;
-
-import hide.application.dto.MenuItem;
-import hide.domain.enums.MenuItemType;
-import js.html.Element;
-
-class MenuBuilder {
-    /**
-     * Строит корневой элемент меню (горизонтальная панель)
-     */
-    public static function build(items:Array<MenuItem>):Element {
-        var ul = js.Browser.document.createElement("ul");
-        ul.className = "main-menu-bar";
-        
-        for (item in items) {
-            ul.appendChild(createMenuItem(item));
-        }
-        
-        return ul;
-    }
-
-    /**
-     * Рекурсивно создает элемент списка <li> и его содержимое
-     */
-    private static function createMenuItem(item:MenuItem):Element {
-        var li = js.Browser.document.createElement("li");
-        li.className = "menu-item";
-        
-        if (item.enabled == false) {
-            li.className += " disabled";
-        }
-
-        // 1. Если это разделитель
-        if (item.type == Separator) {
-            li.className += " separator";
-            return li;
-        }
-
-        // 2. Создаем кликабельный элемент (кнопку)
-        var btn = js.Browser.document.createElement("button");
-        btn.className = "menu-button";
-        btn.setAttribute("data-menu-id", item.id); // Ключ для делегирования событий
-        
-        // Добавляем иконку, если она есть (предполагаем использование FontAwesome или аналога)
-        var iconHtml = item.icon != null ? '<i class="fa fa-${item.icon}"></i>' : '';
-        var shortcutHtml = item.shortcut != null ? '<span class="menu-shortcut">${item.shortcut}</span>' : '';
-
-        // Собираем всё вместе: Иконка + Текст + (Хоткей справа)
-        btn.innerHTML = iconHtml + ' <span style="flex:1">${item.label}</span> ' + shortcutHtml;
-        li.appendChild(btn);
-
-        // 3. Если это подменю, рекурсивно строим его дочерние элементы
-        if (item.type == Submenu && item.children != null && item.children.length > 0) {
-            li.className += " has-submenu";
-            var subUl = js.Browser.document.createElement("ul");
-            subUl.className = "submenu";
-            
-            for (child in item.children) {
-                subUl.appendChild(createMenuItem(child));
-            }
-            
-            li.appendChild(subUl);
-        }
-
-        return li;
-    }
-}
-</file>
-
 <file path="presentation/ui/StatusBar.hx">
 package hide.presentation.ui;
 
@@ -6141,329 +7428,6 @@ package hide.presentation.views;
 
 <file path="presentation/views/ScriptEditorView.hx">
 package hide.presentation.views;
-</file>
-
-<file path="presentation/Ide.hx">
-package hide.presentation;
-
-import hide.presentation.controllers.WindowController;
-import hide.application.services.MenuService;
-import hide.application.services.WindowService;
-import hide.application.services.PluginManager;
-import hide.application.services.ViewRegistry;
-import hide.domain.services.IFileDialog;
-import hide.domain.services.IPlatform;
-import hide.domain.services.IAppInfo;
-import hide.presentation.ui.StatusBar;
-import hide.presentation.controllers.MenuController;
-
-
-import hide.application.commands.LoadProjectUseCase;
-import hide.application.commands.SetFullscreenUseCase;
-import hide.application.commands.SaveLayoutUseCase;
-import hide.application.commands.CloseProjectUseCase;
-import hide.application.commands.OpenViewUseCase;
-import hide.application.dto.ViewDto;
-import hide.domain.valueobjects.DisplayPosition;
-import hide.domain.valueobjects.FilePath;
-
-import hide.shared.events.ProjectLoaded;
-import hide.shared.events.ErrorOccurred;
-import hide.shared.events.LayoutChanged;
-import hide.shared.events.ProjectClosed;
-import hide.shared.events.RecentProjectsUpdated;
-
-import hide.shared.types.IEventBus;
-import hide.shared.types.Result;
-
-import hide.domain.services.ILayoutEngine;
-
-import hx.injection.Service;
-import hx.injection.ServiceCollection;
-import hx.injection.ServiceProvider;
-import tink.core.*;
-
-import hide.infrastructure.di.AppModule;
-using tink.CoreApi;
-using hx.injection.ServiceExtensions;
-using Lambda;
-
-@:expose
-class Ide implements Service {
-    public static var inst(default, null):Ide;
-    private var _resizeHandler:Null<js.html.Event->Void>;
-    private var views:Array<ViewDto>;
-    private var statusBar:StatusBar;
-    
-    public var currentProjectName(get, never):String;
-    private var _currentProject:Null<String>;
-    
-    private var _projectLoadedUnsub:CallbackLink;
-    private var _errorUnsub:CallbackLink;
-    private var _layoutChangedUnsub:CallbackLink;
-    private var _projectClosedUnsub:CallbackLink;
-    
-    private var windowService:WindowService;
-    private var menuService:MenuService;
-    private var layoutEngine:ILayoutEngine;
-    private var menuController:MenuController;
-    private var loadProjectUseCase:LoadProjectUseCase;
-    private var setFullscreenUseCase:SetFullscreenUseCase;
-    //private var saveLayoutUseCase:SaveLayoutUseCase;
-    //private var closeProjectUseCase:CloseProjectUseCase;
-    //private var openViewUseCase:OpenViewUseCase;
-    private var viewRegistry:ViewRegistry;
-    private var pluginManager:PluginManager;
-    private var eventBus:IEventBus;
-    private var fileDialog:IFileDialog;
-    private var platform:IPlatform;
-    private var windowController:WindowController;
-    public function new(
-        windowService:WindowService,
-        menuService:MenuService,
-        loadProjectUseCase:LoadProjectUseCase,
-        setFullscreenUseCase:SetFullscreenUseCase,
-        //saveLayoutUseCase:SaveLayoutUseCase,
-        //closeProjectUseCase:CloseProjectUseCase,
-        //openViewUseCase:OpenViewUseCase,
-        viewRegistry:ViewRegistry,
-        pluginManager:PluginManager,
-        eventBus:IEventBus,
-        fileDialog:IFileDialog,
-        platform:IPlatform,
-        layoutEngine:ILayoutEngine,
-        menuController:MenuController,
-        windowController:WindowController
-    ) {
-        this.windowService = windowService;
-        this.menuService = menuService;
-        this.loadProjectUseCase = loadProjectUseCase;
-        this.setFullscreenUseCase = setFullscreenUseCase;
-        //this.saveLayoutUseCase = saveLayoutUseCase;
-        //this.closeProjectUseCase = closeProjectUseCase;
-        //this.openViewUseCase = openViewUseCase;
-        this.viewRegistry = viewRegistry;
-        this.pluginManager = pluginManager;
-        this.eventBus = eventBus;
-        this.fileDialog = fileDialog;
-        this.platform = platform;
-        this.layoutEngine = layoutEngine;
-        this.menuController = menuController;
-        this.windowController = windowController;
-        inst = this;
-        views = viewRegistry.all(); 
-        
-        menuService.onItemClick("project.open", onMenuOpenProject);
-        menuService.onItemClick("view.fullscreen", onToggleFullscreen);
-        menuService.onItemClick("layout.save", onLayoutSave);
-        menuService.onItemClick("project.close", onCloseProject);
-        menuService.onItemClick("help.about", showAboutDialog);
-        menuService.onItemClick("app.exit", function() {
-            js.Browser.window.close();
-        });
-        for (view in viewRegistry.all()) {
-            trace(view.name);
-            menuService.addViewMenu(view);
-            menuService.onItemClick("view." + view.name, function() openView(view.name));
-        }
-        
-        // Используем js.Browser.document вместо Element.byId
-        var statusEl = js.Browser.document.getElementById("status-bar");
-        statusBar = new StatusBar(statusEl);
-
-
-        
-        _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded, onProjectLoadedHandler);
-        _errorUnsub = eventBus.subscribe(ErrorOccurred, onErrorOccurred);
-        _layoutChangedUnsub = eventBus.subscribe(LayoutChanged, function(e:LayoutChanged) {
-            trace("Layout changed");
-        });
-        _projectClosedUnsub = eventBus.subscribe(ProjectClosed, function(e:ProjectClosed) {
-            _currentProject = null;
-            statusBar.showMessage("Project closed");
-            updateWindowTitle();
-        });
-    }
-    
-    public function onMenuOpenProject():Void {
-        layoutEngine.open("welcome", {}, DisplayPosition.Center);
-        /*
-        fileDialog.showOpen({ filters: [{ name: "Project Files", extensions: ["json", "hide"] }] })
-        .handle(function(path:Null<String>) {
-            if (path != null) {
-                var result = loadProjectUseCase.execute(new FilePath(path));
-                switch (result) {
-                    case Success(_):
-                        trace("Project loading initiated successfully.");
-                    case Failure(err):
-                        statusBar.setError('Failed to load project: $err');
-                }
-            }
-        });*/
-    }
-    
-    private function onErrorOccurred(event:ErrorOccurred):Void {
-        trace("UI ERROR [" + event.context + "]: " + event.error);
-    }
-    
-    private function onProjectLoadedHandler(event:ProjectLoaded):Void {
-        _currentProject = event.project.name;
-        trace("UI: Project loaded successfully: " + _currentProject);
-        updateWindowTitle();
-        //openView("project");
-        //openView("editor");
-    }
-    
-    public function onToggleFullscreen():Void {
-        // isFullscreen — это var, а не функция! Убираем скобки
-        setFullscreenUseCase.execute(!windowService.isFullscreen);
-    }
-    
-    public function onLayoutSave():Void {
-        //saveLayoutUseCase.execute();
-    }
-    
-    public function onCloseProject():Void {
-        //closeProjectUseCase.execute();
-    }
-    
-    private function openView(viewName:String):Void {
-        // Используем Lambda.find вместо Array.find
-        var view = Lambda.find(views, function(v) return v.name == viewName);
-        if (view == null) {
-            throw "View not found: " + viewName;
-        }
-        
-        var position = switch viewName {
-            case "editor": DisplayPosition.Center;
-            case "project": DisplayPosition.Left;
-            default: DisplayPosition.Center;
-        };
-        
-        //openViewUseCase.execute(view.name, view.defaultState, position);
-    }
-    
-    private function onOpenRecent(path:String):Void {
-        loadProjectUseCase.execute(new FilePath(path));
-    }
-    
-    private function updateWindowTitle():Void {
-        var title = _currentProject != null ? '$_currentProject - HIDE IDE' : 'HIDE IDE';
-        trace("Window title updated to: " + title);
-        windowService.setTitle(title);
-    }
-    
-    private function showAboutDialog():Void {
-        trace('HIDE IDE\nVersion 0.1.0');
-    }
-    
-    private function get_currentProjectName():String {
-        return _currentProject != null ? _currentProject : "No project";
-    }
-    
-    public static function main():Void {
-        var collection = new ServiceCollection();
-        // Импортируем AppModule явно
-        hide.infrastructure.di.AppModule.configure(collection);
-        
-        var provider = collection.createProvider();
-        var ide = provider.getService(Ide);
-        ide.startup();
-        
-        provider.getService(PluginManager).loadAll();
-    }
-    
-    private function startup():Void {
-        trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
-         // 2. Регистрируем временные заглушки для View (позже заменим на плагины)
-            // ✅ РЕГИСТРАЦИЯ ЗАГЛУШЕК ФАБРИК
-        viewRegistry.registerViewFactory("project", new hide.infrastructure.external.StubProjectFactory());
-        viewRegistry.registerViewFactory("editor", new hide.infrastructure.external.StubEditorFactory());
-        viewRegistry.registerViewFactory("console", new hide.infrastructure.external.StubConsoleFactory());
-        viewRegistry.registerViewFactory("properties", new hide.infrastructure.external.StubPropertiesFactory());
-        // ✅ РЕГИСТРАЦИЯ REACT-ФАБРИК
-        viewRegistry.registerViewFactory(
-            "welcome",
-            new hide.infrastructure.ui.ReactViewFactory()
-                .withComponent(hide.presentation.ui.react.components.WelcomePanel)
-        );
-        windowController.init();
-        trace("🪟 WindowController инициализирован");
-        // 1. Инициализируем GoldenLayout
-        var layoutEl = js.Browser.document.getElementById("golden-layout-root");
-        if (layoutEl != null) {
-            layoutEngine.setContainer(layoutEl);
-            // Инициализируем с пустым состоянием (адаптер сам создаст дефолтный скелет)
-            layoutEngine.init({ content: [], fullScreen: null }); 
-            trace("🎨 GoldenLayout инициализирован.");
-        } else {
-            trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.");
-        }
-       
-        var menuContainer = js.Browser.document.getElementById("main-menu");
-        if (menuContainer != null) {
-            menuController.setContainer(cast menuContainer);
-            trace("📋 MenuController инициализирован с DOM-контейнером.");
-        } else {
-            trace("⚠️ Контейнер #main-menu не найден в DOM!");
-        }
-
-        var args = platform.getAppArgs();
-        var projectFile:Null<String> = null;
-        // ✅ Подписка на resize окна через js.Browser
-        _resizeHandler = function(_) {
-            haxe.Timer.delay(function() {
-                var layoutEl = js.Browser.document.getElementById("golden-layout-root");
-                if (layoutEl != null) {
-                    var rect = layoutEl.getBoundingClientRect();
-                    layoutEngine.updateSize(Std.int(rect.width), Std.int(rect.height));
-                }
-            }, 100); // Небольшая задержка для стабильности
-        };
-
-        js.Browser.window.addEventListener("resize", _resizeHandler);
-        // Electron передает много внутренних флагов. Ищем первый аргумент, 
-        // который НЕ начинается с '-' и не является пустой строкой.
-        for (arg in args) {
-            if (arg != "" && !StringTools.startsWith(arg, "-") && !StringTools.startsWith(arg, "chrome://")) {
-                projectFile = arg;
-                break;
-            }
-        }
-        
-        if (projectFile != null) {
-            trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile);
-            loadProjectUseCase.execute(new FilePath(projectFile));
-        } else {
-            trace("👋 Приложение запущено без проекта.");
-
-        }
-    }
-    
-    public function dispose():Void {
-        if (_projectLoadedUnsub != null) _projectLoadedUnsub.cancel();
-        if (_errorUnsub != null) _errorUnsub.cancel();
-        if (_layoutChangedUnsub != null) _layoutChangedUnsub.cancel();
-        if (_projectClosedUnsub != null) _projectClosedUnsub.cancel();
-        // ✅ Очищаем ресурсы контроллера меню
-        if (menuController != null) {
-            menuController.dispose();
-        }
-        if (windowController != null) {
-            windowController.dispose();
-        }
-        // ✅ Отписка от resize
-        if (_resizeHandler != null) {
-            js.Browser.window.removeEventListener("resize", _resizeHandler);
-            _resizeHandler = null;
-        }
-    }
-    public function get_eventBus():IEventBus return eventBus;
-    public function get_windowService():WindowService return windowService;
-    public function get_menuService():MenuService return menuService;
-    public function get_viewRegistry():ViewRegistry return viewRegistry;
-    public function get_layoutEngine():ILayoutEngine return layoutEngine;
-}
 </file>
 
 <file path="shared/events/ErrorOccurred.hx">
@@ -6511,6 +7475,30 @@ class LayoutSaved {
     public var state:LayoutState;
     public function new(state:LayoutState) {
         this.state = state;
+    }
+}
+</file>
+
+<file path="shared/events/ObjectChanged.hx">
+// hide/shared/events/ObjectChanged.hx
+package hide.shared.events;
+
+class ObjectChanged {
+    public var objectId:String;
+    public function new(objectId:String) {
+        this.objectId = objectId;
+    }
+}
+</file>
+
+<file path="shared/events/ObjectSelected.hx">
+// hide/shared/events/ObjectSelected.hx
+package hide.shared.events;
+
+class ObjectSelected {
+    public var objectId:Null<String>;
+    public function new(objectId:Null<String>) {
+        this.objectId = objectId;
     }
 }
 </file>
@@ -6719,6 +7707,27 @@ package shared.utils;
 package shared.utils;
 </file>
 
+<file path="plugins.json">
+{
+  "plugins": [
+    {
+      "name": "ConsolePlugin",
+      "className": "plugins.ConsolePlugin",
+      "enabled": true,
+      "config": {
+        "defaultLogLevel": "info"
+      }
+    },
+    {
+      "name": "TerminalPlugin",
+      "className": "plugins.TerminalPlugin",
+      "enabled": false,
+      "config": {}
+    }
+  ]
+}
+</file>
+
 <file path="plugins/console/ConsoleView.hx">
 // plugins/console/ConsoleView.hx
 
@@ -6818,27 +7827,6 @@ package hide.shared.types;
 enum Result<T, E> {
     Success(value: T);
     Failure(error: E);
-}
-</file>
-
-<file path="plugins.json">
-{
-  "plugins": [
-    {
-      "name": "ConsolePlugin",
-      "className": "plugins.ConsolePlugin",
-      "enabled": true,
-      "config": {
-        "defaultLogLevel": "info"
-      }
-    },
-    {
-      "name": "TerminalPlugin",
-      "className": "plugins.TerminalPlugin",
-      "enabled": false,
-      "config": {}
-    }
-  ]
 }
 </file>
 

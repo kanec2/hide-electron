@@ -1,41 +1,37 @@
+// hide/engine/infrastructure/SceneServiceImpl.hx
 package hide.engine.infrastructure;
 
 import hide.engine.domain.services.ISceneService;
+import hide.engine.domain.services.IEngineEventBus;
 import hide.engine.domain.entities.SceneObject;
 import hide.engine.domain.entities.Transform;
 import hide.engine.domain.entities.SceneComponent;
 import hide.engine.domain.entities.MeshRenderer;
 import hide.engine.domain.entities.Rigidbody;
-import hide.shared.types.IEventBus;
-import hide.shared.events.ObjectSelected;
-import hide.shared.events.ObjectChanged;
 import hx.injection.Service;
 
+/**
+ * Реализация ISceneService.
+ * ❌ УБРАНО: import hide.shared.types.IEventBus;
+ * ❌ УБРАНО: import hide.shared.events.*;
+ * ✅ Использует только IEngineEventBus (изолированный от IDE)
+ */
 class SceneServiceImpl implements ISceneService implements Service {
     private var root:SceneObject;
     private var selectedId:Null<String>;
-    private var eventBus:IEventBus;
+    private var eventBus:IEngineEventBus;  // ← Свой EventBus движка!
     private var objectIndex:Map<String, SceneObject>;
-
-    private var onObjectSelectedCallbacks:Array<String->Void>;
-    private var onObjectChangedCallbacks:Array<String->Void>;
-    private var onSceneChangedCallbacks:Array<Void->Void>;
-
-    public function new(eventBus:IEventBus) {
+    
+    public function new(eventBus:IEngineEventBus) {
         this.eventBus = eventBus;
         this.objectIndex = new Map();
-        this.onObjectSelectedCallbacks = [];
-        this.onObjectChangedCallbacks = [];
-        this.onSceneChangedCallbacks = [];
-        
         root = createSampleScene();
     }
-
+    
     private function createSampleScene():SceneObject {
         var scene = new SceneObject("scene", "SampleScene");
         
         var camera = new SceneObject("camera", "Main Camera");
-        
         var light = new SceneObject("light", "Directional Light");
         
         var player = new SceneObject("player", "Player");
@@ -53,15 +49,14 @@ class SceneServiceImpl implements ISceneService implements Service {
         scene.addChild(ground);
         
         indexObject(scene);
-        
         return scene;
     }
-
+    
     private function indexObject(obj:SceneObject):Void {
         objectIndex.set(obj.id, obj);
         for (child in obj.children) indexObject(child);
     }
-
+    
     public function getRoot():SceneObject return root;
     
     public function getObject(id:String):Null<SceneObject> {
@@ -75,62 +70,63 @@ class SceneServiceImpl implements ISceneService implements Service {
     public function getAll():Array<SceneObject> {
         return [for (obj in objectIndex) obj];
     }
-
+    
     public function select(id:String):Void {
         if (!objectIndex.exists(id)) return;
         selectedId = id;
-        eventBus.publish(ObjectSelected, new ObjectSelected(id));
-        for (cb in onObjectSelectedCallbacks) cb(id);
+        // ✅ ИСПРАВЛЕНО: используем emitObjectSelected вместо publish
+        eventBus.emitObjectSelected(id);
     }
-
+    
     public function deselect():Void {
         selectedId = null;
-        eventBus.publish(ObjectSelected, new ObjectSelected(null));
+        // ✅ ИСПРАВЛЕНО: используем emitObjectSelected вместо publish
+        eventBus.emitObjectSelected(null);
     }
-
+    
     public function rename(id:String, newName:String):Void {
         var obj = getObject(id);
         if (obj == null) return;
         obj.name = newName;
         notifyChanged(id);
     }
-
+    
     public function setTransform(id:String, transform:Transform):Void {
         var obj = getObject(id);
         if (obj == null) return;
         obj.transform = transform;
         notifyChanged(id);
     }
-
+    
     public function addComponent(id:String, component:SceneComponent):Void {
         var obj = getObject(id);
         if (obj == null) return;
         obj.addComponent(component);
         notifyChanged(id);
     }
-
+    
     public function removeComponent(id:String, componentId:String):Void {
         var obj = getObject(id);
         if (obj == null) return;
         obj.removeComponent(componentId);
         notifyChanged(id);
     }
-
+    
     public function onObjectSelected(callback:String->Void):Void {
-        onObjectSelectedCallbacks.push(callback);
+        eventBus.onObjectSelected(callback);
     }
-
+    
     public function onObjectChanged(callback:String->Void):Void {
-        onObjectChangedCallbacks.push(callback);
+        eventBus.onObjectChanged(callback);
     }
-
+    
     public function onSceneChanged(callback:Void->Void):Void {
-        onSceneChangedCallbacks.push(callback);
+        eventBus.onSceneChanged(callback);
     }
-
+    
     private function notifyChanged(id:String):Void {
-        eventBus.publish(ObjectChanged, new ObjectChanged(id));
-        for (cb in onObjectChangedCallbacks) cb(id);
-        for (cb in onSceneChangedCallbacks) cb();
+        // ✅ ИСПРАВЛЕНО: используем emitObjectChanged вместо publish
+        eventBus.emitObjectChanged(id);
+        eventBus.emitSceneChanged();
     }
 }

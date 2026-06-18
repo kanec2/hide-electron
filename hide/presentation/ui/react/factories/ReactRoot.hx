@@ -1,4 +1,4 @@
-package hide.infrastructure.ui;
+package hide.presentation.ui.react.factories;
 
 import react.ReactDOM;
 import react.ReactComponent;

@@ -426,52 +426,6 @@ hide_application_services_PluginManager.prototype = {
 			this.saveConfig();
 		}
 	}
-	,loadAll: function() {
-		var _g = 0;
-		var _g1 = this.config.plugins;
-		while(_g < _g1.length) {
-			var pluginConfig = _g1[_g];
-			++_g;
-			if(!pluginConfig.enabled) {
-				continue;
-			}
-			if(this.registry.get(pluginConfig.name) != null) {
-				continue;
-			}
-			try {
-				var plugin = this.loadPlugin(pluginConfig);
-				if(plugin != null && plugin.activate()) {
-					this.registry.add(pluginConfig.name,plugin);
-				} else if(plugin != null) {
-					haxe_Log.trace("Plugin " + pluginConfig.name + " activation returned false",{ fileName : "hide/application/services/PluginManager.hx", lineNumber : 56, className : "hide.application.services.PluginManager", methodName : "loadAll"});
-				}
-			} catch( _g2 ) {
-				var e = haxe_Exception.caught(_g2).unwrap();
-				haxe_Log.trace("Failed to load plugin: " + pluginConfig.name + " - " + Std.string(e),{ fileName : "hide/application/services/PluginManager.hx", lineNumber : 59, className : "hide.application.services.PluginManager", methodName : "loadAll"});
-			}
-		}
-	}
-	,loadPlugin: function(pluginConfig) {
-		var className = pluginConfig.className;
-		var pluginClass = $hxClasses[className];
-		if(pluginClass == null) {
-			haxe_Log.trace("Plugin class not found: " + className,{ fileName : "hide/application/services/PluginManager.hx", lineNumber : 69, className : "hide.application.services.PluginManager", methodName : "loadPlugin"});
-			return null;
-		}
-		try {
-			var args = [this.viewRegistry,this.eventBus,pluginConfig.config != null ? pluginConfig.config : { }];
-			var plugin = Type.createInstance(pluginClass,args);
-			if(!js_Boot.__implements(plugin,hide_domain_services_IPlugin)) {
-				haxe_Log.trace("Plugin " + className + " does not implement IPlugin",{ fileName : "hide/application/services/PluginManager.hx", lineNumber : 79, className : "hide.application.services.PluginManager", methodName : "loadPlugin"});
-				return null;
-			}
-			return plugin;
-		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			haxe_Log.trace("Failed to instantiate plugin " + className + ". Error: " + Std.string(e),{ fileName : "hide/application/services/PluginManager.hx", lineNumber : 84, className : "hide.application.services.PluginManager", methodName : "loadPlugin"});
-			return null;
-		}
-	}
 	,saveConfig: function() {
 		var jsonStr = JSON.stringify(this.config,null,"  ");
 		this.fileSystem.writeText(this.configPath,jsonStr);
@@ -482,22 +436,12 @@ hide_application_services_PluginManager.prototype = {
 	,__class__: hide_application_services_PluginManager
 };
 var hide_application_services_PluginRegistry = function() {
-	this.plugins = new haxe_ds_StringMap();
 };
 $hxClasses["hide.application.services.PluginRegistry"] = hide_application_services_PluginRegistry;
 hide_application_services_PluginRegistry.__name__ = "hide.application.services.PluginRegistry";
 hide_application_services_PluginRegistry.__interfaces__ = [hx_injection_Service];
 hide_application_services_PluginRegistry.prototype = {
-	add: function(name,plugin) {
-		if(Object.prototype.hasOwnProperty.call(this.plugins.h,name)) {
-			throw haxe_Exception.thrown("Plugin $name already exists");
-		}
-		this.plugins.h[name] = plugin;
-	}
-	,get: function(name) {
-		return this.plugins.h[name];
-	}
-	,getConstructorArgs: function() {
+	getConstructorArgs: function() {
 		return [];
 	}
 	,__class__: hide_application_services_PluginRegistry
@@ -603,6 +547,53 @@ hide_application_services_WindowService.prototype = {
 	}
 	,__class__: hide_application_services_WindowService
 };
+var hide_bootstrap_AppModule = function() { };
+$hxClasses["hide.bootstrap.AppModule"] = hide_bootstrap_AppModule;
+hide_bootstrap_AppModule.__name__ = "hide.bootstrap.AppModule";
+hide_bootstrap_AppModule.configure = function(collection) {
+	var implementation = hide_infrastructure_platform_electron_ElectronIpcBridge;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IFileSystem.__name__,hide_infrastructure_platform_electron_ElectronFileSystemAdapter);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IFileDialog.__name__,hide_infrastructure_platform_electron_ElectronFileDialogAdapter);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IWindowManager.__name__,hide_infrastructure_platform_electron_ElectronWindowAdapter);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IPlatform.__name__,hide_infrastructure_platform_electron_ElectronPlatformAdapter);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_ILayoutEngine.__name__,hide_infrastructure_external_GoldenLayoutAdapter);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_shared_types_IEventBus.__name__,hide_shared_types_EventBusImpl);
+	var implementation = hide_application_services_ViewRegistry;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_application_services_PluginRegistry;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	hide_engine_bootstrap_EngineModule.configure(collection);
+	var implementation = hide_application_services_WindowService;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_application_services_MenuService;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_application_services_PluginManager;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_presentation_controllers_MenuController;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_presentation_controllers_WindowController;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_presentation_controllers_ToolbarController;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_application_commands_LoadProjectUseCase;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_application_commands_SetFullscreenUseCase;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_presentation_Ide;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+};
+var hide_bootstrap_Application = function() { };
+$hxClasses["hide.bootstrap.Application"] = hide_bootstrap_Application;
+hide_bootstrap_Application.__name__ = "hide.bootstrap.Application";
+hide_bootstrap_Application.main = function() {
+	var collection = new hx_injection_ServiceCollection();
+	hide_bootstrap_AppModule.configure(collection);
+	var provider = collection.createProvider();
+	var service = hide_presentation_Ide;
+	var ide = provider.handleGetService(service.__name__,service,null);
+	ide.startup();
+};
 var hide_domain_entities_Project = function(id,name,rootPath) {
 	this.id = id;
 	this.name = name;
@@ -699,13 +690,6 @@ hide_domain_services_IPlatform.__interfaces__ = [hx_injection_Service];
 hide_domain_services_IPlatform.prototype = {
 	__class__: hide_domain_services_IPlatform
 };
-var hide_domain_services_IPlugin = function() { };
-$hxClasses["hide.domain.services.IPlugin"] = hide_domain_services_IPlugin;
-hide_domain_services_IPlugin.__name__ = "hide.domain.services.IPlugin";
-hide_domain_services_IPlugin.__isInterface__ = true;
-hide_domain_services_IPlugin.prototype = {
-	__class__: hide_domain_services_IPlugin
-};
 var hide_domain_services_IViewFactory = function() { };
 $hxClasses["hide.domain.services.IViewFactory"] = hide_domain_services_IViewFactory;
 hide_domain_services_IViewFactory.__name__ = "hide.domain.services.IViewFactory";
@@ -744,40 +728,173 @@ hide_domain_valueobjects_FilePath.isValid = function(this1) {
 		return false;
 	}
 };
-var hide_infrastructure_di_AppModule = function() { };
-$hxClasses["hide.infrastructure.di.AppModule"] = hide_infrastructure_di_AppModule;
-hide_infrastructure_di_AppModule.__name__ = "hide.infrastructure.di.AppModule";
-hide_infrastructure_di_AppModule.configure = function(collection) {
-	var implementation = hide_infrastructure_platform_electron_ElectronIpcBridge;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IFileSystem.__name__,hide_infrastructure_platform_electron_ElectronFileSystemAdapter);
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IFileDialog.__name__,hide_infrastructure_platform_electron_ElectronFileDialogAdapter);
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IWindowManager.__name__,hide_infrastructure_platform_electron_ElectronWindowAdapter);
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IPlatform.__name__,hide_infrastructure_platform_electron_ElectronPlatformAdapter);
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_ILayoutEngine.__name__,hide_infrastructure_external_GoldenLayoutAdapter);
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_shared_types_IEventBus.__name__,hide_shared_types_EventBusImpl);
-	var implementation = hide_application_services_ViewRegistry;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
-	var implementation = hide_application_services_PluginRegistry;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
-	var implementation = hide_application_services_WindowService;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
-	var implementation = hide_application_services_MenuService;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
-	var implementation = hide_application_services_PluginManager;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
-	var implementation = hide_presentation_controllers_MenuController;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
-	var implementation = hide_presentation_controllers_WindowController;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
-	var implementation = hide_presentation_controllers_ToolbarController;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
-	var implementation = hide_application_commands_LoadProjectUseCase;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
-	var implementation = hide_application_commands_SetFullscreenUseCase;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
-	var implementation = hide_presentation_Ide;
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+var hide_engine_bootstrap_EngineModule = function() { };
+$hxClasses["hide.engine.bootstrap.EngineModule"] = hide_engine_bootstrap_EngineModule;
+hide_engine_bootstrap_EngineModule.__name__ = "hide.engine.bootstrap.EngineModule";
+hide_engine_bootstrap_EngineModule.configure = function(collection) {
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_engine_domain_services_IEngineEventBus.__name__,hide_engine_infrastructure_EngineEventBusImpl);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_engine_domain_services_ISceneService.__name__,hide_engine_infrastructure_SceneServiceImpl);
+};
+var hide_engine_domain_entities_SceneComponent = function() { };
+$hxClasses["hide.engine.domain.entities.SceneComponent"] = hide_engine_domain_entities_SceneComponent;
+hide_engine_domain_entities_SceneComponent.__name__ = "hide.engine.domain.entities.SceneComponent";
+hide_engine_domain_entities_SceneComponent.__isInterface__ = true;
+var hide_engine_domain_entities_MeshRenderer = function(meshPath,materialPath) {
+	this.id = Std.string(new Date().getTime());
+	this.meshPath = meshPath;
+	this.materialPath = materialPath;
+};
+$hxClasses["hide.engine.domain.entities.MeshRenderer"] = hide_engine_domain_entities_MeshRenderer;
+hide_engine_domain_entities_MeshRenderer.__name__ = "hide.engine.domain.entities.MeshRenderer";
+hide_engine_domain_entities_MeshRenderer.__interfaces__ = [hide_engine_domain_entities_SceneComponent];
+hide_engine_domain_entities_MeshRenderer.prototype = {
+	__class__: hide_engine_domain_entities_MeshRenderer
+};
+var hide_engine_domain_entities_Rigidbody = function(mass,useGravity) {
+	if(useGravity == null) {
+		useGravity = true;
+	}
+	if(mass == null) {
+		mass = 1;
+	}
+	this.id = Std.string(new Date().getTime());
+	this.mass = mass;
+	this.useGravity = useGravity;
+};
+$hxClasses["hide.engine.domain.entities.Rigidbody"] = hide_engine_domain_entities_Rigidbody;
+hide_engine_domain_entities_Rigidbody.__name__ = "hide.engine.domain.entities.Rigidbody";
+hide_engine_domain_entities_Rigidbody.__interfaces__ = [hide_engine_domain_entities_SceneComponent];
+hide_engine_domain_entities_Rigidbody.prototype = {
+	__class__: hide_engine_domain_entities_Rigidbody
+};
+var hide_engine_domain_entities_SceneObject = function(id,name) {
+	this.id = id;
+	this.name = name;
+	this.transform = new hide_engine_domain_entities_Transform();
+	this.components = [];
+	this.children = [];
+	this.isActive = true;
+};
+$hxClasses["hide.engine.domain.entities.SceneObject"] = hide_engine_domain_entities_SceneObject;
+hide_engine_domain_entities_SceneObject.__name__ = "hide.engine.domain.entities.SceneObject";
+hide_engine_domain_entities_SceneObject.prototype = {
+	addChild: function(child) {
+		child.parent = this;
+		this.children.push(child);
+	}
+	,addComponent: function(component) {
+		this.components.push(component);
+	}
+	,__class__: hide_engine_domain_entities_SceneObject
+};
+var hide_engine_domain_entities_Transform = function(x,y,z,rotX,rotY,rotZ,scaleX,scaleY,scaleZ) {
+	if(scaleZ == null) {
+		scaleZ = 1;
+	}
+	if(scaleY == null) {
+		scaleY = 1;
+	}
+	if(scaleX == null) {
+		scaleX = 1;
+	}
+	if(rotZ == null) {
+		rotZ = 0;
+	}
+	if(rotY == null) {
+		rotY = 0;
+	}
+	if(rotX == null) {
+		rotX = 0;
+	}
+	if(z == null) {
+		z = 0;
+	}
+	if(y == null) {
+		y = 0;
+	}
+	if(x == null) {
+		x = 0;
+	}
+	this.x = x;
+	this.y = y;
+	this.z = z;
+	this.rotX = rotX;
+	this.rotY = rotY;
+	this.rotZ = rotZ;
+	this.scaleX = scaleX;
+	this.scaleY = scaleY;
+	this.scaleZ = scaleZ;
+};
+$hxClasses["hide.engine.domain.entities.Transform"] = hide_engine_domain_entities_Transform;
+hide_engine_domain_entities_Transform.__name__ = "hide.engine.domain.entities.Transform";
+hide_engine_domain_entities_Transform.prototype = {
+	__class__: hide_engine_domain_entities_Transform
+};
+var hide_engine_domain_services_IEngineEventBus = function() { };
+$hxClasses["hide.engine.domain.services.IEngineEventBus"] = hide_engine_domain_services_IEngineEventBus;
+hide_engine_domain_services_IEngineEventBus.__name__ = "hide.engine.domain.services.IEngineEventBus";
+hide_engine_domain_services_IEngineEventBus.__isInterface__ = true;
+hide_engine_domain_services_IEngineEventBus.__interfaces__ = [hx_injection_Service];
+var hide_engine_domain_services_ISceneService = function() { };
+$hxClasses["hide.engine.domain.services.ISceneService"] = hide_engine_domain_services_ISceneService;
+hide_engine_domain_services_ISceneService.__name__ = "hide.engine.domain.services.ISceneService";
+hide_engine_domain_services_ISceneService.__isInterface__ = true;
+hide_engine_domain_services_ISceneService.__interfaces__ = [hx_injection_Service];
+var hide_engine_infrastructure_EngineEventBusImpl = function() {
+	this.objectSelectedCallbacks = [];
+	this.objectChangedCallbacks = [];
+	this.sceneChangedCallbacks = [];
+};
+$hxClasses["hide.engine.infrastructure.EngineEventBusImpl"] = hide_engine_infrastructure_EngineEventBusImpl;
+hide_engine_infrastructure_EngineEventBusImpl.__name__ = "hide.engine.infrastructure.EngineEventBusImpl";
+hide_engine_infrastructure_EngineEventBusImpl.__interfaces__ = [hx_injection_Service,hide_engine_domain_services_IEngineEventBus];
+hide_engine_infrastructure_EngineEventBusImpl.prototype = {
+	getConstructorArgs: function() {
+		return [];
+	}
+	,__class__: hide_engine_infrastructure_EngineEventBusImpl
+};
+var hide_engine_infrastructure_SceneServiceImpl = function(eventBus) {
+	this.eventBus = eventBus;
+	this.objectIndex = new haxe_ds_StringMap();
+	this.root = this.createSampleScene();
+};
+$hxClasses["hide.engine.infrastructure.SceneServiceImpl"] = hide_engine_infrastructure_SceneServiceImpl;
+hide_engine_infrastructure_SceneServiceImpl.__name__ = "hide.engine.infrastructure.SceneServiceImpl";
+hide_engine_infrastructure_SceneServiceImpl.__interfaces__ = [hx_injection_Service,hide_engine_domain_services_ISceneService];
+hide_engine_infrastructure_SceneServiceImpl.prototype = {
+	createSampleScene: function() {
+		var scene = new hide_engine_domain_entities_SceneObject("scene","SampleScene");
+		var camera = new hide_engine_domain_entities_SceneObject("camera","Main Camera");
+		var light = new hide_engine_domain_entities_SceneObject("light","Directional Light");
+		var player = new hide_engine_domain_entities_SceneObject("player","Player");
+		player.transform = new hide_engine_domain_entities_Transform(0,1.5,0);
+		player.addComponent(new hide_engine_domain_entities_MeshRenderer("Player.mesh","Default-Diffuse"));
+		player.addComponent(new hide_engine_domain_entities_Rigidbody(1,true));
+		var ground = new hide_engine_domain_entities_SceneObject("ground","Ground");
+		ground.transform = new hide_engine_domain_entities_Transform(0,0,0);
+		ground.addComponent(new hide_engine_domain_entities_MeshRenderer("Ground.mesh","Ground-Material"));
+		scene.addChild(camera);
+		scene.addChild(light);
+		scene.addChild(player);
+		scene.addChild(ground);
+		this.indexObject(scene);
+		return scene;
+	}
+	,indexObject: function(obj) {
+		this.objectIndex.h[obj.id] = obj;
+		var _g = 0;
+		var _g1 = obj.children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			this.indexObject(child);
+		}
+	}
+	,getConstructorArgs: function() {
+		return ["hide.engine.domain.services.IEngineEventBus"];
+	}
+	,__class__: hide_engine_infrastructure_SceneServiceImpl
 };
 var hide_infrastructure_external_GoldenLayoutAdapter = function(eventBus,viewRegistry) {
 	this.eventBus = eventBus;
@@ -1005,7 +1122,7 @@ hide_infrastructure_external_StubConsoleFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubConsoleFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubConsoleFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>🖥️ Console</h2>\n                <p>Console output will appear here.</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>🖥️ Console</h2>\r\n                <p>Console output will appear here.</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1020,7 +1137,7 @@ hide_infrastructure_external_StubEditorFactory.__name__ = "hide.infrastructure.e
 hide_infrastructure_external_StubEditorFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubEditorFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>📝 Stub Editor</h2>\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\n                <p>Состояние: " + JSON.stringify(state) + "</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>📝 Stub Editor</h2>\r\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\r\n                <p>Состояние: " + JSON.stringify(state) + "</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1035,7 +1152,7 @@ hide_infrastructure_external_StubGameFactory.__name__ = "hide.infrastructure.ext
 hide_infrastructure_external_StubGameFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubGameFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\n                    Resolution: 1920×1080 | Stats: OFF\n                </div>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\r\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\r\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\r\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\r\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\r\n                    Resolution: 1920×1080 | Stats: OFF\r\n                </div>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1050,7 +1167,7 @@ hide_infrastructure_external_StubProjectFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubProjectFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubProjectFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\n                </div>\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                            ▼ 📁 Assets\n                        </div>\n                        <div style='padding-left:16px;'>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Materials\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Prefabs\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scenes\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scripts\n                            </div>\n                            <div style='padding-left:16px;'>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                📁 Textures\n                            </div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\r\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\r\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\r\n                </div>\r\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\r\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\r\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                            ▼ 📁 Assets\r\n                        </div>\r\n                        <div style='padding-left:16px;'>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Materials\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Prefabs\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scenes\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scripts\r\n                            </div>\r\n                            <div style='padding-left:16px;'>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                📁 Textures\r\n                            </div>\r\n                        </div>\r\n                    </div>\r\n                </div>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1065,7 +1182,7 @@ hide_infrastructure_external_StubPropertiesFactory.__name__ = "hide.infrastructu
 hide_infrastructure_external_StubPropertiesFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubPropertiesFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\n                <h2>⚙️ Properties</h2>\n                <p>Object properties will appear here.</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\r\n                <h2>⚙️ Properties</h2>\r\n                <p>Object properties will appear here.</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1080,7 +1197,7 @@ hide_infrastructure_external_StubSceneFactory.__name__ = "hide.infrastructure.ex
 hide_infrastructure_external_StubSceneFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubSceneFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\n                <div style='font-size:48px; margin-bottom:20px;'>🎬</div>\n                <h2 style='margin:0; color:#fff;'>Scene View</h2>\n                <p style='color:#aaa; margin-top:10px;'>3D viewport will appear here</p>\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px;'>\n                    <div>📷 Camera: Main Camera</div>\n                    <div>🎯 Gizmos: ON</div>\n                    <div>💡 Lighting: Baked</div>\n                </div>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\r\n                <div style='font-size:48px; margin-bottom:20px;'>🎬</div>\r\n                <h2 style='margin:0; color:#fff;'>Scene View</h2>\r\n                <p style='color:#aaa; margin-top:10px;'>3D viewport will appear here</p>\r\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px;'>\r\n                    <div>📷 Camera: Main Camera</div>\r\n                    <div>🎯 Gizmos: ON</div>\r\n                    <div>💡 Lighting: Baked</div>\r\n                </div>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -1238,49 +1355,6 @@ hide_infrastructure_platform_electron_ElectronWindowAdapter.prototype = {
 	}
 	,__class__: hide_infrastructure_platform_electron_ElectronWindowAdapter
 };
-var hide_infrastructure_ui_ReactRoot = function(domNode) {
-	this.domNode = domNode;
-};
-$hxClasses["hide.infrastructure.ui.ReactRoot"] = hide_infrastructure_ui_ReactRoot;
-hide_infrastructure_ui_ReactRoot.__name__ = "hide.infrastructure.ui.ReactRoot";
-hide_infrastructure_ui_ReactRoot.prototype = {
-	__class__: hide_infrastructure_ui_ReactRoot
-};
-var hide_infrastructure_ui_ReactViewFactory = function() {
-	this.defaultProps = { };
-};
-$hxClasses["hide.infrastructure.ui.ReactViewFactory"] = hide_infrastructure_ui_ReactViewFactory;
-hide_infrastructure_ui_ReactViewFactory.__name__ = "hide.infrastructure.ui.ReactViewFactory";
-hide_infrastructure_ui_ReactViewFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
-hide_infrastructure_ui_ReactViewFactory.prototype = {
-	withComponent: function(componentClass,defaultProps) {
-		this.componentClass = componentClass;
-		this.defaultProps = defaultProps != null ? defaultProps : { };
-		return this;
-	}
-	,create: function(container,state) {
-		if(this.componentClass == null) {
-			throw haxe_Exception.thrown("ReactViewFactory: componentClass not set. Call withComponent() first.");
-		}
-		var htmlElement = container;
-		var domNode = htmlElement.getElement();
-		if(domNode == null || domNode.nodeType == null) {
-			haxe_Log.trace("⚠️ CRITICAL: domNode is invalid! Type: ",{ fileName : "hide/infrastructure/ui/ReactViewFactory.hx", lineNumber : 39, className : "hide.infrastructure.ui.ReactViewFactory", methodName : "create", customParams : [typeof(domNode)," Value: ",domNode]});
-			domNode = window.document.createElement("div");
-			domNode.innerHTML = "<div style='color:red; padding:10px;'>Error: Invalid DOM container for React</div>";
-		}
-		var reactRoot = new hide_infrastructure_ui_ReactRoot(domNode);
-		var props = { initialState : state, defaultProps : this.defaultProps, onUnmount : function() {
-		}};
-		var reactElement = React.createElement(this.componentClass,props);
-		ReactDOM.render(reactElement,domNode);
-		return reactRoot;
-	}
-	,getConstructorArgs: function() {
-		return [];
-	}
-	,__class__: hide_infrastructure_ui_ReactViewFactory
-};
 var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,viewRegistry,pluginManager,eventBus,fileDialog,platform,layoutEngine,menuController,windowController,toolbarController) {
 	var _gthis = this;
 	this.windowService = windowService;
@@ -1311,7 +1385,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	while(_g < _g1.length) {
 		var view = [_g1[_g]];
 		++_g;
-		haxe_Log.trace(view[0].name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 123, className : "hide.presentation.Ide", methodName : "new"});
+		haxe_Log.trace(view[0].name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 122, className : "hide.presentation.Ide", methodName : "new"});
 		menuService.addViewMenu(view[0]);
 		menuService.onItemClick("view." + view[0].name,(function(view) {
 			return function() {
@@ -1324,7 +1398,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this._projectLoadedUnsub = eventBus.subscribe(hide_shared_events_ProjectLoaded,$bind(this,this.onProjectLoadedHandler));
 	this._errorUnsub = eventBus.subscribe(hide_shared_events_ErrorOccurred,$bind(this,this.onErrorOccurred));
 	this._layoutChangedUnsub = eventBus.subscribe(hide_shared_events_LayoutChanged,function(e) {
-		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 137, className : "hide.presentation.Ide", methodName : "new"});
+		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 136, className : "hide.presentation.Ide", methodName : "new"});
 	});
 	this._projectClosedUnsub = eventBus.subscribe(hide_shared_events_ProjectClosed,function(e) {
 		_gthis._currentProject = null;
@@ -1336,26 +1410,16 @@ $hxClasses["hide.presentation.Ide"] = hide_presentation_Ide;
 $hx_exports["hide"]["presentation"]["Ide"] = hide_presentation_Ide;
 hide_presentation_Ide.__name__ = "hide.presentation.Ide";
 hide_presentation_Ide.__interfaces__ = [hx_injection_Service];
-hide_presentation_Ide.main = function() {
-	var collection = new hx_injection_ServiceCollection();
-	hide_infrastructure_di_AppModule.configure(collection);
-	var provider = collection.createProvider();
-	var service = hide_presentation_Ide;
-	var ide = provider.handleGetService(service.__name__,service,null);
-	ide.startup();
-	var service = hide_application_services_PluginManager;
-	provider.handleGetService(service.__name__,service,null).loadAll();
-};
 hide_presentation_Ide.prototype = {
 	onMenuOpenProject: function() {
 		this.layoutEngine.open("welcome",{ },hide_domain_valueobjects_DisplayPosition.Center);
 	}
 	,onErrorOccurred: function(event) {
-		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 164, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
+		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 163, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
 	}
 	,onProjectLoadedHandler: function(event) {
 		this._currentProject = event.project.name;
-		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 169, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
+		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 168, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
 		this.updateWindowTitle();
 	}
 	,onToggleFullscreen: function() {
@@ -1389,11 +1453,11 @@ hide_presentation_Ide.prototype = {
 	}
 	,updateWindowTitle: function() {
 		var title = this._currentProject != null ? "" + this._currentProject + " - HIDE IDE" : "HIDE IDE";
-		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 210, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
+		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 209, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
 		this.windowService.setTitle(title);
 	}
 	,showAboutDialog: function() {
-		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 215, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
+		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 214, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
 	}
 	,get_currentProjectName: function() {
 		if(this._currentProject != null) {
@@ -1404,37 +1468,37 @@ hide_presentation_Ide.prototype = {
 	}
 	,startup: function() {
 		var _gthis = this;
-		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 235, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 224, className : "hide.presentation.Ide", methodName : "startup"});
 		this.viewRegistry.registerViewFactory("scene",new hide_infrastructure_external_StubSceneFactory());
 		this.viewRegistry.registerViewFactory("game",new hide_infrastructure_external_StubGameFactory());
 		this.viewRegistry.registerViewFactory("project",new hide_infrastructure_external_StubProjectFactory());
 		this.viewRegistry.registerViewFactory("editor",new hide_infrastructure_external_StubEditorFactory());
 		this.viewRegistry.registerViewFactory("console",new hide_infrastructure_external_StubConsoleFactory());
 		this.viewRegistry.registerViewFactory("properties",new hide_infrastructure_external_StubPropertiesFactory());
-		this.viewRegistry.registerViewFactory("inspector",new hide_infrastructure_ui_ReactViewFactory().withComponent(hide_presentation_ui_react_components_InspectorPanel));
-		this.viewRegistry.registerViewFactory("hierarchy",new hide_infrastructure_ui_ReactViewFactory().withComponent(hide_presentation_ui_react_components_HierarchyPanel));
-		this.viewRegistry.registerViewFactory("welcome",new hide_infrastructure_ui_ReactViewFactory().withComponent(hide_presentation_ui_react_components_WelcomePanel));
+		this.viewRegistry.registerViewFactory("inspector",new hide_presentation_ui_react_factories_ReactViewFactory().withComponent(hide_presentation_ui_react_components_InspectorPanel));
+		this.viewRegistry.registerViewFactory("hierarchy",new hide_presentation_ui_react_factories_ReactViewFactory().withComponent(hide_presentation_ui_react_components_HierarchyPanel));
+		this.viewRegistry.registerViewFactory("welcome",new hide_presentation_ui_react_factories_ReactViewFactory().withComponent(hide_presentation_ui_react_components_WelcomePanel));
 		this.windowController.init();
-		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 268, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 257, className : "hide.presentation.Ide", methodName : "startup"});
 		var toolbarEl = window.document.getElementById("main-toolbar");
 		if(toolbarEl != null) {
 			this.toolbarController.setContainer(toolbarEl);
-			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 276, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 265, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var layoutEl = window.document.getElementById("golden-layout-root");
 		if(layoutEl != null) {
 			this.layoutEngine.setContainer(layoutEl);
 			this.layoutEngine.init({ content : [], fullScreen : null});
-			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 284, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 273, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 286, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 275, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var menuContainer = window.document.getElementById("main-menu");
 		if(menuContainer != null) {
 			this.menuController.setContainer(menuContainer);
-			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 292, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 281, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 294, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 283, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var args = this.platform.getAppArgs();
 		var projectFile = null;
@@ -1458,10 +1522,10 @@ hide_presentation_Ide.prototype = {
 			}
 		}
 		if(projectFile != null) {
-			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 321, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 310, className : "hide.presentation.Ide", methodName : "startup"});
 			this.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._new(projectFile));
 		} else {
-			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 324, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 313, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 	}
 	,dispose: function() {
@@ -2038,6 +2102,49 @@ hide_presentation_ui_react_components_WelcomePanel.prototype = $extend(hide_pres
 	}
 	,__class__: hide_presentation_ui_react_components_WelcomePanel
 });
+var hide_presentation_ui_react_factories_ReactRoot = function(domNode) {
+	this.domNode = domNode;
+};
+$hxClasses["hide.presentation.ui.react.factories.ReactRoot"] = hide_presentation_ui_react_factories_ReactRoot;
+hide_presentation_ui_react_factories_ReactRoot.__name__ = "hide.presentation.ui.react.factories.ReactRoot";
+hide_presentation_ui_react_factories_ReactRoot.prototype = {
+	__class__: hide_presentation_ui_react_factories_ReactRoot
+};
+var hide_presentation_ui_react_factories_ReactViewFactory = function() {
+	this.defaultProps = { };
+};
+$hxClasses["hide.presentation.ui.react.factories.ReactViewFactory"] = hide_presentation_ui_react_factories_ReactViewFactory;
+hide_presentation_ui_react_factories_ReactViewFactory.__name__ = "hide.presentation.ui.react.factories.ReactViewFactory";
+hide_presentation_ui_react_factories_ReactViewFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
+hide_presentation_ui_react_factories_ReactViewFactory.prototype = {
+	withComponent: function(componentClass,defaultProps) {
+		this.componentClass = componentClass;
+		this.defaultProps = defaultProps != null ? defaultProps : { };
+		return this;
+	}
+	,create: function(container,state) {
+		if(this.componentClass == null) {
+			throw haxe_Exception.thrown("ReactViewFactory: componentClass not set. Call withComponent() first.");
+		}
+		var htmlElement = container;
+		var domNode = htmlElement.getElement();
+		if(domNode == null || domNode.nodeType == null) {
+			haxe_Log.trace("⚠️ CRITICAL: domNode is invalid! Type: ",{ fileName : "hide/presentation/ui/react/factories/ReactViewFactory.hx", lineNumber : 39, className : "hide.presentation.ui.react.factories.ReactViewFactory", methodName : "create", customParams : [typeof(domNode)," Value: ",domNode]});
+			domNode = window.document.createElement("div");
+			domNode.innerHTML = "<div style='color:red; padding:10px;'>Error: Invalid DOM container for React</div>";
+		}
+		var reactRoot = new hide_presentation_ui_react_factories_ReactRoot(domNode);
+		var props = { initialState : state, defaultProps : this.defaultProps, onUnmount : function() {
+		}};
+		var reactElement = React.createElement(this.componentClass,props);
+		ReactDOM.render(reactElement,domNode);
+		return reactRoot;
+	}
+	,getConstructorArgs: function() {
+		return [];
+	}
+	,__class__: hide_presentation_ui_react_factories_ReactViewFactory
+};
 var hide_presentation_ui_react_hooks_UseService = function() { };
 $hxClasses["hide.presentation.ui.react.hooks.UseService"] = hide_presentation_ui_react_hooks_UseService;
 hide_presentation_ui_react_hooks_UseService.__name__ = "hide.presentation.ui.react.hooks.UseService";
@@ -2598,9 +2705,6 @@ js_Boot.__downcastCheck = function(o,cl) {
 		return true;
 	}
 };
-js_Boot.__implements = function(o,iface) {
-	return js_Boot.__interfLoop(js_Boot.getClass(o),iface);
-};
 js_Boot.__cast = function(o,t) {
 	if(o == null || js_Boot.__instanceof(o,t)) {
 		return o;
@@ -2669,7 +2773,7 @@ hide_presentation_ui_react_BaseReactComponent.displayName = "BaseReactComponent"
 hide_presentation_ui_react_components_HierarchyPanel.displayName = "HierarchyPanel";
 hide_presentation_ui_react_components_InspectorPanel.displayName = "InspectorPanel";
 hide_presentation_ui_react_components_WelcomePanel.displayName = "WelcomePanel";
-hide_presentation_Ide.main();
+hide_bootstrap_Application.main();
 })(typeof exports != "undefined" ? exports : typeof window != "undefined" ? window : typeof self != "undefined" ? self : this, typeof window != "undefined" ? window : typeof global != "undefined" ? global : typeof self != "undefined" ? self : this);
 
 //# sourceMappingURL=app.js.map

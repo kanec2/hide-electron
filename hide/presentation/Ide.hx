@@ -38,7 +38,6 @@ import hx.injection.ServiceCollection;
 import hx.injection.ServiceProvider;
 import tink.core.*;
 
-import hide.infrastructure.di.AppModule;
 using tink.CoreApi;
 using hx.injection.ServiceExtensions;
 using Lambda;
@@ -219,19 +218,9 @@ class Ide implements Service {
         return _currentProject != null ? _currentProject : "No project";
     }
     
-    public static function main():Void {
-        var collection = new ServiceCollection();
-        // Импортируем AppModule явно
-        hide.infrastructure.di.AppModule.configure(collection);
-        
-        var provider = collection.createProvider();
-        var ide = provider.getService(Ide);
-        ide.startup();
-        
-        provider.getService(PluginManager).loadAll();
-    }
     
-    private function startup():Void {
+    
+    public function startup():Void {
         trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
          // 2. Регистрируем временные заглушки для View (позже заменим на плагины)
             // ✅ РЕГИСТРАЦИЯ ЗАГЛУШЕК ФАБРИК
@@ -250,17 +239,17 @@ class Ide implements Service {
         // ✅ РЕГИСТРАЦИЯ INSPECTOR
         viewRegistry.registerViewFactory(
             "inspector",
-            new hide.infrastructure.ui.ReactViewFactory()
+            new hide.presentation.ui.react.factories.ReactViewFactory()
                 .withComponent(hide.presentation.ui.react.components.InspectorPanel)
         );
         viewRegistry.registerViewFactory(
             "hierarchy",
-            new hide.infrastructure.ui.ReactViewFactory()
+            new hide.presentation.ui.react.factories.ReactViewFactory()
                 .withComponent(hide.presentation.ui.react.components.HierarchyPanel)
         );
         viewRegistry.registerViewFactory(
             "welcome",
-            new hide.infrastructure.ui.ReactViewFactory()
+            new hide.presentation.ui.react.factories.ReactViewFactory()
                 .withComponent(hide.presentation.ui.react.components.WelcomePanel)
         );
 

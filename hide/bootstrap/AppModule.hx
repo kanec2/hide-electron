@@ -1,4 +1,4 @@
-package hide.infrastructure.di;
+package hide.bootstrap;
 
 import hide.presentation.controllers.ToolbarController;
 import hx.injection.ServiceCollection;
@@ -15,7 +15,6 @@ import hide.domain.services.IFileDialog;
 
 // Infrastructure (Electron)
 #if electron
-import hide.infrastructure.platform.electron.ElectronFileSystemAdapter;
 import hide.infrastructure.platform.electron.*;
 // Добавьте заглушки для остальных, если их еще нет
 #end
@@ -38,6 +37,8 @@ import hide.presentation.controllers.MenuController;
 import hide.presentation.controllers.WindowController;
 // Presentation
 import hide.presentation.Ide;
+import hide.engine.bootstrap.EngineModule;
+
 
 // Подключаем extension-методы для красивого синтаксиса (addSingleton и т.д.)
 using hx.injection.ServiceExtensions;
@@ -48,49 +49,44 @@ class AppModule {
      * Этот метод не создает экземпляры, а только описывает правила их создания.
      */
     public static function configure(collection:ServiceCollection):Void {
-        
-        // 1. Инфраструктура (Платформенно-зависимые реализации)
+        // === 1. Платформа ===
         #if electron
-        // 1. Регистрируем IPC Bridge как Singleton
         collection.addSingleton(ElectronIpcBridge);
         collection.addSingleton(IFileSystem, ElectronFileSystemAdapter);
         collection.addSingleton(IFileDialog, ElectronFileDialogAdapter);
         collection.addSingleton(IWindowManager, ElectronWindowAdapter);
         collection.addSingleton(IPlatform, ElectronPlatformAdapter);
-        // TODO: Добавить ElectronPlatformAdapter, ElectronFileDialogAdapter и IAppInfoAdapter
-        #elseif nw
-        // collection.addSingleton(IFileSystem, NwFileSystemAdapter);
-        #else
-        // Временные заглушки для веб-версии или тестов
-        // collection.addSingleton(IFileSystem, StubFileSystemAdapter);
         #end
-        // ✅ РЕГИСТРАЦИЯ LAYOUT ENGINE
+        
+        // === 2. Layout Engine ===
         collection.addSingleton(ILayoutEngine, GoldenLayoutAdapter);
-        // 2. Ядро и Shared-типы
+        
+        // === 3. Shared ===
         collection.addSingleton(IEventBus, EventBusImpl);
         collection.addSingleton(ViewRegistry);
         collection.addSingleton(PluginRegistry);
-
-        // 3. Сервисы приложения (Singleton, так как хранят состояние)
+        
+        // === 4. ДВИЖОК (отдельная подсистема!) ===
+        EngineModule.configure(collection);  // ← Вызываем модуль движка
+        
+        // === 5. Application services ===
         collection.addSingleton(WindowService);
         collection.addSingleton(MenuService);
         collection.addSingleton(PluginManager);
-        // ✅ РЕГИСТРИРУЕМ КОНТРОЛЛЕР МЕНЮ
-        collection.addSingleton(MenuController);    
+        
+        // === 6. Мост между IDE и движком ===
+        //collection.addSingleton(SceneEditorService);
+        
+        // === 7. Controllers ===
+        collection.addSingleton(MenuController);
         collection.addSingleton(WindowController);
-        collection.addSingleton(ToolbarController);  
-        // 4. Use Cases (Transient, чтобы каждый вызов был чистым, 
-        // или Singleton, если они полностью stateless и тяжелые)
+        collection.addSingleton(ToolbarController);
+        
+        // === 8. Use Cases ===
         collection.addSingleton(LoadProjectUseCase);
-        //collection.addSingleton(OpenViewUseCase);
         collection.addSingleton(SetFullscreenUseCase);
-        //collection.addSingleton(SaveLayoutUseCase);
-        //collection.addSingleton(CloseProjectUseCase);
-       // collection.addTransient(AddRecentProjectUseCase);
-        //collection.addTransient(ClearRecentProjectsUseCase);
-        //collection.addTransient(SetRendererUseCase);
-
-        // 5. Регистрация самого главного класса
+        
+        // === 9. Presentation ===
         collection.addSingleton(Ide);
     }
 }

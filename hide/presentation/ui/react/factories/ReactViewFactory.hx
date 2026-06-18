@@ -1,4 +1,4 @@
-package hide.infrastructure.ui;
+package hide.presentation.ui.react.factories;
 
 import hide.domain.services.IViewFactory;
 import hide.domain.services.IElement;
