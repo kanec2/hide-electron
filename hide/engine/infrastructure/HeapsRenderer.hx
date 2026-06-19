@@ -33,24 +33,24 @@ class HeapsRenderer implements IRenderer implements Service {
         // ✅ КЛЮЧЕВОЕ: отключаем строгую проверку шейдеров
         // Это предотвращает ошибки "Missing global value shadow.proj"
         // и другие шейдерные ошибки при первом рендере
-        h3d.impl.RenderContext.STRICT = false; // prevent errors with bad renderer
-
         this.container = container;
-        
-        // 1. Создаём canvas в document.body
+    
+        // ✅ ШАГ 1: Создаём canvas ПРЯМО В document.body
+        // Это гарантирует, что getElementById("webgl") найдёт его
         canvas = js.Browser.document.createCanvasElement();
         canvas.id = "webgl";
         canvas.width = 800;
         canvas.height = 600;
+        
+        // Скрываем canvas пока движок не готов
+        canvas.style.position = "absolute";
+        canvas.style.top = "-9999px";
+        canvas.style.left = "-9999px";
+        canvas.style.visibility = "hidden";
+        
+        // Добавляем в body — теперь он точно в DOM
         js.Browser.document.body.appendChild(canvas);
-        
-        trace("🎨 [HeapsRenderer] Canvas created in document.body");
-        
-        // 2. Позиционируем canvas
-        updateCanvasPosition();
-        
-        // 3. ✅ ИСПРАВЛЕНО: используем Dynamic для ResizeObserver
-       
+        trace("🎨 [HeapsRenderer] Canvas created in document.body (hidden)");
         
         // 4. Запускаем Heaps
         initEngine();
@@ -75,12 +75,13 @@ class HeapsRenderer implements IRenderer implements Service {
         var h:Int = untyped rect.height | 0;
         
         // Защита от нулевых размеров (canvas не может быть 0x0)
-        if (w < 1) w = 1;
-        if (h < 1) h = 1;
+        if (w < 1) w = 1000;
+        if (h < 1) h = 1000;
         
         canvas.width = w;
         canvas.height = h;
-        
+        canvas.style.border = "2px solid red"; // для отладки
+        canvas.style.zIndex = "9999";
         if (s3d != null) {
             s3d.camera.update();
         }
@@ -117,8 +118,16 @@ class HeapsRenderer implements IRenderer implements Service {
         
         // ✅ УБРАНО: MaterialSetup — он не нужен для базового рендера
         // Heaps использует Forward renderer по умолчанию
-        
+        // ✅ ИСПРАВЛЕНИЕ 1: Отключаем strict mode на уровне инстанса контекста
+        // Статический STRICT мог не сработать, если контекст создался раньше.
+            
         s3d = new h3d.scene.Scene();
+        // Это предотвращает рендеринг DefaultShadowMap pass, который требует shadow.proj
+        s3d.renderer.shadows = false;
+        @:privateAccess s3d.ctx.globals.fastSet(
+            hxsl.Globals.allocID("shadow.proj"),
+            new h3d.Matrix() // пустая матрица
+        );
         sceneRoot = new h3d.scene.Object(s3d);
         
         // ✅ УБРАНО: ambientLight — в этой версии Heaps API другое
@@ -136,7 +145,17 @@ class HeapsRenderer implements IRenderer implements Service {
         
         // ✅ ОСТАВЛЯЕМ ТОЛЬКО DirLight — это точно работает
         var light = new h3d.scene.fwd.DirLight(new h3d.Vector(-0.5, -0.5, -1), s3d);
+
+        // ✅ ШАГ 3: Перемещаем canvas в container GoldenLayout
+        moveCanvasToContainer();
+
+        // ✅ КЛЮЧЕВОЕ: Запускаем непрерывный цикл рендеринга
+        // Без этого Heaps не будет перерисовывать сцену
+        hxd.System.setLoop(mainLoop);
         
+        // ✅ Устанавливаем цвет фона, чтобы видеть, что canvas работает
+        engine.backgroundColor = 0xFF2a2a2a; // тёмно-серый
+
         isSceneReady = true;
         trace("🎨 [HeapsRenderer] Scene created successfully");
         
@@ -144,8 +163,59 @@ class HeapsRenderer implements IRenderer implements Service {
             renderSceneInternal(pendingRoot);
             pendingRoot = null;
         }
+        
     }
-    
+    private function moveCanvasToContainer():Void {
+        if (canvas == null) return;
+        
+        // Перемещаем canvas из body в container GoldenLayout
+        if (container != null && container.appendChild != null) {
+            container.appendChild(canvas);
+            trace("🎨 [HeapsRenderer] Canvas moved to container");
+        }
+        
+        // Применяем стили для правильного отображения внутри GoldenLayout
+        canvas.style.position = "absolute";
+        canvas.style.top = "0";
+        canvas.style.left = "0";
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        canvas.style.zIndex = "10";
+        canvas.style.pointerEvents = "auto";
+        canvas.style.visibility = "visible";
+        
+        // Обновляем размеры canvas под контейнер
+        updateCanvasSize();
+    }
+    private function updateCanvasSize():Void {
+        if (canvas == null || container == null) return;
+        
+        var rect = container.getBoundingClientRect();
+        var w:Int = Std.int(rect.width);
+        var h:Int = Std.int(rect.height);
+        
+        if (w < 1) w = 1;
+        if (h < 1) h = 1;
+        
+        canvas.width = w;
+        canvas.height = h;
+        
+        trace("🎨 [HeapsRenderer] Canvas size: " + w + "x" + h);
+        
+        if (s3d != null) {
+            s3d.camera.update();
+        }
+    }
+    // ✅ НОВЫЙ МЕТОД: главный цикл рендеринга
+    private function mainLoop():Void {
+        // Обновляем таймер Heaps (нужно для анимаций, delta time и т.д.)
+        hxd.Timer.update();
+        
+        // Рендерим сцену каждый кадр
+        if (engine != null && s3d != null) {
+            engine.render(s3d);
+        }
+    }
     public function renderScene(root:SceneObject):Void {
         if (!isSceneReady) {
             pendingRoot = root;
@@ -164,14 +234,10 @@ class HeapsRenderer implements IRenderer implements Service {
         }
         
         buildObjectTree(root, sceneRoot);
-        
-        if (engine != null && s3d != null) {
-            engine.render(s3d);
-        }
     }
     
     public function onResize(width:Int, height:Int):Void {
-        updateCanvasPosition();
+        updateCanvasSize();
     }
     
     public function dispose():Void {

@@ -40,195 +40,247 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
-application/commands/AddRecentProjectUseCase.hx
-application/commands/BuildProjectUseCase.hx
-application/commands/ClearRecentProjectsUseCase.hx
-application/commands/CloseProjectUseCase.hx
-application/commands/ExportDatabaseUseCase.hx
-application/commands/LoadProjectUseCase.hx
-application/commands/OpenResourceUseCase.hx
-application/commands/OpenViewUseCase.hx
-application/commands/SaveLayoutUseCase.hx
-application/commands/SetFullscreenUseCase.hx
-application/commands/SetRendererUseCase.hx
-application/dto/MenuItem.hx
-application/dto/ResourceMetadataDto.hx
-application/dto/ViewDto.hx
-application/dto/WindowBoundsDto.hx
-application/integration/SceneEditorService.hx
-application/services/ClipboardService.hx
-application/services/LayoutHistoryService.hx
-application/services/MenuService.hx
-application/services/PluginManager.hx
-application/services/PluginRegistry.hx
-application/services/ProjectService.hx
-application/services/ResourceService.hx
-application/services/ViewRegistry.hx
-application/services/WindowService.hx
-bootstrap/Application.hx
-bootstrap/AppModule.hx
-domain/entities/Database.hx
-domain/entities/LayoutConfig.hx
-domain/entities/Project.hx
-domain/entities/Resource.hx
-domain/entities/UserSettings.hx
-domain/enums/MenuItemType.hx
-domain/enums/ResourceType.hx
-domain/enums/ViewType.hx
-domain/enums/WindowEvent.hx
-domain/exceptions/FileNotFoundError.hx
-domain/exceptions/InvalidConfigError.hx
-domain/exceptions/ProjectLoadError.hx
-domain/exceptions/ResourceNotFoundError.hx
-domain/services/IAppInfo.hx
-domain/services/IClipboardService.hx
-domain/services/IDomAccess.hx
-domain/services/IElement.hx
-domain/services/IFileDialog.hx
-domain/services/IFileSystem.hx
-domain/services/ILayoutEngine.hx
-domain/services/IPlatform.hx
-domain/services/IPlugin.hx
-domain/services/IResourceLoader.hx
-domain/services/IViewFactory.hx
-domain/services/IWindowManager.hx
-domain/services/PluginConfig.hx
-domain/services/PluginsConfig.hx
-domain/valueobjects/DisplayPosition.hx
-domain/valueobjects/FilePath.hx
-domain/valueobjects/LayoutConfig.hx
-domain/valueobjects/LayoutState.hx
-domain/valueobjects/ResourceId.hx
-domain/valueobjects/ScreenBounds.hx
-domain/valueobjects/WindowBounds.hx
-engine/bootstrap/EngineModule.hx
-engine/domain/entities/MeshRenderer.hx
-engine/domain/entities/Rigidbody.hx
-engine/domain/entities/SceneComponent.hx
-engine/domain/entities/SceneObject.hx
-engine/domain/entities/Transform.hx
-engine/domain/services/IEngineEventBus.hx
-engine/domain/services/IRenderer.hx
-engine/domain/services/IResourceLoader.hx
-engine/domain/services/ISceneService.hx
-engine/infrastructure/EngineEventBusImpl.hx
-engine/infrastructure/HeapsRenderer.hx
-engine/infrastructure/SceneServiceImpl.hx
-infrastructure/BrowserDomAccess.hx
-infrastructure/config/PackageJsonLoader.hx
-infrastructure/config/ProjectConfigParser.hx
-infrastructure/config/UserSettingsLoader.hx
-infrastructure/external/golden/Config.hx
-infrastructure/external/golden/Container.hx
-infrastructure/external/golden/ContentItem.hx
-infrastructure/external/golden/Event.hx
-infrastructure/external/golden/Header.hx
-infrastructure/external/golden/Layout.hx
-infrastructure/external/golden/Tab.hx
-infrastructure/external/GoldenLayoutAdapter.hx
-infrastructure/external/HeapsEngineAdapter.hx
-infrastructure/external/HtmlElement.hx
-infrastructure/external/jQueryElementAdapter.hx
-infrastructure/external/monaco/KeyCode.hx
-infrastructure/external/monaco/KeyMod.hx
-infrastructure/external/monaco/Languages.hx
-infrastructure/external/monaco/MarkdownString.hx
-infrastructure/external/monaco/Model.hx
-infrastructure/external/monaco/ModelDeltaDecoration.hx
-infrastructure/external/monaco/Position.hx
-infrastructure/external/monaco/Range.hx
-infrastructure/external/monaco/ScriptEditor.hx
-infrastructure/external/monaco/Todo.hx
-infrastructure/external/MonacoEditorAdapter.hx
-infrastructure/external/nw/App.hx
-infrastructure/external/nw/Clipboard.hx
-infrastructure/external/nw/Menu.hx
-infrastructure/external/nw/MenuItem.hx
-infrastructure/external/nw/Screen.hx
-infrastructure/external/nw/Window.hx
-infrastructure/external/StubConsoleFactory.hx
-infrastructure/external/StubEditorFactory.hx
-infrastructure/external/StubGameFactory.hx
-infrastructure/external/StubHierarchyFactory.hx
-infrastructure/external/StubInspectorFactory.hx
-infrastructure/external/StubProjectFactory.hx
-infrastructure/external/StubPropertiesFactory.hx
-infrastructure/external/StubSceneFactory.hx
-infrastructure/persistence/FileSystemRepository.hx
-infrastructure/persistence/LocalStorageRepository.hx
-infrastructure/persistence/MemoryRepository.hx
-infrastructure/platform/electron/ElectronClipboardAdapter.hx
-infrastructure/platform/electron/ElectronFileDialogAdapter.hx
-infrastructure/platform/electron/ElectronFileSystemAdapter.hx
-infrastructure/platform/electron/ElectronIpcBridge.hx
-infrastructure/platform/electron/ElectronPlatformAdapter.hx
-infrastructure/platform/electron/ElectronScreenAdapter.hx
-infrastructure/platform/electron/ElectronShortcutAdapter.hx
-infrastructure/platform/electron/ElectronWindowAdapter.hx
-infrastructure/platform/nwjs/NwClipboardAdapter.hx
-infrastructure/platform/nwjs/NwFileSystemAdapter.hx
-infrastructure/platform/nwjs/NwIpcBridge.hx
-infrastructure/platform/nwjs/NwScreenAdapter.hx
-infrastructure/platform/nwjs/NwShortcutAdapter.hx
-infrastructure/platform/nwjs/NwWindowAdapter.hx
-infrastructure/platform/web/BrowserWindowAdapter.hx
-infrastructure/platform/web/LocalStorageAdapter.hx
-infrastructure/ui/ReactElement.hx
-legacy/Extension.hx
-legacy/Ide.hx
+application/
+  commands/
+    AddRecentProjectUseCase.hx
+    BuildProjectUseCase.hx
+    ClearRecentProjectsUseCase.hx
+    CloseProjectUseCase.hx
+    ExportDatabaseUseCase.hx
+    LoadProjectUseCase.hx
+    OpenResourceUseCase.hx
+    OpenViewUseCase.hx
+    SaveLayoutUseCase.hx
+    SetFullscreenUseCase.hx
+    SetRendererUseCase.hx
+  dto/
+    MenuItem.hx
+    ResourceMetadataDto.hx
+    ViewDto.hx
+    WindowBoundsDto.hx
+  integration/
+    SceneEditorService.hx
+  services/
+    ClipboardService.hx
+    LayoutHistoryService.hx
+    MenuService.hx
+    PluginManager.hx
+    PluginRegistry.hx
+    ProjectService.hx
+    ResourceService.hx
+    ViewRegistry.hx
+    WindowService.hx
+bootstrap/
+  Application.hx
+  AppModule.hx
+domain/
+  entities/
+    Database.hx
+    LayoutConfig.hx
+    Project.hx
+    Resource.hx
+    UserSettings.hx
+  enums/
+    MenuItemType.hx
+    ResourceType.hx
+    ViewType.hx
+    WindowEvent.hx
+  exceptions/
+    FileNotFoundError.hx
+    InvalidConfigError.hx
+    ProjectLoadError.hx
+    ResourceNotFoundError.hx
+  services/
+    IAppInfo.hx
+    IClipboardService.hx
+    IDomAccess.hx
+    IElement.hx
+    IFileDialog.hx
+    IFileSystem.hx
+    ILayoutEngine.hx
+    IPlatform.hx
+    IPlugin.hx
+    IResourceLoader.hx
+    IViewFactory.hx
+    IWindowManager.hx
+    PluginConfig.hx
+    PluginsConfig.hx
+  valueobjects/
+    DisplayPosition.hx
+    FilePath.hx
+    LayoutConfig.hx
+    LayoutState.hx
+    ResourceId.hx
+    ScreenBounds.hx
+    WindowBounds.hx
+engine/
+  bootstrap/
+    EngineModule.hx
+  domain/
+    entities/
+      MeshRenderer.hx
+      Rigidbody.hx
+      SceneComponent.hx
+      SceneObject.hx
+      Transform.hx
+    services/
+      IEngineEventBus.hx
+      IRenderer.hx
+      IResourceLoader.hx
+      ISceneService.hx
+  infrastructure/
+    EngineEventBusImpl.hx
+    HeapsRenderer.hx
+    SceneServiceImpl.hx
+infrastructure/
+  config/
+    PackageJsonLoader.hx
+    ProjectConfigParser.hx
+    UserSettingsLoader.hx
+  external/
+    golden/
+      Config.hx
+      Container.hx
+      ContentItem.hx
+      Event.hx
+      Header.hx
+      Layout.hx
+      Tab.hx
+    monaco/
+      KeyCode.hx
+      KeyMod.hx
+      Languages.hx
+      MarkdownString.hx
+      Model.hx
+      ModelDeltaDecoration.hx
+      Position.hx
+      Range.hx
+      ScriptEditor.hx
+      Todo.hx
+    nw/
+      App.hx
+      Clipboard.hx
+      Menu.hx
+      MenuItem.hx
+      Screen.hx
+      Window.hx
+    GoldenLayoutAdapter.hx
+    HeapsEngineAdapter.hx
+    HtmlElement.hx
+    jQueryElementAdapter.hx
+    MonacoEditorAdapter.hx
+    SceneViewFactory.hx
+    StubConsoleFactory.hx
+    StubEditorFactory.hx
+    StubGameFactory.hx
+    StubHierarchyFactory.hx
+    StubInspectorFactory.hx
+    StubProjectFactory.hx
+    StubPropertiesFactory.hx
+    StubSceneFactory.hx
+  persistence/
+    FileSystemRepository.hx
+    LocalStorageRepository.hx
+    MemoryRepository.hx
+  platform/
+    electron/
+      ElectronClipboardAdapter.hx
+      ElectronFileDialogAdapter.hx
+      ElectronFileSystemAdapter.hx
+      ElectronIpcBridge.hx
+      ElectronPlatformAdapter.hx
+      ElectronScreenAdapter.hx
+      ElectronShortcutAdapter.hx
+      ElectronWindowAdapter.hx
+    nwjs/
+      NwClipboardAdapter.hx
+      NwFileSystemAdapter.hx
+      NwIpcBridge.hx
+      NwScreenAdapter.hx
+      NwShortcutAdapter.hx
+      NwWindowAdapter.hx
+    web/
+      BrowserWindowAdapter.hx
+      LocalStorageAdapter.hx
+  ui/
+    ReactElement.hx
+  BrowserDomAccess.hx
+legacy/
+  Extension.hx
+  Ide.hx
+plugins/
+  console/
+    ConsolePlugin.hx
+    ConsoleView.hx
+    ConsoleViewFactory.hx
+presentation/
+  config/
+    MenuConfig.hx
+  controllers/
+    DragDropController.hx
+    KeyboardController.hx
+    MenuController.hx
+    ToolbarController.hx
+    WindowController.hx
+  styles/
+    CssVariables.hx
+    Theme.hx
+  ui/
+    react/
+      components/
+        HierarchyPanel.hx
+        InspectorPanel.hx
+        WelcomePanel.hx
+      factories/
+        ReactRoot.hx
+        ReactViewFactory.hx
+      hooks/
+        UseService.hx
+      BaseReactComponent.hx
+    Dialog.hx
+    Element.hx
+    MenuBuilder.hx
+    StatusBar.hx
+    View.hx
+  views/
+    CdbTableView.hx
+    ModelView.hx
+    PrefabView.hx
+    ScriptEditorView.hx
+  Ide.hx
+shared/
+  events/
+    ErrorOccurred.hx
+    FullscreenChanged.hx
+    LayoutChanged.hx
+    LayoutSaved.hx
+    ObjectChanged.hx
+    ObjectSelected.hx
+    ProjectClosed.hx
+    ProjectClosing.hx
+    ProjectLoaded.hx
+    RecentProjectsUpdated.hx
+    RendererChanged.hx
+    ResourceOpened.hx
+    SceneChanged.hx
+    ViewOpened.hx
+  extensions/
+    ArrayExt.hx
+    DateExt.hx
+    StringExt.hx
+  types/
+    EventBusImpl.hx
+    IEventBus.hx
+    NonEmptyArray.hx
+    Option.hx
+    Result.hx
+  utils/
+    AsyncUtils.hx
+    JsonUtils.hx
+    PathUtils.hx
+tools/
+  Macros.hx
 plugins.json
-plugins/console/ConsolePlugin.hx
-plugins/console/ConsoleView.hx
-plugins/console/ConsoleViewFactory.hx
-presentation/config/MenuConfig.hx
-presentation/controllers/DragDropController.hx
-presentation/controllers/KeyboardController.hx
-presentation/controllers/MenuController.hx
-presentation/controllers/ToolbarController.hx
-presentation/controllers/WindowController.hx
-presentation/Ide.hx
-presentation/styles/CssVariables.hx
-presentation/styles/Theme.hx
-presentation/ui/Dialog.hx
-presentation/ui/Element.hx
-presentation/ui/MenuBuilder.hx
-presentation/ui/react/BaseReactComponent.hx
-presentation/ui/react/components/HierarchyPanel.hx
-presentation/ui/react/components/InspectorPanel.hx
-presentation/ui/react/components/WelcomePanel.hx
-presentation/ui/react/factories/ReactRoot.hx
-presentation/ui/react/factories/ReactViewFactory.hx
-presentation/ui/react/hooks/UseService.hx
-presentation/ui/StatusBar.hx
-presentation/ui/View.hx
-presentation/views/CdbTableView.hx
-presentation/views/ModelView.hx
-presentation/views/PrefabView.hx
-presentation/views/ScriptEditorView.hx
-shared/events/ErrorOccurred.hx
-shared/events/FullscreenChanged.hx
-shared/events/LayoutChanged.hx
-shared/events/LayoutSaved.hx
-shared/events/ObjectChanged.hx
-shared/events/ObjectSelected.hx
-shared/events/ProjectClosed.hx
-shared/events/ProjectClosing.hx
-shared/events/ProjectLoaded.hx
-shared/events/RecentProjectsUpdated.hx
-shared/events/RendererChanged.hx
-shared/events/ResourceOpened.hx
-shared/events/ViewOpened.hx
-shared/extensions/ArrayExt.hx
-shared/extensions/DateExt.hx
-shared/extensions/StringExt.hx
-shared/types/EventBusImpl.hx
-shared/types/IEventBus.hx
-shared/types/NonEmptyArray.hx
-shared/types/Option.hx
-shared/types/Result.hx
-shared/utils/AsyncUtils.hx
-shared/utils/JsonUtils.hx
-shared/utils/PathUtils.hx
 </directory_structure>
 
 <files>
@@ -543,6 +595,7 @@ import hide.engine.domain.services.IEngineEventBus;
 import hide.shared.types.IEventBus;
 import hide.shared.events.ObjectSelected;
 import hide.shared.events.ObjectChanged;
+import hide.shared.events.SceneChanged;
 import hx.injection.Service;
 /**
  * Транслирует события между движком и IDE.
@@ -573,13 +626,17 @@ class SceneEditorService implements Service {
             trace('🌉 [Bridge] Engine → IDE: ObjectChanged($id)');
             ideBus.publish(ObjectChanged, new ObjectChanged(id));
         });
-        
+
+        engineBus.onSceneChanged(function() {
+            ideBus.publish(SceneChanged, new SceneChanged());
+        });
         // IDE → Движок
+        /*
         ideBus.subscribe(ObjectSelected, function(e:ObjectSelected) {
             trace('🌉 [Bridge] IDE → Engine: ${e.objectId}');
             if (e.objectId != null) sceneService.select(e.objectId);
             else sceneService.deselect();
-        });
+        });*/
     }
 }
 </file>
@@ -1114,7 +1171,7 @@ import hide.presentation.controllers.WindowController;
 // Presentation
 import hide.presentation.Ide;
 import hide.engine.bootstrap.EngineModule;
-
+import hide.infrastructure.external.SceneViewFactory;
 
 // Подключаем extension-методы для красивого синтаксиса (addSingleton и т.д.)
 using hx.injection.ServiceExtensions;
@@ -1145,6 +1202,7 @@ class AppModule {
         // === 4. ДВИЖОК (отдельная подсистема!) ===
         EngineModule.configure(collection);  // ← Вызываем модуль движка
         
+        collection.addSingleton(SceneViewFactory); // ← ДОБАВИТЬ
         // === 5. Application services ===
         collection.addSingleton(WindowService);
         collection.addSingleton(MenuService);
@@ -1164,6 +1222,8 @@ class AppModule {
         
         // === 9. Presentation ===
         collection.addSingleton(Ide);
+
+
     }
 }
 </file>
@@ -1686,6 +1746,7 @@ import hide.engine.domain.services.IRenderer;
 import hide.engine.domain.services.IResourceLoader;
 import hide.engine.domain.services.IEngineEventBus;
 import hide.engine.infrastructure.SceneServiceImpl;
+import hide.engine.infrastructure.HeapsRenderer;
 import hide.engine.infrastructure.EngineEventBusImpl;
 // Конкретные реализации выбираются в AppModule IDE
 
@@ -1702,7 +1763,7 @@ class EngineModule {
         // Внутренние сервисы движка
         collection.addSingleton(IEngineEventBus, EngineEventBusImpl);
         collection.addSingleton(ISceneService, SceneServiceImpl);
-        
+        collection.addSingleton(IRenderer, HeapsRenderer);
         // IRenderer и IEngineResourceLoader НЕ регистрируем здесь —
         // они платформенно-зависимые, их регистрирует AppModule IDE
     }
@@ -1900,11 +1961,12 @@ interface IEngineEventBus extends Service {
 <file path="engine/domain/services/IRenderer.hx">
 package hide.engine.domain.services;
 import hide.engine.domain.entities.SceneObject;
+import hx.injection.Service;
 /**
  * Порт рендерера. НЕ знает про Heaps/Three.js/WebGL.
  */
  
-interface IRenderer {
+interface IRenderer extends Service {
     function init(container:Dynamic):Void;
     function renderScene(root:SceneObject):Void;
     function onResize(width:Int, height:Int):Void;
@@ -2021,7 +2083,249 @@ class EngineEventBusImpl implements IEngineEventBus implements Service {
 </file>
 
 <file path="engine/infrastructure/HeapsRenderer.hx">
+// hide/engine/infrastructure/HeapsRenderer.hx
+package hide.engine.infrastructure;
+import hide.engine.domain.services.IRenderer;
+import hide.engine.domain.entities.SceneObject;
+import hide.engine.domain.entities.Transform;
+import hide.engine.domain.entities.MeshRenderer;
+import h3d.scene.Object;
+import h3d.scene.Mesh;
+import h3d.scene.fwd.DirLight;
+import h3d.prim.Cube;
+import h3d.Quat;
+import hx.injection.Service;
 
+class HeapsRenderer implements IRenderer implements Service {
+    private var engine:h3d.Engine;
+    private var s3d:h3d.scene.Scene;
+    private var sceneRoot:h3d.scene.Object;
+    private var canvas:js.html.CanvasElement;
+    private var container:Dynamic;
+    // ✅ ИСПРАВЛЕНО: используем Dynamic вместо js.html.ResizeObserver
+    
+    
+    private var isSceneReady:Bool = false;
+    private var pendingRoot:SceneObject;
+    
+    private static var isSystemInitialized:Bool = false;
+    
+    public function new() {
+        h3d.impl.RenderContext.STRICT = false;
+    }
+    
+    public function init(container:Dynamic):Void {
+        // ✅ КЛЮЧЕВОЕ: отключаем строгую проверку шейдеров
+        // Это предотвращает ошибки "Missing global value shadow.proj"
+        // и другие шейдерные ошибки при первом рендере
+        h3d.impl.RenderContext.STRICT = false; // prevent errors with bad renderer
+
+        this.container = container;
+        
+        // 1. Создаём canvas в document.body
+        canvas = js.Browser.document.createCanvasElement();
+        canvas.id = "webgl";
+        canvas.width = 800;
+        canvas.height = 600;
+        js.Browser.document.body.appendChild(canvas);
+        
+        trace("🎨 [HeapsRenderer] Canvas created in document.body");
+        
+        // 2. Позиционируем canvas
+        updateCanvasPosition();
+        
+        // 3. ✅ ИСПРАВЛЕНО: используем Dynamic для ResizeObserver
+       
+        
+        // 4. Запускаем Heaps
+        initEngine();
+    }
+    
+    private function updateCanvasPosition():Void {
+        if (canvas == null || container == null) return;
+        
+        var rect = container.getBoundingClientRect();
+        canvas.style.position = "fixed";
+        canvas.style.left = rect.left + "px";
+        canvas.style.top = rect.top + "px";
+        canvas.style.width = rect.width + "px";
+        canvas.style.height = rect.height + "px";
+        canvas.style.zIndex = "1";
+        canvas.style.pointerEvents = "auto";
+        
+    // ✅ ИСПРАВЛЕНО: используем untyped для обхода типизации
+        // getBoundingClientRect() возвращает DOMRect, но через Dynamic-контейнер
+        // компилятор не знает точный тип — используем untyped
+        var w:Int = untyped rect.width | 0;
+        var h:Int = untyped rect.height | 0;
+        
+        // Защита от нулевых размеров (canvas не может быть 0x0)
+        if (w < 1) w = 1;
+        if (h < 1) h = 1;
+        
+        canvas.width = w;
+        canvas.height = h;
+        
+        if (s3d != null) {
+            s3d.camera.update();
+        }
+    }
+    
+    private function initEngine():Void {
+        var existingEngine = h3d.Engine.getCurrent();
+        
+        if (existingEngine != null) {
+            trace("🎨 [HeapsRenderer] Using existing engine");
+            this.engine = existingEngine;
+            engine.onReady = onEngineReady;
+            haxe.Timer.delay(onEngineReady, 0);
+        } else {
+            trace("🎨 [HeapsRenderer] Creating new engine...");
+            
+            if (!isSystemInitialized) {
+                hxd.System.start(function() {
+                    this.engine = @:privateAccess new h3d.Engine();
+                    engine.onReady = onEngineReady;
+                    engine.init();
+                    isSystemInitialized = true;
+                });
+            } else {
+                this.engine = @:privateAccess new h3d.Engine();
+                engine.onReady = onEngineReady;
+                engine.init();
+            }
+        }
+    }
+    
+    private function onEngineReady():Void {
+        trace("🎨 [HeapsRenderer] Engine ready, creating scene...");
+        
+        // ✅ УБРАНО: MaterialSetup — он не нужен для базового рендера
+        // Heaps использует Forward renderer по умолчанию
+        
+        s3d = new h3d.scene.Scene();
+        sceneRoot = new h3d.scene.Object(s3d);
+        
+        // ✅ УБРАНО: ambientLight — в этой версии Heaps API другое
+        // DirLight даст достаточно света для видимости кубов
+        
+        // Настраиваем камеру
+        var camera = s3d.camera;
+        camera.pos.set(8, 8, 8);
+        camera.target.set(0, 0, 0);
+        camera.up.set(0, 1, 0);
+        camera.fovY = 45;
+        camera.zNear = 0.1;
+        camera.zFar = 1000;
+        camera.update();
+        
+        // ✅ ОСТАВЛЯЕМ ТОЛЬКО DirLight — это точно работает
+        var light = new h3d.scene.fwd.DirLight(new h3d.Vector(-0.5, -0.5, -1), s3d);
+        
+        isSceneReady = true;
+        trace("🎨 [HeapsRenderer] Scene created successfully");
+        
+        if (pendingRoot != null) {
+            renderSceneInternal(pendingRoot);
+            pendingRoot = null;
+        }
+    }
+    
+    public function renderScene(root:SceneObject):Void {
+        if (!isSceneReady) {
+            pendingRoot = root;
+            return;
+        }
+        renderSceneInternal(root);
+    }
+    
+    private function renderSceneInternal(root:SceneObject):Void {
+        var toRemove:Array<h3d.scene.Object> = [];
+        for (child in sceneRoot) {
+            if (child != sceneRoot) toRemove.push(child);
+        }
+        for (child in toRemove) {
+            child.remove();
+        }
+        
+        buildObjectTree(root, sceneRoot);
+        
+        if (engine != null && s3d != null) {
+            engine.render(s3d);
+        }
+    }
+    
+    public function onResize(width:Int, height:Int):Void {
+        updateCanvasPosition();
+    }
+    
+    public function dispose():Void {
+        
+        
+        if (s3d != null) {
+            s3d.dispose();
+            s3d = null;
+        }
+        
+        if (canvas != null && canvas.parentElement != null) {
+            canvas.parentElement.removeChild(canvas);
+            canvas = null;
+        }
+        
+        engine = null;
+    }
+    
+    private function buildObjectTree(obj:SceneObject, h3dParent:h3d.scene.Object):Void {
+        if (!obj.isActive) return;
+        
+        var h3dObj = new h3d.scene.Object(h3dParent);
+        h3dObj.name = obj.name;
+        applyTransform(h3dObj, obj.transform);
+        
+        for (comp in obj.components) {
+            if (Std.isOfType(comp, MeshRenderer)) {
+                var mesh = createMeshPrimitive();
+                if (mesh != null) {
+                    h3dObj.addChild(mesh);
+                }
+            }
+        }
+        
+        for (child in obj.children) {
+            buildObjectTree(child, h3dObj);
+        }
+    }
+    
+    private function applyTransform(h3dObj:h3d.scene.Object, t:Transform):Void {
+        h3dObj.x = t.x;
+        h3dObj.y = t.y;
+        h3dObj.z = t.z;
+        
+        var q = new Quat();
+        q.initRotation(
+            t.rotX * Math.PI / 180,
+            t.rotY * Math.PI / 180,
+            t.rotZ * Math.PI / 180
+        );
+        h3dObj.setRotationQuat(q);
+        
+        h3dObj.scaleX = t.scaleX;
+        h3dObj.scaleY = t.scaleY;
+        h3dObj.scaleZ = t.scaleZ;
+    }
+    
+    private function createMeshPrimitive():Null<Mesh> {
+        var cube = new Cube(1, 1, 1, false);
+        cube.addNormals();
+        cube.addUVs();
+        
+        var mesh = new Mesh(cube);
+        mesh.material.color.setColor(0x4a90e2);
+        mesh.material.mainPass.enableLights = true;
+        
+        return mesh;
+    }
+}
 </file>
 
 <file path="engine/infrastructure/SceneServiceImpl.hx">
@@ -2198,29 +2502,6 @@ class SceneServiceImpl implements ISceneService implements Service {
 
         obj.isActive = active;
         notifyChanged(id);
-    }
-}
-</file>
-
-<file path="infrastructure/BrowserDomAccess.hx">
-package hide.infrastructure;
-
-import hide.domain.services.IDomAccess;
-import hx.injection.Service;
-
-class BrowserDomAccess implements IDomAccess implements Service {
-    public function new() {}
-    
-    public function getElementById(id:String):Dynamic {
-        return js.Browser.document.getElementById(id);
-    }
-    
-    public function addWindowEventListener(event:String, handler:Dynamic->Void):Void {
-        js.Browser.window.addEventListener(event, handler);
-    }
-    
-    public function removeWindowEventListener(event:String, handler:Dynamic->Void):Void {
-        js.Browser.window.removeEventListener(event, handler);
     }
 }
 </file>
@@ -2416,6 +2697,469 @@ extern class Tab {
     public var element : Dynamic; // ← СТАЛО
 
 	dynamic function onClose() : Bool;
+
+}
+</file>
+
+<file path="infrastructure/external/monaco/KeyCode.hx">
+package monaco;
+
+enum abstract KeyCode(Int) from Int to Int {
+	var Unknown = 0;
+	var Backspace = 1;
+	var Tab = 2;
+	var Enter = 3;
+	var Shift = 4;
+	var Ctrl = 5;
+	var Alt = 6;
+	var PauseBreak = 7;
+	var CapsLock = 8;
+	var Escape = 9;
+	var Space = 10;
+	var PageUp = 11;
+	var PageDown = 12;
+	var End = 13;
+	var Home = 14;
+	var LeftArrow = 15;
+	var UpArrow = 16;
+	var RightArrow = 17;
+	var DownArrow = 18;
+	var Insert = 19;
+	var Delete = 20;
+	var KEY_0 = 21;
+	var KEY_1 = 22;
+	var KEY_2 = 23;
+	var KEY_3 = 24;
+	var KEY_4 = 25;
+	var KEY_5 = 26;
+	var KEY_6 = 27;
+	var KEY_7 = 28;
+	var KEY_8 = 29;
+	var KEY_9 = 30;
+	var KEY_A = 31;
+	var KEY_B = 32;
+	var KEY_C = 33;
+	var KEY_D = 34;
+	var KEY_E = 35;
+	var KEY_F = 36;
+	var KEY_G = 37;
+	var KEY_H = 38;
+	var KEY_I = 39;
+	var KEY_J = 40;
+	var KEY_K = 41;
+	var KEY_L = 42;
+	var KEY_M = 43;
+	var KEY_N = 44;
+	var KEY_O = 45;
+	var KEY_P = 46;
+	var KEY_Q = 47;
+	var KEY_R = 48;
+	var KEY_S = 49;
+	var KEY_T = 50;
+	var KEY_U = 51;
+	var KEY_V = 52;
+	var KEY_W = 53;
+	var KEY_X = 54;
+	var KEY_Y = 55;
+	var KEY_Z = 56;
+	var Meta = 57;
+	var ContextMenu = 58;
+	var F1 = 59;
+	var F2 = 60;
+	var F3 = 61;
+	var F4 = 62;
+	var F5 = 63;
+	var F6 = 64;
+	var F7 = 65;
+	var F8 = 66;
+	var F9 = 67;
+	var F10 = 68;
+	var F11 = 69;
+	var F12 = 70;
+	var F13 = 71;
+	var F14 = 72;
+	var F15 = 73;
+	var F16 = 74;
+	var F17 = 75;
+	var F18 = 76;
+	var F19 = 77;
+	var NumLock = 78;
+	var ScrollLock = 79;
+	var US_SEMICOLON = 80;
+	var US_EQUAL = 81;
+	var US_COMMA = 82;
+	var US_MINUS = 83;
+	var US_DOT = 84;
+	var US_SLASH = 85;
+	var US_BACKTICK = 86;
+	var US_OPEN_SQUARE_BRACKET = 87;
+	var US_BACKSLASH = 88;
+	var US_CLOSE_SQUARE_BRACKET = 89;
+	var US_QUOTE = 90;
+	var OEM_8 = 91;
+	var OEM_102 = 92;
+	var NUMPAD_0 = 93;
+	var NUMPAD_1 = 94;
+	var NUMPAD_2 = 95;
+	var NUMPAD_3 = 96;
+	var NUMPAD_4 = 97;
+	var NUMPAD_5 = 98;
+	var NUMPAD_6 = 99;
+	var NUMPAD_7 = 100;
+	var NUMPAD_8 = 101;
+	var NUMPAD_9 = 102;
+	var NUMPAD_MULTIPLY = 103;
+	var NUMPAD_ADD = 104;
+	var NUMPAD_SEPARATOR = 105;
+	var NUMPAD_SUBTRACT = 106;
+	var NUMPAD_DECIMAL = 107;
+	var NUMPAD_DIVIDE = 108;
+	var MAX_VALUE = 109;
+}
+</file>
+
+<file path="infrastructure/external/monaco/KeyMod.hx">
+package monaco;
+
+extern class KeyMod {
+	static var CtrlCmd : Int;
+    static var Shift : Int;
+    static var Alt : Int;
+    static var WinCtrl : Int;
+}
+</file>
+
+<file path="infrastructure/external/monaco/Languages.hx">
+package monaco;
+
+typedef CompletionProvider = {
+	var ?triggerCharacters : Array<String>;
+	function provideCompletionItems( model : Model, position : Position, token : Any, context : CompletionContext ) : { suggestions : Array<CompletionItem>, ?incomplete: Bool };
+}
+
+typedef CompletionContext = {
+	var ?triggerCharacter : String;
+	var triggerKind : SuggestTriggerKind;
+}
+
+enum abstract SuggestTriggerKind(Int) {
+	var Invoke;
+	var TriggerCharacter;
+	var TriggerForIncompleteCompletions;
+}
+
+enum abstract CompletionItemKind(Int) {
+	var Class = 6;
+	var Color = 15;
+	var Constructor = 3;
+	var Enum = 12;
+	var Field = 4;
+	var File = 16;
+	var Folder = 18;
+	var Function = 2;
+	var Interface = 7;
+	var Keyword = 13;
+	var Method = 1;
+	var Module = 8;
+	var Property = 9;
+	var Reference = 17;
+	var Snippet = 14;
+	var Text = 0;
+	var Unit = 10;
+	var Value = 11;
+	var Variable = 5;
+}
+
+enum abstract CompletionItemInsertTextRule(Int) {
+	var InsertAsSnippet = 4;
+	var KeepWhitespace = 1;
+	var None = 0;
+}
+
+typedef CompletionItem = {
+	var ?additionalTextEdits : Any;
+	var ?command : Any;
+	var ?commitCharacters : Array<String>;
+	var ?detail : String;
+	var ?documentation : MarkdownString;
+	var ?filterText : String;
+	var ?insertText : String;
+	var kind : CompletionItemKind;
+	var label : String;
+	var ?range : Range;
+	var ?sortText : String;
+	var ?insertTextRules: CompletionItemInsertTextRule;
+	//var ?textEdit : deprecated
+}
+
+@:native("monaco.languages")
+extern class Languages {
+
+	public static function registerCompletionItemProvider( language : String, provider : CompletionProvider ) : Void;
+
+}
+</file>
+
+<file path="infrastructure/external/monaco/MarkdownString.hx">
+package monaco;
+
+typedef MarkdownString = {
+	var value: String;
+}
+</file>
+
+<file path="infrastructure/external/monaco/Model.hx">
+package monaco;
+
+extern class Model {
+	function updateOptions( opts : {?insertSpaces:Bool,?tabSize:Int,?trimAutoWhitespace:Bool} ) : Void;
+	function getValueInRange( pos : { startLineNumber : Int, startColumn : Int, endLineNumber : Int, endColumn : Int } ) : String;
+}
+</file>
+
+<file path="infrastructure/external/monaco/ModelDeltaDecoration.hx">
+package monaco;
+
+typedef ModelDeltaDecoration = {
+	var range : Range;
+	var options : {
+		?afterContentClassName : String,
+		?beforeContentClassName : String,
+		?className : String,
+		?glyphMarginClassName : String,
+		?glyphMarginHoverMessage : MarkdownString,
+		?hoverMessage : MarkdownString,
+		?inlineClassName : String,
+		?inlineClassNameAffectsLetterSpacing : Bool,
+		?isWholeLine : Bool,
+		?linesDecorationsClassName : String,
+		?marginClassName : String,
+		?overviewRuler : Todo,
+		?stickiness : Todo,
+		?zIndex : Int,
+	};
+}
+</file>
+
+<file path="infrastructure/external/monaco/Position.hx">
+package monaco;
+
+typedef Position = {
+	var column : Int;
+	var lineNumber : Int;
+}
+</file>
+
+<file path="infrastructure/external/monaco/Range.hx">
+package monaco;
+
+extern class Range {
+	var startColumn : Int;
+	var endColumn : Int;
+	var startLineNumber : Int;
+	var endLineNumber : Int;
+	public function new(startLineNumber: Int, startColumn: Int, endLineNumber: Int, endColumn: Int) : Void;
+}
+</file>
+
+<file path="infrastructure/external/monaco/ScriptEditor.hx">
+package monaco;
+
+enum abstract ScrollType(Int) {
+	var Smooth = 0;
+	var Immediate = 1;
+}
+
+@:native("monaco.editor")
+extern class ScriptEditor {
+
+
+	function addCommand( command : Int, callback : Void -> Void ) : Void;
+	function getValue( ?options : { ?lineEnding : String, ?preserveBOM : Bool } ) : String;
+	function onDidChangeModelContent( listener : Void -> Void ) : Void;
+	function onDidBlurEditorText( listener : Void -> Void ) : Void;
+	function onDidFocusEditorText( listener : Void -> Void ) : Void;
+	function focus() : Void;
+	function dispose() : Void;
+	function getModel() : Model;
+	function deltaDecorations( old : Array<String>, newDeco : Array<ModelDeltaDecoration> ) : Array<String>;
+	function setValue( script : String ) : Void;
+	function executeEdits( source : String, edits : Array<Dynamic>, ?endCursorState : Array<Dynamic> ) : Void;
+	function updateOptions( options : Dynamic ) : Void;
+	function getPosition() : Position;
+	function setPosition( p : Position ) : Void;
+	function revealLine(lineNumber: Int, ?ScrollType: ScrollType) : Void;
+	function revealLineInCenter(lineNumber: Int, ?ScrollType: ScrollType) : Void;
+	function revealLineNearTop( lineNumber : Int, ?ScrollType: ScrollType) : Void;
+	function getOption( opt : Int ) : Dynamic;
+	function setScrollTop( value : Int ) : Void;
+
+
+	public static function create( elt : js.html.Element, ?options : Dynamic ) : ScriptEditor;
+
+}
+</file>
+
+<file path="infrastructure/external/monaco/Todo.hx">
+package monaco;
+
+abstract Todo(Dynamic) {
+}
+</file>
+
+<file path="infrastructure/external/nw/App.hx">
+package nw;
+
+extern class App {
+
+	public static var argv(default, never) : Array<String>;
+	public static var manifest(default, never) : Dynamic;
+	public static var dataPath(default, never) : String;
+	public static function on( event : String, callb : String -> Void ) : Void;
+	public static function clearCache( ) : Void;
+
+}
+</file>
+
+<file path="infrastructure/external/nw/Clipboard.hx">
+package nw;
+
+enum abstract ClipboardType(String) {
+	var Text = "text";
+	var Png = "png";
+	var Jpeg = "jpeg";
+	var Html = "html";
+	var Rtf = "rtf";
+}
+
+typedef ClipboardData = {
+	data: String,
+	?type: ClipboardType,
+	?raw: Bool
+}
+extern class Clipboard {
+
+	function set( clipboardData : Dynamic ) : Void;
+	function get( ?type : ClipboardType, ?raw : Bool ) : String;
+	function readAvailableTypes() : Array<ClipboardType>;
+	function clear() : Void;
+
+	static function get() : Clipboard;
+
+}
+</file>
+
+<file path="infrastructure/external/nw/Menu.hx">
+package nw;
+
+enum abstract MenuType(String) {
+	var Menubar = "menubar";
+	var ContextMenu = "contextmenu";
+}
+
+extern class Menu {
+
+	public function new( ?options : { ?label : String, ?type : MenuType } ) : Void;
+	public function append( m : MenuItem ) : Void;
+	public function popup( x : Int, y : Int ) : Void;
+
+}
+</file>
+
+<file path="infrastructure/external/nw/MenuItem.hx">
+package nw;
+
+enum abstract MenuItemType(String) {
+	var Normal = "normal";
+	var Checkbox = "checkbox";
+	var Separator = "separator";
+}
+
+typedef MenuItemOptions = { label : String, ?icon : String, ?type : MenuItemType, ?submenu : Menu, ?key : String, ?modifiers : String };
+
+extern class MenuItem {
+
+	public var checked : Bool;
+	public var enabled : Bool;
+
+	public function new( options : MenuItemOptions ) : Void;
+	public dynamic function click() : Void;
+}
+</file>
+
+<file path="infrastructure/external/nw/Screen.hx">
+package nw;
+
+typedef IndividualScreen = {
+    var id : Int;
+
+    // physical screen resolution, can be negative, not necessarily start from 0,depending on screen arrangement
+    var bounds : {
+        x : Int,
+        y : Int,
+        width : Int,
+        height : Int,
+    };
+    // useable area within the screen bound
+    var work_area : {
+        x : Int,
+        y : Int,
+        width : Int,
+        height : Int,
+    };
+    var scaleFactor : Float;
+    var isBuiltIn : Bool;
+    var rotation : Int;
+    var touchSupport : Int;
+}
+
+extern class Screen {
+	public static var screens(default, never) : Array<IndividualScreen>;
+	public static function Init() : Void;
+	public static function on( event : String, callb : IndividualScreen -> Void ) : Void;
+	public static function chooseDesktopMedia(sources : Array<String>, callb : Dynamic -> Void) : Void;
+
+}
+</file>
+
+<file path="infrastructure/external/nw/Window.hx">
+package nw;
+
+extern class Window {
+
+	public var x : Int;
+	public var y : Int;
+	public var width : Int;
+	public var height : Int;
+	public var zoomLevel : Float;
+
+	public var window : js.html.Window;
+
+	public var menu : Menu;
+	public var title : String;
+
+	public function showDevTools() : Void;
+
+	public function moveTo( x : Int, y : Int ) : Void;
+	public function moveBy( dx : Int, dy : Int ) : Void;
+	public function resizeTo( w : Int, h : Int ) : Void;
+	public function resizeBy( dw : Int, dh : Int ) : Void;
+
+	public function maximize() : Void;
+	public function minimize() : Void;
+	public function restore() : Void;
+	public function enterFullscreen() : Void;
+	public function leaveFullscreen() : Void;
+	public function on( event : String, callb : Void -> Void ) : Void;
+
+	public function focus() : Void;
+	public function blur() : Void;
+	public function show( ?b : Bool ) : Void;
+
+	public function close( ?force : Bool ) : Void;
+
+	public static function get() : Window;
+	public static function open( url : String, ?params : {?new_instance:Bool,?inject_js_start:String,?inject_js_end:String,?id:String}, ?callb:Window->Void ) : Void;
 
 }
 </file>
@@ -2854,470 +3598,60 @@ class HtmlElement implements IElement {
 package hide.infrastructure.external;
 </file>
 
-<file path="infrastructure/external/monaco/KeyCode.hx">
-package monaco;
-
-enum abstract KeyCode(Int) from Int to Int {
-	var Unknown = 0;
-	var Backspace = 1;
-	var Tab = 2;
-	var Enter = 3;
-	var Shift = 4;
-	var Ctrl = 5;
-	var Alt = 6;
-	var PauseBreak = 7;
-	var CapsLock = 8;
-	var Escape = 9;
-	var Space = 10;
-	var PageUp = 11;
-	var PageDown = 12;
-	var End = 13;
-	var Home = 14;
-	var LeftArrow = 15;
-	var UpArrow = 16;
-	var RightArrow = 17;
-	var DownArrow = 18;
-	var Insert = 19;
-	var Delete = 20;
-	var KEY_0 = 21;
-	var KEY_1 = 22;
-	var KEY_2 = 23;
-	var KEY_3 = 24;
-	var KEY_4 = 25;
-	var KEY_5 = 26;
-	var KEY_6 = 27;
-	var KEY_7 = 28;
-	var KEY_8 = 29;
-	var KEY_9 = 30;
-	var KEY_A = 31;
-	var KEY_B = 32;
-	var KEY_C = 33;
-	var KEY_D = 34;
-	var KEY_E = 35;
-	var KEY_F = 36;
-	var KEY_G = 37;
-	var KEY_H = 38;
-	var KEY_I = 39;
-	var KEY_J = 40;
-	var KEY_K = 41;
-	var KEY_L = 42;
-	var KEY_M = 43;
-	var KEY_N = 44;
-	var KEY_O = 45;
-	var KEY_P = 46;
-	var KEY_Q = 47;
-	var KEY_R = 48;
-	var KEY_S = 49;
-	var KEY_T = 50;
-	var KEY_U = 51;
-	var KEY_V = 52;
-	var KEY_W = 53;
-	var KEY_X = 54;
-	var KEY_Y = 55;
-	var KEY_Z = 56;
-	var Meta = 57;
-	var ContextMenu = 58;
-	var F1 = 59;
-	var F2 = 60;
-	var F3 = 61;
-	var F4 = 62;
-	var F5 = 63;
-	var F6 = 64;
-	var F7 = 65;
-	var F8 = 66;
-	var F9 = 67;
-	var F10 = 68;
-	var F11 = 69;
-	var F12 = 70;
-	var F13 = 71;
-	var F14 = 72;
-	var F15 = 73;
-	var F16 = 74;
-	var F17 = 75;
-	var F18 = 76;
-	var F19 = 77;
-	var NumLock = 78;
-	var ScrollLock = 79;
-	var US_SEMICOLON = 80;
-	var US_EQUAL = 81;
-	var US_COMMA = 82;
-	var US_MINUS = 83;
-	var US_DOT = 84;
-	var US_SLASH = 85;
-	var US_BACKTICK = 86;
-	var US_OPEN_SQUARE_BRACKET = 87;
-	var US_BACKSLASH = 88;
-	var US_CLOSE_SQUARE_BRACKET = 89;
-	var US_QUOTE = 90;
-	var OEM_8 = 91;
-	var OEM_102 = 92;
-	var NUMPAD_0 = 93;
-	var NUMPAD_1 = 94;
-	var NUMPAD_2 = 95;
-	var NUMPAD_3 = 96;
-	var NUMPAD_4 = 97;
-	var NUMPAD_5 = 98;
-	var NUMPAD_6 = 99;
-	var NUMPAD_7 = 100;
-	var NUMPAD_8 = 101;
-	var NUMPAD_9 = 102;
-	var NUMPAD_MULTIPLY = 103;
-	var NUMPAD_ADD = 104;
-	var NUMPAD_SEPARATOR = 105;
-	var NUMPAD_SUBTRACT = 106;
-	var NUMPAD_DECIMAL = 107;
-	var NUMPAD_DIVIDE = 108;
-	var MAX_VALUE = 109;
-}
-</file>
-
-<file path="infrastructure/external/monaco/KeyMod.hx">
-package monaco;
-
-extern class KeyMod {
-	static var CtrlCmd : Int;
-    static var Shift : Int;
-    static var Alt : Int;
-    static var WinCtrl : Int;
-}
-</file>
-
-<file path="infrastructure/external/monaco/Languages.hx">
-package monaco;
-
-typedef CompletionProvider = {
-	var ?triggerCharacters : Array<String>;
-	function provideCompletionItems( model : Model, position : Position, token : Any, context : CompletionContext ) : { suggestions : Array<CompletionItem>, ?incomplete: Bool };
-}
-
-typedef CompletionContext = {
-	var ?triggerCharacter : String;
-	var triggerKind : SuggestTriggerKind;
-}
-
-enum abstract SuggestTriggerKind(Int) {
-	var Invoke;
-	var TriggerCharacter;
-	var TriggerForIncompleteCompletions;
-}
-
-enum abstract CompletionItemKind(Int) {
-	var Class = 6;
-	var Color = 15;
-	var Constructor = 3;
-	var Enum = 12;
-	var Field = 4;
-	var File = 16;
-	var Folder = 18;
-	var Function = 2;
-	var Interface = 7;
-	var Keyword = 13;
-	var Method = 1;
-	var Module = 8;
-	var Property = 9;
-	var Reference = 17;
-	var Snippet = 14;
-	var Text = 0;
-	var Unit = 10;
-	var Value = 11;
-	var Variable = 5;
-}
-
-enum abstract CompletionItemInsertTextRule(Int) {
-	var InsertAsSnippet = 4;
-	var KeepWhitespace = 1;
-	var None = 0;
-}
-
-typedef CompletionItem = {
-	var ?additionalTextEdits : Any;
-	var ?command : Any;
-	var ?commitCharacters : Array<String>;
-	var ?detail : String;
-	var ?documentation : MarkdownString;
-	var ?filterText : String;
-	var ?insertText : String;
-	var kind : CompletionItemKind;
-	var label : String;
-	var ?range : Range;
-	var ?sortText : String;
-	var ?insertTextRules: CompletionItemInsertTextRule;
-	//var ?textEdit : deprecated
-}
-
-@:native("monaco.languages")
-extern class Languages {
-
-	public static function registerCompletionItemProvider( language : String, provider : CompletionProvider ) : Void;
-
-}
-</file>
-
-<file path="infrastructure/external/monaco/MarkdownString.hx">
-package monaco;
-
-typedef MarkdownString = {
-	var value: String;
-}
-</file>
-
-<file path="infrastructure/external/monaco/Model.hx">
-package monaco;
-
-extern class Model {
-	function updateOptions( opts : {?insertSpaces:Bool,?tabSize:Int,?trimAutoWhitespace:Bool} ) : Void;
-	function getValueInRange( pos : { startLineNumber : Int, startColumn : Int, endLineNumber : Int, endColumn : Int } ) : String;
-}
-</file>
-
-<file path="infrastructure/external/monaco/ModelDeltaDecoration.hx">
-package monaco;
-
-typedef ModelDeltaDecoration = {
-	var range : Range;
-	var options : {
-		?afterContentClassName : String,
-		?beforeContentClassName : String,
-		?className : String,
-		?glyphMarginClassName : String,
-		?glyphMarginHoverMessage : MarkdownString,
-		?hoverMessage : MarkdownString,
-		?inlineClassName : String,
-		?inlineClassNameAffectsLetterSpacing : Bool,
-		?isWholeLine : Bool,
-		?linesDecorationsClassName : String,
-		?marginClassName : String,
-		?overviewRuler : Todo,
-		?stickiness : Todo,
-		?zIndex : Int,
-	};
-}
-</file>
-
-<file path="infrastructure/external/monaco/Position.hx">
-package monaco;
-
-typedef Position = {
-	var column : Int;
-	var lineNumber : Int;
-}
-</file>
-
-<file path="infrastructure/external/monaco/Range.hx">
-package monaco;
-
-extern class Range {
-	var startColumn : Int;
-	var endColumn : Int;
-	var startLineNumber : Int;
-	var endLineNumber : Int;
-	public function new(startLineNumber: Int, startColumn: Int, endLineNumber: Int, endColumn: Int) : Void;
-}
-</file>
-
-<file path="infrastructure/external/monaco/ScriptEditor.hx">
-package monaco;
-
-enum abstract ScrollType(Int) {
-	var Smooth = 0;
-	var Immediate = 1;
-}
-
-@:native("monaco.editor")
-extern class ScriptEditor {
-
-
-	function addCommand( command : Int, callback : Void -> Void ) : Void;
-	function getValue( ?options : { ?lineEnding : String, ?preserveBOM : Bool } ) : String;
-	function onDidChangeModelContent( listener : Void -> Void ) : Void;
-	function onDidBlurEditorText( listener : Void -> Void ) : Void;
-	function onDidFocusEditorText( listener : Void -> Void ) : Void;
-	function focus() : Void;
-	function dispose() : Void;
-	function getModel() : Model;
-	function deltaDecorations( old : Array<String>, newDeco : Array<ModelDeltaDecoration> ) : Array<String>;
-	function setValue( script : String ) : Void;
-	function executeEdits( source : String, edits : Array<Dynamic>, ?endCursorState : Array<Dynamic> ) : Void;
-	function updateOptions( options : Dynamic ) : Void;
-	function getPosition() : Position;
-	function setPosition( p : Position ) : Void;
-	function revealLine(lineNumber: Int, ?ScrollType: ScrollType) : Void;
-	function revealLineInCenter(lineNumber: Int, ?ScrollType: ScrollType) : Void;
-	function revealLineNearTop( lineNumber : Int, ?ScrollType: ScrollType) : Void;
-	function getOption( opt : Int ) : Dynamic;
-	function setScrollTop( value : Int ) : Void;
-
-
-	public static function create( elt : js.html.Element, ?options : Dynamic ) : ScriptEditor;
-
-}
-</file>
-
-<file path="infrastructure/external/monaco/Todo.hx">
-package monaco;
-
-abstract Todo(Dynamic) {
-}
-</file>
-
 <file path="infrastructure/external/MonacoEditorAdapter.hx">
 package hide.infrastructure.external;
 </file>
 
-<file path="infrastructure/external/nw/App.hx">
-package nw;
+<file path="infrastructure/external/SceneViewFactory.hx">
+// hide/infrastructure/external/SceneViewFactory.hx
+package hide.infrastructure.external;
+import hide.domain.services.IViewFactory;
+import hide.domain.services.IElement;
+import hide.infrastructure.external.HtmlElement;
+import hide.engine.domain.services.IRenderer;
+import hide.engine.domain.services.ISceneService;
+import hide.shared.types.IEventBus;
+import hide.shared.events.SceneChanged;
+import hx.injection.Service;
 
-extern class App {
-
-	public static var argv(default, never) : Array<String>;
-	public static var manifest(default, never) : Dynamic;
-	public static var dataPath(default, never) : String;
-	public static function on( event : String, callb : String -> Void ) : Void;
-	public static function clearCache( ) : Void;
-
-}
-</file>
-
-<file path="infrastructure/external/nw/Clipboard.hx">
-package nw;
-
-enum abstract ClipboardType(String) {
-	var Text = "text";
-	var Png = "png";
-	var Jpeg = "jpeg";
-	var Html = "html";
-	var Rtf = "rtf";
-}
-
-typedef ClipboardData = {
-	data: String,
-	?type: ClipboardType,
-	?raw: Bool
-}
-extern class Clipboard {
-
-	function set( clipboardData : Dynamic ) : Void;
-	function get( ?type : ClipboardType, ?raw : Bool ) : String;
-	function readAvailableTypes() : Array<ClipboardType>;
-	function clear() : Void;
-
-	static function get() : Clipboard;
-
-}
-</file>
-
-<file path="infrastructure/external/nw/Menu.hx">
-package nw;
-
-enum abstract MenuType(String) {
-	var Menubar = "menubar";
-	var ContextMenu = "contextmenu";
-}
-
-extern class Menu {
-
-	public function new( ?options : { ?label : String, ?type : MenuType } ) : Void;
-	public function append( m : MenuItem ) : Void;
-	public function popup( x : Int, y : Int ) : Void;
-
-}
-</file>
-
-<file path="infrastructure/external/nw/MenuItem.hx">
-package nw;
-
-enum abstract MenuItemType(String) {
-	var Normal = "normal";
-	var Checkbox = "checkbox";
-	var Separator = "separator";
-}
-
-typedef MenuItemOptions = { label : String, ?icon : String, ?type : MenuItemType, ?submenu : Menu, ?key : String, ?modifiers : String };
-
-extern class MenuItem {
-
-	public var checked : Bool;
-	public var enabled : Bool;
-
-	public function new( options : MenuItemOptions ) : Void;
-	public dynamic function click() : Void;
-}
-</file>
-
-<file path="infrastructure/external/nw/Screen.hx">
-package nw;
-
-typedef IndividualScreen = {
-    var id : Int;
-
-    // physical screen resolution, can be negative, not necessarily start from 0,depending on screen arrangement
-    var bounds : {
-        x : Int,
-        y : Int,
-        width : Int,
-        height : Int,
-    };
-    // useable area within the screen bound
-    var work_area : {
-        x : Int,
-        y : Int,
-        width : Int,
-        height : Int,
-    };
-    var scaleFactor : Float;
-    var isBuiltIn : Bool;
-    var rotation : Int;
-    var touchSupport : Int;
-}
-
-extern class Screen {
-	public static var screens(default, never) : Array<IndividualScreen>;
-	public static function Init() : Void;
-	public static function on( event : String, callb : IndividualScreen -> Void ) : Void;
-	public static function chooseDesktopMedia(sources : Array<String>, callb : Dynamic -> Void) : Void;
-
-}
-</file>
-
-<file path="infrastructure/external/nw/Window.hx">
-package nw;
-
-extern class Window {
-
-	public var x : Int;
-	public var y : Int;
-	public var width : Int;
-	public var height : Int;
-	public var zoomLevel : Float;
-
-	public var window : js.html.Window;
-
-	public var menu : Menu;
-	public var title : String;
-
-	public function showDevTools() : Void;
-
-	public function moveTo( x : Int, y : Int ) : Void;
-	public function moveBy( dx : Int, dy : Int ) : Void;
-	public function resizeTo( w : Int, h : Int ) : Void;
-	public function resizeBy( dw : Int, dh : Int ) : Void;
-
-	public function maximize() : Void;
-	public function minimize() : Void;
-	public function restore() : Void;
-	public function enterFullscreen() : Void;
-	public function leaveFullscreen() : Void;
-	public function on( event : String, callb : Void -> Void ) : Void;
-
-	public function focus() : Void;
-	public function blur() : Void;
-	public function show( ?b : Bool ) : Void;
-
-	public function close( ?force : Bool ) : Void;
-
-	public static function get() : Window;
-	public static function open( url : String, ?params : {?new_instance:Bool,?inject_js_start:String,?inject_js_end:String,?id:String}, ?callb:Window->Void ) : Void;
-
+/**
+ * Фабрика для Scene View.
+ * Создаёт canvas, инициализирует рендерер, подписывается на изменения сцены.
+ */
+class SceneViewFactory implements IViewFactory implements Service {
+    private var renderer:IRenderer;
+    private var sceneService:ISceneService;
+    private var eventBus:IEventBus;
+    
+    public function new(
+        renderer:IRenderer,
+        sceneService:ISceneService,
+        eventBus:IEventBus
+    ) {
+        this.renderer = renderer;
+        this.sceneService = sceneService;
+        this.eventBus = eventBus;
+    }
+    
+    public function create(container:IElement, state:Dynamic):Dynamic {
+        var htmlEl:HtmlElement = cast container;
+        var domNode = htmlEl.getElement();
+        
+        // 1. Инициализируем рендерер
+        renderer.init(domNode);
+        
+        // 2. Подписываемся на изменения сцены
+        eventBus.subscribe(SceneChanged, function(_) {
+            renderer.renderScene(sceneService.getRoot());
+        });
+        
+        // 3. Первичный рендер
+        renderer.renderScene(sceneService.getRoot());
+        
+        trace("🎬 [SceneViewFactory] Scene view created");
+        
+        return renderer;
+    }
 }
 </file>
 
@@ -4075,6 +4409,29 @@ class ReactElement implements IElement {
     
     public function unmount():Void {
         root.unmount();
+    }
+}
+</file>
+
+<file path="infrastructure/BrowserDomAccess.hx">
+package hide.infrastructure;
+
+import hide.domain.services.IDomAccess;
+import hx.injection.Service;
+
+class BrowserDomAccess implements IDomAccess implements Service {
+    public function new() {}
+    
+    public function getElementById(id:String):Dynamic {
+        return js.Browser.document.getElementById(id);
+    }
+    
+    public function addWindowEventListener(event:String, handler:Dynamic->Void):Void {
+        js.Browser.window.addEventListener(event, handler);
+    }
+    
+    public function removeWindowEventListener(event:String, handler:Dynamic->Void):Void {
+        js.Browser.window.removeEventListener(event, handler);
     }
 }
 </file>
@@ -6688,483 +7045,12 @@ class WindowController implements Service {
 }
 </file>
 
-<file path="presentation/Ide.hx">
-package hide.presentation;
-
-import hide.presentation.controllers.ToolbarController;
-import hide.presentation.controllers.WindowController;
-import hide.application.services.MenuService;
-import hide.application.services.WindowService;
-import hide.application.services.PluginManager;
-import hide.application.services.ViewRegistry;
-import hide.domain.services.IFileDialog;
-import hide.domain.services.IPlatform;
-import hide.domain.services.IAppInfo;
-import hide.presentation.ui.StatusBar;
-import hide.presentation.controllers.MenuController;
-
-import hide.application.integration.SceneEditorService;
-
-import hide.application.commands.LoadProjectUseCase;
-import hide.application.commands.SetFullscreenUseCase;
-import hide.application.commands.SaveLayoutUseCase;
-import hide.application.commands.CloseProjectUseCase;
-import hide.application.commands.OpenViewUseCase;
-import hide.application.dto.ViewDto;
-import hide.domain.valueobjects.DisplayPosition;
-import hide.domain.valueobjects.FilePath;
-
-import hide.shared.events.ProjectLoaded;
-import hide.shared.events.ErrorOccurred;
-import hide.shared.events.LayoutChanged;
-import hide.shared.events.ProjectClosed;
-import hide.shared.events.RecentProjectsUpdated;
-
-import hide.shared.types.IEventBus;
-import hide.shared.types.Result;
-
-import hide.domain.services.ILayoutEngine;
-
-import hide.engine.domain.services.ISceneService;
-
-import hx.injection.Service;
-import hx.injection.ServiceCollection;
-import hx.injection.ServiceProvider;
-import tink.core.*;
-
-using tink.CoreApi;
-using hx.injection.ServiceExtensions;
-using Lambda;
-
-@:expose
-class Ide implements Service {
-    public static var inst(default, null):Ide;
-    private var _resizeHandler:Null<js.html.Event->Void>;
-    private var views:Array<ViewDto>;
-    private var statusBar:StatusBar;
-    
-    public var currentProjectName(get, never):String;
-    private var _currentProject:Null<String>;
-    
-    private var _projectLoadedUnsub:CallbackLink;
-    private var _errorUnsub:CallbackLink;
-    private var _layoutChangedUnsub:CallbackLink;
-    private var _projectClosedUnsub:CallbackLink;
-    
-    private var windowService:WindowService;
-    private var menuService:MenuService;
-    private var layoutEngine:ILayoutEngine;
-    private var menuController:MenuController;
-    private var loadProjectUseCase:LoadProjectUseCase;
-    private var setFullscreenUseCase:SetFullscreenUseCase;
-    //private var saveLayoutUseCase:SaveLayoutUseCase;
-    //private var closeProjectUseCase:CloseProjectUseCase;
-    //private var openViewUseCase:OpenViewUseCase;
-    private var viewRegistry:ViewRegistry;
-    private var pluginManager:PluginManager;
-    private var eventBus:IEventBus;
-    private var fileDialog:IFileDialog;
-    private var platform:IPlatform;
-    private var windowController:WindowController;
-    private var toolbarController:ToolbarController;
-    private var sceneService:ISceneService;
-    private var sceneEditorService:SceneEditorService;
-
-    public function new(
-        windowService:WindowService,
-        menuService:MenuService,
-        loadProjectUseCase:LoadProjectUseCase,
-        setFullscreenUseCase:SetFullscreenUseCase,
-        //saveLayoutUseCase:SaveLayoutUseCase,
-        //closeProjectUseCase:CloseProjectUseCase,
-        //openViewUseCase:OpenViewUseCase,
-        viewRegistry:ViewRegistry,
-        pluginManager:PluginManager,
-        eventBus:IEventBus,
-        fileDialog:IFileDialog,
-        platform:IPlatform,
-        layoutEngine:ILayoutEngine,
-        menuController:MenuController,
-        windowController:WindowController,
-        toolbarController:ToolbarController,
-        sceneService:ISceneService,
-        sceneEditorService:SceneEditorService
-    ) {
-        this.windowService = windowService;
-        this.menuService = menuService;
-        this.loadProjectUseCase = loadProjectUseCase;
-        this.setFullscreenUseCase = setFullscreenUseCase;
-        //this.saveLayoutUseCase = saveLayoutUseCase;
-        //this.closeProjectUseCase = closeProjectUseCase;
-        //this.openViewUseCase = openViewUseCase;
-        this.viewRegistry = viewRegistry;
-        this.pluginManager = pluginManager;
-        this.eventBus = eventBus;
-        this.fileDialog = fileDialog;
-        this.platform = platform;
-        this.layoutEngine = layoutEngine;
-        this.menuController = menuController;
-        this.windowController = windowController;
-        this.toolbarController = toolbarController;
-        this.sceneService = sceneService;
-        this.sceneEditorService = sceneEditorService;
-        inst = this;
-        views = viewRegistry.all(); 
-        
-        menuService.onItemClick("project.open", onMenuOpenProject);
-        menuService.onItemClick("view.fullscreen", onToggleFullscreen);
-        menuService.onItemClick("layout.save", onLayoutSave);
-        menuService.onItemClick("project.close", onCloseProject);
-        menuService.onItemClick("help.about", showAboutDialog);
-        menuService.onItemClick("app.exit", function() {
-            js.Browser.window.close();
-        });
-        for (view in viewRegistry.all()) {
-            trace(view.name);
-            menuService.addViewMenu(view);
-            menuService.onItemClick("view." + view.name, function() openView(view.name));
-        }
-        
-        // Используем js.Browser.document вместо Element.byId
-        var statusEl = js.Browser.document.getElementById("status-bar");
-        statusBar = new StatusBar(statusEl);
-
-
-        
-        _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded, onProjectLoadedHandler);
-        _errorUnsub = eventBus.subscribe(ErrorOccurred, onErrorOccurred);
-        _layoutChangedUnsub = eventBus.subscribe(LayoutChanged, function(e:LayoutChanged) {
-            trace("Layout changed");
-        });
-        _projectClosedUnsub = eventBus.subscribe(ProjectClosed, function(e:ProjectClosed) {
-            _currentProject = null;
-            statusBar.showMessage("Project closed");
-            updateWindowTitle();
-        });
-    }
-    
-    public function onMenuOpenProject():Void {
-        layoutEngine.open("welcome", {}, DisplayPosition.Center);
-        /*
-        fileDialog.showOpen({ filters: [{ name: "Project Files", extensions: ["json", "hide"] }] })
-        .handle(function(path:Null<String>) {
-            if (path != null) {
-                var result = loadProjectUseCase.execute(new FilePath(path));
-                switch (result) {
-                    case Success(_):
-                        trace("Project loading initiated successfully.");
-                    case Failure(err):
-                        statusBar.setError('Failed to load project: $err');
-                }
-            }
-        });*/
-    }
-    
-    private function onErrorOccurred(event:ErrorOccurred):Void {
-        trace("UI ERROR [" + event.context + "]: " + event.error);
-    }
-    
-    private function onProjectLoadedHandler(event:ProjectLoaded):Void {
-        _currentProject = event.project.name;
-        trace("UI: Project loaded successfully: " + _currentProject);
-        updateWindowTitle();
-        //openView("project");
-        //openView("editor");
-    }
-    
-    public function onToggleFullscreen():Void {
-        // isFullscreen — это var, а не функция! Убираем скобки
-        setFullscreenUseCase.execute(!windowService.isFullscreen);
-    }
-    
-    public function onLayoutSave():Void {
-        //saveLayoutUseCase.execute();
-    }
-    
-    public function onCloseProject():Void {
-        //closeProjectUseCase.execute();
-    }
-    
-    private function openView(viewName:String):Void {
-        // Используем Lambda.find вместо Array.find
-        var view = Lambda.find(views, function(v) return v.name == viewName);
-        if (view == null) {
-            throw "View not found: " + viewName;
-        }
-        
-        var position = switch viewName {
-            case "editor": DisplayPosition.Center;
-            case "project": DisplayPosition.Left;
-            default: DisplayPosition.Center;
-        };
-        
-        //openViewUseCase.execute(view.name, view.defaultState, position);
-    }
-    
-    private function onOpenRecent(path:String):Void {
-        loadProjectUseCase.execute(new FilePath(path));
-    }
-    
-    private function updateWindowTitle():Void {
-        var title = _currentProject != null ? '$_currentProject - HIDE IDE' : 'HIDE IDE';
-        trace("Window title updated to: " + title);
-        windowService.setTitle(title);
-    }
-    
-    private function showAboutDialog():Void {
-        trace('HIDE IDE\nVersion 0.1.0');
-    }
-    
-    private function get_currentProjectName():String {
-        return _currentProject != null ? _currentProject : "No project";
-    }
-    
-    
-    
-    public function startup():Void {
-        trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
-         // 2. Регистрируем временные заглушки для View (позже заменим на плагины)
-            // ✅ РЕГИСТРАЦИЯ ЗАГЛУШЕК ФАБРИК
-            // ✅ РЕГИСТРАЦИЯ UNITY-LIKE VIEW
-        viewRegistry.registerViewFactory("scene", new hide.infrastructure.external.StubSceneFactory());
-        viewRegistry.registerViewFactory("game", new hide.infrastructure.external.StubGameFactory());
-        //viewRegistry.registerViewFactory("hierarchy", new hide.infrastructure.external.StubHierarchyFactory());
-        //viewRegistry.registerViewFactory("inspector", new hide.infrastructure.external.StubInspectorFactory());
-        viewRegistry.registerViewFactory("project", new hide.infrastructure.external.StubProjectFactory());
-        
-        viewRegistry.registerViewFactory("editor", new hide.infrastructure.external.StubEditorFactory());
-        viewRegistry.registerViewFactory("console", new hide.infrastructure.external.StubConsoleFactory());
-        viewRegistry.registerViewFactory("properties", new hide.infrastructure.external.StubPropertiesFactory());
-        // ✅ РЕГИСТРАЦИЯ REACT-ФАБРИК
-
-        // ✅ РЕГИСТРАЦИЯ INSPECTOR
-        viewRegistry.registerViewFactory(
-            "inspector",
-            new hide.presentation.ui.react.factories.ReactViewFactory()
-                .withComponent(hide.presentation.ui.react.components.InspectorPanel)
-        );
-        viewRegistry.registerViewFactory(
-            "hierarchy",
-            new hide.presentation.ui.react.factories.ReactViewFactory()
-                .withComponent(hide.presentation.ui.react.components.HierarchyPanel)
-        );
-        viewRegistry.registerViewFactory(
-            "welcome",
-            new hide.presentation.ui.react.factories.ReactViewFactory()
-                .withComponent(hide.presentation.ui.react.components.WelcomePanel)
-        );
-
-        windowController.init();
-        trace("🪟 WindowController инициализирован");
-
-        // ✅ ИНИЦИАЛИЗАЦИЯ TOOLBAR
-        var toolbarEl = js.Browser.document.getElementById("main-toolbar");
-        if (toolbarEl != null) {
-            // ToolbarController уже в DI, получаем его
-            
-            toolbarController.setContainer(cast toolbarEl);
-            trace("🔧 Toolbar инициализирован");
-        }
-        // 1. Инициализируем GoldenLayout
-        var layoutEl = js.Browser.document.getElementById("golden-layout-root");
-        if (layoutEl != null) {
-            layoutEngine.setContainer(layoutEl);
-            // Инициализируем с пустым состоянием (адаптер сам создаст дефолтный скелет)
-            layoutEngine.init({ content: [], fullScreen: null }); 
-            trace("🎨 GoldenLayout инициализирован.");
-        } else {
-            trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.");
-        }
-       
-        var menuContainer = js.Browser.document.getElementById("main-menu");
-        if (menuContainer != null) {
-            menuController.setContainer(cast menuContainer);
-            trace("📋 MenuController инициализирован с DOM-контейнером.");
-        } else {
-            trace("⚠️ Контейнер #main-menu не найден в DOM!");
-        }
-
-        var args = platform.getAppArgs();
-        var projectFile:Null<String> = null;
-        // ✅ Подписка на resize окна через js.Browser
-        _resizeHandler = function(_) {
-            haxe.Timer.delay(function() {
-                var layoutEl = js.Browser.document.getElementById("golden-layout-root");
-                if (layoutEl != null) {
-                    var rect = layoutEl.getBoundingClientRect();
-                    layoutEngine.updateSize(Std.int(rect.width), Std.int(rect.height));
-                }
-            }, 100); // Небольшая задержка для стабильности
-        };
-
-        js.Browser.window.addEventListener("resize", _resizeHandler);
-        // Electron передает много внутренних флагов. Ищем первый аргумент, 
-        // который НЕ начинается с '-' и не является пустой строкой.
-        for (arg in args) {
-            if (arg != "" && !StringTools.startsWith(arg, "-") && !StringTools.startsWith(arg, "chrome://")) {
-                projectFile = arg;
-                break;
-            }
-        }
-        
-        if (projectFile != null) {
-            trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile);
-            loadProjectUseCase.execute(new FilePath(projectFile));
-        } else {
-            trace("👋 Приложение запущено без проекта.");
-
-        }
-    }
-    
-    public function dispose():Void {
-        if (_projectLoadedUnsub != null) _projectLoadedUnsub.cancel();
-        if (_errorUnsub != null) _errorUnsub.cancel();
-        if (_layoutChangedUnsub != null) _layoutChangedUnsub.cancel();
-        if (_projectClosedUnsub != null) _projectClosedUnsub.cancel();
-        // ✅ Очищаем ресурсы контроллера меню
-        if (menuController != null) {
-            menuController.dispose();
-        }
-        if (windowController != null) {
-            windowController.dispose();
-        }
-        // ✅ Отписка от resize
-        if (_resizeHandler != null) {
-            js.Browser.window.removeEventListener("resize", _resizeHandler);
-            _resizeHandler = null;
-        }
-    }
-    public function get_eventBus():IEventBus return eventBus;
-    public function get_windowService():WindowService return windowService;
-    public function get_menuService():MenuService return menuService;
-    public function get_viewRegistry():ViewRegistry return viewRegistry;
-    public function get_layoutEngine():ILayoutEngine return layoutEngine;
-    public function get_sceneService():ISceneService return sceneService;
-}
-</file>
-
 <file path="presentation/styles/CssVariables.hx">
 package hide.presentation.styles;
 </file>
 
 <file path="presentation/styles/Theme.hx">
 package hide.presentation.styles;
-</file>
-
-<file path="presentation/ui/Dialog.hx">
-package hide.presentation.ui;
-</file>
-
-<file path="presentation/ui/Element.hx">
-package hide.presentation.ui;
-</file>
-
-<file path="presentation/ui/MenuBuilder.hx">
-package hide.presentation.ui;
-
-import hide.application.dto.MenuItem;
-import hide.domain.enums.MenuItemType;
-import js.html.Element;
-
-class MenuBuilder {
-    /**
-     * Строит корневой элемент меню (горизонтальная панель)
-     */
-    public static function build(items:Array<MenuItem>):Element {
-        var ul = js.Browser.document.createElement("ul");
-        ul.className = "main-menu-bar";
-        
-        for (item in items) {
-            ul.appendChild(createMenuItem(item));
-        }
-        
-        return ul;
-    }
-
-    /**
-     * Рекурсивно создает элемент списка <li> и его содержимое
-     */
-    private static function createMenuItem(item:MenuItem):Element {
-        var li = js.Browser.document.createElement("li");
-        li.className = "menu-item";
-        
-        if (item.enabled == false) {
-            li.className += " disabled";
-        }
-
-        // 1. Если это разделитель
-        if (item.type == Separator) {
-            li.className += " separator";
-            return li;
-        }
-
-        // 2. Создаем кликабельный элемент (кнопку)
-        var btn = js.Browser.document.createElement("button");
-        btn.className = "menu-button";
-        btn.setAttribute("data-menu-id", item.id); // Ключ для делегирования событий
-        
-        // Добавляем иконку, если она есть (предполагаем использование FontAwesome или аналога)
-        var iconHtml = item.icon != null ? '<i class="fa fa-${item.icon}"></i>' : '';
-        var shortcutHtml = item.shortcut != null ? '<span class="menu-shortcut">${item.shortcut}</span>' : '';
-
-        // Собираем всё вместе: Иконка + Текст + (Хоткей справа)
-        btn.innerHTML = iconHtml + ' <span style="flex:1">${item.label}</span> ' + shortcutHtml;
-        li.appendChild(btn);
-
-        // 3. Если это подменю, рекурсивно строим его дочерние элементы
-        if (item.type == Submenu && item.children != null && item.children.length > 0) {
-            li.className += " has-submenu";
-            var subUl = js.Browser.document.createElement("ul");
-            subUl.className = "submenu";
-            
-            for (child in item.children) {
-                subUl.appendChild(createMenuItem(child));
-            }
-            
-            li.appendChild(subUl);
-        }
-
-        return li;
-    }
-}
-</file>
-
-<file path="presentation/ui/react/BaseReactComponent.hx">
-package hide.presentation.ui.react;
-
-import react.ReactComponent;
-import hide.shared.types.IEventBus;
-import tink.core.*;
-import react.ReactMacro.jsx;
-using tink.CoreApi;
-/**
- * Базовый React-компонент с интеграцией в Haxe-сервисы.
- * Автоматически отписывается от событий при unmount.
- */
-class BaseReactComponent<P, S> extends ReactComponentOfPropsAndState<P, S> {
-    private var subscriptions:Array<CallbackLink> = [];
-    
-    /**
-     * Подписывает компонент на событие EventBus.
-     * Автоматически отписывается при unmount.
-     */
-    private function subscribe<T>(eventBus:IEventBus, eventClass:Class<T>, handler:T->Void):Void {
-        var link = eventBus.subscribe(eventClass, handler);
-        subscriptions.push(link);
-    }
-    // ✅ ДОБАВЛЕНО: Базовый render, чтобы удовлетворить компилятор
-    override function render():ReactElement {
-        return jsx('<div></div>');
-    }
-    override function componentWillUnmount():Void {
-        // Отписываемся от всех событий
-        for (link in subscriptions) {
-            link.cancel();
-        }
-        subscriptions = [];
-        super.componentWillUnmount();
-    }
-}
 </file>
 
 <file path="presentation/ui/react/components/HierarchyPanel.hx">
@@ -7287,13 +7173,12 @@ typedef InspectorProps = {
 
 typedef InspectorState = {
     var selectedObject: Null<SceneObject>;
-    var version: Int; // триггер для перерисовки при изменениях
 }
 
 class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> {
     public function new() {
         super();
-        state = { selectedObject: null, version: 0 };
+        state = { selectedObject: null };
     }
 
     override function componentDidMount(): Void {
@@ -7303,21 +7188,21 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
         // 1. Подписываемся на выбор объекта
         subscribe(eventBus, ObjectSelected, function(e:ObjectSelected) {
             var obj = e.objectId != null ? scene.getObject(e.objectId) : null;
-            setState({ selectedObject: obj, version: state.version + 1 });
+            setState({ selectedObject: obj});
         });
 
         // 2. Подписываемся на изменения объекта (обновляем UI)
         subscribe(eventBus, ObjectChanged, function(e:ObjectChanged) {
             if (state.selectedObject != null && state.selectedObject.id == e.objectId) {
                 var fresh = scene.getObject(e.objectId);
-                setState({ selectedObject: fresh, version: state.version + 1 });
+                setState({ selectedObject: fresh });
             }
         });
 
         // 3. Если уже что-то выбрано при монтировании — покажем сразу
         var current = scene.getSelected();
         if (current != null) {
-            setState({ selectedObject: current, version: state.version + 1 });
+            setState({ selectedObject: current});
         }
     }
 
@@ -7433,11 +7318,11 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
             <div style={{display:"flex",gap:"4px",marginBottom:"4px"}}>
                 <span style={{width:"60px",color:"#aaa"}}>{label}</span>
                 <input defaultValue={x} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
-                    onBlur={function(e) onChange(Std.parseFloat(e.target.value), y, z)} />
+                    onBlur={function(e) onChange(safeParse(e.target.value,0), y, z)} />
                 <input defaultValue={y} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
-                    onBlur={function(e) onChange(x, Std.parseFloat(e.target.value), z)} />
+                    onBlur={function(e) onChange(x, safeParse(e.target.value,0), z)} />
                 <input defaultValue={z} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
-                    onBlur={function(e) onChange(x, y, Std.parseFloat(e.target.value))} />
+                    onBlur={function(e) onChange(x, y, safeParse(e.target.value,0))} />
             </div>
         ');
     }
@@ -7457,7 +7342,7 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
             <div style={{display:"flex",gap:"4px",marginBottom:"4px"}}>
                 <span style={{width:"60px",color:"#aaa"}}>{label}</span>
                 <input defaultValue={value} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
-                    onBlur={function(e) onChange(Std.parseFloat(e.target.value))} />
+                    onBlur={function(e) onChange(safeParse(e.target.value,0))} />
             </div>
         ');
     }
@@ -7487,6 +7372,11 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
         var obj = UseService.sceneService().getObject(objId);
         if (obj == null) return;
         UseService.sceneService().setActive(objId, !obj.isActive);
+    }
+
+    private function safeParse(v:String, fallback:Float):Float {
+        var f = Std.parseFloat(v);
+        return Math.isNaN(f) ? fallback : f;
     }
 }
 </file>
@@ -7744,6 +7634,122 @@ class UseService {
 }
 </file>
 
+<file path="presentation/ui/react/BaseReactComponent.hx">
+package hide.presentation.ui.react;
+
+import react.ReactComponent;
+import hide.shared.types.IEventBus;
+import tink.core.*;
+import react.ReactMacro.jsx;
+using tink.CoreApi;
+/**
+ * Базовый React-компонент с интеграцией в Haxe-сервисы.
+ * Автоматически отписывается от событий при unmount.
+ */
+class BaseReactComponent<P, S> extends ReactComponentOfPropsAndState<P, S> {
+    private var subscriptions:Array<CallbackLink> = [];
+    
+    /**
+     * Подписывает компонент на событие EventBus.
+     * Автоматически отписывается при unmount.
+     */
+    private function subscribe<T>(eventBus:IEventBus, eventClass:Class<T>, handler:T->Void):Void {
+        var link = eventBus.subscribe(eventClass, handler);
+        subscriptions.push(link);
+    }
+    // ✅ ДОБАВЛЕНО: Базовый render, чтобы удовлетворить компилятор
+    override function render():ReactElement {
+        return jsx('<div></div>');
+    }
+    override function componentWillUnmount():Void {
+        // Отписываемся от всех событий
+        for (link in subscriptions) {
+            link.cancel();
+        }
+        subscriptions = [];
+        super.componentWillUnmount();
+    }
+}
+</file>
+
+<file path="presentation/ui/Dialog.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/Element.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/MenuBuilder.hx">
+package hide.presentation.ui;
+
+import hide.application.dto.MenuItem;
+import hide.domain.enums.MenuItemType;
+import js.html.Element;
+
+class MenuBuilder {
+    /**
+     * Строит корневой элемент меню (горизонтальная панель)
+     */
+    public static function build(items:Array<MenuItem>):Element {
+        var ul = js.Browser.document.createElement("ul");
+        ul.className = "main-menu-bar";
+        
+        for (item in items) {
+            ul.appendChild(createMenuItem(item));
+        }
+        
+        return ul;
+    }
+
+    /**
+     * Рекурсивно создает элемент списка <li> и его содержимое
+     */
+    private static function createMenuItem(item:MenuItem):Element {
+        var li = js.Browser.document.createElement("li");
+        li.className = "menu-item";
+        
+        if (item.enabled == false) {
+            li.className += " disabled";
+        }
+
+        // 1. Если это разделитель
+        if (item.type == Separator) {
+            li.className += " separator";
+            return li;
+        }
+
+        // 2. Создаем кликабельный элемент (кнопку)
+        var btn = js.Browser.document.createElement("button");
+        btn.className = "menu-button";
+        btn.setAttribute("data-menu-id", item.id); // Ключ для делегирования событий
+        
+        // Добавляем иконку, если она есть (предполагаем использование FontAwesome или аналога)
+        var iconHtml = item.icon != null ? '<i class="fa fa-${item.icon}"></i>' : '';
+        var shortcutHtml = item.shortcut != null ? '<span class="menu-shortcut">${item.shortcut}</span>' : '';
+
+        // Собираем всё вместе: Иконка + Текст + (Хоткей справа)
+        btn.innerHTML = iconHtml + ' <span style="flex:1">${item.label}</span> ' + shortcutHtml;
+        li.appendChild(btn);
+
+        // 3. Если это подменю, рекурсивно строим его дочерние элементы
+        if (item.type == Submenu && item.children != null && item.children.length > 0) {
+            li.className += " has-submenu";
+            var subUl = js.Browser.document.createElement("ul");
+            subUl.className = "submenu";
+            
+            for (child in item.children) {
+                subUl.appendChild(createMenuItem(child));
+            }
+            
+            li.appendChild(subUl);
+        }
+
+        return li;
+    }
+}
+</file>
+
 <file path="presentation/ui/StatusBar.hx">
 package hide.presentation.ui;
 
@@ -7782,6 +7788,366 @@ package hide.presentation.views;
 
 <file path="presentation/views/ScriptEditorView.hx">
 package hide.presentation.views;
+</file>
+
+<file path="presentation/Ide.hx">
+package hide.presentation;
+
+import hide.presentation.controllers.ToolbarController;
+import hide.presentation.controllers.WindowController;
+import hide.application.services.MenuService;
+import hide.application.services.WindowService;
+import hide.application.services.PluginManager;
+import hide.application.services.ViewRegistry;
+import hide.domain.services.IFileDialog;
+import hide.domain.services.IPlatform;
+import hide.domain.services.IAppInfo;
+import hide.presentation.ui.StatusBar;
+import hide.presentation.controllers.MenuController;
+
+import hide.application.integration.SceneEditorService;
+
+import hide.application.commands.LoadProjectUseCase;
+import hide.application.commands.SetFullscreenUseCase;
+import hide.application.commands.SaveLayoutUseCase;
+import hide.application.commands.CloseProjectUseCase;
+import hide.application.commands.OpenViewUseCase;
+import hide.application.dto.ViewDto;
+import hide.domain.valueobjects.DisplayPosition;
+import hide.domain.valueobjects.FilePath;
+
+import hide.shared.events.ProjectLoaded;
+import hide.shared.events.ErrorOccurred;
+import hide.shared.events.LayoutChanged;
+import hide.shared.events.ProjectClosed;
+import hide.shared.events.RecentProjectsUpdated;
+
+import hide.shared.types.IEventBus;
+import hide.shared.types.Result;
+
+import hide.domain.services.ILayoutEngine;
+
+import hide.engine.domain.services.ISceneService;
+import hide.infrastructure.external.SceneViewFactory;
+
+import hx.injection.Service;
+import hx.injection.ServiceCollection;
+import hx.injection.ServiceProvider;
+import tink.core.*;
+
+using tink.CoreApi;
+using hx.injection.ServiceExtensions;
+using Lambda;
+
+@:expose
+class Ide implements Service {
+    public static var inst(default, null):Ide;
+    private var _resizeHandler:Null<js.html.Event->Void>;
+    private var views:Array<ViewDto>;
+    private var statusBar:StatusBar;
+    
+    public var currentProjectName(get, never):String;
+    private var _currentProject:Null<String>;
+    
+    private var _projectLoadedUnsub:CallbackLink;
+    private var _errorUnsub:CallbackLink;
+    private var _layoutChangedUnsub:CallbackLink;
+    private var _projectClosedUnsub:CallbackLink;
+    
+    private var windowService:WindowService;
+    private var menuService:MenuService;
+    private var layoutEngine:ILayoutEngine;
+    private var menuController:MenuController;
+    private var loadProjectUseCase:LoadProjectUseCase;
+    private var setFullscreenUseCase:SetFullscreenUseCase;
+    //private var saveLayoutUseCase:SaveLayoutUseCase;
+    //private var closeProjectUseCase:CloseProjectUseCase;
+    //private var openViewUseCase:OpenViewUseCase;
+    private var viewRegistry:ViewRegistry;
+    private var pluginManager:PluginManager;
+    private var eventBus:IEventBus;
+    private var fileDialog:IFileDialog;
+    private var platform:IPlatform;
+    private var windowController:WindowController;
+    private var toolbarController:ToolbarController;
+    private var sceneService:ISceneService;
+    private var sceneEditorService:SceneEditorService;
+    private var sceneViewFactory:SceneViewFactory;
+
+    public function new(
+        windowService:WindowService,
+        menuService:MenuService,
+        loadProjectUseCase:LoadProjectUseCase,
+        setFullscreenUseCase:SetFullscreenUseCase,
+        //saveLayoutUseCase:SaveLayoutUseCase,
+        //closeProjectUseCase:CloseProjectUseCase,
+        //openViewUseCase:OpenViewUseCase,
+        viewRegistry:ViewRegistry,
+        pluginManager:PluginManager,
+        eventBus:IEventBus,
+        fileDialog:IFileDialog,
+        platform:IPlatform,
+        layoutEngine:ILayoutEngine,
+        menuController:MenuController,
+        windowController:WindowController,
+        toolbarController:ToolbarController,
+        sceneService:ISceneService,
+        sceneEditorService:SceneEditorService,
+        sceneViewFactory:SceneViewFactory
+    ) {
+        this.windowService = windowService;
+        this.menuService = menuService;
+        this.loadProjectUseCase = loadProjectUseCase;
+        this.setFullscreenUseCase = setFullscreenUseCase;
+        //this.saveLayoutUseCase = saveLayoutUseCase;
+        //this.closeProjectUseCase = closeProjectUseCase;
+        //this.openViewUseCase = openViewUseCase;
+        this.viewRegistry = viewRegistry;
+        this.pluginManager = pluginManager;
+        this.eventBus = eventBus;
+        this.fileDialog = fileDialog;
+        this.platform = platform;
+        this.layoutEngine = layoutEngine;
+        this.menuController = menuController;
+        this.windowController = windowController;
+        this.toolbarController = toolbarController;
+        this.sceneService = sceneService;
+        this.sceneEditorService = sceneEditorService;
+        this.sceneViewFactory = sceneViewFactory;
+        inst = this;
+        views = viewRegistry.all(); 
+        
+        menuService.onItemClick("project.open", onMenuOpenProject);
+        menuService.onItemClick("view.fullscreen", onToggleFullscreen);
+        menuService.onItemClick("layout.save", onLayoutSave);
+        menuService.onItemClick("project.close", onCloseProject);
+        menuService.onItemClick("help.about", showAboutDialog);
+        menuService.onItemClick("app.exit", function() {
+            js.Browser.window.close();
+        });
+        for (view in viewRegistry.all()) {
+            trace(view.name);
+            menuService.addViewMenu(view);
+            menuService.onItemClick("view." + view.name, function() openView(view.name));
+        }
+        
+        // Используем js.Browser.document вместо Element.byId
+        var statusEl = js.Browser.document.getElementById("status-bar");
+        statusBar = new StatusBar(statusEl);
+
+
+        
+        _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded, onProjectLoadedHandler);
+        _errorUnsub = eventBus.subscribe(ErrorOccurred, onErrorOccurred);
+        _layoutChangedUnsub = eventBus.subscribe(LayoutChanged, function(e:LayoutChanged) {
+            trace("Layout changed");
+        });
+        _projectClosedUnsub = eventBus.subscribe(ProjectClosed, function(e:ProjectClosed) {
+            _currentProject = null;
+            statusBar.showMessage("Project closed");
+            updateWindowTitle();
+        });
+    }
+    
+    public function onMenuOpenProject():Void {
+        layoutEngine.open("welcome", {}, DisplayPosition.Center);
+        /*
+        fileDialog.showOpen({ filters: [{ name: "Project Files", extensions: ["json", "hide"] }] })
+        .handle(function(path:Null<String>) {
+            if (path != null) {
+                var result = loadProjectUseCase.execute(new FilePath(path));
+                switch (result) {
+                    case Success(_):
+                        trace("Project loading initiated successfully.");
+                    case Failure(err):
+                        statusBar.setError('Failed to load project: $err');
+                }
+            }
+        });*/
+    }
+    
+    private function onErrorOccurred(event:ErrorOccurred):Void {
+        trace("UI ERROR [" + event.context + "]: " + event.error);
+    }
+    
+    private function onProjectLoadedHandler(event:ProjectLoaded):Void {
+        _currentProject = event.project.name;
+        trace("UI: Project loaded successfully: " + _currentProject);
+        updateWindowTitle();
+        //openView("project");
+        //openView("editor");
+    }
+    
+    public function onToggleFullscreen():Void {
+        // isFullscreen — это var, а не функция! Убираем скобки
+        setFullscreenUseCase.execute(!windowService.isFullscreen);
+    }
+    
+    public function onLayoutSave():Void {
+        //saveLayoutUseCase.execute();
+    }
+    
+    public function onCloseProject():Void {
+        //closeProjectUseCase.execute();
+    }
+    
+    private function openView(viewName:String):Void {
+        // Используем Lambda.find вместо Array.find
+        var view = Lambda.find(views, function(v) return v.name == viewName);
+        if (view == null) {
+            throw "View not found: " + viewName;
+        }
+        
+        var position = switch viewName {
+            case "editor": DisplayPosition.Center;
+            case "project": DisplayPosition.Left;
+            default: DisplayPosition.Center;
+        };
+        
+        //openViewUseCase.execute(view.name, view.defaultState, position);
+    }
+    
+    private function onOpenRecent(path:String):Void {
+        loadProjectUseCase.execute(new FilePath(path));
+    }
+    
+    private function updateWindowTitle():Void {
+        var title = _currentProject != null ? '$_currentProject - HIDE IDE' : 'HIDE IDE';
+        trace("Window title updated to: " + title);
+        windowService.setTitle(title);
+    }
+    
+    private function showAboutDialog():Void {
+        trace('HIDE IDE\nVersion 0.1.0');
+    }
+    
+    private function get_currentProjectName():String {
+        return _currentProject != null ? _currentProject : "No project";
+    }
+    
+    
+    
+    public function startup():Void {
+        trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
+         // 2. Регистрируем временные заглушки для View (позже заменим на плагины)
+            // ✅ РЕГИСТРАЦИЯ ЗАГЛУШЕК ФАБРИК
+            // ✅ РЕГИСТРАЦИЯ UNITY-LIKE VIEW
+        //viewRegistry.registerViewFactory("scene", new hide.infrastructure.external.StubSceneFactory());
+        viewRegistry.registerViewFactory("scene", sceneViewFactory);
+        viewRegistry.registerViewFactory("game", new hide.infrastructure.external.StubGameFactory());
+        //viewRegistry.registerViewFactory("hierarchy", new hide.infrastructure.external.StubHierarchyFactory());
+        //viewRegistry.registerViewFactory("inspector", new hide.infrastructure.external.StubInspectorFactory());
+        viewRegistry.registerViewFactory("project", new hide.infrastructure.external.StubProjectFactory());
+        
+        viewRegistry.registerViewFactory("editor", new hide.infrastructure.external.StubEditorFactory());
+        viewRegistry.registerViewFactory("console", new hide.infrastructure.external.StubConsoleFactory());
+        viewRegistry.registerViewFactory("properties", new hide.infrastructure.external.StubPropertiesFactory());
+        // ✅ РЕГИСТРАЦИЯ REACT-ФАБРИК
+
+        // ✅ РЕГИСТРАЦИЯ INSPECTOR
+        viewRegistry.registerViewFactory(
+            "inspector",
+            new hide.presentation.ui.react.factories.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.InspectorPanel)
+        );
+        viewRegistry.registerViewFactory(
+            "hierarchy",
+            new hide.presentation.ui.react.factories.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.HierarchyPanel)
+        );
+        viewRegistry.registerViewFactory(
+            "welcome",
+            new hide.presentation.ui.react.factories.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.WelcomePanel)
+        );
+
+        windowController.init();
+        trace("🪟 WindowController инициализирован");
+
+        // ✅ ИНИЦИАЛИЗАЦИЯ TOOLBAR
+        var toolbarEl = js.Browser.document.getElementById("main-toolbar");
+        if (toolbarEl != null) {
+            // ToolbarController уже в DI, получаем его
+            
+            toolbarController.setContainer(cast toolbarEl);
+            trace("🔧 Toolbar инициализирован");
+        }
+        // 1. Инициализируем GoldenLayout
+        var layoutEl = js.Browser.document.getElementById("golden-layout-root");
+        if (layoutEl != null) {
+            layoutEngine.setContainer(layoutEl);
+            // Инициализируем с пустым состоянием (адаптер сам создаст дефолтный скелет)
+            layoutEngine.init({ content: [], fullScreen: null }); 
+            trace("🎨 GoldenLayout инициализирован.");
+        } else {
+            trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.");
+        }
+       
+        var menuContainer = js.Browser.document.getElementById("main-menu");
+        if (menuContainer != null) {
+            menuController.setContainer(cast menuContainer);
+            trace("📋 MenuController инициализирован с DOM-контейнером.");
+        } else {
+            trace("⚠️ Контейнер #main-menu не найден в DOM!");
+        }
+
+        var args = platform.getAppArgs();
+        var projectFile:Null<String> = null;
+        // ✅ Подписка на resize окна через js.Browser
+        _resizeHandler = function(_) {
+            haxe.Timer.delay(function() {
+                var layoutEl = js.Browser.document.getElementById("golden-layout-root");
+                if (layoutEl != null) {
+                    var rect = layoutEl.getBoundingClientRect();
+                    layoutEngine.updateSize(Std.int(rect.width), Std.int(rect.height));
+                }
+            }, 100); // Небольшая задержка для стабильности
+        };
+
+        js.Browser.window.addEventListener("resize", _resizeHandler);
+        // Electron передает много внутренних флагов. Ищем первый аргумент, 
+        // который НЕ начинается с '-' и не является пустой строкой.
+        for (arg in args) {
+            if (arg != "" && !StringTools.startsWith(arg, "-") && !StringTools.startsWith(arg, "chrome://")) {
+                projectFile = arg;
+                break;
+            }
+        }
+        
+        if (projectFile != null) {
+            trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile);
+            loadProjectUseCase.execute(new FilePath(projectFile));
+        } else {
+            trace("👋 Приложение запущено без проекта.");
+
+        }
+    }
+    
+    public function dispose():Void {
+        if (_projectLoadedUnsub != null) _projectLoadedUnsub.cancel();
+        if (_errorUnsub != null) _errorUnsub.cancel();
+        if (_layoutChangedUnsub != null) _layoutChangedUnsub.cancel();
+        if (_projectClosedUnsub != null) _projectClosedUnsub.cancel();
+        // ✅ Очищаем ресурсы контроллера меню
+        if (menuController != null) {
+            menuController.dispose();
+        }
+        if (windowController != null) {
+            windowController.dispose();
+        }
+        // ✅ Отписка от resize
+        if (_resizeHandler != null) {
+            js.Browser.window.removeEventListener("resize", _resizeHandler);
+            _resizeHandler = null;
+        }
+    }
+    public function get_eventBus():IEventBus return eventBus;
+    public function get_windowService():WindowService return windowService;
+    public function get_menuService():MenuService return menuService;
+    public function get_viewRegistry():ViewRegistry return viewRegistry;
+    public function get_layoutEngine():ILayoutEngine return layoutEngine;
+    public function get_sceneService():ISceneService return sceneService;
+}
 </file>
 
 <file path="shared/events/ErrorOccurred.hx">
@@ -7921,6 +8287,14 @@ package hide.application.events;
 class ResourceOpened { public function new() {} }
 </file>
 
+<file path="shared/events/SceneChanged.hx">
+// hide/shared/events/SceneChanged.hx
+package hide.shared.events;
+class SceneChanged {
+    public function new() {}
+}
+</file>
+
 <file path="shared/events/ViewOpened.hx">
 // hide/shared/events/ViewOpened.hx
 
@@ -8010,6 +8384,171 @@ interface IEventBus extends Service {
 }
 </file>
 
+<file path="tools/Macros.hx">
+package hide.tools;
+
+import haxe.macro.Expr;
+import haxe.macro.Context;
+import haxe.macro.Type;
+using haxe.macro.ExprTools;
+
+class Macros {
+
+	#if macro
+
+	static function includeShaderSources() {
+		var paths = [
+			"h3d/shader/BaseMesh.hx",
+			"hrt/shader/BaseEmitter.hx",
+		];
+
+		for (pathStr in paths) {
+			var path = Context.resolvePath(pathStr);
+			var dir = new haxe.io.Path(path).dir;
+			for( f in sys.FileSystem.readDirectory(dir) )
+				if( StringTools.endsWith(f,".hx") )
+					Context.addResource("shader/" + f.substr(0, -3), sys.io.File.getBytes(dir + "/" + f));
+		}
+	}
+
+	public static function buildSaveLoad() {
+
+		inline function isSerialized( field : Field ) : Bool {
+			return Lambda.find(field.meta, m -> m.name == ":s") != null;
+		}
+
+		inline function isOpt( field : Field ) : Bool {
+			return Lambda.find(field.meta, m -> m.name == ":opt") != null;
+		}
+
+		var fields = haxe.macro.Context.getBuildFields();
+
+		// Add the call of _save and _load
+		if( haxe.macro.Context.getLocalClass().get().name == "Prefab" ) {
+
+			var loadField : Field = null;
+			var saveField : Field = null;
+			for( f in fields ) {
+				if( f.name == "save" && f.kind.match(FFun(_)) )
+					saveField = f;
+				else if( f.name == "load" && f.kind.match(FFun(_)) )
+					loadField = f;
+				if( loadField != null && saveField != null )
+					break;
+			}
+
+			var loadFunction = switch loadField.kind {
+				case FFun(f): f;
+				default: null;
+			}
+			loadFunction.expr = macro _load(v);
+
+			var saveFunction = switch saveField.kind {
+				case FFun(f): f;
+				default: null;
+			}
+			saveFunction.expr = macro return _save();
+
+			fields.push({
+				name: "_load",
+				access: [APrivate],
+				pos: haxe.macro.Context.currentPos(),
+				kind: FFun({
+					args: [{ name : "obj", type : (macro:Dynamic) }],
+					expr: macro return,
+					params: [],
+					ret: null
+				})
+			});
+
+			fields.push({
+				name: "_save",
+				access: [APrivate],
+				pos: haxe.macro.Context.currentPos(),
+				kind: FFun({
+					args: [],
+					expr: macro return {},
+					params: [],
+					ret: (macro:Dynamic)
+				})
+			});
+
+			return fields;
+		}
+
+		// Generate code for every field with :s metadata
+		var saveExpr : Array<haxe.macro.Expr> = [];
+		var loadExpr : Array<haxe.macro.Expr> = [];
+		for( f in fields ) {
+			if( !isSerialized(f) )
+				continue;
+			var name = f.name;
+			switch f.kind {
+				case FVar(t, e):
+					// Don't save a field with his default value
+					if( e != null )
+						saveExpr.push(macro if( this.$name != $e ) obj.$name = this.$name);
+					else {
+						switch t {
+							// Basic types default values : https://haxe.org/manual/types-nullability.html
+							case TPath(p):
+								if( p.name == "Bool" )
+									saveExpr.push(macro if( this.$name != false) obj.$name = this.$name);
+								else if( p.name == "Float" )
+									saveExpr.push(macro if( this.$name != #if flash NaN #else 0.0 #end ) obj.$name = this.$name);
+								else if( p.name == "Int" )
+									saveExpr.push(macro if( this.$name != 0 ) obj.$name = this.$name);
+								else
+									saveExpr.push(macro if( this.$name != null ) obj.$name = this.$name);
+							default:
+								saveExpr.push(macro if( this.$name != null ) obj.$name = this.$name);
+						}
+					}
+				case FFun(f): saveExpr.push(macro obj.$name = this.$name );
+				case FProp(get, set, t, e): saveExpr.push(macro obj.$name = this.$name );
+			}
+			loadExpr.push(macro if( obj.$name != null ) this.$name = obj.$name );
+		}
+
+		// Generate the functions if not empty
+		if( saveExpr.length > 0 ) {
+			saveExpr.insert(0, macro var obj : Dynamic = super._save());
+			saveExpr.push(macro return obj );
+			fields.push({
+				name: "_save",
+				access: [AOverride, APrivate],
+				pos: haxe.macro.Context.currentPos(),
+				kind: FFun({
+					args: [],
+					expr: macro $b{saveExpr},
+					params: [],
+					ret: (macro:Dynamic)
+				})
+			});
+		}
+
+		if( loadExpr.length > 0 ) {
+			loadExpr.insert(0, macro super._load(obj));
+			fields.push({
+				name: "_load",
+				access: [AOverride, APrivate],
+				pos: haxe.macro.Context.currentPos(),
+				kind: FFun({
+					args: [{ name : "obj", type : (macro:Dynamic) }],
+					expr: macro $b{loadExpr},
+					params: [],
+					ret: null
+				})
+			});
+		}
+
+		return fields;
+	}
+	#end
+
+}
+</file>
+
 <file path="plugins/console/ConsoleViewFactory.hx">
 // plugins/console/ConsoleViewFactory.hx
 
@@ -8061,27 +8600,6 @@ package shared.utils;
 package shared.utils;
 </file>
 
-<file path="plugins.json">
-{
-  "plugins": [
-    {
-      "name": "ConsolePlugin",
-      "className": "plugins.ConsolePlugin",
-      "enabled": true,
-      "config": {
-        "defaultLogLevel": "info"
-      }
-    },
-    {
-      "name": "TerminalPlugin",
-      "className": "plugins.TerminalPlugin",
-      "enabled": false,
-      "config": {}
-    }
-  ]
-}
-</file>
-
 <file path="plugins/console/ConsoleView.hx">
 // plugins/console/ConsoleView.hx
 
@@ -8126,6 +8644,27 @@ package hide.shared.types;
 enum Result<T, E> {
     Success(value: T);
     Failure(error: E);
+}
+</file>
+
+<file path="plugins.json">
+{
+  "plugins": [
+    {
+      "name": "ConsolePlugin",
+      "className": "plugins.ConsolePlugin",
+      "enabled": true,
+      "config": {
+        "defaultLogLevel": "info"
+      }
+    },
+    {
+      "name": "TerminalPlugin",
+      "className": "plugins.TerminalPlugin",
+      "enabled": false,
+      "config": {}
+    }
+  ]
 }
 </file>
 
