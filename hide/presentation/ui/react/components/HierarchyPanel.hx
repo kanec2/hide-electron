@@ -37,6 +37,7 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
 
         // 3. Подписываемся на внешний выбор (например, кликом в 3D-вью)
         subscribe(eventBus, ObjectSelected, function(e:ObjectSelected) {
+            trace('🖥️ [Hierarchy] Received ObjectSelected: ${e.objectId}');
             setState({ root: state.root, selectedId: e.objectId });
         });
     }
@@ -84,10 +85,12 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
         ');
     }
 
+    
+
     private function handleSelect(id: String): Void {
-        // Обновляем локальное состояние
-        setState({ root: state.root, selectedId: id });
-        // ✅ Публикуем событие — его подхватит SceneEditorService и передаст в движок
-        UseService.eventBus().publish(ObjectSelected, new ObjectSelected(id));
+        // ✅ ЧИСТО: просто вызываем метод движка.
+        // Движок сам опубликует ObjectSelected через IEngineEventBus →
+        // SceneEditorService → IDE EventBus → наша подписка выше обновит UI.
+        UseService.sceneService().select(id);
     }
 }

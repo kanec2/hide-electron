@@ -12,6 +12,7 @@ import hide.domain.services.IAppInfo;
 import hide.presentation.ui.StatusBar;
 import hide.presentation.controllers.MenuController;
 
+import hide.application.integration.SceneEditorService;
 
 import hide.application.commands.LoadProjectUseCase;
 import hide.application.commands.SetFullscreenUseCase;
@@ -34,6 +35,7 @@ import hide.shared.types.Result;
 import hide.domain.services.ILayoutEngine;
 
 import hide.engine.domain.services.ISceneService;
+import hide.infrastructure.external.SceneViewFactory;
 
 import hx.injection.Service;
 import hx.injection.ServiceCollection;
@@ -76,6 +78,9 @@ class Ide implements Service {
     private var windowController:WindowController;
     private var toolbarController:ToolbarController;
     private var sceneService:ISceneService;
+    private var sceneEditorService:SceneEditorService;
+    private var sceneViewFactory:SceneViewFactory;
+
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -93,7 +98,9 @@ class Ide implements Service {
         menuController:MenuController,
         windowController:WindowController,
         toolbarController:ToolbarController,
-        sceneService:ISceneService
+        sceneService:ISceneService,
+        sceneEditorService:SceneEditorService,
+        sceneViewFactory:SceneViewFactory
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -112,6 +119,8 @@ class Ide implements Service {
         this.windowController = windowController;
         this.toolbarController = toolbarController;
         this.sceneService = sceneService;
+        this.sceneEditorService = sceneEditorService;
+        this.sceneViewFactory = sceneViewFactory;
         inst = this;
         views = viewRegistry.all(); 
         
@@ -230,7 +239,8 @@ class Ide implements Service {
          // 2. Регистрируем временные заглушки для View (позже заменим на плагины)
             // ✅ РЕГИСТРАЦИЯ ЗАГЛУШЕК ФАБРИК
             // ✅ РЕГИСТРАЦИЯ UNITY-LIKE VIEW
-        viewRegistry.registerViewFactory("scene", new hide.infrastructure.external.StubSceneFactory());
+        //viewRegistry.registerViewFactory("scene", new hide.infrastructure.external.StubSceneFactory());
+        viewRegistry.registerViewFactory("scene", sceneViewFactory);
         viewRegistry.registerViewFactory("game", new hide.infrastructure.external.StubGameFactory());
         //viewRegistry.registerViewFactory("hierarchy", new hide.infrastructure.external.StubHierarchyFactory());
         //viewRegistry.registerViewFactory("inspector", new hide.infrastructure.external.StubInspectorFactory());

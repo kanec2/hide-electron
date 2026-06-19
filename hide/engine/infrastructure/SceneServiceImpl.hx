@@ -72,15 +72,17 @@ class SceneServiceImpl implements ISceneService implements Service {
     }
     
     public function select(id:String):Void {
+        trace('🔵 [Engine] select() called: $id (current: $selectedId)');
         if (!objectIndex.exists(id)) return;
+        if (selectedId == id) return;  // ✅ Защита от цикла
         selectedId = id;
-        // ✅ ИСПРАВЛЕНО: используем emitObjectSelected вместо publish
         eventBus.emitObjectSelected(id);
+        trace('🔵 [Engine] Emitted ObjectSelected');
     }
-    
+
     public function deselect():Void {
+        if (selectedId == null) return;  // ✅ Защита от цикла
         selectedId = null;
-        // ✅ ИСПРАВЛЕНО: используем emitObjectSelected вместо publish
         eventBus.emitObjectSelected(null);
     }
     
@@ -128,5 +130,46 @@ class SceneServiceImpl implements ISceneService implements Service {
         // ✅ ИСПРАВЛЕНО: используем emitObjectChanged вместо publish
         eventBus.emitObjectChanged(id);
         eventBus.emitSceneChanged();
+    }
+
+    // === Высокоуровневые команды ===
+
+    public function setMeshRenderer(id:String, meshPath:String, materialPath:String):Void {
+        var obj = getObject(id);
+        if (obj == null) return;
+
+        // Удаляем старый MeshRenderer, если есть
+        var old = obj.getComponent(MeshRenderer);
+        if (old != null) {
+            obj.removeComponent(old.id);
+        }
+
+        // Добавляем новый
+        obj.addComponent(new MeshRenderer(meshPath, materialPath));
+        notifyChanged(id);  // ← движок сам публикует ObjectChanged
+    }
+
+    public function setRigidbody(id:String, mass:Float, useGravity:Bool):Void {
+        var obj = getObject(id);
+        if (obj == null) return;
+
+        // Удаляем старый Rigidbody, если есть
+        var old = obj.getComponent(Rigidbody);
+        if (old != null) {
+            obj.removeComponent(old.id);
+        }
+
+        // Добавляем новый
+        obj.addComponent(new Rigidbody(mass, useGravity));
+        notifyChanged(id);
+    }
+
+    public function setActive(id:String, active:Bool):Void {
+        var obj = getObject(id);
+        if (obj == null) return;
+        if (obj.isActive == active) return;  // защита от лишних событий
+
+        obj.isActive = active;
+        notifyChanged(id);
     }
 }

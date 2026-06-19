@@ -22,8 +22,14 @@ interface ISceneService extends Service {
     function deselect():Void;
     function rename(id:String, newName:String):Void;
     function setTransform(id:String, transform:Transform):Void;
+    function setMeshRenderer(id:String, meshPath:String, materialPath:String):Void;
+    function setRigidbody(id:String, mass:Float, useGravity:Bool):Void;
+    function setActive(id:String, active:Bool):Void;
+    
     function addComponent(id:String, component:SceneComponent):Void;
     function removeComponent(id:String, componentId:String):Void;
+
+
 
     // События
     function onObjectSelected(callback:String->Void):Void;

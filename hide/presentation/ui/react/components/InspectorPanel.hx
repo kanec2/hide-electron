@@ -18,13 +18,12 @@ typedef InspectorProps = {
 
 typedef InspectorState = {
     var selectedObject: Null<SceneObject>;
-    var version: Int; // триггер для перерисовки при изменениях
 }
 
 class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> {
     public function new() {
         super();
-        state = { selectedObject: null, version: 0 };
+        state = { selectedObject: null };
     }
 
     override function componentDidMount(): Void {
@@ -34,21 +33,21 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
         // 1. Подписываемся на выбор объекта
         subscribe(eventBus, ObjectSelected, function(e:ObjectSelected) {
             var obj = e.objectId != null ? scene.getObject(e.objectId) : null;
-            setState({ selectedObject: obj, version: state.version + 1 });
+            setState({ selectedObject: obj});
         });
 
         // 2. Подписываемся на изменения объекта (обновляем UI)
         subscribe(eventBus, ObjectChanged, function(e:ObjectChanged) {
             if (state.selectedObject != null && state.selectedObject.id == e.objectId) {
                 var fresh = scene.getObject(e.objectId);
-                setState({ selectedObject: fresh, version: state.version + 1 });
+                setState({ selectedObject: fresh });
             }
         });
 
         // 3. Если уже что-то выбрано при монтировании — покажем сразу
         var current = scene.getSelected();
         if (current != null) {
-            setState({ selectedObject: current, version: state.version + 1 });
+            setState({ selectedObject: current});
         }
     }
 
@@ -164,11 +163,11 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
             <div style={{display:"flex",gap:"4px",marginBottom:"4px"}}>
                 <span style={{width:"60px",color:"#aaa"}}>{label}</span>
                 <input defaultValue={x} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
-                    onBlur={function(e) onChange(Std.parseFloat(e.target.value), y, z)} />
+                    onBlur={function(e) onChange(safeParse(e.target.value,0), y, z)} />
                 <input defaultValue={y} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
-                    onBlur={function(e) onChange(x, Std.parseFloat(e.target.value), z)} />
+                    onBlur={function(e) onChange(x, safeParse(e.target.value,0), z)} />
                 <input defaultValue={z} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
-                    onBlur={function(e) onChange(x, y, Std.parseFloat(e.target.value))} />
+                    onBlur={function(e) onChange(x, y, safeParse(e.target.value,0))} />
             </div>
         ');
     }
@@ -188,7 +187,7 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
             <div style={{display:"flex",gap:"4px",marginBottom:"4px"}}>
                 <span style={{width:"60px",color:"#aaa"}}>{label}</span>
                 <input defaultValue={value} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
-                    onBlur={function(e) onChange(Std.parseFloat(e.target.value))} />
+                    onBlur={function(e) onChange(safeParse(e.target.value,0))} />
             </div>
         ');
     }
@@ -203,26 +202,25 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
     }
 
     private function setMesh(objId: String, meshPath: String, matPath: String): Void {
-        var obj = UseService.sceneService().getObject(objId);
-        if (obj == null) return;
-        obj.removeComponent(obj.getComponent(MeshRenderer).id);
-        obj.addComponent(new MeshRenderer(meshPath, matPath));
-        UseService.eventBus().publish(ObjectChanged, new ObjectChanged(objId));
+        UseService.sceneService().setMeshRenderer(objId, meshPath, matPath);
+        // ✅ Движок сам:
+        //   - удалит старый MeshRenderer
+        //   - добавит новый
+        //   - опубликует ObjectChanged через IEngineEventBus → IDE EventBus
     }
 
     private function setRigidbody(objId: String, mass: Float, gravity: Bool): Void {
-        var obj = UseService.sceneService().getObject(objId);
-        if (obj == null) return;
-        var old = obj.getComponent(Rigidbody);
-        if (old != null) obj.removeComponent(old.id);
-        obj.addComponent(new Rigidbody(mass, gravity));
-        UseService.eventBus().publish(ObjectChanged, new ObjectChanged(objId));
+        UseService.sceneService().setRigidbody(objId, mass, gravity);
     }
 
     private function toggleActive(objId: String): Void {
         var obj = UseService.sceneService().getObject(objId);
         if (obj == null) return;
-        obj.isActive = !obj.isActive;
-        UseService.eventBus().publish(ObjectChanged, new ObjectChanged(objId));
+        UseService.sceneService().setActive(objId, !obj.isActive);
+    }
+
+    private function safeParse(v:String, fallback:Float):Float {
+        var f = Std.parseFloat(v);
+        return Math.isNaN(f) ? fallback : f;
     }
 }

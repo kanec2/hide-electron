@@ -7,6 +7,7 @@ import hide.engine.domain.services.IRenderer;
 import hide.engine.domain.services.IResourceLoader;
 import hide.engine.domain.services.IEngineEventBus;
 import hide.engine.infrastructure.SceneServiceImpl;
+import hide.engine.infrastructure.HeapsRenderer;
 import hide.engine.infrastructure.EngineEventBusImpl;
 // Конкретные реализации выбираются в AppModule IDE
 
@@ -23,7 +24,7 @@ class EngineModule {
         // Внутренние сервисы движка
         collection.addSingleton(IEngineEventBus, EngineEventBusImpl);
         collection.addSingleton(ISceneService, SceneServiceImpl);
-        
+        collection.addSingleton(IRenderer, HeapsRenderer);
         // IRenderer и IEngineResourceLoader НЕ регистрируем здесь —
         // они платформенно-зависимые, их регистрирует AppModule IDE
     }

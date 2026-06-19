@@ -26,7 +26,7 @@ import hide.application.services.PluginManager;
 import hide.application.services.ViewRegistry;
 import hide.application.services.PluginRegistry;
 
-//import hide.application.integration.SceneEditorService;
+import hide.application.integration.SceneEditorService;
 // Commands (Use Cases)
 import hide.application.commands.LoadProjectUseCase;
 import hide.application.commands.SetFullscreenUseCase;
@@ -39,7 +39,7 @@ import hide.presentation.controllers.WindowController;
 // Presentation
 import hide.presentation.Ide;
 import hide.engine.bootstrap.EngineModule;
-
+import hide.infrastructure.external.SceneViewFactory;
 
 // Подключаем extension-методы для красивого синтаксиса (addSingleton и т.д.)
 using hx.injection.ServiceExtensions;
@@ -70,13 +70,14 @@ class AppModule {
         // === 4. ДВИЖОК (отдельная подсистема!) ===
         EngineModule.configure(collection);  // ← Вызываем модуль движка
         
+        collection.addSingleton(SceneViewFactory); // ← ДОБАВИТЬ
         // === 5. Application services ===
         collection.addSingleton(WindowService);
         collection.addSingleton(MenuService);
         collection.addSingleton(PluginManager);
         
         // === 6. Мост между IDE и движком ===
-//        collection.addSingleton(SceneEditorService);
+        collection.addSingleton(SceneEditorService);
         
         // === 7. Controllers ===
         collection.addSingleton(MenuController);
@@ -89,5 +90,7 @@ class AppModule {
         
         // === 9. Presentation ===
         collection.addSingleton(Ide);
+
+
     }
 }

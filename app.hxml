@@ -4,7 +4,43 @@
 -lib tink_core
 -lib react 
 -lib haxe-injection
--dce full
+-lib heaps
+-lib format
+
+# === КРИТИЧНО: Макросы Heaps ===
+# Включают шейдеры и классы сцены в сборку
+
+--macro include("h3d.shader")
+--macro include("h3d.anim")
+--macro include("h3d.prim")
+--macro include("h3d.scene")
+--macro include("h3d.pass")
+--macro include("h3d.mat")
+--macro include("h2d.col")
+--macro include("hxd.poly2tri")
+--macro include("hxd.clipper")
+--macro include("hxd.earcut")
+--macro include("hide.view")
+--macro include("hide.prefab")
+--macro include("hide.tools")
+--macro include("hrt")
+
+# Для 2D (если понадобится позже)
+# --macro include("h2d")
+# --macro include("h2d.col")
+
+# Для геометрии (опционально)
+# --macro include("hxd.poly2ti")
+# --macro include("hxd.clipper")
+# --macro include("hxd.earcut")
+
+# === НЕ НУЖНЫ для нашего проекта ===
+# --macro include("hide.view")      # legacy Hide IDE
+# --macro include("hide.prefab")    # legacy Hide IDE
+# --macro include("hide.tools")     # legacy Hide IDE
+# --macro include("hrt")            # Hide runtime
+
+-dce no
 --debug
 -D no-deprecation-warnings
 -D message.log-format=pretty
