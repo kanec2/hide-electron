@@ -9707,7 +9707,7 @@ class Ide implements Service {
         this.shaderPreviewRenderer = shaderPreviewRenderer;
         inst = this;
         views = viewRegistry.all(); 
-        trace(views);
+        
         menuService.onItemClick("project.open", onMenuOpenProject);
         menuService.onItemClick("view.fullscreen", onToggleFullscreen);
         menuService.onItemClick("layout.save", onLayoutSave);

@@ -1,5 +1,6 @@
 package hide.presentation;
 
+import hide.application.services.IViewModule;
 import hide.engine.infrastructure.ShaderPreviewRenderer;
 import hide.presentation.controllers.ToolbarController;
 import hide.presentation.controllers.WindowController;
@@ -70,7 +71,7 @@ class Ide implements Service {
     private var setFullscreenUseCase:SetFullscreenUseCase;
     //private var saveLayoutUseCase:SaveLayoutUseCase;
     //private var closeProjectUseCase:CloseProjectUseCase;
-    //private var openViewUseCase:OpenViewUseCase;
+    private var openViewUseCase:OpenViewUseCase;
     private var viewRegistry:ViewRegistry;
     private var pluginManager:PluginManager;
     private var eventBus:IEventBus;
@@ -82,6 +83,7 @@ class Ide implements Service {
     private var sceneEditorService:SceneEditorService;
     private var sceneViewFactory:SceneViewFactory;
     private var shaderPreviewRenderer:ShaderPreviewRenderer;
+    private var viewModules:Iterable<IViewModule>;
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -89,7 +91,7 @@ class Ide implements Service {
         setFullscreenUseCase:SetFullscreenUseCase,
         //saveLayoutUseCase:SaveLayoutUseCase,
         //closeProjectUseCase:CloseProjectUseCase,
-        //openViewUseCase:OpenViewUseCase,
+        openViewUseCase:OpenViewUseCase,
         viewRegistry:ViewRegistry,
         pluginManager:PluginManager,
         eventBus:IEventBus,
@@ -102,7 +104,8 @@ class Ide implements Service {
         sceneService:ISceneService,
         sceneEditorService:SceneEditorService,
         sceneViewFactory:SceneViewFactory,
-        shaderPreviewRenderer:ShaderPreviewRenderer
+        shaderPreviewRenderer:ShaderPreviewRenderer,
+        viewModules:Iterable<IViewModule>
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -110,7 +113,7 @@ class Ide implements Service {
         this.setFullscreenUseCase = setFullscreenUseCase;
         //this.saveLayoutUseCase = saveLayoutUseCase;
         //this.closeProjectUseCase = closeProjectUseCase;
-        //this.openViewUseCase = openViewUseCase;
+        this.openViewUseCase = openViewUseCase;
         this.viewRegistry = viewRegistry;
         this.pluginManager = pluginManager;
         this.eventBus = eventBus;
@@ -124,8 +127,10 @@ class Ide implements Service {
         this.sceneEditorService = sceneEditorService;
         this.sceneViewFactory = sceneViewFactory;
         this.shaderPreviewRenderer = shaderPreviewRenderer;
+        this.viewModules = viewModules;
         inst = this;
-        views = viewRegistry.all(); 
+        
+        //views = viewRegistry.all(); 
         
         menuService.onItemClick("project.open", onMenuOpenProject);
         menuService.onItemClick("view.fullscreen", onToggleFullscreen);
@@ -135,11 +140,12 @@ class Ide implements Service {
         menuService.onItemClick("app.exit", function() {
             js.Browser.window.close();
         });
+        /*
         for (view in viewRegistry.all()) {
             trace(view.name);
             menuService.addViewMenu(view);
             menuService.onItemClick("view." + view.name, function() openView(view.name));
-        }
+        }*/
         
         // Используем js.Browser.document вместо Element.byId
         var statusEl = js.Browser.document.getElementById("status-bar");
@@ -203,7 +209,8 @@ class Ide implements Service {
     
     private function openView(viewName:String):Void {
         // Используем Lambda.find вместо Array.find
-        var view = Lambda.find(views, function(v) return v.name == viewName);
+        trace("[Open view] search view to open: "+ viewName);
+        var view = Lambda.find(viewRegistry.all(), function(v) return v.name == viewName);
         if (view == null) {
             throw "View not found: " + viewName;
         }
@@ -213,8 +220,8 @@ class Ide implements Service {
             case "project": DisplayPosition.Left;
             default: DisplayPosition.Center;
         };
-        
-        //openViewUseCase.execute(view.name, view.defaultState, position);
+        trace("[Open view] view opened");
+        openViewUseCase.execute(view.name, view.defaultState, position);
     }
     
     private function onOpenRecent(path:String):Void {
@@ -239,42 +246,21 @@ class Ide implements Service {
     
     public function startup():Void {
         trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
-         // 2. Регистрируем временные заглушки для View (позже заменим на плагины)
-            // ✅ РЕГИСТРАЦИЯ ЗАГЛУШЕК ФАБРИК
-            // ✅ РЕГИСТРАЦИЯ UNITY-LIKE VIEW
-        //viewRegistry.registerViewFactory("scene", new hide.infrastructure.external.StubSceneFactory());
-        viewRegistry.registerViewFactory("scene", sceneViewFactory);
-        viewRegistry.registerViewFactory("game", new hide.infrastructure.external.StubGameFactory());
-        //viewRegistry.registerViewFactory("hierarchy", new hide.infrastructure.external.StubHierarchyFactory());
-        //viewRegistry.registerViewFactory("inspector", new hide.infrastructure.external.StubInspectorFactory());
-        viewRegistry.registerViewFactory("project", new hide.infrastructure.external.StubProjectFactory());
-        
-        viewRegistry.registerViewFactory("editor", new hide.infrastructure.external.StubEditorFactory());
-        viewRegistry.registerViewFactory("console", new hide.infrastructure.external.StubConsoleFactory());
-        viewRegistry.registerViewFactory("properties", new hide.infrastructure.external.StubPropertiesFactory());
-        // ✅ РЕГИСТРАЦИЯ REACT-ФАБРИК
 
-        // ✅ РЕГИСТРАЦИЯ INSPECTOR
-        viewRegistry.registerViewFactory(
-            "inspector",
-            new hide.presentation.ui.react.factories.ReactViewFactory()
-                .withComponent(hide.presentation.ui.react.components.InspectorPanel)
-        );
-        viewRegistry.registerViewFactory(
-            "hierarchy",
-            new hide.presentation.ui.react.factories.ReactViewFactory()
-                .withComponent(hide.presentation.ui.react.components.HierarchyPanel)
-        );
-        viewRegistry.registerViewFactory(
-            "welcome",
-            new hide.presentation.ui.react.factories.ReactViewFactory()
-                .withComponent(hide.presentation.ui.react.components.WelcomePanel)
-        );
-        viewRegistry.registerViewFactory(
-            "shadereditor",
-            new hide.presentation.ui.react.factories.ReactViewFactory()
-                .withComponent(hide.presentation.ui.react.components.ShaderEditorPanel)
-        );
+        // ✅ НОВОЕ: Регистрируем все View через модули (атомарно!)
+        for (module in viewModules) {
+            var descriptor = module.getDescriptor();
+            viewRegistry.add(descriptor.dto);
+            viewRegistry.registerViewFactory(descriptor.dto.name, descriptor.factory);
+            
+            // Добавляем пункт в меню
+            menuService.addViewMenu(descriptor.dto);
+            menuService.onItemClick("view." + descriptor.dto.name, function() {
+                openView(descriptor.dto.name);
+            });
+            
+            trace('📦 View registered: ${descriptor.dto.name}');
+        }
 
         windowController.init();
         trace("🪟 WindowController инициализирован");

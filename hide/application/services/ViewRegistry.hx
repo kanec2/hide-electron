@@ -23,8 +23,8 @@ class ViewRegistry implements Service {
     }
     
     public function new() {
-        add({ name: "editor", label: "Редактор", description: "Открыть редактор кода", icon: "fa-code", defaultState: {} });
-        add({ name: "project", label: "Проект", description: "Показать дерево проекта", icon: "fa-folder", defaultState: {} });
+        //add({ name: "editor", label: "Редактор", description: "Открыть редактор кода", icon: "fa-code", defaultState: {} });
+        //add({ name: "project", label: "Проект", description: "Показать дерево проекта", icon: "fa-folder", defaultState: {} });
     }
 
     public function getFactory(name:String):Null<IViewFactory> {

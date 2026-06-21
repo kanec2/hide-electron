@@ -1,5 +1,16 @@
 package hide.bootstrap;
 
+import hide.presentation.modules.ConsoleModule;
+import hide.presentation.modules.PropertiesModule;
+import hide.presentation.modules.EditorModule;
+import hide.presentation.modules.ProjectModule;
+import hide.presentation.modules.GameModule;
+import hide.presentation.modules.ShaderEditorModule;
+import hide.presentation.modules.WelcomeModule;
+import hide.presentation.modules.HierarchyModule;
+import hide.presentation.modules.SceneModule;
+import hide.presentation.modules.InspectorModule;
+import hide.application.services.IViewModule;
 import hide.presentation.controllers.ToolbarController;
 import hx.injection.ServiceCollection;
 import hide.shared.types.IEventBus;
@@ -87,8 +98,21 @@ class AppModule {
         // === 8. Use Cases ===
         collection.addSingleton(LoadProjectUseCase);
         collection.addSingleton(SetFullscreenUseCase);
-        
-        // === 9. Presentation ===
+        collection.addSingleton(OpenViewUseCase);
+        // === 9. View-модули (НОВОЕ!) ===
+        // Все регистрируются под интерфейсом IViewModule.
+        // Контейнер соберёт их в Iterable<IViewModule> для Ide.
+        collection.addSingleton(IViewModule, SceneModule);
+        collection.addSingleton(IViewModule, InspectorModule);
+        collection.addSingleton(IViewModule, HierarchyModule);
+        collection.addSingleton(IViewModule, WelcomeModule);
+        collection.addSingleton(IViewModule, ShaderEditorModule);
+        collection.addSingleton(IViewModule, GameModule);
+        collection.addSingleton(IViewModule, ProjectModule);
+        collection.addSingleton(IViewModule, EditorModule);
+        collection.addSingleton(IViewModule, PropertiesModule);
+        collection.addSingleton(IViewModule, ConsoleModule);
+        // === 10. Presentation ===
         collection.addSingleton(Ide);
 
 
