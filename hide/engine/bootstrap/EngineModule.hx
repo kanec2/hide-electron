@@ -1,6 +1,7 @@
 // engine/bootstrap/EngineModule.hx
 package hide.engine.bootstrap;
 
+import hide.engine.infrastructure.ShaderPreviewRenderer;
 import hx.injection.ServiceCollection;
 import hide.engine.domain.services.ISceneService;
 import hide.engine.domain.services.IRenderer;
@@ -25,6 +26,7 @@ class EngineModule {
         collection.addSingleton(IEngineEventBus, EngineEventBusImpl);
         collection.addSingleton(ISceneService, SceneServiceImpl);
         collection.addSingleton(IRenderer, HeapsRenderer);
+        collection.addSingleton(ShaderPreviewRenderer); // ← НОВОЕ
         // IRenderer и IEngineResourceLoader НЕ регистрируем здесь —
         // они платформенно-зависимые, их регистрирует AppModule IDE
     }

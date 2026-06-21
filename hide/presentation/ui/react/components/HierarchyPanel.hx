@@ -91,6 +91,7 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
         // ✅ ЧИСТО: просто вызываем метод движка.
         // Движок сам опубликует ObjectSelected через IEngineEventBus →
         // SceneEditorService → IDE EventBus → наша подписка выше обновит UI.
+        trace('🎯 [Hierarchy] Selecting object: $id');
         UseService.sceneService().select(id);
     }
 }

@@ -41,9 +41,10 @@ class MenuConfig {
                     { id: "view.project", label: "Project", icon: "folder" },
                     { id: "view.console", label: "Console", icon: "terminal" },
                     { id: "sep_view_1", label: "", type: Separator },
-                    { id: "view.fullscreen", label: "Toggle Fullscreen", icon: "expand", shortcut: "F11" }
+                    { id: "view.fullscreen", label: "Toggle Fullscreen", icon: "expand", shortcut: "F11" },
                     // Динамические пункты (Console, Editor и т.д.) 
                     // добавляются через MenuService.injectViews()
+                    { id: "view.shadereditor", label: "Shader Editor", icon: "paint-brush" }
                 ]
             },
             {

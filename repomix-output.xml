@@ -132,6 +132,7 @@ engine/
     EngineEventBusImpl.hx
     HeapsRenderer.hx
     SceneServiceImpl.hx
+    ShaderPreviewRenderer.hx
 infrastructure/
   config/
     PackageJsonLoader.hx
@@ -146,6 +147,14 @@ infrastructure/
       Header.hx
       Layout.hx
       Tab.hx
+    litegraph/
+      LGraph.hx
+      LGraphCanvas.hx
+      LGraphGroup.hx
+      LGraphLink.hx
+      LGraphNode.hx
+      LiteGraph.hx
+      ShaderEditorPanel.hx
     monaco/
       KeyCode.hx
       KeyMod.hx
@@ -230,6 +239,7 @@ presentation/
       components/
         HierarchyPanel.hx
         InspectorPanel.hx
+        ShaderEditorPanel.hx
         WelcomePanel.hx
       factories/
         ReactRoot.hx
@@ -1740,6 +1750,7 @@ typedef WindowBounds = {
 // engine/bootstrap/EngineModule.hx
 package hide.engine.bootstrap;
 
+import hide.engine.infrastructure.ShaderPreviewRenderer;
 import hx.injection.ServiceCollection;
 import hide.engine.domain.services.ISceneService;
 import hide.engine.domain.services.IRenderer;
@@ -1764,6 +1775,7 @@ class EngineModule {
         collection.addSingleton(IEngineEventBus, EngineEventBusImpl);
         collection.addSingleton(ISceneService, SceneServiceImpl);
         collection.addSingleton(IRenderer, HeapsRenderer);
+        collection.addSingleton(ShaderPreviewRenderer); // ← НОВОЕ
         // IRenderer и IEngineResourceLoader НЕ регистрируем здесь —
         // они платформенно-зависимые, их регистрирует AppModule IDE
     }
@@ -2085,10 +2097,14 @@ class EngineEventBusImpl implements IEngineEventBus implements Service {
 <file path="engine/infrastructure/HeapsRenderer.hx">
 // hide/engine/infrastructure/HeapsRenderer.hx
 package hide.engine.infrastructure;
+import h3d.col.Collider;
 import hide.engine.domain.services.IRenderer;
 import hide.engine.domain.entities.SceneObject;
 import hide.engine.domain.entities.Transform;
 import hide.engine.domain.entities.MeshRenderer;
+
+import hide.engine.domain.services.ISceneService;  // ← ДОБАВИТЬ
+
 import h3d.scene.Object;
 import h3d.scene.Mesh;
 import h3d.scene.fwd.DirLight;
@@ -2098,44 +2114,178 @@ import hx.injection.Service;
 
 class HeapsRenderer implements IRenderer implements Service {
     private var engine:h3d.Engine;
+    private var sevents:hxd.SceneEvents;  // ← НОВОЕ ПОЛЕ
     private var s3d:h3d.scene.Scene;
     private var sceneRoot:h3d.scene.Object;
     private var canvas:js.html.CanvasElement;
     private var container:Dynamic;
-    // ✅ ИСПРАВЛЕНО: используем Dynamic вместо js.html.ResizeObserver
-    
-    
+    private var sceneService:ISceneService;  // ← ДОБАВИТЬ
+    var fpsText: h2d.Text;
+    // ✅ НОВАЯ MAP: храним связь между h3d.Mesh и domain ID
+    // Связь между h3d.Mesh и domain ID
+    private var meshToDomainId:Map<h3d.scene.Mesh, String>;
+
+    private var isInteractiveClicked:Bool = false;
     private var isSceneReady:Bool = false;
     private var pendingRoot:SceneObject;
     
+    // === Selection outline ===
+    private var bboxPrim:h3d.prim.Cube;
+    private var selectionOutline:Null<h3d.scene.Mesh> = null;
+    private var selectedMeshRef:Null<h3d.scene.Mesh> = null;
+    private var meshOriginalColor:Map<h3d.scene.Mesh, h3d.Vector>;
+
+    // В начале класса HeapsRenderer
+    private var currentSelectedId:Null<String> = null;
+
     private static var isSystemInitialized:Bool = false;
     
-    public function new() {
+    public function new(sceneService:ISceneService) {
         h3d.impl.RenderContext.STRICT = false;
+        this.sceneService = sceneService;
+        this.meshToDomainId = new Map();
+        this.meshOriginalColor = new Map();
+
+        // ✅ Создаём примитив один раз — переиспользуется для всех выделений
+        this.bboxPrim = new h3d.prim.Cube(1, 1, 1, false);
+        bboxPrim.addNormals();
+        bboxPrim.addUVs();
     }
     
+    /**
+     * Обновляет визуальное выделение. Вызывается при смене selection.
+     * @param id Доменный ID объекта, или null для снятия выделения
+     */
+    private function updateSelectionVisuals(id:Null<String>):Void {
+        trace('🎯 [Selection] updateSelectionVisuals called with id=$id');
+        clearSelectionVisuals(); // Сначала сбрасываем старое выделение
+        if (id == null) return;
+        
+        // Ищем меш по domain ID
+        var targetMesh:Null<h3d.scene.Mesh> = null;
+        for (mesh => domainId in meshToDomainId) {
+            if (domainId == id) {
+                targetMesh = mesh;
+                break;
+            }
+        }
+        if (targetMesh == null) {
+            trace('⚠️ [Selection] Mesh not found for id: $id');
+            return;
+        }
+        trace('🎯 [Selection] targetMesh found: ${targetMesh != null}');
+        if (targetMesh == null) return;
+        
+        // ✅ 1. Сохраняем ОРИГИНАЛЬНЫЙ цвет (клонируем вектор!)
+        if (!meshOriginalColor.exists(targetMesh)) {
+            var orig = new h3d.Vector();
+            orig.set(targetMesh.material.color.x, targetMesh.material.color.y, targetMesh.material.color.z);
+            meshOriginalColor.set(targetMesh, orig);
+        }
+        
+        // Лёгкая подсветка самого меша (голубой оттенок)
+        targetMesh.material.color.setColor(0x6ab0ff);
+        
+        // Получаем МИРОВЫЕ bounds (с учётом трансформации)
+        var worldBounds = targetMesh.getBounds();
+
+        if (worldBounds.isEmpty()) {
+            trace('⚠️ [Selection] Bounds EMPTY — рамка не будет создана');
+            return;
+        }
+
+        trace('🎯 [Selection] worldBounds: empty=${worldBounds.isEmpty()}, ' +
+            'min=(${worldBounds.xMin},${worldBounds.yMin},${worldBounds.zMin}), ' +
+            'max=(${worldBounds.xMax},${worldBounds.yMax},${worldBounds.zMax})');
+
+        var sizeX = worldBounds.xMax - worldBounds.xMin;
+        var sizeY = worldBounds.yMax - worldBounds.yMin;
+        var sizeZ = worldBounds.zMax - worldBounds.zMin;
+        var centerX = (worldBounds.xMax + worldBounds.xMin) / 2;
+        var centerY = (worldBounds.yMax + worldBounds.yMin) / 2;
+        var centerZ = (worldBounds.zMax + worldBounds.zMin) / 2;
+        // Создаём mesh с готовым Cube примитивом, дочерний к сцене
+        selectionOutline = new h3d.scene.Mesh(bboxPrim, sceneRoot);
+        
+        // Материал: оранжевый wireframe, поверх всего
+        selectionOutline.material.mainPass.wireframe = true;
+        selectionOutline.material.color.setColor(0xFF6600);
+        selectionOutline.material.mainPass.depth(false, Always); // рисуем поверх
+        selectionOutline.material.mainPass.culling = None;
+        // ✅ 3. ADDITIVE BLENDING (свечение)
+        selectionOutline.material.mainPass.setBlendMode(AlphaAdd);
+        // Масштабируем и позиционируем под bounds объекта
+        
+        
+        selectionOutline.x = worldBounds.xMin;
+        selectionOutline.y = worldBounds.yMin;
+        selectionOutline.z = worldBounds.zMin;
+        selectionOutline.scaleX = sizeX * 1.05; // 5% увеличение
+        selectionOutline.scaleY = sizeY * 1.05;
+        selectionOutline.scaleZ = sizeZ * 1.05;
+        
+        selectedMeshRef = targetMesh;
+        trace('📦 [Debug] Mesh pos: ${targetMesh.x},${targetMesh.y},${targetMesh.z}');
+        trace('📦 [Debug] Mesh absPos: ${targetMesh.getAbsPos()}');
+        trace('📦 [Debug] World bounds: min=(${worldBounds.xMin},${worldBounds.yMin},${worldBounds.zMin}) max=(${worldBounds.xMax},${worldBounds.yMax},${worldBounds.zMax})');
+        trace('✨ [Selection] Outline created at (${selectionOutline.x},${selectionOutline.y},${selectionOutline.z}) ' +
+            'scale=(${selectionOutline.scaleX},${selectionOutline.scaleY},${selectionOutline.scaleZ})');
+    }
+    /**
+     * Удаляет визуальное выделение
+     */
+    private function clearSelectionVisuals():Void {
+        if (selectionOutline != null) {
+            selectionOutline.remove();
+            selectionOutline = null;
+        }
+        
+        // ✅ 2. Восстанавливаем цвета всех затронутых мешей
+        for (mesh => origColor in meshOriginalColor) {
+            if (mesh != null && mesh.material != null) {
+                mesh.material.color.set(origColor.x, origColor.y, origColor.z);
+            }
+        }
+
+        /*
+        if (selectedMeshRef != null) {
+            // ✅ Восстанавливаем оригинальный цвет напрямую из h3d.Vector
+            if (meshOriginalColor.exists(selectedMeshRef)) {
+                var orig = meshOriginalColor.get(selectedMeshRef);
+                selectedMeshRef.material.color.x = orig.x;
+                selectedMeshRef.material.color.y = orig.y;
+                selectedMeshRef.material.color.z = orig.z;
+                //selectedMeshRef.material.color.w = orig.w;
+                meshOriginalColor.remove(selectedMeshRef);
+            }
+            selectedMeshRef = null;
+        }*/
+        meshOriginalColor.clear();
+        currentSelectedId = null;
+    }
+
     public function init(container:Dynamic):Void {
         // ✅ КЛЮЧЕВОЕ: отключаем строгую проверку шейдеров
         // Это предотвращает ошибки "Missing global value shadow.proj"
         // и другие шейдерные ошибки при первом рендере
-        h3d.impl.RenderContext.STRICT = false; // prevent errors with bad renderer
-
         this.container = container;
-        
-        // 1. Создаём canvas в document.body
+    
+        // ✅ ШАГ 1: Создаём canvas ПРЯМО В document.body
+        // Это гарантирует, что getElementById("webgl") найдёт его
         canvas = js.Browser.document.createCanvasElement();
         canvas.id = "webgl";
         canvas.width = 800;
         canvas.height = 600;
+        
+        // Скрываем canvas пока движок не готов
+        canvas.style.position = "absolute";
+        canvas.style.top = "-9999px";
+        canvas.style.left = "-9999px";
+        canvas.style.visibility = "hidden";
+        
+        // Добавляем в body — теперь он точно в DOM
         js.Browser.document.body.appendChild(canvas);
-        
-        trace("🎨 [HeapsRenderer] Canvas created in document.body");
-        
-        // 2. Позиционируем canvas
-        updateCanvasPosition();
-        
-        // 3. ✅ ИСПРАВЛЕНО: используем Dynamic для ResizeObserver
-       
+        trace("🎨 [HeapsRenderer] Canvas created in document.body (hidden)");
         
         // 4. Запускаем Heaps
         initEngine();
@@ -2160,12 +2310,13 @@ class HeapsRenderer implements IRenderer implements Service {
         var h:Int = untyped rect.height | 0;
         
         // Защита от нулевых размеров (canvas не может быть 0x0)
-        if (w < 1) w = 1;
-        if (h < 1) h = 1;
+        if (w < 1) w = 1000;
+        if (h < 1) h = 1000;
         
         canvas.width = w;
         canvas.height = h;
-        
+        canvas.style.border = "2px solid red"; // для отладки
+        canvas.style.zIndex = "9999";
         if (s3d != null) {
             s3d.camera.update();
         }
@@ -2198,17 +2349,35 @@ class HeapsRenderer implements IRenderer implements Service {
     }
     
     private function onEngineReady():Void {
-        trace("🎨 [HeapsRenderer] Engine ready, creating scene...");
+         trace("🎨 [HeapsRenderer] Engine ready");
+    
+        // === ДИАГНОСТИКА ===
+        trace('🔍 [Diag] hxd.Window: ${hxd.Window.getInstance()}');
         
         // ✅ УБРАНО: MaterialSetup — он не нужен для базового рендера
         // Heaps использует Forward renderer по умолчанию
-        
+        // ✅ ИСПРАВЛЕНИЕ 1: Отключаем strict mode на уровне инстанса контекста
+        // Статический STRICT мог не сработать, если контекст создался раньше.
+            
         s3d = new h3d.scene.Scene();
+        // Это предотвращает рендеринг DefaultShadowMap pass, который требует shadow.proj
+        s3d.renderer.shadows = false;
+        @:privateAccess s3d.ctx.globals.fastSet(
+            hxsl.Globals.allocID("shadow.proj"),
+            new h3d.Matrix() // пустая матрица
+        );
+
+        sevents = new hxd.SceneEvents();
+        sevents.addScene(s3d);
+
         sceneRoot = new h3d.scene.Object(s3d);
         
         // ✅ УБРАНО: ambientLight — в этой версии Heaps API другое
         // DirLight даст достаточно света для видимости кубов
-        
+        // В onEngineReady, после создания s3d:
+        fpsText = new h2d.Text(hxd.res.DefaultFont.get());
+        fpsText.textColor = 0xFFFFFF;
+        fpsText.dropShadow = { dx: 1, dy: 1, color: 0, alpha: 0.5 };
         // Настраиваем камеру
         var camera = s3d.camera;
         camera.pos.set(8, 8, 8);
@@ -2221,7 +2390,19 @@ class HeapsRenderer implements IRenderer implements Service {
         
         // ✅ ОСТАВЛЯЕМ ТОЛЬКО DirLight — это точно работает
         var light = new h3d.scene.fwd.DirLight(new h3d.Vector(-0.5, -0.5, -1), s3d);
+        // ✅ ПРЯМОЙ RAYCAST ВМЕСТО INTERACTIVE
+        setupMouseClickHandler();
+        // ✅ ШАГ 3: Перемещаем canvas в container GoldenLayout
+        moveCanvasToContainer();
+        // ✅ НОВЫЙ ПОДХОД: используем Interactive для обработки кликов
+        //setupInteractive();
+        // ✅ КЛЮЧЕВОЕ: Запускаем непрерывный цикл рендеринга
+        // Без этого Heaps не будет перерисовывать сцену
+        hxd.System.setLoop(mainLoop);
         
+        // ✅ Устанавливаем цвет фона, чтобы видеть, что canvas работает
+        engine.backgroundColor = 0xFF2a2a2a; // тёмно-серый
+
         isSceneReady = true;
         trace("🎨 [HeapsRenderer] Scene created successfully");
         
@@ -2229,8 +2410,119 @@ class HeapsRenderer implements IRenderer implements Service {
             renderSceneInternal(pendingRoot);
             pendingRoot = null;
         }
+        // ✅ ПОДПИСКА НА ВЫДЕЛЕНИЕ (из любого источника!)
+        sceneService.onObjectSelected(function(id:Null<String>) {
+            trace('🔗 [Heaps] ObjectSelected event: $id');
+            currentSelectedId = id;
+            
+            if (id == null) {
+                clearSelectionVisuals();
+            } else {
+                // Если сцена ещё не построена — ждём rebuild
+                if (meshToDomainId.iterator().hasNext()) {
+                    updateSelectionVisuals(id);
+                } else {
+                    trace('⏳ [Heaps] Scene not ready yet, selection will be restored after rebuild');
+                }
+            }
+        });
+        
+        // ✅ Если при старте уже есть выделенный объект — показываем рамку
+        var initialSelection = sceneService.getSelected();
+        if (initialSelection != null) {
+            currentSelectedId = initialSelection.id;
+        }
     }
-    
+
+    // ✅ НОВЫЙ ПОДХОД: прямой raycast через camera.rayFromScreen()
+    // ✅ ИСПРАВЛЕННЫЙ Raycast с рекурсивным обходом и отладкой
+    private function setupMouseClickHandler():Void {
+    // Слушаем события через hxd.Window (то, что использует SceneEvents)
+        var window = hxd.Window.getInstance();
+        
+        window.addEventTarget(function(e:hxd.Event) {
+            if (e.kind == EPush && e.button == 0) {
+                // Клик произошёл — даём Interactive шанс обработать
+                isInteractiveClicked = false;
+                
+                // Проверяем в следующем кадре, был ли клик обработан
+                haxe.Timer.delay(function() {
+                    if (!isInteractiveClicked) {
+                        trace("❌ Click on empty space");
+                        sceneService.deselect();
+                    }
+                }, 0);
+            }
+        });
+    }
+
+    private function moveCanvasToContainer():Void {
+        if (canvas == null) return;
+        
+        // Перемещаем canvas из body в container GoldenLayout
+        if (container != null && container.appendChild != null) {
+            container.appendChild(canvas);
+            trace("🎨 [HeapsRenderer] Canvas moved to container");
+        }
+        
+        // Применяем стили для правильного отображения внутри GoldenLayout
+        canvas.style.position = "absolute";
+        canvas.style.top = "0";
+        canvas.style.left = "0";
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        canvas.style.zIndex = "10";
+        canvas.style.pointerEvents = "auto";
+        canvas.style.visibility = "visible";
+        
+        // Обновляем размеры canvas под контейнер
+        updateCanvasSize();
+    }
+    private function updateCanvasSize():Void {
+        if (canvas == null || container == null) return;
+        
+        var rect = container.getBoundingClientRect();
+        var w:Int = Std.int(rect.width);
+        var h:Int = Std.int(rect.height);
+        
+        if (w < 1) w = 1;
+        if (h < 1) h = 1;
+        
+        canvas.width = w;
+        canvas.height = h;
+        
+        trace("🎨 [HeapsRenderer] Canvas size: " + w + "x" + h);
+        
+        if (s3d != null) {
+            s3d.camera.update();
+        }
+    }
+
+    private var fpsAccumulator:Float = 0;
+    private var frameCount:Int = 0;
+    private var fpsTimer:Float = 0;
+    // ✅ НОВЫЙ МЕТОД: главный цикл рендеринга
+    private function mainLoop():Void {
+        hxd.Timer.update();
+        if (sevents != null) sevents.checkEvents();
+        if (engine != null && s3d != null) engine.render(s3d);
+        
+        fpsTimer += hxd.Timer.dt;
+        if (fpsTimer >= 0.5) {  // обновляем 2 раза в секунду
+            var fps = 1.0 / hxd.Timer.dt;
+            fpsText.text = 'FPS: ${Std.int(fps)}';
+            fpsTimer = 0;
+        }
+        /*
+        if (fpsAccumulator >= 1.0) {
+            var fps = frameCount / fpsAccumulator;
+            var frameMs = hxd.Timer.elapsedTime * 1000;  // ← реальное время кадра
+            trace('📊 FPS: ${Std.int(fps)} | frame: ${Std.int(frameMs)}ms');
+            
+            frameCount = 0;
+            fpsAccumulator = 0;
+        }*/
+    }
     public function renderScene(root:SceneObject):Void {
         if (!isSceneReady) {
             pendingRoot = root;
@@ -2240,6 +2532,12 @@ class HeapsRenderer implements IRenderer implements Service {
     }
     
     private function renderSceneInternal(root:SceneObject):Void {
+        // Сохраняем ID выделенного объекта до rebuild
+        var savedSelectionId = currentSelectedId;
+
+        // ✅ СНАЧАЛА очищаем выделение (восстанавливаем цвета)
+        clearSelectionVisuals();
+
         var toRemove:Array<h3d.scene.Object> = [];
         for (child in sceneRoot) {
             if (child != sceneRoot) toRemove.push(child);
@@ -2247,21 +2545,32 @@ class HeapsRenderer implements IRenderer implements Service {
         for (child in toRemove) {
             child.remove();
         }
-        
+        // ✅ ОЧИЩАЕМ MAP перед перестроением
+        meshToDomainId.clear();
+        meshOriginalColor.clear();
+
         buildObjectTree(root, sceneRoot);
-        
-        if (engine != null && s3d != null) {
-            engine.render(s3d);
+        // ✅ Создаём Interactive для всех мешей после построения дерева
+
+        // ✅ Восстанавливаем выделение, если оно было
+        if (savedSelectionId != null) {
+            trace('🔄 [Heaps] Restoring selection after rebuild: $savedSelectionId');
+            // Используем haxe.Timer.delay, чтобы дать сцене синхронизироваться
+            haxe.Timer.delay(function() {
+                updateSelectionVisuals(savedSelectionId);
+            }, 0);
         }
+
     }
     
     public function onResize(width:Int, height:Int):Void {
-        updateCanvasPosition();
+        updateCanvasSize();
     }
     
     public function dispose():Void {
         
-        
+        clearSelectionVisuals();
+
         if (s3d != null) {
             s3d.dispose();
             s3d = null;
@@ -2273,6 +2582,8 @@ class HeapsRenderer implements IRenderer implements Service {
         }
         
         engine = null;
+        meshToDomainId.clear();
+        meshOriginalColor.clear();
     }
     
     private function buildObjectTree(obj:SceneObject, h3dParent:h3d.scene.Object):Void {
@@ -2286,7 +2597,50 @@ class HeapsRenderer implements IRenderer implements Service {
             if (Std.isOfType(comp, MeshRenderer)) {
                 var mesh = createMeshPrimitive();
                 if (mesh != null) {
+                    meshToDomainId.set(mesh, obj.id);
                     h3dObj.addChild(mesh);
+                    // ✅ Синхронизируем позицию перед получением bounds
+                    @:privateAccess mesh.syncPos();
+                    // ✅ Получаем локальные bounds
+                    var localBounds = mesh.getBounds(null, mesh);
+                    
+                    if (!localBounds.isEmpty()) {
+                        // Создаём Interactive — он автоматически зарегистрируется
+                        // в scene.events через onAdd()
+                        var interaction = new h3d.scene.Interactive(localBounds, mesh);
+                        
+                        interaction.onClick = function(e:hxd.Event) {
+                            trace('✅ [Interactive] Clicked: ${obj.name}');
+                            isInteractiveClicked = true;
+                            sceneService.select(obj.id);
+                            e.cancel = true;
+                        }
+                        
+                        interaction.onOver = function(e:hxd.Event) {
+                            // НЕ меняем цвет, если объект выделен
+                            if (selectedMeshRef != mesh) {
+                                mesh.material.color.setColor(0x6ab0ff);
+                            }
+                        }
+                        
+                        interaction.onOut = function(e:hxd.Event) {
+                            // Восстанавливаем цвет ТОЛЬКО если объект НЕ выделен
+                            if (selectedMeshRef != mesh) {
+                                // Восстанавливаем оригинальный цвет из map
+                                if (meshOriginalColor.exists(mesh)) {
+                                    var orig = meshOriginalColor.get(mesh);
+                                    mesh.material.color.x = orig.x;
+                                    mesh.material.color.y = orig.y;
+                                    mesh.material.color.z = orig.z;
+                                } else {
+                                    mesh.material.color.setColor(0x4a90e2); // fallback
+                                }
+                            }
+                        }
+                    } else {
+                        trace('⚠️ [Interactive] Bounds EMPTY for ${obj.name}');
+                    }
+                    
                 }
             }
         }
@@ -2506,6 +2860,136 @@ class SceneServiceImpl implements ISceneService implements Service {
 }
 </file>
 
+<file path="engine/infrastructure/ShaderPreviewRenderer.hx">
+// engine/infrastructure/ShaderPreviewRenderer.hx
+package hide.engine.infrastructure;
+import h3d.scene.Mesh;
+import h3d.scene.fwd.DirLight;
+import h3d.prim.Sphere;
+import hx.injection.Service;
+
+/**
+ * Отвечает ТОЛЬКО за превью шейдера на сфере.
+ * Не знает ничего про React, ноды, IDE.
+ */
+class ShaderPreviewRenderer implements Service {
+    private var engine:h3d.Engine;
+    private var s3d:h3d.scene.Scene;
+    private var previewMesh:Null<Mesh>;
+    private var canvas:js.html.CanvasElement;
+    private var container:Dynamic;
+    
+    private static var isInitialized:Bool = false;
+    
+    public function new() {}
+    
+    /**
+     * Инициализирует превью в указанном DOM-контейнере.
+     * Вызывается из IDE-слоя (ShaderEditorPanel).
+     */
+    public function init(container:Dynamic):Void {
+        this.container = container;
+        
+        // Создаём canvas
+        canvas = js.Browser.document.createCanvasElement();
+        canvas.width = 400;
+        canvas.height = 300;
+        canvas.style.cssText = 'width:100%;height:100%;background:#000;';
+        
+        if (container != null && container.appendChild != null) {
+            container.appendChild(canvas);
+        }
+        
+        initEngine();
+    }
+    
+    private function initEngine():Void {
+        var existingEngine = h3d.Engine.getCurrent();
+        
+        if (existingEngine != null) {
+            this.engine = existingEngine;
+            onEngineReady();
+        } else {
+            if (!isInitialized) {
+                hxd.System.start(function() {
+                    this.engine = @:privateAccess new h3d.Engine();
+                    engine.onReady = onEngineReady;
+                    engine.init();
+                    isInitialized = true;
+                });
+            } else {
+                this.engine = @:privateAccess new h3d.Engine();
+                engine.onReady = onEngineReady;
+                engine.init();
+            }
+        }
+    }
+    
+    private function onEngineReady():Void {
+        s3d = new h3d.scene.Scene();
+        
+        // Камера
+        var camera = s3d.camera;
+        camera.pos.set(0, 2, 3);
+        camera.target.set(0, 0, 0);
+        camera.fovY = 45;
+        camera.zNear = 0.1;
+        camera.zFar = 100;
+        camera.update();
+        
+        // Свет
+        var light = new DirLight(new h3d.Vector(-0.5, -0.5, -1), s3d);
+        
+        // Сфера для превью
+        var sphere = new Sphere(1, 32, 32);
+        sphere.addNormals();
+        sphere.addUVs();
+        previewMesh = new Mesh(sphere, s3d);
+        previewMesh.material.color.setColor(0xFFFFFF);
+        
+        // Запускаем рендер-луп
+        hxd.System.setLoop(mainLoop);
+        
+        trace("✅ [ShaderPreview] Initialized");
+    }
+    
+    private function mainLoop():Void {
+        hxd.Timer.update();
+        if (engine != null && s3d != null) {
+            // Медленное вращение сферы
+            if (previewMesh != null) {
+                previewMesh.rotate(0, 0.01,0);
+            }
+            engine.render(s3d);
+        }
+    }
+    
+    /**
+     * Обновляет материал сферы на основе сгенерированного шейдера.
+     * Вызывается из ShaderEditorService при изменении графа.
+     */
+    public function updateMaterial(shaderData:Dynamic):Void {
+        if (previewMesh == null) return;
+        
+        // TODO: компилируем HXSL из shaderData
+        // и применяем к previewMesh.material
+        
+        trace("🎨 [ShaderPreview] Material updated");
+    }
+    
+    public function dispose():Void {
+        if (s3d != null) {
+            s3d.dispose();
+            s3d = null;
+        }
+        if (canvas != null && canvas.parentElement != null) {
+            canvas.parentElement.removeChild(canvas);
+            canvas = null;
+        }
+    }
+}
+</file>
+
 <file path="infrastructure/config/PackageJsonLoader.hx">
 package hide.infrastructure.config;
 </file>
@@ -2698,6 +3182,1073 @@ extern class Tab {
 
 	dynamic function onClose() : Bool;
 
+}
+</file>
+
+<file path="infrastructure/external/litegraph/LGraph.hx">
+// infrastructure/external/litegraph/LGraph.hx
+package hide.infrastructure.external.litegraph;
+
+extern class LGraph {
+    var _version:Float;
+    var state:Float;
+    var status:String;
+    var nodes:Array<LGraphNode>;
+    var inputs:Dynamic;
+    var outputs:Dynamic;
+    var groups:Array<LGraphGroup>;
+    var nodes_by_id:Map<Int, LGraphNode>;
+    var nodes_in_order:Array<LGraphNode>;
+    var nodes_executable:Null<Array<LGraphNode>>;
+    var _nodes:Null<Array<LGraphNode>>;
+    var _nodes_executable:Null<Array<LGraphNode>>;
+    var _nodes_in_order:Null<Array<LGraphNode>>;
+    var lists:Dynamic;
+    var extra:Dynamic;
+    var timestamp:Float;
+    var globaltime:Float;
+    var runningtime:Float;
+    var iterations:Int;
+    var last_update_time:Float;
+    var starttime:Float;
+    var catch_errors:Bool;
+    var execution_timer_id:Null<Int>;
+    var execution_timer:Null<Int>;
+    var profiler:Dynamic;
+    var onInputAdded:Null<Dynamic->Void>;
+    var onInputRemoved:Null<Dynamic->Void>;
+    var onOutputAdded:Null<Dynamic->Void>;
+    var onOutputRemoved:Null<Dynamic->Void>;
+    var onNodeAdded:Null<LGraphNode->Void>;
+    var onNodeRemoved:Null<LGraphNode->Void>;
+    var onTrigger:Null<Dynamic->Void>;
+    var onBeforeStep:Null<Void->Void>;
+    var onAfterStep:Null<Void->Void>;
+    var onError:Null<Dynamic->Void>;
+    var onPlayEvent:Null<Void->Void>;
+    var onStopEvent:Null<Void->Void>;
+    var onPauseEvent:Null<Void->Void>;
+    var onTickEvent:Null<Float->Void>;
+    var onCustomEvent:Null<String->Dynamic->Void>;
+    var onSerialize:Null<Dynamic->Void>;
+    var onConfigure:Null<Dynamic->Void>;
+    
+    function new();
+    
+    function attachCanvas(canvas:LGraphCanvas):Void;
+    function detachCanvas(canvas:LGraphCanvas):Void;
+    function start():Void;
+    function stop():Void;
+    function pause():Void;
+    function runStep(?do_not_catch_errors:Bool):Void;
+    function updateFullTime():Void;
+    function sendEventToAllNodes(eventname:String, ?params:Dynamic, ?mode:String):Void;
+    function sendActionToCanvas(action:String, ?params:Array<Dynamic>):Void;
+    function add(node:LGraphNode, ?skip_compute_order:Bool):LGraphNode;
+    function remove(node:LGraphNode, ?keep_connections:Bool):Void;
+    function getNodeById(id:Int):Null<LGraphNode>;
+    function getNodeByName(name:String):Null<LGraphNode>;
+    function getNodesInRectangle(x:Float, y:Float, w:Float, h:Float):Array<LGraphNode>;
+    function findNodesByProperty(property:String, value:Dynamic):Array<LGraphNode>;
+    function getGroupOnPos(x:Float, y:Float):Null<LGraphGroup>;
+    function getNodesOnRectangle(x:Float, y:Float, w:Float, h:Float):Array<LGraphNode>;
+    function getNodesOnArea(x:Float, y:Float, w:Float, h:Float):Array<LGraphNode>;
+    function getNodeOnPos(x:Float, y:Float, ?node_list:Array<LGraphNode>, ?margin:Float):Null<LGraphNode>;
+    function getNodeOnItems(x:Float, y:Float, items:Array<Dynamic>):Dynamic;
+    function sortNodes(?method:String):Void;
+    function updateExecutionOrder():Void;
+    function _computeExecutionOrder():Void;
+    function getExecutionOrder():Array<LGraphNode>;
+    function setupExecutionOrder():Void;
+    function reorder():Void;
+    function afterChange(info:Dynamic):Void;
+    function connectionChange(node:LGraphNode):Void;
+    function getOutputNodes(id:Int):Array<LGraphNode>;
+    function trigger(action:String, ?params:Dynamic):Void;
+    function triggerInput(input_name:String, data:Dynamic):Void;
+    function setOutputData(output_name:String, data:Dynamic):Void;
+    function sendInputToOutput(input_name:String, data:Dynamic):Void;
+    function connectSlots(output_node:LGraphNode, output_slot:Int, input_node:LGraphNode, input_slot:Int):LGraphLink;
+    function connectByType(output_node:LGraphNode, output_slot:Int, input_node:LGraphNode, input_type:String, ?optsIn:Dynamic):LGraphLink;
+    function connectByTypeOutput(output_node:LGraphNode, output_type:String, input_node:LGraphNode, input_slot:Int, ?optsOut:Dynamic):LGraphLink;
+    function connect(output_node:LGraphNode, output_slot:Int, input_node:LGraphNode, input_slot:Int):LGraphLink;
+    function disconnectLink(link:LGraphLink):Bool;
+    function disconnectNodeInput(node:LGraphNode, input_slot:String):Bool;
+    function disconnectNodeOutput(node:LGraphNode, output_slot:String):Bool;
+    function removeLink(link_id:Int):Bool;
+    function getLink(id:Int):Null<LGraphLink>;
+    function findLinkByNodeAndSlot(node:LGraphNode, slot:Int, ?is_input:Bool):Null<LGraphLink>;
+    function serialize(?options:Dynamic):Dynamic;
+    function configure(o:Dynamic):Void;
+    function loadGraph(data:Dynamic, ?keep_old:Bool):Void;
+    function clear():Void;
+    function close():Void;
+    function getIterator():Dynamic;
+    static function createFromJSON(data:String):LGraph;
+    static function createFromURL(url:String, callback:Dynamic->Void):LGraph;
+}
+</file>
+
+<file path="infrastructure/external/litegraph/LGraphCanvas.hx">
+// infrastructure/external/litegraph/LGraphCanvas.hx
+package hide.infrastructure.external.litegraph;
+
+import js.html.CanvasElement;
+import js.html.Element;
+
+extern class LGraphCanvas {
+    var canvas:CanvasElement;
+    var graph:LGraph;
+    var ds:Dynamic; // DragAndScale
+    var bgcanvas:Null<CanvasElement>;
+    var bgctx:Null<js.html.CanvasRenderingContext2D>;
+    var force_canvas_size:Bool;
+    var autoresize:Bool;
+    var static_canvas:Bool;
+    var skip_events:Bool;
+    var skip_render:Bool;
+    var allow_dragcanvas:Bool;
+    var allow_zoomcanvas:Bool;
+    var allow_draggroup:Bool;
+    var allow_interaction:Bool;
+    var multi_select:Bool;
+    var allow_searchbox:Bool;
+    var allow_linkcanvas:Bool;
+    var always_render_background:Bool;
+    var render_shadows:Bool;
+    var render_canvas_border:Bool;
+    var render_connections_shadows:Bool;
+    var render_connections_border:Bool;
+    var render_curved_connections:Bool;
+    var render_connection_arrows:Bool;
+    var render_collapsed_slots:Bool;
+    var render_execution_order:Bool;
+    var render_title_colored:Bool;
+    var render_link_tooltip:Bool;
+    var links_render_mode:Float;
+    var highquality_render:Bool;
+    var use_gradients:Bool;
+    var editor_alpha:Float;
+    var pause_rendering:Bool;
+    var clear_background:Bool;
+    var clear_background_color:String;
+    var highlight_selected_group:Bool;
+    var highlight_selected_node:Bool;
+    var group_selected_only:Bool;
+    var show_info:Bool;
+    var do_process_click:Bool;
+    var background_image:String;
+    var zoom_speed:Float;
+    var node_title_color:String;
+    var default_link_color:String;
+    var default_connection_color:Dynamic;
+    var default_connection_color_byType:Dynamic;
+    var default_connection_color_byInput:Dynamic;
+    var selected_group:Null<LGraphGroup>;
+    var selected_nodes:Array<LGraphNode>;
+    var selected_group_moving:Bool;
+    var connecting_node:Null<LGraphNode>;
+    var highlighted_links:Dynamic;
+    var connecting_input:Null<Int>;
+    var connecting_output:Null<Int>;
+    var connecting_slot:Int;
+    var connecting_pos:Array<Float>;
+    var connecting_output_type:String;
+    var connecting_input_type:String;
+    var connecting_direction:String;
+    var connecting_color:String;
+    var connecting_after_canvas:Null<Void->Void>;
+    var graph_mouse:Array<Float>;
+    var canvas_mouse:Array<Float>;
+    var offset:Array<Float>;
+    var scale:Float;
+    var last_mouse:Array<Float>;
+    var last_mouseposition:Array<Float>;
+    var mouse_button_down:Bool;
+    var dragging_rectangle:Null<Array<Float>>;
+    var filter:Null<String>;
+    var set_canvas_dirty_on_mouse_event:Bool;
+    var _graph_changed:Bool;
+    var _mousedown_callback:Dynamic;
+    var _mousemove_callback:Dynamic;
+    var _mouseup_callback:Dynamic;
+    var _mousewheel_callback:Dynamic;
+    var _key_callback:Dynamic;
+    var zoom_modify_alpha:Bool;
+    var _pattern:Dynamic;
+    var _ctx:js.html.CanvasRenderingContext2D;
+    var _last_draw_time:Float;
+    var _render_time:Float;
+    var _fps:Float;
+    var onDrawBackground:Null<js.html.CanvasRenderingContext2D->Void>;
+    var onDrawForeground:Null<js.html.CanvasRenderingContext2D->Void>;
+    var onDrawLinkTooltip:Null<Int->Dynamic->Bool>;
+    var onNodeMoved:Null<LGraphNode->Void>;
+    var onSelectionChange:Null<Array<LGraphNode>->Void>;
+    var onShowNodeContextMenu:Null<Array<Dynamic>->Bool>;
+    var onShowLinkContextMenu:Null<Array<Dynamic>->Bool>;
+    var onBackgroundClick:Null<Void->Void>;
+    var onBackgroundDblClick:Null<Void->Void>;
+    var onInputDblClick:Null<Int->Dynamic->Void>;
+    var onOutputDblClick:Null<Int->Dynamic->Void>;
+    var onShowSearchBox:Null<Void->Void>;
+    var onSearchBox:Null<String->Array<String>->String>;
+    var onSearchBoxSelection:Null<String->Void->LGraph->Void>;
+    var onMouse:Null<Int->Int->Array<Float>->Bool>;
+    var onDrawOverlay:Null<js.html.CanvasRenderingContext2D->Void>;
+    var onRenderBackground:Null<CanvasElement->js.html.CanvasRenderingContext2D->Bool>;
+    var node_colors:Dynamic;
+    var live_mode:Bool;
+    var show_connection_arrows:Bool;
+    var block_click:Bool;
+    var highlight_pos:Null<Array<Float>>;
+    var viewport:Null<Array<Float>>;
+    var camera:Null<Dynamic>;
+    var render_only_selected:Bool;
+    
+    function new(canvas:CanvasElement, ?graph:LGraph, ?options:Dynamic);
+    
+    function getCanvasMenuOptions(?node:Dynamic, ?options:Dynamic):Dynamic;
+    function getGroupMenuOptions(group:LGraphGroup):Dynamic;
+    function processMouseDown(e:js.html.MouseEvent):Void;
+    function processMouseMove(e:js.html.MouseEvent):Void;
+    function processMouseUp(e:js.html.MouseEvent):Void;
+    function processMouseWheel(e:js.html.WheelEvent):Void;
+    function processKey(e:js.html.KeyboardEvent):Void;
+    function setDirty(fg:Bool, bg:Bool):Void;
+    function draw(force_canvas:Bool):Void;
+    function drawCanvas(canvas:CanvasElement, force:Bool):Void;
+    function computeVisibleNodes(nodes:Array<LGraphNode>):Array<LGraphNode>;
+    function drawNode(node:LGraphNode, ctx:js.html.CanvasRenderingContext2D):Void;
+    function drawNodeShape(node:LGraphNode, ctx:js.html.CanvasRenderingContext2D, size:Array<Float>, fgcolor:String, bgcolor:String, selected:Bool, mouse_over:Bool):Void;
+    function drawNodeWidgets(node:LGraphNode, ctx:js.html.CanvasRenderingContext2D):Void;
+    function drawNodeSlots(node:LGraphNode, ctx:js.html.CanvasRenderingContext2D):Void;
+    function drawExecutionOrder(ctx:js.html.CanvasRenderingContext2D):Void;
+    function drawCanvasArea(ctx:js.html.CanvasRenderingContext2D, ?area:Array<Float>, ?margin:Float):Void;
+    function drawLink(ctx:js.html.CanvasRenderingContext2D, link:LGraphLink, ?color:String):Void;
+    function drawConnections(ctx:js.html.CanvasRenderingContext2D):Void;
+    function drawGroups(ctx:js.html.CanvasRenderingContext2D, ?visible_groups:Array<LGraphGroup>):Void;
+    function drawSelectionRect(ctx:js.html.CanvasRenderingContext2D, x:Float, y:Float, w:Float, h:Float):Void;
+    function drawFrontCanvas():Void;
+    function computeCanvasSize(?width:Int, ?height:Int):Void;
+    function resize(width:Int, height:Int):Void;
+    function getCanvasItem(x:Float, y:Float):Dynamic;
+    function getNodeOnPos(x:Float, y:Float, ?node_list:Array<LGraphNode>):Null<LGraphNode>;
+    function getGroupOnPos(x:Float, y:Float):Null<LGraphGroup>;
+    function getSlotOnPos(x:Float, y:Float):Dynamic;
+    function isOverNodeInput(node:LGraphNode, x:Float, y:Float, slot_pos:Array<Float>):Int;
+    function isOverNodeOutput(node:LGraphNode, x:Float, y:Float, slot_pos:Array<Float>):Int;
+    function processNodeDblClick(node:LGraphNode, e:js.html.MouseEvent):Void;
+    function processNodeClick(node:LGraphNode, e:js.html.MouseEvent):Void;
+    function selectNodes(nodes:Array<LGraphNode>, ?keep_previous:Bool):Void;
+    function selectNode(node:LGraphNode, ?keep_previous:Bool):Void;
+    function deselectNode(node:LGraphNode):Void;
+    function deselectAllNodes():Void;
+    function deleteSelectedNodes():Void;
+    function copyToClipboard(nodes:Array<LGraphNode>):Void;
+    function pasteFromClipboard():Void;
+    function processSelect(x:Float, y:Float, ?keep_previous:Bool):Void;
+    function processDrag(x:Float, y:Float):Void;
+    function showSearchBox(?options:Dynamic):Void;
+    function showEditPropertyValue(node:LGraphNode, property:String, type:Dynamic, callback:Dynamic->Void):Void;
+    function showNodeContextMenu(node:LGraphNode, slot:Int, e:js.html.MouseEvent):Void;
+    function showLinkContextMenu(link:LGraphLink, e:js.html.MouseEvent):Void;
+    function showGroupContextMenu(group:LGraphGroup, e:js.html.MouseEvent):Void;
+    function closePanels():Void;
+    function showPanel(html:String, ?width:Int, ?callback:Dynamic->Void):Element;
+    function prompt(title:String, value:Dynamic, callback:Dynamic->Void, ?event:Dynamic):Void;
+    function showDamage(node:LGraphNode, msg:String):Void;
+    function drawNodeTooltip(node:LGraphNode, ctx:js.html.CanvasRenderingContext2D):Void;
+    function drawLinkTooltip(ctx:js.html.CanvasRenderingContext2D, link:LGraphLink):Void;
+    function convertOffsetToCanvas(pos:Array<Float>, ?out:Array<Float>):Array<Float>;
+    function convertCanvasToOffset(pos:Array<Float>, ?out:Array<Float>):Array<Float>;
+    function convertEventToCanvasOffset(e:js.html.MouseEvent):Array<Float>;
+    function bringToFront(node:LGraphNode):Void;
+    function sendToBack(node:LGraphNode):Void;
+    function getNodeMenuOptions(node:LGraphNode, options:Dynamic):Dynamic;
+    function getSlotMenuOptions(slot:Dynamic):Dynamic;
+    function getLinkMenuOptions(link:LGraphLink):Dynamic;
+    function showMenu(items:Array<Dynamic>, options:Dynamic):Element;
+    function closeMenu():Void;
+    function createPanel(title:String, options:Dynamic):Element;
+    function showEditDialog(title:String, options:Dynamic, callback:Dynamic->Void):Void;
+    function showPrompt(title:String, value:Dynamic, callback:Dynamic->Void):Void;
+    function showColorPicker(value:Dynamic, options:Dynamic, callback:Dynamic->Void):Void;
+    function showComboMenu(values:Array<String>, callback:String->Void):Void;
+    function startDragging(nodes:Array<LGraphNode>):Void;
+    function stopDragging():Void;
+    function setNodePos(node:LGraphNode, pos:Array<Float>):Void;
+    function animate():Void;
+    function setGraph(graph:LGraph, ?clear:Bool):Void;
+    function getGraph():LGraph;
+    function clear():Void;
+    function getCanvas():CanvasElement;
+    function getCanvasWindow():js.html.Window;
+    function getCanvasRect():Array<Float>;
+    function getCanvasOffset():Array<Float>;
+    function getCanvasScale():Float;
+    function getCanvasZoom():Float;
+    function getCanvasPan():Array<Float>;
+    function setCanvasZoom(zoom:Float):Void;
+    function setCanvasPan(pan:Array<Float>):Void;
+    function fitViewTo(nodes:Array<LGraphNode>, ?margin:Float):Void;
+    function centerView(nodes:Array<LGraphNode>, ?margin:Float):Void;
+    function computeVisibleArea(?margin:Float):Array<Float>;
+    function isAreaVisible(area:Array<Float>):Bool;
+    function isPointInCanvas(x:Float, y:Float):Bool;
+    function getCanvasMousePos(e:js.html.MouseEvent):Array<Float>;
+    function getCanvasMouseOffset(e:js.html.MouseEvent):Array<Float>;
+    function getCanvasMouseScale():Float;
+    function getCanvasMouseZoom():Float;
+    function getCanvasMousePan():Array<Float>;
+    function setCanvasMousePos(pos:Array<Float>):Void;
+    function setCanvasMouseScale(scale:Float):Void;
+    function setCanvasMouseZoom(zoom:Float):Void;
+    function setCanvasMousePan(pan:Array<Float>):Void;
+    function convertCanvasToEventOffset(pos:Array<Float>, e:js.html.MouseEvent):Array<Float>;
+    function getBounding(nodes:Array<LGraphNode>, ?out:Array<Float>):Array<Float>;
+    function getCanvasBounding():Array<Float>;
+    function getCanvasCenter():Array<Float>;
+    function getCanvasSize():Array<Float>;
+    function setCanvasSize(width:Int, height:Int):Void;
+    function setCanvasOffset(offset:Array<Float>):Void;
+    function setCanvasScale(scale:Float):Void;
+    function resetView():Void;
+    function fitView(?margin:Float):Void;
+    function zoomIn():Void;
+    function zoomOut():Void;
+    function zoomReset():Void;
+    function panLeft():Void;
+    function panRight():Void;
+    function panUp():Void;
+    function panDown():Void;
+    function panTo(x:Float, y:Float):Void;
+    function panToNode(node:LGraphNode):Void;
+    function panToGroup(group:LGraphGroup):Void;
+    function panToSelection():Void;
+    function panToVisible():Void;
+    function panToCanvas():Void;
+    function panToOffset(offset:Array<Float>):Void;
+    function panToScale(scale:Float):Void;
+    function panToZoom(zoom:Float):Void;
+    function panToPan(pan:Array<Float>):Void;
+    function panToSize(size:Array<Float>):Void;
+    function panToBounds(bounds:Array<Float>):Void;
+    function panToCenter(center:Array<Float>):Void;
+    function panToPosition(pos:Array<Float>):Void;
+    function panToMouse():Void;
+    function panToEvent(e:js.html.MouseEvent):Void;
+    function panToCanvasMouse():Void;
+    function panToCanvasEvent(e:js.html.MouseEvent):Void;
+    function panToCanvasOffset(offset:Array<Float>):Void;
+    function panToCanvasScale(scale:Float):Void;
+    function panToCanvasZoom(zoom:Float):Void;
+    function panToCanvasPan(pan:Array<Float>):Void;
+    function panToCanvasSize(size:Array<Float>):Void;
+    function panToCanvasBounds(bounds:Array<Float>):Void;
+    function panToCanvasCenter(center:Array<Float>):Void;
+    function panToCanvasPosition(pos:Array<Float>):Void;
+}
+</file>
+
+<file path="infrastructure/external/litegraph/LGraphGroup.hx">
+// infrastructure/external/litegraph/LGraphGroup.hx
+package hide.infrastructure.external.litegraph;
+
+extern class LGraphGroup {
+    var title:String;
+    var pos:Array<Float>;
+    var size:Array<Float>;
+    var color:String;
+    var font:String;
+    var _bounding:Array<Float>;
+    var _nodes:Array<LGraphNode>;
+    var graph:LGraph;
+    var flags:Dynamic;
+    var id:Int;
+    
+    function new();
+    
+    function move(deltaX:Float, deltaY:Float):Void;
+    function recomputeInsideNodes():Void;
+    function addNode(node:LGraphNode):Void;
+    function removeNode(node:LGraphNode):Void;
+    function isPointInside(x:Float, y:Float):Bool;
+    function getBounding():Array<Float>;
+    function configure(o:Dynamic):Void;
+    function serialize():Dynamic;
+}
+</file>
+
+<file path="infrastructure/external/litegraph/LGraphLink.hx">
+// infrastructure/external/litegraph/LGraphLink.hx
+package hide.infrastructure.external.litegraph;
+
+extern class LGraphLink {
+    var id:Int;
+    var origin_id:Int;
+    var origin_slot:Int;
+    var target_id:Int;
+    var target_slot:Int;
+    var data:Dynamic;
+    var _data:Dynamic;
+    var _pos:Array<Float>;
+    var _last_pos:Array<Float>;
+    var _next_pos:Array<Float>;
+    var _center:Array<Float>;
+    var _center_end:Array<Float>;
+    var path:Array<Float>;
+    var _path:Array<Float>;
+    var _last_path:Array<Float>;
+    var _next_path:Array<Float>;
+    var _center_path:Array<Float>;
+    var _center_end_path:Array<Float>;
+    var color:String;
+    var _color:String;
+    var _last_color:String;
+    var _next_color:String;
+    var _center_color:String;
+    var _center_end_color:String;
+    var width:Float;
+    var _width:Float;
+    var _last_width:Float;
+    var _next_width:Float;
+    var _center_width:Float;
+    var _center_end_width:Float;
+    var _pos_size:Array<Float>;
+    var _last_pos_size:Array<Float>;
+    var _next_pos_size:Array<Float>;
+    var _center_pos_size:Array<Float>;
+    var _center_end_pos_size:Array<Float>;
+    var _bounding:Array<Float>;
+    var _last_bounding:Array<Float>;
+    var _next_bounding:Array<Float>;
+    var _center_bounding:Array<Float>;
+    var _center_end_bounding:Array<Float>;
+    var _flags:Dynamic;
+    var _last_flags:Dynamic;
+    var _next_flags:Dynamic;
+    var _center_flags:Dynamic;
+    var _center_end_flags:Dynamic;
+    var _info:Dynamic;
+    var _last_info:Dynamic;
+    var _next_info:Dynamic;
+    var _center_info:Dynamic;
+    var _center_end_info:Dynamic;
+    var _type:String;
+    var _last_type:String;
+    var _next_type:String;
+    var _center_type:String;
+    var _center_end_type:String;
+    var _name:String;
+    var _last_name:String;
+    var _next_name:String;
+    var _center_name:String;
+    var _center_end_name:String;
+    var _value:Dynamic;
+    var _last_value:Dynamic;
+    var _next_value:Dynamic;
+    var _center_value:Dynamic;
+    var _center_end_value:Dynamic;
+    var _data_type:String;
+    var _last_data_type:String;
+    var _next_data_type:String;
+    var _center_data_type:String;
+    var _center_end_data_type:String;
+    var _data_value:Dynamic;
+    var _last_data_value:Dynamic;
+    var _next_data_value:Dynamic;
+    var _center_data_value:Dynamic;
+    var _center_end_data_value:Dynamic;
+    
+    function new(id:Int, origin_id:Int, origin_slot:Int, target_id:Int, target_slot:Int, ?type:String);
+    
+    function configure(o:Dynamic):Void;
+    function serialize():Dynamic;
+    function getData():Dynamic;
+    function setData(data:Dynamic):Void;
+    function getDataType():String;
+    function setDataType(type:String):Void;
+    function getDataValue():Dynamic;
+    function setDataValue(value:Dynamic):Void;
+    function getValue():Dynamic;
+    function setValue(value:Dynamic):Void;
+    function getType():String;
+    function setType(type:String):Void;
+    function getName():String;
+    function setName(name:String):Void;
+    function getInfo():Dynamic;
+    function setInfo(info:Dynamic):Void;
+    function getFlags():Dynamic;
+    function setFlags(flags:Dynamic):Void;
+    function getBounding():Array<Float>;
+    function setBounding(bounding:Array<Float>):Void;
+    function getPos():Array<Float>;
+    function setPos(pos:Array<Float>):Void;
+    function getWidth():Float;
+    function setWidth(width:Float):Void;
+    function getColor():String;
+    function setColor(color:String):Void;
+    function getPath():Array<Float>;
+    function setPath(path:Array<Float>):Void;
+    function getCenter():Array<Float>;
+    function setCenter(center:Array<Float>):Void;
+    function getCenterEnd():Array<Float>;
+    function setCenterEnd(center_end:Array<Float>):Void;
+    function getLastPos():Array<Float>;
+    function setLastPos(pos:Array<Float>):Void;
+    function getNextPos():Array<Float>;
+    function setNextPos(pos:Array<Float>):Void;
+    function getCenterPos():Array<Float>;
+    function setCenterPos(pos:Array<Float>):Void;
+    function getCenterEndPos():Array<Float>;
+    function setCenterEndPos(pos:Array<Float>):Void;
+    function getLastPath():Array<Float>;
+    function setLastPath(path:Array<Float>):Void;
+    function getNextPath():Array<Float>;
+    function setNextPath(path:Array<Float>):Void;
+    function getCenterPath():Array<Float>;
+    function setCenterPath(path:Array<Float>):Void;
+    function getCenterEndPath():Array<Float>;
+    function setCenterEndPath(path:Array<Float>):Void;
+    function getLastBounding():Array<Float>;
+    function setLastBounding(bounding:Array<Float>):Void;
+    function getNextBounding():Array<Float>;
+    function setNextBounding(bounding:Array<Float>):Void;
+    function getCenterBounding():Array<Float>;
+    function setCenterBounding(bounding:Array<Float>):Void;
+    function getCenterEndBounding():Array<Float>;
+    function setCenterEndBounding(bounding:Array<Float>):Void;
+    function getLastWidth():Float;
+    function setLastWidth(width:Float):Void;
+    function getNextWidth():Float;
+    function setNextWidth(width:Float):Void;
+    function getCenterWidth():Float;
+    function setCenterWidth(width:Float):Void;
+    function getCenterEndWidth():Float;
+    function setCenterEndWidth(width:Float):Void;
+    function getLastColor():String;
+    function setLastColor(color:String):Void;
+    function getNextColor():String;
+    function setNextColor(color:String):Void;
+    function getCenterColor():String;
+    function setCenterColor(color:String):Void;
+    function getCenterEndColor():String;
+    function setCenterEndColor(color:String):Void;
+    function getLastFlags():Dynamic;
+    function setLastFlags(flags:Dynamic):Void;
+    function getNextFlags():Dynamic;
+    function setNextFlags(flags:Dynamic):Void;
+    function getCenterFlags():Dynamic;
+    function setCenterFlags(flags:Dynamic):Void;
+    function getCenterEndFlags():Dynamic;
+    function setCenterEndFlags(flags:Dynamic):Void;
+    function getLastInfo():Dynamic;
+    function setLastInfo(info:Dynamic):Void;
+    function getNextInfo():Dynamic;
+    function setNextInfo(info:Dynamic):Void;
+    function getCenterInfo():Dynamic;
+    function setCenterInfo(info:Dynamic):Void;
+    function getCenterEndInfo():Dynamic;
+    function setCenterEndInfo(info:Dynamic):Void;
+    function getLastType():String;
+    function setLastType(type:String):Void;
+    function getNextType():String;
+    function setNextType(type:String):Void;
+    function getCenterType():String;
+    function setCenterType(type:String):Void;
+    function getCenterEndType():String;
+    function setCenterEndType(type:String):Void;
+    function getLastName():String;
+    function setLastName(name:String):Void;
+    function getNextName():String;
+    function setNextName(name:String):Void;
+    function getCenterName():String;
+    function setCenterName(name:String):Void;
+    function getCenterEndName():String;
+    function setCenterEndName(name:String):Void;
+    function getLastValue():Dynamic;
+    function setLastValue(value:Dynamic):Void;
+    function getNextValue():Dynamic;
+    function setNextValue(value:Dynamic):Void;
+    function getCenterValue():Dynamic;
+    function setCenterValue(value:Dynamic):Void;
+    function getCenterEndValue():Dynamic;
+    function setCenterEndValue(value:Dynamic):Void;
+    function getLastDataType():String;
+    function setLastDataType(type:String):Void;
+    function getNextDataType():String;
+    function setNextDataType(type:String):Void;
+    function getCenterDataType():String;
+    function setCenterDataType(type:String):Void;
+    function getCenterEndDataType():String;
+    function setCenterEndDataType(type:String):Void;
+    function getLastDataValue():Dynamic;
+    function setLastDataValue(value:Dynamic):Void;
+    function getNextDataValue():Dynamic;
+    function setNextDataValue(value:Dynamic):Void;
+    function getCenterDataValue():Dynamic;
+    function setCenterDataValue(value:Dynamic):Void;
+    function getCenterEndDataValue():Dynamic;
+    function setCenterEndDataValue(value:Dynamic):Void;
+}
+</file>
+
+<file path="infrastructure/external/litegraph/LGraphNode.hx">
+// infrastructure/external/litegraph/LGraphNode.hx
+package hide.infrastructure.external.litegraph;
+
+extern class LGraphNode {
+    var id:Int;
+    var type:String;
+    var inputs:Array<Dynamic>;
+    var outputs:Array<Dynamic>;
+    var properties:Dynamic;
+    var properties_info:Array<Dynamic>;
+    var flags:Dynamic;
+    var widgets:Array<Dynamic>;
+    var widgets_info:Array<Dynamic>;
+    var widgets_values:Array<Dynamic>;
+    var title:String;
+    var title_font:String;
+    var title_font_size:Float;
+    var title_color:String;
+    var title_text_color:String;
+    var title_text_height:Float;
+    var title_y:Float;
+    var selected:Bool;
+    var mouseOver:Bool;
+    var block_delete:Bool;
+    var skip_event:Bool;
+    var locked:Bool;
+    var executable:Bool;
+    var executing:Bool;
+    var collapsed:Bool;
+    var collapse:Bool;
+    var renderArea:Array<Float>;
+    var size:Array<Float>;
+    var pos:Array<Float>;
+    var last_size:Array<Float>;
+    var posAddX:Float;
+    var posAddY:Float;
+    var graph:LGraph;
+    var graph_mouse:Array<Float>;
+    var graph_offset:Array<Float>;
+    var graph_scale:Float;
+    var graph_zoom:Float;
+    var graph_pan:Array<Float>;
+    var graph_canvas:LGraphCanvas;
+    var graph_ctx:js.html.CanvasRenderingContext2D;
+    var graph_canvas_ctx:js.html.CanvasRenderingContext2D;
+    var graph_canvas_mouse:Array<Float>;
+    var graph_canvas_offset:Array<Float>;
+    var graph_canvas_scale:Float;
+    var graph_canvas_zoom:Float;
+    var graph_canvas_pan:Array<Float>;
+    var graph_canvas_renderArea:Array<Float>;
+    var graph_canvas_size:Array<Float>;
+    var graph_canvas_pos:Array<Float>;
+    var graph_canvas_last_size:Array<Float>;
+    var graph_canvas_posAddX:Float;
+    var graph_canvas_posAddY:Float;
+    var graph_canvas_graph:LGraph;
+    var graph_canvas_graph_mouse:Array<Float>;
+    var graph_canvas_graph_offset:Array<Float>;
+    var graph_canvas_graph_scale:Float;
+    var graph_canvas_graph_zoom:Float;
+    var graph_canvas_graph_pan:Array<Float>;
+    var onExecuted:Null<Dynamic->Void>;
+    var onExecute:Null<Void->Void>;
+    var onAction:Null<String->Dynamic->Void>;
+    var onDrawBackground:Null<js.html.CanvasRenderingContext2D->Void>;
+    var onDrawForeground:Null<js.html.CanvasRenderingContext2D->Void>;
+    var onDrawCollapsed:Null<js.html.CanvasRenderingContext2D->Void>;
+    var onMouseDown:Null<Int->Int->Array<Float>->js.html.MouseEvent->Bool>;
+    var onMouseMove:Null<Int->Int->Array<Float>->js.html.MouseEvent->Bool>;
+    var onMouseUp:Null<Int->Int->Array<Float>->js.html.MouseEvent->Bool>;
+    var onMouseEnter:Null<js.html.MouseEvent->Bool>;
+    var onMouseLeave:Null<js.html.MouseEvent->Bool>;
+    var onContextMenu:Null<Int->Int->js.html.MouseEvent->Dynamic->Bool>;
+    var onDblClick:Null<Int->Int->js.html.MouseEvent->Bool>;
+    var onNodeTitleDblClick:Null<js.html.MouseEvent->Bool>;
+    var onInputDblClick:Null<Int->js.html.MouseEvent->Bool>;
+    var onOutputDblClick:Null<Int->js.html.MouseEvent->Bool>;
+    var onPropertyChange:Null<String->Dynamic->Void>;
+    var onPropertyChanged:Null<String->Dynamic->Dynamic>;
+    var onGetInputs:Null<Void->Array<Dynamic>>;
+    var onGetOutputs:Null<Void->Array<Dynamic>>;
+    var onBounding:Null<Array<Float>->Array<Float>>;
+    var onMeasure:Null<Array<Float>->Void>;
+    var onResize:Null<Array<Float>->Void>;
+    var onSerialize:Null<Dynamic->Void>;
+    var onConfigure:Null<Dynamic->Void>;
+    var onAdded:Null<LGraph->Void>;
+    var onRemoved:Null<Void->Void>;
+    var onClone:Null<LGraphNode->Void>;
+    var onDropItem:Null<js.html.DragEvent->Bool>;
+    var onDropData:Null<String->String->Int->Int->Bool>;
+    var onDropFile:Null<js.html.File->Int->Int->Bool>;
+    var onGetMenuOptions:Null<Dynamic>;
+    var onNodeCreated:Null<Void->Void>;
+    var onInputAdded:Null<Int->Dynamic->Void>;
+    var onOutputAdded:Null<Int->Dynamic->Void>;
+    var onInputRemoved:Null<Int->Dynamic->Void>;
+    var onOutputRemoved:Null<Int->Dynamic->Void>;
+    var onWidgetChanged:Null<String->Dynamic->Dynamic->Void>;
+    var onWidgetMouseDown:Null<Int->Int->Array<Float>->js.html.MouseEvent->Bool>;
+    var onWidgetMouseMove:Null<Int->Int->Array<Float>->js.html.MouseEvent->Bool>;
+    var onWidgetMouseUp:Null<Int->Int->Array<Float>->js.html.MouseEvent->Bool>;
+    var onWidgetMouseEnter:Null<Int->js.html.MouseEvent->Bool>;
+    var onWidgetMouseLeave:Null<Int->js.html.MouseEvent->Bool>;
+    var onWidgetDblClick:Null<Int->js.html.MouseEvent->Bool>;
+    var onWidgetContextMenu:Null<Int->Int->js.html.MouseEvent->Dynamic->Bool>;
+    var onWidgetPropertyChange:Null<String->Dynamic->Void>;
+    var onWidgetPropertyChanged:Null<String->Dynamic->Dynamic>;
+    var onWidgetSerialize:Null<Dynamic->Void>;
+    var onWidgetConfigure:Null<Dynamic->Void>;
+    var onWidgetAdded:Null<Int->Dynamic->Void>;
+    var onWidgetRemoved:Null<Int->Dynamic->Void>;
+    
+    function new(title:String, ?type:String);
+    
+    function configure(o:Dynamic):Void;
+    function serialize():Dynamic;
+    function clone():LGraphNode;
+    function getTitle():String;
+    function setTitle(title:String):Void;
+    function getProperty(name:String):Dynamic;
+    function setProperty(name:String, value:Dynamic):Void;
+    function getProperties():Dynamic;
+    function setProperties(properties:Dynamic):Void;
+    function getInputData(slot:Int):Dynamic;
+    function getInputDataType(slot:Int):String;
+    function getInputDataByName(slot_name:String):Dynamic;
+    function setInputData(slot:Int, data:Dynamic):Void;
+    function getInputLink(slot:Int):Null<LGraphLink>;
+    function getOutputData(slot:Int):Dynamic;
+    function getOutputDataType(slot:Int):String;
+    function getOutputDataByName(slot_name:String):Dynamic;
+    function setOutputData(slot:Int, data:Dynamic):Void;
+    function getOutputLink(slot:Int):Null<LGraphLink>;
+    function connect(slot:Int, node:LGraphNode, target_slot:Int):LGraphLink;
+    function connectByType(slot:Int, node:LGraphNode, target_type:String):LGraphLink;
+    function disconnect(slot:Int):Bool;
+    function disconnectOutput(slot:Int):Bool;
+    function disconnectInput(slot:Int):Bool;
+    function addInput(name:String, ?type:String, ?options:Dynamic):Int;
+    function addOutput(name:String, ?type:String, ?options:Dynamic):Int;
+    function addInputs(list:Array<Dynamic>):Void;
+    function addOutputs(list:Array<Dynamic>):Void;
+    function removeInput(slot:Int):Bool;
+    function removeOutput(slot:Int):Bool;
+    function findInputSlot(name:String):Int;
+    function findOutputSlot(name:String):Int;
+    function findInputSlotByType(type:String, ?return_all:Bool, ?preferFreeSlot:Bool):Dynamic;
+    function findOutputSlotByType(type:String, ?return_all:Bool, ?preferFreeSlot:Bool):Dynamic;
+    function getInputSlot(slot:Int):Dynamic;
+    function getOutputSlot(slot:Int):Dynamic;
+    function getInputNode(slot:Int):Null<LGraphNode>;
+    function getOutputNodes(slot:Int):Array<LGraphNode>;
+    function isInputConnected(slot:Int):Bool;
+    function isOutputConnected(slot:Int):Bool;
+    function isAnyInputConnected():Bool;
+    function isAnyOutputConnected():Bool;
+    function getInputInfo(slot:Int):Dynamic;
+    function getOutputInfo(slot:Int):Dynamic;
+    function setDirtyCanvas(fg:Bool, bg:Bool):Void;
+    function setSize(size:Array<Float>):Void;
+    function setPos(pos:Array<Float>):Void;
+    function move(deltaX:Float, deltaY:Float):Void;
+    function getBounding():Array<Float>;
+    function isPointInside(x:Float, y:Float):Bool;
+    function isOverNodeInput(x:Float, y:Float, ?slot_pos:Array<Float>):Int;
+    function isOverNodeOutput(x:Float, y:Float, ?slot_pos:Array<Float>):Int;
+    function addWidget(type:String, name:String, value:Dynamic, ?callback:Dynamic, ?options:Dynamic):Dynamic;
+    function addWidgetInput(name:String, ?type:String, ?options:Dynamic):Dynamic;
+    function addWidgetOutput(name:String, ?type:String, ?options:Dynamic):Dynamic;
+    function addWidgetButton(name:String, callback:Dynamic):Dynamic;
+    function addWidgetToggle(name:String, ?value:Bool, ?callback:Dynamic):Dynamic;
+    function addWidgetNumber(name:String, ?value:Float, ?options:Dynamic, ?callback:Dynamic):Dynamic;
+    function addWidgetString(name:String, ?value:String, ?options:Dynamic, ?callback:Dynamic):Dynamic;
+    function addWidgetCombo(name:String, values:Array<String>, ?options:Dynamic, ?callback:Dynamic):Dynamic;
+    function addWidgetSlider(name:String, ?value:Float, ?options:Dynamic, ?callback:Dynamic):Dynamic;
+    function addWidgetProgress(name:String, ?value:Float, ?options:Dynamic):Dynamic;
+    function getWidget(name:String):Dynamic;
+    function getWidgets():Array<Dynamic>;
+    function removeWidget(widget:Dynamic):Bool;
+    function setWidgetValue(widget:Dynamic, value:Dynamic, ?force:Bool):Void;
+    function triggerAction(action:String, ?param:Dynamic):Void;
+    function trigger(slot:Int, param:Dynamic):Void;
+    function sendOutputToOutput(slot:Int, data:Dynamic):Void;
+    function getInputOrProperty(name:String):Dynamic;
+    function setValue(name:String, value:Dynamic):Void;
+    function getValue(name:String, ?default_value:Dynamic):Dynamic;
+    function hasProperty(name:String):Bool;
+    function getPropertyInfo(name:String):Dynamic;
+    function setPropertyInfo(name:String, info:Dynamic):Void;
+    function getPropertiesInfo():Array<Dynamic>;
+    function setPropertiesInfo(info:Array<Dynamic>):Void;
+    function getFlags():Dynamic;
+    function setFlags(flags:Dynamic):Void;
+    function getFlag(name:String):Bool;
+    function setFlag(name:String, value:Bool):Void;
+    function getWidgetsInfo():Array<Dynamic>;
+    function setWidgetsInfo(info:Array<Dynamic>):Void;
+    function getWidgetInfo(name:String):Dynamic;
+    function setWidgetInfo(name:String, info:Dynamic):Void;
+    function getInputs():Array<Dynamic>;
+    function getOutputs():Array<Dynamic>;
+    function getInput(slot:Int):Dynamic;
+    function getOutput(slot:Int):Dynamic;
+    function getInputByName(name:String):Dynamic;
+    function getOutputByName(name:String):Dynamic;
+    function getInputType(slot:Int):String;
+    function getOutputType(slot:Int):String;
+    function getInputName(slot:Int):String;
+    function getOutputName(slot:Int):String;
+    function getInputSlotByName(name:String):Int;
+    function getOutputSlotByName(name:String):Int;
+    function isInputType(slot:Int, type:String):Bool;
+    function isOutputType(slot:Int, type:String):Bool;
+    function canConnectInput(slot:Int, node:LGraphNode, target_slot:Int):Bool;
+    function canConnectOutput(slot:Int, node:LGraphNode, target_slot:Int):Bool;
+    function canConnectToInput(slot:Int, type:String):Bool;
+    function canConnectToOutput(slot:Int, type:String):Bool;
+    function canConnectToNode(node:LGraphNode):Bool;
+    function canBeDeleted():Bool;
+    function canBeCopied():Bool;
+    function canBeMoved():Bool;
+    function canBeSelected():Bool;
+    function canBeCollapsed():Bool;
+    function canBeExecuted():Bool;
+    function canBeTriggered():Bool;
+    function canBeActioned():Bool;
+    function canBeWidgeted():Bool;
+    function canBePropertyed():Bool;
+    function canBeFlagged():Bool;
+    function canBeInfoed():Bool;
+    function canBeMeasured():Bool;
+    function canBeResized():Bool;
+    function canBeBounded():Bool;
+    function canBeDrawn():Bool;
+    function canBeSerialized():Bool;
+    function canBeConfigured():Bool;
+    function canBeCloned():Bool;
+    function canBeDropped():Bool;
+    function canBeMenued():Bool;
+    function canBeCreated():Bool;
+    function canBeAdded():Bool;
+    function canBeRemoved():Bool;
+    function canBeConnected():Bool;
+    function canBeDisconnected():Bool;
+    function canBeLinked():Bool;
+    function canBeUnlinked():Bool;
+    function canBeTriggeredIn():Bool;
+    function canBeTriggeredOut():Bool;
+    function canBeActionedIn():Bool;
+    function canBeActionedOut():Bool;
+    function canBeWidgetedIn():Bool;
+    function canBeWidgetedOut():Bool;
+    function canBePropertyedIn():Bool;
+    function canBePropertyedOut():Bool;
+    function canBeFlaggedIn():Bool;
+    function canBeFlaggedOut():Bool;
+    function canBeInfoedIn():Bool;
+    function canBeInfoedOut():Bool;
+    function canBeMeasuredIn():Bool;
+    function canBeMeasuredOut():Bool;
+    function canBeResizedIn():Bool;
+    function canBeResizedOut():Bool;
+    function canBeBoundedIn():Bool;
+    function canBeBoundedOut():Bool;
+    function canBeDrawnIn():Bool;
+    function canBeDrawnOut():Bool;
+    function canBeSerializedIn():Bool;
+    function canBeSerializedOut():Bool;
+    function canBeConfiguredIn():Bool;
+    function canBeConfiguredOut():Bool;
+    function canBeClonedIn():Bool;
+    function canBeClonedOut():Bool;
+    function canBeDroppedIn():Bool;
+    function canBeDroppedOut():Bool;
+    function canBeMenuedIn():Bool;
+    function canBeMenuedOut():Bool;
+    function canBeCreatedIn():Bool;
+    function canBeCreatedOut():Bool;
+    function canBeAddedIn():Bool;
+    function canBeAddedOut():Bool;
+    function canBeRemovedIn():Bool;
+    function canBeRemovedOut():Bool;
+    function canBeConnectedIn():Bool;
+    function canBeConnectedOut():Bool;
+    function canBeDisconnectedIn():Bool;
+    function canBeDisconnectedOut():Bool;
+    function canBeLinkedIn():Bool;
+    function canBeLinkedOut():Bool;
+    function canBeUnlinkedIn():Bool;
+    function canBeUnlinkedOut():Bool;
+}
+</file>
+
+<file path="infrastructure/external/litegraph/LiteGraph.hx">
+// infrastructure/external/litegraph/LiteGraph.hx
+package hide.infrastructure.external.litegraph;
+
+import js.html.CanvasElement;
+import js.html.Element;
+
+@:jsRequire("litegraph.js")
+extern class LiteGraph {
+    // Constants
+    static var VERSION:Float;
+    static var CANVAS_GRID_SIZE:Float;
+    static var NODE_TITLE_HEIGHT:Float;
+    static var NODE_TITLE_TEXT_Y:Float;
+    static var NODE_SLOT_HEIGHT:Float;
+    static var NODE_WIDTH:Float;
+    static var NODE_MIN_WIDTH:Float;
+    static var NODE_COLLAPSED_RADIUS:Float;
+    static var NODE_COLLAPSED_WIDTH:Float;
+    static var NODE_TITLE_COLOR:String;
+    static var NODE_SELECTED_TITLE_COLOR:String;
+    static var NODE_TEXT_SIZE:Float;
+    static var NODE_TEXT_COLOR:String;
+    static var NODE_TEXT_HIGHLIGHT_COLOR:String;
+    static var NODE_SUBTEXT_SIZE:Float;
+    static var NODE_DEFAULT_COLOR:String;
+    static var NODE_DEFAULT_BGCOLOR:String;
+    static var NODE_DEFAULT_BOXCOLOR:String;
+    static var NODE_DEFAULT_SHAPE:String;
+    static var NODE_BOX_OUTLINE_COLOR:String;
+    static var NODE_ERROR_COLOUR:String;
+    static var DEFAULT_GROUP_FONT:Float;
+    static var WIDGET_BGCOLOR:String;
+    static var WIDGET_OUTLINE_COLOR:String;
+    static var WIDGET_TEXT_COLOR:String;
+    static var WIDGET_SECONDARY_TEXT_COLOR:String;
+    static var LINK_COLOR:String;
+    static var EVENT_LINK_COLOR:String;
+    static var CONNECTING_LINK_COLOR:String;
+    
+    // Enums
+    static var UP:String;
+    static var DOWN:String;
+    static var LEFT:String;
+    static var RIGHT:String;
+    static var CENTER:String;
+    static var STRAIGHT_LINK:String;
+    static var LINEAR_LINK:String;
+    static var SPLINE_LINK:String;
+    static var NORMAL_TITLE:String;
+    static var NO_TITLE:String;
+    static var TRANSPARENT_TITLE:String;
+    static var AUTOHIDE_TITLE:String;
+    static var VERTICAL:String;
+    static var HORIZONTAL:String;
+    static var ALWAYS:String;
+    static var ON_EVENT:String;
+    static var NEVER:String;
+    static var ON_TRIGGER:String;
+    static var OPACITY_ZERO:String;
+    static var OPACITY_NORMAL:String;
+    static var OPACITY_HOVER:String;
+    static var OPACITY_ACTIVE:String;
+    
+    // Settings
+    static var alt_drag_do_clone:Bool;
+    static var link_type_menu:Bool;
+    static var search_filter_enabled:Bool;
+    static var search_show_all_on_open:Bool;
+    static var auto_load_slot_types:Bool;
+    static var registered_slot_in_types:Dynamic;
+    static var slot_types_in:Dynamic;
+    static var slot_types_out:Dynamic;
+    static var slot_types_default_in:Dynamic;
+    static var slot_types_default_out:Dynamic;
+    static var registered_node_types:Dynamic;
+    static var node_types_by_file_extension:Dynamic;
+    static var Nodes:Dynamic;
+    static var Globals:Dynamic;
+    
+    // Methods
+    static function registerNodeType(type:String, nodeClass:Dynamic):Void;
+    static function unregisterNodeType(type:String):Void;
+    static function registerNodeTypeByMethod(method:Dynamic, type:String):Void;
+    static function getNodeType(type:String):Dynamic;
+    static function getNodeTypesCategories(separator:String):Array<String>;
+    static function createNode(type:String, ?title:String, ?skipEvents:Bool):LGraphNode;
+    static function trigger(action:String, params:Dynamic):Void;
+    static function on(action:String, callback:Dynamic->Void):Void;
+    static function compareObjects(a:Dynamic, b:Dynamic):Bool;
+    static function distance(a:Array<Float>, b:Array<Float>):Float;
+    static function colorToString(color:Array<Float>):String;
+    static function isInsideRectangle(x:Float, y:Float, left:Float, top:Float, width:Float, height:Float):Bool;
+    static function growBounding(bounding:Array<Float>, x:Float, y:Float):Void;
+    static function isPointInRectangle(x:Float, y:Float, rect:Array<Float>):Bool;
+    static function overlapBounding(a:Array<Float>, b:Array<Float>):Bool;
+    static function extendClass(classObject:Dynamic, superClass:Dynamic):Void;
+    static function getParameterNames(func:String):Array<String>;
+    static function cloneObject(obj:Dynamic, ?visited:Dynamic):Dynamic;
+    static function loadGraphInformation(info:Dynamic):Dynamic;
+    static function downloadFile(filename:String, data:String):Void;
+    static function toFixed(number:Float, digits:Int):String;
+    static function createDialog(html:String, ?options:Dynamic):Element;
+    static function closeAllContextMenus(?refWindow:Dynamic):Void;
+    static function setTooltip(text:String):Void;
+    static function isInsideBox(x:Float, y:Float, box:Array<Float>):Bool;
+    static function overlapBoxes(a:Array<Float>, b:Array<Float>):Bool;
+    static function createCanvas(width:Int, height:Int, ?alpha:Bool):CanvasElement;
+    static function getMousePosition(e:js.html.MouseEvent):Array<Float>;
+    static function getContextMenuOptions(x:Float, y:Float):Dynamic;
+    static function getCanvasMenuOptions(?context:Dynamic, ?options:Dynamic):Dynamic;
+    static function showContextMenu(items:Array<Dynamic>, x:Float, y:Float, ?options:Dynamic):Void;
+    static function getSlotMenuOptions(slot:Dynamic):Array<Dynamic>;
+}
+</file>
+
+<file path="infrastructure/external/litegraph/ShaderEditorPanel.hx">
+package hide.infrastructure.external.litegraph;
+
+import infrastructure.external.litegraph.*;
+
+class ShaderEditorPanel {
+    private var graph:LGraph;
+    private var graphCanvas:LGraphCanvas;
+    
+    public function new(canvas:js.html.CanvasElement) {
+        // Создаём граф
+        graph = new LGraph();
+        
+        // Создаём canvas для редактора
+        graphCanvas = new LGraphCanvas(canvas, graph);
+        
+        // Настраиваем
+        graphCanvas.show_info = true;
+        graphCanvas.allow_dragcanvas = true;
+        graphCanvas.allow_zoomcanvas = true;
+        
+        // Регистрируем ноды
+        registerShaderNodes();
+        
+        // Запускаем
+        graph.start();
+    }
+    
+    private function registerShaderNodes():Void {
+        // Регистрируем кастомные ноды для шейдеров
+        var textureNode = {
+            title: "Texture Sample",
+            type: "texture/sample",
+            properties: { texture: "" },
+            inputs: [{name: "UV", type: "vec2"}],
+            outputs: [{name: "RGBA", type: "vec4"}],
+            onExecute: function() {
+                // Логика ноды
+            }
+        };
+        
+        LiteGraph.registerNodeType("texture/sample", textureNode);
+    }
 }
 </file>
 
@@ -6714,9 +8265,10 @@ class MenuConfig {
                     { id: "view.project", label: "Project", icon: "folder" },
                     { id: "view.console", label: "Console", icon: "terminal" },
                     { id: "sep_view_1", label: "", type: Separator },
-                    { id: "view.fullscreen", label: "Toggle Fullscreen", icon: "expand", shortcut: "F11" }
+                    { id: "view.fullscreen", label: "Toggle Fullscreen", icon: "expand", shortcut: "F11" },
                     // Динамические пункты (Console, Editor и т.д.) 
                     // добавляются через MenuService.injectViews()
+                    { id: "view.shadereditor", label: "Shader Editor", icon: "paint-brush" }
                 ]
             },
             {
@@ -7147,6 +8699,7 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
         // ✅ ЧИСТО: просто вызываем метод движка.
         // Движок сам опубликует ObjectSelected через IEngineEventBus →
         // SceneEditorService → IDE EventBus → наша подписка выше обновит UI.
+        trace('🎯 [Hierarchy] Selecting object: $id');
         UseService.sceneService().select(id);
     }
 }
@@ -7186,9 +8739,11 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
         var scene = UseService.sceneService();
 
         // 1. Подписываемся на выбор объекта
+        // Подписываемся на выбор объекта
         subscribe(eventBus, ObjectSelected, function(e:ObjectSelected) {
+            trace('🔍 [Inspector] Received ObjectSelected: ${e.objectId}');
             var obj = e.objectId != null ? scene.getObject(e.objectId) : null;
-            setState({ selectedObject: obj});
+            setState({ selectedObject: obj });
         });
 
         // 2. Подписываемся на изменения объекта (обновляем UI)
@@ -7377,6 +8932,235 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
     private function safeParse(v:String, fallback:Float):Float {
         var f = Std.parseFloat(v);
         return Math.isNaN(f) ? fallback : f;
+    }
+}
+</file>
+
+<file path="presentation/ui/react/components/ShaderEditorPanel.hx">
+// hide/presentation/ui/react/components/ShaderEditorPanel.hx
+package hide.presentation.ui.react.components;
+import hide.engine.infrastructure.ShaderPreviewRenderer;
+import react.ReactComponent;
+import react.ReactMacro.jsx;
+import hide.presentation.ui.react.BaseReactComponent;
+import hide.presentation.ui.react.hooks.UseService;
+import hide.infrastructure.external.litegraph.*;
+
+typedef ShaderEditorProps = {
+    var initialState: Dynamic;
+    var onUnmount: Void->Void;
+}
+
+typedef ShaderEditorState = {
+    var graph: Dynamic;
+}
+
+class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEditorState> {
+    private var liteGraphCanvas:js.html.CanvasElement;
+    private var graph:LGraph;
+    private var graphCanvas:LGraphCanvas;
+    private var previewRenderer:ShaderPreviewRenderer; // ← инжектируем
+    
+    public function new() {
+        super();
+        // ✅ Получаем рендерер из DI, а не создаём h3d.Engine вручную!
+        previewRenderer = UseService.shaderPreviewRenderer();
+        state = { graph: null };
+    }
+    
+    override function componentDidMount():Void {
+        initLiteGraph();
+        // ✅ Передаём DOM-контейнер в engine layer
+        var previewContainer = js.Browser.document.getElementById("heaps-preview-container");
+        previewRenderer.init(previewContainer);
+        
+        registerShaderNodes();
+    }
+    
+    private function initLiteGraph():Void {
+        // Создаём canvas для редактора нод
+        liteGraphCanvas = cast js.Browser.document.createElement("canvas");
+        liteGraphCanvas.id = "shader-graph-canvas";
+        liteGraphCanvas.width = 800;
+        liteGraphCanvas.height = 600;
+        liteGraphCanvas.style.cssText = 'width:100%;height:100%;background:#1a1a1a;';
+        
+        var container = js.Browser.document.getElementById("litegraph-container");
+        if (container != null) {
+            container.appendChild(liteGraphCanvas);
+            
+            // Создаём граф
+            graph = new LGraph();
+            
+            // Создаём canvas для рендеринга графа
+            graphCanvas = new LGraphCanvas(liteGraphCanvas, graph);
+            
+            // Настраиваем
+            graphCanvas.show_info = true;
+            graphCanvas.allow_dragcanvas = true;
+            graphCanvas.allow_zoomcanvas = true;
+            
+            // Запускаем граф
+            graph.start();
+            
+            state = { graph: graph };
+        }
+    }
+    
+    private function registerShaderNodes():Void {
+        // ✅ ПРАВИЛЬНЫЙ СПОСОБ: используем js.Syntax.code для создания JS-функций,
+        // где `this` ссылается на экземпляр ноды, а не на ShaderEditorPanel
+        
+        // === Нода: Texture Sample ===
+        var TextureSampleNode = js.Syntax.code("(function() { this.title = 'Texture Sample'; this.addInput('UV', 'vec2'); this.addOutput('RGBA', 'vec4'); this.properties = { texture: '' }; })");
+        js.Syntax.code("TextureSampleNode.prototype.onExecute = function() { var uv = this.getInputData(0); if (uv == null) uv = [0, 0]; this.setOutputData(0, [1, 0, 0, 1]); }");
+        LiteGraph.registerNodeType("texture/sample", TextureSampleNode);
+        
+        // === Нода: PBR Material ===
+        var PBRMaterialNode = js.Syntax.code("(function() { this.title = 'PBR Material'; this.addInput('Albedo', 'vec3'); this.addInput('Normal', 'vec3'); this.addInput('Metallic', 'float'); this.addInput('Roughness', 'float'); this.addOutput('Color', 'vec3'); this.properties = { metallic: 0.5, roughness: 0.5 }; })");
+        js.Syntax.code("PBRMaterialNode.prototype.onExecute = function() { var albedo = this.getInputData(0); if (albedo == null) albedo = [1, 1, 1]; this.setOutputData(0, albedo); }");
+        LiteGraph.registerNodeType("material/pbr", PBRMaterialNode);
+        
+        // === Нода: Math Operation ===
+        var MathNode = js.Syntax.code("(function() { this.title = 'Math'; this.addInput('A', 'float'); this.addInput('B', 'float'); this.addOutput('Result', 'float'); this.properties = { operation: 'multiply' }; })");
+        js.Syntax.code("MathNode.prototype.onExecute = function() { var a = this.getInputData(0); if (a == null) a = 0; var b = this.getInputData(1); if (b == null) b = 0; var result = 0; switch(this.properties.operation) { case 'add': result = a + b; break; case 'subtract': result = a - b; break; case 'multiply': result = a * b; break; case 'divide': result = b != 0 ? a / b : 0; break; case 'lerp': result = a + (b - a) * 0.5; break; } this.setOutputData(0, result); }");
+        LiteGraph.registerNodeType("math/operation", MathNode);
+        
+        // === Нода: Float Value ===
+        var FloatNode = js.Syntax.code("(function() { this.title = 'Float'; this.addOutput('Value', 'float'); this.properties = { value: 1.0 }; })");
+        js.Syntax.code("FloatNode.prototype.onExecute = function() { this.setOutputData(0, this.properties.value); }");
+        LiteGraph.registerNodeType("value/float", FloatNode);
+        
+        // === Нода: Vector3 ===
+        var Vec3Node = js.Syntax.code("(function() { this.title = 'Vector3'; this.addOutput('Vector', 'vec3'); this.properties = { x: 0.0, y: 0.0, z: 0.0 }; })");
+        js.Syntax.code("Vec3Node.prototype.onExecute = function() { this.setOutputData(0, [this.properties.x, this.properties.y, this.properties.z]); }");
+        LiteGraph.registerNodeType("value/vec3", Vec3Node);
+        
+        trace("✅ [ShaderEditor] Shader nodes registered");
+    }
+
+    
+    override function render():ReactElement {
+        return jsx('
+            <div style={{display: "flex", height: "100%", flexDirection: "column"}}>
+                {renderToolbar()}
+                {renderMainArea()}
+            </div>
+        ');
+    }
+
+    private function renderToolbar():ReactElement {
+        return jsx('
+            <div style={{padding: "8px", background: "#2a2a2a", borderBottom: "1px solid #1a1a1a", display: "flex", gap: "8px"}}>
+                <button onClick={onCompile}>Compile</button>
+                <button onClick={onSave}>Save</button>
+                <button onClick={onExportHLSL}>Export HLSL</button>
+                <div style={{flex: 1}}></div>
+                <button onClick={onClearGraph}>Clear Graph</button>
+            </div>
+        ');
+    }
+
+    private function renderMainArea():ReactElement {
+        return jsx('
+            <div style={{display: "flex", flex: 1, overflow: "hidden"}}>
+                {renderNodeEditor()}
+                {renderRightPanel()}
+            </div>
+        ');
+    }
+
+    private function renderNodeEditor():ReactElement {
+        return jsx('
+            <div id="litegraph-container" 
+                style={{flex: 1, position: "relative", background: "#1a1a1a"}}>
+            </div>
+        ');
+    }
+
+    private function renderRightPanel():ReactElement {
+        return jsx('
+            <div style={{
+                width: "400px", 
+                display: "flex", 
+                flexDirection: "column", 
+                borderLeft: "1px solid #1a1a1a"
+            }}>
+                {renderPreview()}
+                {renderProperties()}
+            </div>
+        ');
+    }
+
+    private function renderPreview():ReactElement {
+        return jsx('
+            <div style={{height: "300px", background: "#000", position: "relative"}}>
+                <div id="heaps-preview-container" 
+                    style={{width: "100%", height: "100%"}}>
+                </div>
+                <div style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "8px",
+                    padding: "4px 8px",
+                    background: "rgba(0,0,0,0.5)",
+                    color: "#fff",
+                    fontSize: "12px",
+                    borderRadius: "3px"
+                }}>
+                    Preview
+                </div>
+            </div>
+        ');
+    }
+
+    private function renderProperties():ReactElement {
+        return jsx('
+            <div style={{flex: 1, padding: "10px", background: "#2a2a2a", overflowY: "auto"}}>
+                <h3 style={{margin: "0 0 10px 0", color: "#fff", fontSize: "14px"}}>
+                    Properties
+                </h3>
+                {renderPropertiesContent()}
+            </div>
+        ');
+    }
+
+    private function renderPropertiesContent():ReactElement {
+        // Позже здесь будет рендеринг свойств выбранной ноды
+        return jsx('
+            <div style={{color: "#888", fontSize: "12px"}}>
+                Select a node to edit properties
+            </div>
+        ');
+    }
+
+    // Обработчики событий для toolbar
+    private function onCompile():Void {
+        trace("🔨 Compile shader graph");
+        // TODO: компиляция графа в HXSL
+    }
+
+    private function onSave():Void {
+        trace("💾 Save shader graph");
+        // TODO: сохранение .shader файла
+    }
+
+    private function onExportHLSL():Void {
+        trace("📤 Export HLSL");
+        // TODO: экспорт в HLSL
+    }
+
+    private function onClearGraph():Void {
+        if (graph != null) {
+            graph.clear();
+            trace("🧹 Graph cleared");
+        }
+    }
+    
+    override function componentWillUnmount():Void {
+        if (graph != null) graph.stop();
+        previewRenderer.dispose(); // ← освобождаем ресурсы engine layer
+        super.componentWillUnmount();
     }
 }
 </file>
@@ -7595,6 +9379,7 @@ class ReactViewFactory implements IViewFactory implements Service {
 <file path="presentation/ui/react/hooks/UseService.hx">
 package hide.presentation.ui.react.hooks;
 
+import hide.engine.infrastructure.ShaderPreviewRenderer;
 import hide.presentation.Ide;
 import hide.application.services.WindowService;
 import hide.application.services.MenuService;
@@ -7630,6 +9415,9 @@ class UseService {
 
     public static function sceneService():ISceneService {
         return Ide.inst.get_sceneService();
+    }
+    public static function shaderPreviewRenderer():ShaderPreviewRenderer {
+        return Ide.inst.get_shaderPreviewRenderer();
     }
 }
 </file>
@@ -7793,6 +9581,7 @@ package hide.presentation.views;
 <file path="presentation/Ide.hx">
 package hide.presentation;
 
+import hide.engine.infrastructure.ShaderPreviewRenderer;
 import hide.presentation.controllers.ToolbarController;
 import hide.presentation.controllers.WindowController;
 import hide.application.services.MenuService;
@@ -7873,7 +9662,7 @@ class Ide implements Service {
     private var sceneService:ISceneService;
     private var sceneEditorService:SceneEditorService;
     private var sceneViewFactory:SceneViewFactory;
-
+    private var shaderPreviewRenderer:ShaderPreviewRenderer;
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -7893,7 +9682,8 @@ class Ide implements Service {
         toolbarController:ToolbarController,
         sceneService:ISceneService,
         sceneEditorService:SceneEditorService,
-        sceneViewFactory:SceneViewFactory
+        sceneViewFactory:SceneViewFactory,
+        shaderPreviewRenderer:ShaderPreviewRenderer
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -7914,9 +9704,10 @@ class Ide implements Service {
         this.sceneService = sceneService;
         this.sceneEditorService = sceneEditorService;
         this.sceneViewFactory = sceneViewFactory;
+        this.shaderPreviewRenderer = shaderPreviewRenderer;
         inst = this;
         views = viewRegistry.all(); 
-        
+        trace(views);
         menuService.onItemClick("project.open", onMenuOpenProject);
         menuService.onItemClick("view.fullscreen", onToggleFullscreen);
         menuService.onItemClick("layout.save", onLayoutSave);
@@ -8060,6 +9851,11 @@ class Ide implements Service {
             new hide.presentation.ui.react.factories.ReactViewFactory()
                 .withComponent(hide.presentation.ui.react.components.WelcomePanel)
         );
+        viewRegistry.registerViewFactory(
+            "shadereditor",
+            new hide.presentation.ui.react.factories.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.ShaderEditorPanel)
+        );
 
         windowController.init();
         trace("🪟 WindowController инициализирован");
@@ -8147,6 +9943,7 @@ class Ide implements Service {
     public function get_viewRegistry():ViewRegistry return viewRegistry;
     public function get_layoutEngine():ILayoutEngine return layoutEngine;
     public function get_sceneService():ISceneService return sceneService;
+    public function get_shaderPreviewRenderer():ShaderPreviewRenderer return shaderPreviewRenderer;
 }
 </file>
 

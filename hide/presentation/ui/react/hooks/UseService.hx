@@ -1,5 +1,6 @@
 package hide.presentation.ui.react.hooks;
 
+import hide.engine.infrastructure.ShaderPreviewRenderer;
 import hide.presentation.Ide;
 import hide.application.services.WindowService;
 import hide.application.services.MenuService;
@@ -35,5 +36,8 @@ class UseService {
 
     public static function sceneService():ISceneService {
         return Ide.inst.get_sceneService();
+    }
+    public static function shaderPreviewRenderer():ShaderPreviewRenderer {
+        return Ide.inst.get_shaderPreviewRenderer();
     }
 }

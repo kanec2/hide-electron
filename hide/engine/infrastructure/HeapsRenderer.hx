@@ -1,9 +1,13 @@
 // hide/engine/infrastructure/HeapsRenderer.hx
 package hide.engine.infrastructure;
+import h3d.col.Collider;
 import hide.engine.domain.services.IRenderer;
 import hide.engine.domain.entities.SceneObject;
 import hide.engine.domain.entities.Transform;
 import hide.engine.domain.entities.MeshRenderer;
+
+import hide.engine.domain.services.ISceneService;  // ← ДОБАВИТЬ
+
 import h3d.scene.Object;
 import h3d.scene.Mesh;
 import h3d.scene.fwd.DirLight;
@@ -13,22 +17,156 @@ import hx.injection.Service;
 
 class HeapsRenderer implements IRenderer implements Service {
     private var engine:h3d.Engine;
+    private var sevents:hxd.SceneEvents;  // ← НОВОЕ ПОЛЕ
     private var s3d:h3d.scene.Scene;
     private var sceneRoot:h3d.scene.Object;
     private var canvas:js.html.CanvasElement;
     private var container:Dynamic;
-    // ✅ ИСПРАВЛЕНО: используем Dynamic вместо js.html.ResizeObserver
-    
-    
+    private var sceneService:ISceneService;  // ← ДОБАВИТЬ
+    var fpsText: h2d.Text;
+    // ✅ НОВАЯ MAP: храним связь между h3d.Mesh и domain ID
+    // Связь между h3d.Mesh и domain ID
+    private var meshToDomainId:Map<h3d.scene.Mesh, String>;
+
+    private var isInteractiveClicked:Bool = false;
     private var isSceneReady:Bool = false;
     private var pendingRoot:SceneObject;
     
+    // === Selection outline ===
+    private var bboxPrim:h3d.prim.Cube;
+    private var selectionOutline:Null<h3d.scene.Mesh> = null;
+    private var selectedMeshRef:Null<h3d.scene.Mesh> = null;
+    private var meshOriginalColor:Map<h3d.scene.Mesh, h3d.Vector>;
+
+    // В начале класса HeapsRenderer
+    private var currentSelectedId:Null<String> = null;
+
     private static var isSystemInitialized:Bool = false;
     
-    public function new() {
+    public function new(sceneService:ISceneService) {
         h3d.impl.RenderContext.STRICT = false;
+        this.sceneService = sceneService;
+        this.meshToDomainId = new Map();
+        this.meshOriginalColor = new Map();
+
+        // ✅ Создаём примитив один раз — переиспользуется для всех выделений
+        this.bboxPrim = new h3d.prim.Cube(1, 1, 1, false);
+        bboxPrim.addNormals();
+        bboxPrim.addUVs();
     }
     
+    /**
+     * Обновляет визуальное выделение. Вызывается при смене selection.
+     * @param id Доменный ID объекта, или null для снятия выделения
+     */
+    private function updateSelectionVisuals(id:Null<String>):Void {
+        trace('🎯 [Selection] updateSelectionVisuals called with id=$id');
+        clearSelectionVisuals(); // Сначала сбрасываем старое выделение
+        if (id == null) return;
+        
+        // Ищем меш по domain ID
+        var targetMesh:Null<h3d.scene.Mesh> = null;
+        for (mesh => domainId in meshToDomainId) {
+            if (domainId == id) {
+                targetMesh = mesh;
+                break;
+            }
+        }
+        if (targetMesh == null) {
+            trace('⚠️ [Selection] Mesh not found for id: $id');
+            return;
+        }
+        trace('🎯 [Selection] targetMesh found: ${targetMesh != null}');
+        if (targetMesh == null) return;
+        
+        // ✅ 1. Сохраняем ОРИГИНАЛЬНЫЙ цвет (клонируем вектор!)
+        if (!meshOriginalColor.exists(targetMesh)) {
+            var orig = new h3d.Vector();
+            orig.set(targetMesh.material.color.x, targetMesh.material.color.y, targetMesh.material.color.z);
+            meshOriginalColor.set(targetMesh, orig);
+        }
+        
+        // Лёгкая подсветка самого меша (голубой оттенок)
+        targetMesh.material.color.setColor(0x6ab0ff);
+        
+        // Получаем МИРОВЫЕ bounds (с учётом трансформации)
+        var worldBounds = targetMesh.getBounds();
+
+        if (worldBounds.isEmpty()) {
+            trace('⚠️ [Selection] Bounds EMPTY — рамка не будет создана');
+            return;
+        }
+
+        trace('🎯 [Selection] worldBounds: empty=${worldBounds.isEmpty()}, ' +
+            'min=(${worldBounds.xMin},${worldBounds.yMin},${worldBounds.zMin}), ' +
+            'max=(${worldBounds.xMax},${worldBounds.yMax},${worldBounds.zMax})');
+
+        var sizeX = worldBounds.xMax - worldBounds.xMin;
+        var sizeY = worldBounds.yMax - worldBounds.yMin;
+        var sizeZ = worldBounds.zMax - worldBounds.zMin;
+        var centerX = (worldBounds.xMax + worldBounds.xMin) / 2;
+        var centerY = (worldBounds.yMax + worldBounds.yMin) / 2;
+        var centerZ = (worldBounds.zMax + worldBounds.zMin) / 2;
+        // Создаём mesh с готовым Cube примитивом, дочерний к сцене
+        selectionOutline = new h3d.scene.Mesh(bboxPrim, sceneRoot);
+        
+        // Материал: оранжевый wireframe, поверх всего
+        selectionOutline.material.mainPass.wireframe = true;
+        selectionOutline.material.color.setColor(0xFF6600);
+        selectionOutline.material.mainPass.depth(false, Always); // рисуем поверх
+        selectionOutline.material.mainPass.culling = None;
+        // ✅ 3. ADDITIVE BLENDING (свечение)
+        selectionOutline.material.mainPass.setBlendMode(AlphaAdd);
+        // Масштабируем и позиционируем под bounds объекта
+        
+        
+        selectionOutline.x = worldBounds.xMin;
+        selectionOutline.y = worldBounds.yMin;
+        selectionOutline.z = worldBounds.zMin;
+        selectionOutline.scaleX = sizeX * 1.05; // 5% увеличение
+        selectionOutline.scaleY = sizeY * 1.05;
+        selectionOutline.scaleZ = sizeZ * 1.05;
+        
+        selectedMeshRef = targetMesh;
+        trace('📦 [Debug] Mesh pos: ${targetMesh.x},${targetMesh.y},${targetMesh.z}');
+        trace('📦 [Debug] Mesh absPos: ${targetMesh.getAbsPos()}');
+        trace('📦 [Debug] World bounds: min=(${worldBounds.xMin},${worldBounds.yMin},${worldBounds.zMin}) max=(${worldBounds.xMax},${worldBounds.yMax},${worldBounds.zMax})');
+        trace('✨ [Selection] Outline created at (${selectionOutline.x},${selectionOutline.y},${selectionOutline.z}) ' +
+            'scale=(${selectionOutline.scaleX},${selectionOutline.scaleY},${selectionOutline.scaleZ})');
+    }
+    /**
+     * Удаляет визуальное выделение
+     */
+    private function clearSelectionVisuals():Void {
+        if (selectionOutline != null) {
+            selectionOutline.remove();
+            selectionOutline = null;
+        }
+        
+        // ✅ 2. Восстанавливаем цвета всех затронутых мешей
+        for (mesh => origColor in meshOriginalColor) {
+            if (mesh != null && mesh.material != null) {
+                mesh.material.color.set(origColor.x, origColor.y, origColor.z);
+            }
+        }
+
+        /*
+        if (selectedMeshRef != null) {
+            // ✅ Восстанавливаем оригинальный цвет напрямую из h3d.Vector
+            if (meshOriginalColor.exists(selectedMeshRef)) {
+                var orig = meshOriginalColor.get(selectedMeshRef);
+                selectedMeshRef.material.color.x = orig.x;
+                selectedMeshRef.material.color.y = orig.y;
+                selectedMeshRef.material.color.z = orig.z;
+                //selectedMeshRef.material.color.w = orig.w;
+                meshOriginalColor.remove(selectedMeshRef);
+            }
+            selectedMeshRef = null;
+        }*/
+        meshOriginalColor.clear();
+        currentSelectedId = null;
+    }
+
     public function init(container:Dynamic):Void {
         // ✅ КЛЮЧЕВОЕ: отключаем строгую проверку шейдеров
         // Это предотвращает ошибки "Missing global value shadow.proj"
@@ -114,7 +252,10 @@ class HeapsRenderer implements IRenderer implements Service {
     }
     
     private function onEngineReady():Void {
-        trace("🎨 [HeapsRenderer] Engine ready, creating scene...");
+         trace("🎨 [HeapsRenderer] Engine ready");
+    
+        // === ДИАГНОСТИКА ===
+        trace('🔍 [Diag] hxd.Window: ${hxd.Window.getInstance()}');
         
         // ✅ УБРАНО: MaterialSetup — он не нужен для базового рендера
         // Heaps использует Forward renderer по умолчанию
@@ -128,11 +269,18 @@ class HeapsRenderer implements IRenderer implements Service {
             hxsl.Globals.allocID("shadow.proj"),
             new h3d.Matrix() // пустая матрица
         );
+
+        sevents = new hxd.SceneEvents();
+        sevents.addScene(s3d);
+
         sceneRoot = new h3d.scene.Object(s3d);
         
         // ✅ УБРАНО: ambientLight — в этой версии Heaps API другое
         // DirLight даст достаточно света для видимости кубов
-        
+        // В onEngineReady, после создания s3d:
+        fpsText = new h2d.Text(hxd.res.DefaultFont.get());
+        fpsText.textColor = 0xFFFFFF;
+        fpsText.dropShadow = { dx: 1, dy: 1, color: 0, alpha: 0.5 };
         // Настраиваем камеру
         var camera = s3d.camera;
         camera.pos.set(8, 8, 8);
@@ -145,10 +293,12 @@ class HeapsRenderer implements IRenderer implements Service {
         
         // ✅ ОСТАВЛЯЕМ ТОЛЬКО DirLight — это точно работает
         var light = new h3d.scene.fwd.DirLight(new h3d.Vector(-0.5, -0.5, -1), s3d);
-
+        // ✅ ПРЯМОЙ RAYCAST ВМЕСТО INTERACTIVE
+        setupMouseClickHandler();
         // ✅ ШАГ 3: Перемещаем canvas в container GoldenLayout
         moveCanvasToContainer();
-
+        // ✅ НОВЫЙ ПОДХОД: используем Interactive для обработки кликов
+        //setupInteractive();
         // ✅ КЛЮЧЕВОЕ: Запускаем непрерывный цикл рендеринга
         // Без этого Heaps не будет перерисовывать сцену
         hxd.System.setLoop(mainLoop);
@@ -163,8 +313,52 @@ class HeapsRenderer implements IRenderer implements Service {
             renderSceneInternal(pendingRoot);
             pendingRoot = null;
         }
+        // ✅ ПОДПИСКА НА ВЫДЕЛЕНИЕ (из любого источника!)
+        sceneService.onObjectSelected(function(id:Null<String>) {
+            trace('🔗 [Heaps] ObjectSelected event: $id');
+            currentSelectedId = id;
+            
+            if (id == null) {
+                clearSelectionVisuals();
+            } else {
+                // Если сцена ещё не построена — ждём rebuild
+                if (meshToDomainId.iterator().hasNext()) {
+                    updateSelectionVisuals(id);
+                } else {
+                    trace('⏳ [Heaps] Scene not ready yet, selection will be restored after rebuild');
+                }
+            }
+        });
         
+        // ✅ Если при старте уже есть выделенный объект — показываем рамку
+        var initialSelection = sceneService.getSelected();
+        if (initialSelection != null) {
+            currentSelectedId = initialSelection.id;
+        }
     }
+
+    // ✅ НОВЫЙ ПОДХОД: прямой raycast через camera.rayFromScreen()
+    // ✅ ИСПРАВЛЕННЫЙ Raycast с рекурсивным обходом и отладкой
+    private function setupMouseClickHandler():Void {
+    // Слушаем события через hxd.Window (то, что использует SceneEvents)
+        var window = hxd.Window.getInstance();
+        
+        window.addEventTarget(function(e:hxd.Event) {
+            if (e.kind == EPush && e.button == 0) {
+                // Клик произошёл — даём Interactive шанс обработать
+                isInteractiveClicked = false;
+                
+                // Проверяем в следующем кадре, был ли клик обработан
+                haxe.Timer.delay(function() {
+                    if (!isInteractiveClicked) {
+                        trace("❌ Click on empty space");
+                        sceneService.deselect();
+                    }
+                }, 0);
+            }
+        });
+    }
+
     private function moveCanvasToContainer():Void {
         if (canvas == null) return;
         
@@ -206,15 +400,31 @@ class HeapsRenderer implements IRenderer implements Service {
             s3d.camera.update();
         }
     }
+
+    private var fpsAccumulator:Float = 0;
+    private var frameCount:Int = 0;
+    private var fpsTimer:Float = 0;
     // ✅ НОВЫЙ МЕТОД: главный цикл рендеринга
     private function mainLoop():Void {
-        // Обновляем таймер Heaps (нужно для анимаций, delta time и т.д.)
         hxd.Timer.update();
+        if (sevents != null) sevents.checkEvents();
+        if (engine != null && s3d != null) engine.render(s3d);
         
-        // Рендерим сцену каждый кадр
-        if (engine != null && s3d != null) {
-            engine.render(s3d);
+        fpsTimer += hxd.Timer.dt;
+        if (fpsTimer >= 0.5) {  // обновляем 2 раза в секунду
+            var fps = 1.0 / hxd.Timer.dt;
+            fpsText.text = 'FPS: ${Std.int(fps)}';
+            fpsTimer = 0;
         }
+        /*
+        if (fpsAccumulator >= 1.0) {
+            var fps = frameCount / fpsAccumulator;
+            var frameMs = hxd.Timer.elapsedTime * 1000;  // ← реальное время кадра
+            trace('📊 FPS: ${Std.int(fps)} | frame: ${Std.int(frameMs)}ms');
+            
+            frameCount = 0;
+            fpsAccumulator = 0;
+        }*/
     }
     public function renderScene(root:SceneObject):Void {
         if (!isSceneReady) {
@@ -225,6 +435,12 @@ class HeapsRenderer implements IRenderer implements Service {
     }
     
     private function renderSceneInternal(root:SceneObject):Void {
+        // Сохраняем ID выделенного объекта до rebuild
+        var savedSelectionId = currentSelectedId;
+
+        // ✅ СНАЧАЛА очищаем выделение (восстанавливаем цвета)
+        clearSelectionVisuals();
+
         var toRemove:Array<h3d.scene.Object> = [];
         for (child in sceneRoot) {
             if (child != sceneRoot) toRemove.push(child);
@@ -232,8 +448,22 @@ class HeapsRenderer implements IRenderer implements Service {
         for (child in toRemove) {
             child.remove();
         }
-        
+        // ✅ ОЧИЩАЕМ MAP перед перестроением
+        meshToDomainId.clear();
+        meshOriginalColor.clear();
+
         buildObjectTree(root, sceneRoot);
+        // ✅ Создаём Interactive для всех мешей после построения дерева
+
+        // ✅ Восстанавливаем выделение, если оно было
+        if (savedSelectionId != null) {
+            trace('🔄 [Heaps] Restoring selection after rebuild: $savedSelectionId');
+            // Используем haxe.Timer.delay, чтобы дать сцене синхронизироваться
+            haxe.Timer.delay(function() {
+                updateSelectionVisuals(savedSelectionId);
+            }, 0);
+        }
+
     }
     
     public function onResize(width:Int, height:Int):Void {
@@ -242,7 +472,8 @@ class HeapsRenderer implements IRenderer implements Service {
     
     public function dispose():Void {
         
-        
+        clearSelectionVisuals();
+
         if (s3d != null) {
             s3d.dispose();
             s3d = null;
@@ -254,6 +485,8 @@ class HeapsRenderer implements IRenderer implements Service {
         }
         
         engine = null;
+        meshToDomainId.clear();
+        meshOriginalColor.clear();
     }
     
     private function buildObjectTree(obj:SceneObject, h3dParent:h3d.scene.Object):Void {
@@ -267,7 +500,50 @@ class HeapsRenderer implements IRenderer implements Service {
             if (Std.isOfType(comp, MeshRenderer)) {
                 var mesh = createMeshPrimitive();
                 if (mesh != null) {
+                    meshToDomainId.set(mesh, obj.id);
                     h3dObj.addChild(mesh);
+                    // ✅ Синхронизируем позицию перед получением bounds
+                    @:privateAccess mesh.syncPos();
+                    // ✅ Получаем локальные bounds
+                    var localBounds = mesh.getBounds(null, mesh);
+                    
+                    if (!localBounds.isEmpty()) {
+                        // Создаём Interactive — он автоматически зарегистрируется
+                        // в scene.events через onAdd()
+                        var interaction = new h3d.scene.Interactive(localBounds, mesh);
+                        
+                        interaction.onClick = function(e:hxd.Event) {
+                            trace('✅ [Interactive] Clicked: ${obj.name}');
+                            isInteractiveClicked = true;
+                            sceneService.select(obj.id);
+                            e.cancel = true;
+                        }
+                        
+                        interaction.onOver = function(e:hxd.Event) {
+                            // НЕ меняем цвет, если объект выделен
+                            if (selectedMeshRef != mesh) {
+                                mesh.material.color.setColor(0x6ab0ff);
+                            }
+                        }
+                        
+                        interaction.onOut = function(e:hxd.Event) {
+                            // Восстанавливаем цвет ТОЛЬКО если объект НЕ выделен
+                            if (selectedMeshRef != mesh) {
+                                // Восстанавливаем оригинальный цвет из map
+                                if (meshOriginalColor.exists(mesh)) {
+                                    var orig = meshOriginalColor.get(mesh);
+                                    mesh.material.color.x = orig.x;
+                                    mesh.material.color.y = orig.y;
+                                    mesh.material.color.z = orig.z;
+                                } else {
+                                    mesh.material.color.setColor(0x4a90e2); // fallback
+                                }
+                            }
+                        }
+                    } else {
+                        trace('⚠️ [Interactive] Bounds EMPTY for ${obj.name}');
+                    }
+                    
                 }
             }
         }

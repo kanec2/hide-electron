@@ -31,9 +31,11 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
         var scene = UseService.sceneService();
 
         // 1. Подписываемся на выбор объекта
+        // Подписываемся на выбор объекта
         subscribe(eventBus, ObjectSelected, function(e:ObjectSelected) {
+            trace('🔍 [Inspector] Received ObjectSelected: ${e.objectId}');
             var obj = e.objectId != null ? scene.getObject(e.objectId) : null;
-            setState({ selectedObject: obj});
+            setState({ selectedObject: obj });
         });
 
         // 2. Подписываемся на изменения объекта (обновляем UI)

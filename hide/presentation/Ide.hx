@@ -1,5 +1,6 @@
 package hide.presentation;
 
+import hide.engine.infrastructure.ShaderPreviewRenderer;
 import hide.presentation.controllers.ToolbarController;
 import hide.presentation.controllers.WindowController;
 import hide.application.services.MenuService;
@@ -80,7 +81,7 @@ class Ide implements Service {
     private var sceneService:ISceneService;
     private var sceneEditorService:SceneEditorService;
     private var sceneViewFactory:SceneViewFactory;
-
+    private var shaderPreviewRenderer:ShaderPreviewRenderer;
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -100,7 +101,8 @@ class Ide implements Service {
         toolbarController:ToolbarController,
         sceneService:ISceneService,
         sceneEditorService:SceneEditorService,
-        sceneViewFactory:SceneViewFactory
+        sceneViewFactory:SceneViewFactory,
+        shaderPreviewRenderer:ShaderPreviewRenderer
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -121,6 +123,7 @@ class Ide implements Service {
         this.sceneService = sceneService;
         this.sceneEditorService = sceneEditorService;
         this.sceneViewFactory = sceneViewFactory;
+        this.shaderPreviewRenderer = shaderPreviewRenderer;
         inst = this;
         views = viewRegistry.all(); 
         
@@ -267,6 +270,11 @@ class Ide implements Service {
             new hide.presentation.ui.react.factories.ReactViewFactory()
                 .withComponent(hide.presentation.ui.react.components.WelcomePanel)
         );
+        viewRegistry.registerViewFactory(
+            "shadereditor",
+            new hide.presentation.ui.react.factories.ReactViewFactory()
+                .withComponent(hide.presentation.ui.react.components.ShaderEditorPanel)
+        );
 
         windowController.init();
         trace("🪟 WindowController инициализирован");
@@ -354,4 +362,5 @@ class Ide implements Service {
     public function get_viewRegistry():ViewRegistry return viewRegistry;
     public function get_layoutEngine():ILayoutEngine return layoutEngine;
     public function get_sceneService():ISceneService return sceneService;
+    public function get_shaderPreviewRenderer():ShaderPreviewRenderer return shaderPreviewRenderer;
 }
