@@ -64,7 +64,11 @@ class ShaderPreviewRenderer implements Service {
     
     private function onEngineReady():Void {
         s3d = new h3d.scene.Scene();
-        
+        s3d.renderer.shadows = false;
+        @:privateAccess s3d.ctx.globals.fastSet(
+            hxsl.Globals.allocID("shadow.proj"),
+            new h3d.Matrix() // пустая матрица
+        );
         // Камера
         var camera = s3d.camera;
         camera.pos.set(0, 2, 3);

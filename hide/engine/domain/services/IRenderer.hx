@@ -7,7 +7,7 @@ import hx.injection.Service;
  
 interface IRenderer extends Service {
     function init(container:Dynamic):Void;
-    function renderScene(root:SceneObject):Void;
+    //function renderScene(root:SceneObject):Void;
     function onResize(width:Int, height:Int):Void;
     function dispose():Void;
 }

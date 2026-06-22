@@ -4,10 +4,11 @@ package hide.infrastructure.external.litegraph;
 import js.html.CanvasElement;
 import js.html.Element;
 
-@:jsRequire("litegraph.js")
+@:jsRequire("litegraph.js", "LiteGraph")
 extern class LiteGraph {
     // Constants
     static var VERSION:Float;
+    
     static var CANVAS_GRID_SIZE:Float;
     static var NODE_TITLE_HEIGHT:Float;
     static var NODE_TITLE_TEXT_Y:Float;
