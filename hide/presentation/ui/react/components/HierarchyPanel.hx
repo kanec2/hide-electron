@@ -5,6 +5,7 @@ import react.ReactMacro.jsx;
 import hide.presentation.ui.react.BaseReactComponent;
 import hide.presentation.ui.react.hooks.UseService;
 import hide.presentation.ui.react.components.HierarchyIcon;
+import hide.presentation.ui.react.components.ContextMenu;
 import hide.shared.events.ObjectSelected;
 import hide.engine.domain.entities.SceneObject;
 
@@ -17,6 +18,7 @@ typedef HierarchyState = {
     var root: Null<SceneObject>;
     var selectedId: Null<String>;
     var searchQuery: String; // <-- НОВОЕ: строка поиска
+    var contextMenu: Null<{x: Float, y: Float, objId: String}>; // <-- НОВОЕ
 }
 
 class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> {
@@ -25,7 +27,8 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
         state = { 
             root: null, 
             selectedId: null,
-            searchQuery: "" // <-- Инициализируем пустым
+            searchQuery: "", // <-- Инициализируем пустым
+            contextMenu: null 
         };
     }
 
@@ -34,17 +37,17 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
         var eventBus = UseService.eventBus();
 
         // 1. Загружаем реальное дерево сцены
-        setState({ root: scene.getRoot(), selectedId: null, searchQuery: "" });
+        setState({ root: scene.getRoot(), selectedId: null, searchQuery: "",contextMenu:state.contextMenu });
 
         // 2. Подписываемся на изменения сцены (добавление/удаление объектов)
         subscribe(eventBus, hide.shared.events.ObjectChanged, function(_) {
-            setState({ root: scene.getRoot(), selectedId: state.selectedId, searchQuery: state.searchQuery });
+            setState({ root: scene.getRoot(), selectedId: state.selectedId, searchQuery: state.searchQuery,contextMenu:state.contextMenu });
         });
 
         // 3. Подписываемся на внешний выбор (например, кликом в 3D-вью)
         subscribe(eventBus, ObjectSelected, function(e:ObjectSelected) {
             trace('🖥️ [Hierarchy] Received ObjectSelected: ${e.objectId}');
-            setState({ root: state.root, selectedId: e.objectId, searchQuery: state.searchQuery });
+            setState({ root: state.root, selectedId: e.objectId, searchQuery: state.searchQuery,contextMenu:state.contextMenu });
         });
     }
 
@@ -54,7 +57,8 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
         setState({ 
             root: state.root, 
             selectedId: state.selectedId, 
-            searchQuery: target.value.toLowerCase() 
+            searchQuery: target.value.toLowerCase() ,
+            contextMenu:state.contextMenu
         });
     }
 
@@ -63,7 +67,8 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
         setState({ 
             root: state.root, 
             selectedId: state.selectedId, 
-            searchQuery: "" 
+            searchQuery: "",
+            contextMenu:state.contextMenu
         });
         
         // Опционально: можно сразу вернуть фокус в инпут
@@ -109,29 +114,38 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
         // Проверяем, есть ли что очищать
         var hasQuery = state.searchQuery.length > 0;
         var clearIcon = hasQuery ? jsx('
-                        <button 
-                            onClick={clearSearch}
-                            title="Clear search"
-                            style={{
-                                background: "transparent",
-                                border: "none",
-                                color: "#888",
-                                cursor: "pointer",
-                                padding: "2px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                borderRadius: "3px"
-                            }}
-                            onMouseOver={function(e) untyped e.currentTarget.style.color = "#fff"}
-                            onMouseOut={function(e) untyped e.currentTarget.style.color = "#888"}
-                        >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                        </button>
-                    ') : null;
+            <button 
+                onClick={clearSearch}
+                title="Clear search"
+                style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#888",
+                    cursor: "pointer",
+                    padding: "2px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "3px"
+                }}
+                onMouseOver={function(e) untyped e.currentTarget.style.color = "#fff"}
+                onMouseOut={function(e) untyped e.currentTarget.style.color = "#888"}
+            >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        ') : null;
+
+        var ctxMenu = state.contextMenu != null ? jsx('
+            <ContextMenu 
+                x={state.contextMenu.x} 
+                y={state.contextMenu.y} 
+                items={getHierarchyContextMenu(state.contextMenu.objId)}
+                onClose={function() setState({root: state.root, selectedId: state.selectedId, searchQuery: state.searchQuery, contextMenu: null})}
+            />
+        ') : null;
         return jsx('
             <div style={{display: "flex", flexDirection: "column", height: "100%", background: "#383838"}}>
                 <div style={{padding: "6px", 
@@ -164,12 +178,106 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
                     {clearIcon}
                 </div>
 
-=
                 <div style={{flex: 1, overflowY: "auto", padding: "4px 0"}}>
                     {renderObject(state.root, 0)}
                 </div>
+                {ctxMenu}
             </div>
         ');
+    }
+
+    // Метод для генерации пунктов меню
+    private function getHierarchyContextMenu(objId: String): Array<hide.presentation.ui.react.components.ContextMenu.MenuItem> {
+        var scene = UseService.sceneService();
+        var obj = scene.getObject(objId);
+        if (obj == null) return [];
+
+        var isRoot = obj.parent == null;
+        var closeMenu = function() {
+            setState({
+                root: state.root,
+                selectedId: state.selectedId,
+                searchQuery: state.searchQuery,
+                contextMenu: null // ✅ Закрываем меню после действия
+            });
+        };
+        return [
+            {
+                label: "Rename",
+                icon: "✏️",
+                action: function() {
+                    var newName = js.Browser.window.prompt("Enter new name:", obj.name);
+                    if (newName != null && newName.length > 0) {
+                        scene.rename(objId, newName);
+                    }
+                    closeMenu();
+                }
+            },
+            {
+                label: "Duplicate",
+                icon: "📋",
+                action: function() {
+                    // TODO: Реализовать дублирование через сервис сцены
+                    trace("Duplicate requested for: " + obj.name);
+                    closeMenu();
+                }
+            },
+            { separator: true, label: "sep1", action: function(){} },
+            {
+                label: "Create Empty Child",
+                icon: "➕",
+                action: function() {
+                    // TODO: Создать пустой объект и добавить как ребенка
+                    trace("Create child for: " + obj.name);
+                    closeMenu();
+                }
+            },
+            { separator: true, label: "sep2", action: function(){} },
+            {
+                label: "Delete",
+                icon: "🗑️",
+                disabled: isRoot, // Корневой объект нельзя удалить
+                action: function() {
+                    if (js.Browser.window.confirm("Delete '" + obj.name + "'?")) {
+                        // TODO: Удаление объекта
+                        trace("Delete requested for: " + obj.name);
+                        closeMenu();
+                    }
+                }
+            }
+        ];
+    }
+
+    // Обработчик правого клика на строке объекта
+    // Добавьте этот пропс в div строки объекта в renderObject():
+    // onContextMenu={function(e) handleContextMenu(e, obj.id)}
+    private function handleContextMenu(e: js.html.MouseEvent, objId: String): Void {
+        e.preventDefault();
+        e.stopPropagation();
+        // ✅ ЗАЩИТА ОТ ВЫХОДА ЗА ГРАНИЦЫ ЭКРАНА
+        var menuWidth = 200; // Примерная ширина меню
+        var menuHeight = 250; // Примерная высота
+        var winW = js.Browser.window.innerWidth;
+        var winH = js.Browser.window.innerHeight;
+        
+        var x = e.clientX;
+        var y = e.clientY;
+        
+        // Если меню не помещается справа — показываем слева от курсора
+        if (x + menuWidth > winW) {
+            x = winW - menuWidth - 10;
+        }
+        
+        // Если меню не помещается снизу — показываем выше курсора
+        if (y + menuHeight > winH) {
+            y = winH - menuHeight - 10;
+        }
+        setState({
+            root: state.root,
+            selectedId: state.selectedId,
+            searchQuery: state.searchQuery,
+            contextMenu: { x: x, y: y, objId: objId }
+        });
     }
     /**
      * Разбивает текст на массив ReactElement, подсвечивая совпадения желтым цветом.
@@ -257,7 +365,9 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
              <div key={obj.id}>
                  <div
                     style={rowStyle}
-                    onClick={handleSelect.bind(obj.id)}>
+                    onClick={function(_) handleSelect(obj.id)}
+                    onContextMenu={function(e:js.html.MouseEvent) handleContextMenu(e, obj.id)}
+                    >
                     
 
                     <span style={{width: "16px", textAlign: "center", fontSize: "10px", marginRight: "4px", color: "#888"}}>

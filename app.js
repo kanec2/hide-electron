@@ -120499,6 +120499,60 @@ hide_presentation_ui_react_components_ComponentIcon.prototype = $extend(React_Co
 	}
 	,__class__: hide_presentation_ui_react_components_ComponentIcon
 });
+var hide_presentation_ui_react_components_ContextMenu = function(props,context) {
+	React_Component.call(this,props,context);
+};
+$hxClasses["hide.presentation.ui.react.components.ContextMenu"] = hide_presentation_ui_react_components_ContextMenu;
+hide_presentation_ui_react_components_ContextMenu.__name__ = "hide.presentation.ui.react.components.ContextMenu";
+hide_presentation_ui_react_components_ContextMenu.__super__ = React_Component;
+hide_presentation_ui_react_components_ContextMenu.prototype = $extend(React_Component.prototype,{
+	componentDidMount: function() {
+		window.document.addEventListener("mousedown",$bind(this,this.handleGlobalClick));
+		window.addEventListener("keydown",$bind(this,this.handleKeyDown));
+	}
+	,componentWillUnmount: function() {
+		window.document.removeEventListener("mousedown",$bind(this,this.handleGlobalClick));
+		window.removeEventListener("keydown",$bind(this,this.handleKeyDown));
+	}
+	,handleGlobalClick: function(e) {
+		var target = js_Boot.__cast(e.target , HTMLElement);
+		if(target != null && target.closest(".context-menu-root") == null) {
+			this.props.onClose();
+		}
+	}
+	,handleKeyDown: function(e) {
+		if(e.key == "Escape") {
+			this.props.onClose();
+		}
+	}
+	,render: function() {
+		var tmp = { style : { position : "fixed", left : this.props.x + "px", top : this.props.y + "px", zIndex : 9999, background : "#252526", border : "1px solid #454545", boxShadow : "0 4px 12px rgba(0,0,0,0.5)", borderRadius : "4px", padding : "4px 0", minWidth : "180px", fontSize : "12px", color : "#cccccc"}, className : "context-menu-root"};
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = this.props.items;
+		while(_g1 < _g2.length) {
+			var item = _g2[_g1];
+			++_g1;
+			_g.push(this.renderItem(item));
+		}
+		return React.createElement("div",tmp,_g);
+	}
+	,renderItem: function(item) {
+		if(item.separator) {
+			return React.createElement("div",{ key : "sep-" + item.label, style : { height : "1px", background : "#454545", margin : "4px 0"}});
+		}
+		var isDisabled = item.disabled == true;
+		var innerElement = item.icon != null ? React.createElement("span",{ style : { width : "16px", textAlign : "center"}},item.icon) : React.createElement("span",{ style : { width : "16px"}});
+		var tmp = !isDisabled ? function(e) {
+			e.currentTarget.style.background = "#094771";
+		} : null;
+		var tmp1 = !isDisabled ? function(e) {
+			e.currentTarget.style.background = "transparent";
+		} : null;
+		return React.createElement("div",{ key : item.label, style : { padding : "4px 12px", cursor : isDisabled ? "default" : "pointer", display : "flex", alignItems : "center", gap : "8px", opacity : isDisabled ? 0.5 : 1, transition : "background 0.1s"}, onMouseOver : tmp, onMouseOut : tmp1, onClick : !isDisabled ? item.action : null, className : isDisabled ? "context-item disabled" : "context-item"},innerElement,React.createElement("span",{ },item.label));
+	}
+	,__class__: hide_presentation_ui_react_components_ContextMenu
+});
 var hide_presentation_ui_react_components_ObjectType = $hxEnums["hide.presentation.ui.react.components.ObjectType"] = { __ename__:"hide.presentation.ui.react.components.ObjectType",__constructs__:null
 	,Camera: {_hx_name:"Camera",_hx_index:0,__enum__:"hide.presentation.ui.react.components.ObjectType",toString:$estr}
 	,Light: {_hx_name:"Light",_hx_index:1,__enum__:"hide.presentation.ui.react.components.ObjectType",toString:$estr}
@@ -120545,7 +120599,7 @@ hide_presentation_ui_react_components_HierarchyIcon.prototype = $extend(React_Co
 });
 var hide_presentation_ui_react_components_HierarchyPanel = function() {
 	hide_presentation_ui_react_BaseReactComponent.call(this);
-	this.state = { root : null, selectedId : null, searchQuery : ""};
+	this.state = { root : null, selectedId : null, searchQuery : "", contextMenu : null};
 };
 $hxClasses["hide.presentation.ui.react.components.HierarchyPanel"] = hide_presentation_ui_react_components_HierarchyPanel;
 hide_presentation_ui_react_components_HierarchyPanel.__name__ = "hide.presentation.ui.react.components.HierarchyPanel";
@@ -120555,21 +120609,21 @@ hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_pr
 		var _gthis = this;
 		var scene = hide_presentation_ui_react_hooks_UseService.sceneService();
 		var eventBus = hide_presentation_ui_react_hooks_UseService.eventBus();
-		this.setState({ root : scene.getRoot(), selectedId : null, searchQuery : ""});
+		this.setState({ root : scene.getRoot(), selectedId : null, searchQuery : "", contextMenu : this.state.contextMenu});
 		this.subscribe(eventBus,hide_shared_events_ObjectChanged,function(_) {
-			_gthis.setState({ root : scene.getRoot(), selectedId : _gthis.state.selectedId, searchQuery : _gthis.state.searchQuery});
+			_gthis.setState({ root : scene.getRoot(), selectedId : _gthis.state.selectedId, searchQuery : _gthis.state.searchQuery, contextMenu : _gthis.state.contextMenu});
 		});
 		this.subscribe(eventBus,hide_shared_events_ObjectSelected,function(e) {
-			haxe_Log.trace("🖥️ [Hierarchy] Received ObjectSelected: " + e.objectId,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 46, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "componentDidMount"});
-			_gthis.setState({ root : _gthis.state.root, selectedId : e.objectId, searchQuery : _gthis.state.searchQuery});
+			haxe_Log.trace("🖥️ [Hierarchy] Received ObjectSelected: " + e.objectId,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 49, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "componentDidMount"});
+			_gthis.setState({ root : _gthis.state.root, selectedId : e.objectId, searchQuery : _gthis.state.searchQuery, contextMenu : _gthis.state.contextMenu});
 		});
 	}
 	,handleSearchChange: function(e) {
 		var target = js_Boot.__cast(e.target , HTMLInputElement);
-		this.setState({ root : this.state.root, selectedId : this.state.selectedId, searchQuery : target.value.toLowerCase()});
+		this.setState({ root : this.state.root, selectedId : this.state.selectedId, searchQuery : target.value.toLowerCase(), contextMenu : this.state.contextMenu});
 	}
 	,clearSearch: function() {
-		this.setState({ root : this.state.root, selectedId : this.state.selectedId, searchQuery : ""});
+		this.setState({ root : this.state.root, selectedId : this.state.selectedId, searchQuery : "", contextMenu : this.state.contextMenu});
 		var input = window.document.getElementById("hierarchy-search-input");
 		if(input != null) {
 			input.focus();
@@ -120606,6 +120660,7 @@ hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_pr
 		return hide_presentation_ui_react_components_ObjectType.Default;
 	}
 	,render: function() {
+		var _gthis = this;
 		if(this.state.root == null) {
 			return React.createElement("div",{ style : { padding : "10px", color : "#888"}},"No scene loaded");
 		}
@@ -120623,6 +120678,9 @@ hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_pr
 		} else {
 			clearIcon = null;
 		}
+		var ctxMenu = this.state.contextMenu != null ? React.createElement(hide_presentation_ui_react_components_ContextMenu,{ y : this.state.contextMenu.y, x : this.state.contextMenu.x, onClose : function() {
+			_gthis.setState({ root : _gthis.state.root, selectedId : _gthis.state.selectedId, searchQuery : _gthis.state.searchQuery, contextMenu : null});
+		}, items : this.getHierarchyContextMenu(this.state.contextMenu.objId)}) : null;
 		var tmp = React.createElement("circle",{ r : "8", cy : "11", cx : "11"});
 		var tmp1 = React.createElement("line",{ y2 : "16.65", y1 : "21", x2 : "16.65", x1 : "21"});
 		var tmp2 = React.createElement("svg",{ width : "14", viewBox : "0 0 24 24", strokeWidth : "2", strokeLinejoin : "round", strokeLinecap : "round", stroke : "#888", height : "14", fill : "none"},tmp,tmp1);
@@ -120630,7 +120688,56 @@ hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_pr
 		var tmp1 = React.createElement("div",{ style : { padding : "6px", borderBottom : "1px solid #2a2a2a", display : "flex", alignItems : "center", gap : "4px", background : "#2a2a2a"}},tmp2,tmp,clearIcon);
 		var tmp = this.renderObject(this.state.root,0);
 		var tmp2 = React.createElement("div",{ style : { flex : 1, overflowY : "auto", padding : "4px 0"}},tmp);
-		return React.createElement("div",{ style : { display : "flex", flexDirection : "column", height : "100%", background : "#383838"}},tmp1,"=",tmp2);
+		return React.createElement("div",{ style : { display : "flex", flexDirection : "column", height : "100%", background : "#383838"}},tmp1,tmp2,ctxMenu);
+	}
+	,getHierarchyContextMenu: function(objId) {
+		var _gthis = this;
+		var scene = hide_presentation_ui_react_hooks_UseService.sceneService();
+		var obj = scene.getObject(objId);
+		if(obj == null) {
+			return [];
+		}
+		var isRoot = obj.parent == null;
+		var closeMenu = function() {
+			_gthis.setState({ root : _gthis.state.root, selectedId : _gthis.state.selectedId, searchQuery : _gthis.state.searchQuery, contextMenu : null});
+		};
+		return [{ label : "Rename", icon : "✏️", action : function() {
+			var newName = window.prompt("Enter new name:",obj.name);
+			if(newName != null && newName.length > 0) {
+				scene.rename(objId,newName);
+			}
+			closeMenu();
+		}},{ label : "Duplicate", icon : "📋", action : function() {
+			haxe_Log.trace("Duplicate requested for: " + obj.name,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 221, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "getHierarchyContextMenu"});
+			closeMenu();
+		}},{ separator : true, label : "sep1", action : function() {
+		}},{ label : "Create Empty Child", icon : "➕", action : function() {
+			haxe_Log.trace("Create child for: " + obj.name,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 231, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "getHierarchyContextMenu"});
+			closeMenu();
+		}},{ separator : true, label : "sep2", action : function() {
+		}},{ label : "Delete", icon : "🗑️", disabled : isRoot, action : function() {
+			if(window.confirm("Delete '" + obj.name + "'?")) {
+				haxe_Log.trace("Delete requested for: " + obj.name,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 243, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "getHierarchyContextMenu"});
+				closeMenu();
+			}
+		}}];
+	}
+	,handleContextMenu: function(e,objId) {
+		e.preventDefault();
+		e.stopPropagation();
+		var menuWidth = 200;
+		var menuHeight = 250;
+		var winW = window.innerWidth;
+		var winH = window.innerHeight;
+		var x = e.clientX;
+		var y = e.clientY;
+		if(x + menuWidth > winW) {
+			x = winW - menuWidth - 10;
+		}
+		if(y + menuHeight > winH) {
+			y = winH - menuHeight - 10;
+		}
+		this.setState({ root : this.state.root, selectedId : this.state.selectedId, searchQuery : this.state.searchQuery, contextMenu : { x : x, y : y, objId : objId}});
 	}
 	,highlightText: function(text,query) {
 		if(query == "" || text.toLowerCase().indexOf(query) == -1) {
@@ -120658,6 +120765,7 @@ hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_pr
 		return React.createElement("span",{ },parts);
 	}
 	,renderObject: function(obj,depth) {
+		var _gthis = this;
 		if(!this.matchesSearch(obj,this.state.searchQuery)) {
 			return React.createElement("div",{ key : obj.id});
 		}
@@ -120689,15 +120797,18 @@ hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_pr
 		} else {
 			childrenList = React.createElement("div",{ });
 		}
-		var _g = this;
-		var id = obj.id;
-		var tmp = { style : rowStyle, onClick : function() {
-			_g.handleSelect(id);
-		}};
-		return React.createElement("div",{ key : obj.id},React.createElement("div",tmp,React.createElement("span",{ style : { width : "16px", textAlign : "center", fontSize : "10px", marginRight : "4px", color : "#888"}},hasChildren ? "▼" : " "),React.createElement(hide_presentation_ui_react_components_HierarchyIcon,{ type : iconType}),this.highlightText(obj.name,this.state.searchQuery)),childrenList);
+		var tmp = { key : obj.id};
+		var tmp1 = React.createElement("span",{ style : { width : "16px", textAlign : "center", fontSize : "10px", marginRight : "4px", color : "#888"}},hasChildren ? "▼" : " ");
+		var tmp2 = React.createElement(hide_presentation_ui_react_components_HierarchyIcon,{ type : iconType});
+		var tmp3 = this.highlightText(obj.name,this.state.searchQuery);
+		return React.createElement("div",tmp,React.createElement("div",{ style : rowStyle, onContextMenu : function(e) {
+			_gthis.handleContextMenu(e,obj.id);
+		}, onClick : function(_) {
+			_gthis.handleSelect(obj.id);
+		}},tmp1,tmp2,tmp3),childrenList);
 	}
 	,handleSelect: function(id) {
-		haxe_Log.trace("🎯 [Hierarchy] Selecting object: " + id,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 283, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "handleSelect"});
+		haxe_Log.trace("🎯 [Hierarchy] Selecting object: " + id,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 393, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "handleSelect"});
 		hide_presentation_ui_react_hooks_UseService.sceneService().select(id);
 	}
 	,__class__: hide_presentation_ui_react_components_HierarchyPanel
@@ -184923,6 +185034,7 @@ hide_engine_infrastructure_HeapsRenderer.isSystemInitialized = false;
 hide_engine_infrastructure_ShaderPreviewRenderer.isInitialized = false;
 hide_presentation_ui_react_BaseReactComponent.displayName = "BaseReactComponent";
 hide_presentation_ui_react_components_ComponentIcon.displayName = "ComponentIcon";
+hide_presentation_ui_react_components_ContextMenu.displayName = "ContextMenu";
 hide_presentation_ui_react_components_HierarchyIcon.displayName = "HierarchyIcon";
 hide_presentation_ui_react_components_HierarchyPanel.displayName = "HierarchyPanel";
 hide_presentation_ui_react_components_InspectorPanel.displayName = "InspectorPanel";
