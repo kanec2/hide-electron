@@ -17983,7 +17983,7 @@ h2d_col_Polygon.makeCircle = function(x,y,radius,npoints) {
 	if(npoints < 3) {
 		npoints = 3;
 	}
-	var angle = 6.28318530717958623 / npoints;
+	var angle = 6.2831853071795862 / npoints;
 	var points = [];
 	var _g = 0;
 	var _g1 = npoints;
@@ -26046,18 +26046,18 @@ h3d_VectorImpl.prototype = {
 		if(saturation == null) {
 			saturation = 1.;
 		}
-		var r = hue % 6.28318530717958623;
-		hue = r >= 0 ? r : r + 6.28318530717958623;
+		var r = hue % 6.2831853071795862;
+		hue = r >= 0 ? r : r + 6.2831853071795862;
 		var f = 2 * brightness - 1;
 		var c = (1 - (f < 0 ? -f : f)) * saturation;
 		var f = hue * 3 / 3.14159265358979323 % 2. - 1;
 		var x = c * (1 - (f < 0 ? -f : f));
 		var m = brightness - c / 2;
-		if(hue < 1.04719755119659763) {
+		if(hue < 1.0471975511965976) {
 			this.x = c;
 			this.y = x;
 			this.z = 0;
-		} else if(hue < 2.09439510239319526) {
+		} else if(hue < 2.0943951023931953) {
 			this.x = x;
 			this.y = c;
 			this.z = 0;
@@ -26065,11 +26065,11 @@ h3d_VectorImpl.prototype = {
 			this.x = 0;
 			this.y = c;
 			this.z = x;
-		} else if(hue < 4.18879020478639053) {
+		} else if(hue < 4.1887902047863905) {
 			this.x = 0;
 			this.y = x;
 			this.z = c;
-		} else if(hue < 5.23598775598298882) {
+		} else if(hue < 5.2359877559829888) {
 			this.x = x;
 			this.y = 0;
 			this.z = c;
@@ -26115,7 +26115,7 @@ h3d_VectorImpl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.04719755119659763;
+			h *= 1.0471975511965976;
 		}
 		var x = h;
 		var y = s;
@@ -26158,7 +26158,7 @@ h3d_VectorImpl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.04719755119659763;
+			h *= 1.0471975511965976;
 		}
 		var x = h;
 		var y = s;
@@ -26652,18 +26652,18 @@ h3d_Vector4Impl.prototype = {
 		if(saturation == null) {
 			saturation = 1.;
 		}
-		var r = hue % 6.28318530717958623;
-		hue = r >= 0 ? r : r + 6.28318530717958623;
+		var r = hue % 6.2831853071795862;
+		hue = r >= 0 ? r : r + 6.2831853071795862;
 		var f = 2 * brightness - 1;
 		var c = (1 - (f < 0 ? -f : f)) * saturation;
 		var f = hue * 3 / 3.14159265358979323 % 2. - 1;
 		var x = c * (1 - (f < 0 ? -f : f));
 		var m = brightness - c / 2;
-		if(hue < 1.04719755119659763) {
+		if(hue < 1.0471975511965976) {
 			this.x = c;
 			this.y = x;
 			this.z = 0;
-		} else if(hue < 2.09439510239319526) {
+		} else if(hue < 2.0943951023931953) {
 			this.x = x;
 			this.y = c;
 			this.z = 0;
@@ -26671,11 +26671,11 @@ h3d_Vector4Impl.prototype = {
 			this.x = 0;
 			this.y = c;
 			this.z = x;
-		} else if(hue < 4.18879020478639053) {
+		} else if(hue < 4.1887902047863905) {
 			this.x = 0;
 			this.y = x;
 			this.z = c;
-		} else if(hue < 5.23598775598298882) {
+		} else if(hue < 5.2359877559829888) {
 			this.x = x;
 			this.y = 0;
 			this.z = c;
@@ -26723,7 +26723,7 @@ h3d_Vector4Impl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.04719755119659763;
+			h *= 1.0471975511965976;
 		}
 		var x = h;
 		var y = s;
@@ -26770,7 +26770,7 @@ h3d_Vector4Impl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.04719755119659763;
+			h *= 1.0471975511965976;
 		}
 		var x = h;
 		var y = s;
@@ -40209,15 +40209,15 @@ h3d_col_OrientedBounds.prototype = $extend(h3d_col_Collider.prototype,{
 		var rpz = dx * this.zx + dy * this.zy + dz * this.zz;
 		var tmp;
 		var f = this.hx;
-		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-10) {
+		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-010) {
 			var f = this.hy;
-			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-10;
+			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-010;
 		} else {
 			tmp = false;
 		}
 		if(tmp) {
 			var f = this.hz;
-			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-10;
+			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-010;
 		} else {
 			return false;
 		}
@@ -40237,15 +40237,15 @@ h3d_col_OrientedBounds.prototype = $extend(h3d_col_Collider.prototype,{
 		var rpz = dx * this.zx + dy * this.zy + dz * this.zz;
 		var tmp;
 		var f = this.hx;
-		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-10 - s.r) {
+		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-010 - s.r) {
 			var f = this.hy;
-			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-10 - s.r;
+			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-010 - s.r;
 		} else {
 			tmp = false;
 		}
 		if(tmp) {
 			var f = this.hz;
-			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-10 - s.r;
+			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-010 - s.r;
 		} else {
 			return false;
 		}
@@ -78469,7 +78469,7 @@ h3d_scene_FPSCameraController.prototype = $extend(h3d_scene_CameraController.pro
 		var ty = this.targetOffset.y + this.curPos.x / this.curOffset.w * Math.sin(this.curPos.y) * Math.sin(this.curPos.z);
 		var tz = this.targetOffset.z + this.curPos.x / this.curOffset.w * Math.cos(this.curPos.z);
 		this.targetPos.y = this.curPos.y - dtheta;
-		var min = 0.0314159265358979339;
+		var min = 0.031415926535897934;
 		var f = this.curPos.z - dphi;
 		var min1 = min;
 		var max = 3.14159265358979323 - min;
@@ -99826,7 +99826,7 @@ h3d_shader_Shadow.prototype = $extend(hxsl_Shader.prototype,{
 	,__class__: h3d_shader_Shadow
 });
 var h3d_shader_SignedDistanceField = function() {
-	this.smoothing__ = 0.0416666666666666644;
+	this.smoothing__ = 0.041666666666666664;
 	this.alphaCutoff__ = 0.5;
 	this.autoSmoothing__ = false;
 	this.channel__ = 0;
@@ -115158,6 +115158,210 @@ var haxe_macro_TypedExprDef = $hxEnums["haxe.macro.TypedExprDef"] = { __ename__:
 };
 haxe_macro_TypedExprDef.__constructs__ = [haxe_macro_TypedExprDef.TConst,haxe_macro_TypedExprDef.TLocal,haxe_macro_TypedExprDef.TArray,haxe_macro_TypedExprDef.TBinop,haxe_macro_TypedExprDef.TField,haxe_macro_TypedExprDef.TTypeExpr,haxe_macro_TypedExprDef.TParenthesis,haxe_macro_TypedExprDef.TObjectDecl,haxe_macro_TypedExprDef.TArrayDecl,haxe_macro_TypedExprDef.TCall,haxe_macro_TypedExprDef.TNew,haxe_macro_TypedExprDef.TUnop,haxe_macro_TypedExprDef.TFunction,haxe_macro_TypedExprDef.TVar,haxe_macro_TypedExprDef.TBlock,haxe_macro_TypedExprDef.TFor,haxe_macro_TypedExprDef.TIf,haxe_macro_TypedExprDef.TWhile,haxe_macro_TypedExprDef.TSwitch,haxe_macro_TypedExprDef.TTry,haxe_macro_TypedExprDef.TReturn,haxe_macro_TypedExprDef.TBreak,haxe_macro_TypedExprDef.TContinue,haxe_macro_TypedExprDef.TThrow,haxe_macro_TypedExprDef.TCast,haxe_macro_TypedExprDef.TMeta,haxe_macro_TypedExprDef.TEnumParameter,haxe_macro_TypedExprDef.TEnumIndex,haxe_macro_TypedExprDef.TIdent];
 haxe_macro_TypedExprDef.__empty_constructs__ = [haxe_macro_TypedExprDef.TBreak,haxe_macro_TypedExprDef.TContinue];
+var haxe_macro_TypeTools = function() { };
+$hxClasses["haxe.macro.TypeTools"] = haxe_macro_TypeTools;
+haxe_macro_TypeTools.__name__ = "haxe.macro.TypeTools";
+haxe_macro_TypeTools.nullable = function(complexType) {
+	return haxe_macro_ComplexType.TPath({ pack : [], name : "Null", params : [haxe_macro_TypeParam.TPType(complexType)]});
+};
+haxe_macro_TypeTools.toField = function(cf) {
+	var varAccessToString = function(va,getOrSet) {
+		switch(va._hx_index) {
+		case 1:
+			return "null";
+		case 2:
+			return "never";
+		case 3:
+			throw haxe_Exception.thrown("Invalid TAnonymous");
+		case 4:
+			return getOrSet;
+		case 5:
+			return "default";
+		case 6:
+			var _g = va.r;
+			var _g = va.msg;
+			return "default";
+		case 0:case 7:
+			return "default";
+		}
+	};
+	var access = cf.isPublic ? [haxe_macro_Access.APublic] : [haxe_macro_Access.APrivate];
+	if(cf.meta.has(":final")) {
+		access.push(haxe_macro_Access.AFinal);
+	}
+	if(cf.params.length == 0) {
+		var cf1 = cf.name;
+		var cf2 = cf.doc;
+		var tmp;
+		var _g = cf.kind;
+		var _g1 = cf.type;
+		switch(_g._hx_index) {
+		case 0:
+			var read = _g.read;
+			var write = _g.write;
+			var ret = _g1;
+			tmp = haxe_macro_FieldType.FProp(varAccessToString(read,"get"),varAccessToString(write,"set"),haxe_macro_TypeTools.toComplexType(ret),null);
+			break;
+		case 1:
+			var _g2 = _g.k;
+			if(_g1._hx_index == 4) {
+				var args = _g1.args;
+				var ret = _g1.ret;
+				var _g = [];
+				var _g1 = 0;
+				while(_g1 < args.length) {
+					var a = args[_g1];
+					++_g1;
+					_g.push({ name : a.name, opt : a.opt, type : haxe_macro_TypeTools.toComplexType(a.t)});
+				}
+				tmp = haxe_macro_FieldType.FFun({ args : _g, ret : haxe_macro_TypeTools.toComplexType(ret), expr : null});
+			} else {
+				throw haxe_Exception.thrown("Invalid TAnonymous");
+			}
+			break;
+		}
+		return { name : cf1, doc : cf2, access : access, kind : tmp, pos : cf.pos, meta : cf.meta.get()};
+	} else {
+		throw haxe_Exception.thrown("Invalid TAnonymous");
+	}
+};
+haxe_macro_TypeTools.toComplexType = function(type) {
+	if(type == null) {
+		return null;
+	} else {
+		switch(type._hx_index) {
+		case 0:
+			var t = type.t.get();
+			if(t == null) {
+				return null;
+			} else {
+				return haxe_macro_TypeTools.toComplexType(t);
+			}
+			break;
+		case 1:
+			var baseType = type.t.get();
+			var params = type.params;
+			return haxe_macro_ComplexType.TPath(haxe_macro_TypeTools.toTypePath(baseType,params));
+		case 2:
+			var classType = type.t.get();
+			var params = type.params;
+			var _g = classType.kind;
+			if(_g._hx_index == 1) {
+				var _g1 = _g.constraints;
+				return haxe_macro_ComplexType.TPath({ name : classType.name, pack : []});
+			} else {
+				return haxe_macro_ComplexType.TPath(haxe_macro_TypeTools.toTypePath(classType,params));
+			}
+			break;
+		case 3:
+			var baseType = type.t.get();
+			var params = type.params;
+			return haxe_macro_ComplexType.TPath(haxe_macro_TypeTools.toTypePath(baseType,params));
+		case 4:
+			var args = type.args;
+			var ret = type.ret;
+			var _g = [];
+			var _g1 = 0;
+			while(_g1 < args.length) {
+				var a = args[_g1];
+				++_g1;
+				_g.push(a.opt ? haxe_macro_TypeTools.nullable(haxe_macro_TypeTools.toComplexType(a.t)) : haxe_macro_TypeTools.toComplexType(a.t));
+			}
+			return haxe_macro_ComplexType.TFunction(_g,haxe_macro_TypeTools.toComplexType(ret));
+		case 5:
+			var _hx_tmp = type.a.get();
+			var _g = _hx_tmp.status;
+			var fields = _hx_tmp.fields;
+			var _g = [];
+			var _g1 = 0;
+			while(_g1 < fields.length) {
+				var cf = fields[_g1];
+				++_g1;
+				_g.push(haxe_macro_TypeTools.toField(cf));
+			}
+			return haxe_macro_ComplexType.TAnonymous(_g);
+		case 6:
+			var t = type.t;
+			if(t == null) {
+				return haxe_macro_ComplexType.TPath({ pack : [], name : "Dynamic", params : []});
+			} else {
+				var ct = haxe_macro_TypeTools.toComplexType(t);
+				return haxe_macro_ComplexType.TPath({ pack : [], name : "Dynamic", params : [haxe_macro_TypeParam.TPType(ct)]});
+			}
+			break;
+		case 7:
+			var f = type.f;
+			return haxe_macro_TypeTools.toComplexType(f());
+		case 8:
+			var baseType = type.t.get();
+			var params = type.params;
+			return haxe_macro_ComplexType.TPath(haxe_macro_TypeTools.toTypePath(baseType,params));
+		}
+	}
+};
+haxe_macro_TypeTools.toTypeParam = function(type) {
+	if(type._hx_index == 2) {
+		var _g = type.params;
+		var _hx_tmp = type.t.get();
+		var _g = _hx_tmp.constructor;
+		var _g = _hx_tmp.doc;
+		var _g = _hx_tmp.fields;
+		var _g = _hx_tmp.init;
+		var _g = _hx_tmp.interfaces;
+		var _g = _hx_tmp.isAbstract;
+		var _g = _hx_tmp.isExtern;
+		var _g = _hx_tmp.isFinal;
+		var _g = _hx_tmp.isInterface;
+		var _g = _hx_tmp.isPrivate;
+		var _g = _hx_tmp.kind;
+		var _g1 = _hx_tmp.meta;
+		var _g1 = _hx_tmp.module;
+		var _g1 = _hx_tmp.name;
+		var _g1 = _hx_tmp.overrides;
+		var _g1 = _hx_tmp.pack;
+		var _g1 = _hx_tmp.params;
+		var _g1 = _hx_tmp.pos;
+		var _g1 = _hx_tmp.statics;
+		var _g1 = _hx_tmp.superClass;
+		if(_g._hx_index == 3) {
+			var e = _g.expr;
+			return haxe_macro_TypeParam.TPExpr(e);
+		} else {
+			return haxe_macro_TypeParam.TPType(haxe_macro_TypeTools.toComplexType(type));
+		}
+	} else {
+		return haxe_macro_TypeParam.TPType(haxe_macro_TypeTools.toComplexType(type));
+	}
+};
+haxe_macro_TypeTools.toTypePath = function(baseType,params) {
+	var $module = baseType.module;
+	var baseType1 = baseType.pack;
+	var tmp = $module.substring($module.lastIndexOf(".") + 1);
+	var baseType2 = baseType.name;
+	var _g = [];
+	var _g1 = 0;
+	while(_g1 < params.length) {
+		var t = params[_g1];
+		++_g1;
+		_g.push(haxe_macro_TypeTools.toTypeParam(t));
+	}
+	return { pack : baseType1, name : tmp, sub : baseType2, params : _g};
+};
+haxe_macro_TypeTools.findField = function(c,name,isStatic) {
+	if(isStatic == null) {
+		isStatic = false;
+	}
+	var field = Lambda.find((isStatic ? c.statics : c.fields).get(),function(field) {
+		return field.name == name;
+	});
+	if(field != null) {
+		return field;
+	} else if(c.superClass != null) {
+		return haxe_macro_TypeTools.findField(c.superClass.t.get(),name,isStatic);
+	} else {
+		return null;
+	}
+};
 var haxe_xml__$Access_NodeAccess = {};
 haxe_xml__$Access_NodeAccess.resolve = function(this1,name) {
 	var x = this1.elementsNamed(name).next();
@@ -117826,8 +118030,8 @@ hide_engine_infrastructure_HeapsRenderer.prototype = {
 			this.meshOriginalColor.set(targetMesh,orig);
 		}
 		var _this = targetMesh.material.mshader.color__;
-		_this.x = 0.415686274509803944;
-		_this.y = 0.690196078431372539;
+		_this.x = 0.41568627450980394;
+		_this.y = 0.69019607843137254;
 		_this.z = 1.;
 		_this.w = 0.;
 		var worldBounds = targetMesh.getBounds();
@@ -118335,8 +118539,8 @@ hide_engine_infrastructure_HeapsRenderer.prototype = {
 							return function(e) {
 								if(_gthis.selectedMeshRef != mesh[0]) {
 									var _this = mesh[0].material.mshader.color__;
-									_this.x = 0.415686274509803944;
-									_this.y = 0.690196078431372539;
+									_this.x = 0.41568627450980394;
+									_this.y = 0.69019607843137254;
 									_this.z = 1.;
 									_this.w = 0.;
 								}
@@ -118352,9 +118556,9 @@ hide_engine_infrastructure_HeapsRenderer.prototype = {
 										mesh[0].material.mshader.color__.z = orig.z;
 									} else {
 										var _this = mesh[0].material.mshader.color__;
-										_this.x = 0.290196078431372573;
-										_this.y = 0.564705882352941169;
-										_this.z = 0.886274509803921529;
+										_this.x = 0.29019607843137257;
+										_this.y = 0.56470588235294117;
+										_this.z = 0.88627450980392153;
 										_this.w = 0.;
 									}
 								}
@@ -118481,9 +118685,9 @@ hide_engine_infrastructure_HeapsRenderer.prototype = {
 		cube.addUVs();
 		var mesh = new h3d_scene_Mesh(cube);
 		var _this = mesh.material.mshader.color__;
-		_this.x = 0.290196078431372573;
-		_this.y = 0.564705882352941169;
-		_this.z = 0.886274509803921529;
+		_this.x = 0.29019607843137257;
+		_this.y = 0.56470588235294117;
+		_this.z = 0.88627450980392153;
 		_this.w = 0.;
 		mesh.material.passes.set_enableLights(true);
 		return mesh;
@@ -119132,7 +119336,7 @@ hide_infrastructure_external_StubConsoleFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubConsoleFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubConsoleFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>🖥️ Console</h2>\n                <p>Console output will appear here.</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>🖥️ Console</h2>\r\n                <p>Console output will appear here.</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -119147,7 +119351,7 @@ hide_infrastructure_external_StubEditorFactory.__name__ = "hide.infrastructure.e
 hide_infrastructure_external_StubEditorFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubEditorFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>📝 Stub Editor</h2>\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\n                <p>Состояние: " + JSON.stringify(state) + "</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>📝 Stub Editor</h2>\r\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\r\n                <p>Состояние: " + JSON.stringify(state) + "</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -119162,7 +119366,7 @@ hide_infrastructure_external_StubGameFactory.__name__ = "hide.infrastructure.ext
 hide_infrastructure_external_StubGameFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubGameFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\n                    Resolution: 1920×1080 | Stats: OFF\n                </div>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\r\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\r\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\r\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\r\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\r\n                    Resolution: 1920×1080 | Stats: OFF\r\n                </div>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -119177,7 +119381,7 @@ hide_infrastructure_external_StubProjectFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubProjectFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubProjectFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\n                </div>\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                            ▼ 📁 Assets\n                        </div>\n                        <div style='padding-left:16px;'>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Materials\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Prefabs\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scenes\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scripts\n                            </div>\n                            <div style='padding-left:16px;'>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                📁 Textures\n                            </div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\r\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\r\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\r\n                </div>\r\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\r\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\r\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                            ▼ 📁 Assets\r\n                        </div>\r\n                        <div style='padding-left:16px;'>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Materials\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Prefabs\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scenes\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scripts\r\n                            </div>\r\n                            <div style='padding-left:16px;'>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                📁 Textures\r\n                            </div>\r\n                        </div>\r\n                    </div>\r\n                </div>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -119192,7 +119396,7 @@ hide_infrastructure_external_StubPropertiesFactory.__name__ = "hide.infrastructu
 hide_infrastructure_external_StubPropertiesFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubPropertiesFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\n                <h2>⚙️ Properties</h2>\n                <p>Object properties will appear here.</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\r\n                <h2>⚙️ Properties</h2>\r\n                <p>Object properties will appear here.</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -120264,9 +120468,84 @@ hide_presentation_ui_react_BaseReactComponent.prototype = $extend(React_Componen
 	}
 	,__class__: hide_presentation_ui_react_BaseReactComponent
 });
+var hide_presentation_ui_react_components_ComponentIcon = function(props,context) {
+	React_Component.call(this,props,context);
+};
+$hxClasses["hide.presentation.ui.react.components.ComponentIcon"] = hide_presentation_ui_react_components_ComponentIcon;
+hide_presentation_ui_react_components_ComponentIcon.__name__ = "hide.presentation.ui.react.components.ComponentIcon";
+hide_presentation_ui_react_components_ComponentIcon.__super__ = React_Component;
+hide_presentation_ui_react_components_ComponentIcon.prototype = $extend(React_Component.prototype,{
+	render: function() {
+		var color = "#9ca3af";
+		var svgPath = "";
+		switch(this.props.className) {
+		case "hide.engine.domain.entities.MeshRenderer":
+			color = "#60a5fa";
+			svgPath = "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96L12 12.01l8.73-5.05 M12 22.08V12";
+			break;
+		case "hide.engine.domain.entities.Rigidbody":
+			color = "#facc15";
+			svgPath = "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm0-4a2 2 0 1 1 0-4 2 2 0 0 1 0 4z";
+			break;
+		case "hide.engine.domain.entities.Transform":
+			color = "#d1d5db";
+			svgPath = "M3 12h18M12 3v18m-9-9l4-4m5 5l4-4m-9 9l4 4m5-5l4 4";
+			break;
+		default:
+			svgPath = "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z";
+		}
+		var tmp = React.createElement("path",{ d : svgPath});
+		return React.createElement("svg",{ width : "14", viewBox : "0 0 24 24", style : { marginRight : "6px", flexShrink : "0", verticalAlign : "middle"}, strokeWidth : "2", strokeLinejoin : "round", strokeLinecap : "round", stroke : color, height : "14", fill : "none"},tmp);
+	}
+	,__class__: hide_presentation_ui_react_components_ComponentIcon
+});
+var hide_presentation_ui_react_components_ObjectType = $hxEnums["hide.presentation.ui.react.components.ObjectType"] = { __ename__:"hide.presentation.ui.react.components.ObjectType",__constructs__:null
+	,Camera: {_hx_name:"Camera",_hx_index:0,__enum__:"hide.presentation.ui.react.components.ObjectType",toString:$estr}
+	,Light: {_hx_name:"Light",_hx_index:1,__enum__:"hide.presentation.ui.react.components.ObjectType",toString:$estr}
+	,Mesh: {_hx_name:"Mesh",_hx_index:2,__enum__:"hide.presentation.ui.react.components.ObjectType",toString:$estr}
+	,Player: {_hx_name:"Player",_hx_index:3,__enum__:"hide.presentation.ui.react.components.ObjectType",toString:$estr}
+	,Default: {_hx_name:"Default",_hx_index:4,__enum__:"hide.presentation.ui.react.components.ObjectType",toString:$estr}
+};
+hide_presentation_ui_react_components_ObjectType.__constructs__ = [hide_presentation_ui_react_components_ObjectType.Camera,hide_presentation_ui_react_components_ObjectType.Light,hide_presentation_ui_react_components_ObjectType.Mesh,hide_presentation_ui_react_components_ObjectType.Player,hide_presentation_ui_react_components_ObjectType.Default];
+hide_presentation_ui_react_components_ObjectType.__empty_constructs__ = [hide_presentation_ui_react_components_ObjectType.Camera,hide_presentation_ui_react_components_ObjectType.Light,hide_presentation_ui_react_components_ObjectType.Mesh,hide_presentation_ui_react_components_ObjectType.Player,hide_presentation_ui_react_components_ObjectType.Default];
+var hide_presentation_ui_react_components_HierarchyIcon = function(props,context) {
+	React_Component.call(this,props,context);
+};
+$hxClasses["hide.presentation.ui.react.components.HierarchyIcon"] = hide_presentation_ui_react_components_HierarchyIcon;
+hide_presentation_ui_react_components_HierarchyIcon.__name__ = "hide.presentation.ui.react.components.HierarchyIcon";
+hide_presentation_ui_react_components_HierarchyIcon.__super__ = React_Component;
+hide_presentation_ui_react_components_HierarchyIcon.prototype = $extend(React_Component.prototype,{
+	render: function() {
+		var color = "#9ca3af";
+		var svgPath = "";
+		switch(this.props.type._hx_index) {
+		case 0:
+			color = "#60a5fa";
+			svgPath = "M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z";
+			break;
+		case 1:
+			color = "#facc15";
+			svgPath = "M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z";
+			break;
+		case 2:
+			color = "#d1d5db";
+			svgPath = "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96L12 12.01l8.73-5.05 M12 22.08V12";
+			break;
+		case 3:
+			color = "#4ade80";
+			svgPath = "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z";
+			break;
+		default:
+			svgPath = "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8";
+		}
+		var tmp = React.createElement("path",{ d : svgPath});
+		return React.createElement("svg",{ width : "16", viewBox : "0 0 24 24", style : { marginRight : "6px", flexShrink : "0"}, strokeWidth : "2", strokeLinejoin : "round", strokeLinecap : "round", stroke : color, height : "16", fill : "none"},tmp);
+	}
+	,__class__: hide_presentation_ui_react_components_HierarchyIcon
+});
 var hide_presentation_ui_react_components_HierarchyPanel = function() {
 	hide_presentation_ui_react_BaseReactComponent.call(this);
-	this.state = { root : null, selectedId : null};
+	this.state = { root : null, selectedId : null, searchQuery : ""};
 };
 $hxClasses["hide.presentation.ui.react.components.HierarchyPanel"] = hide_presentation_ui_react_components_HierarchyPanel;
 hide_presentation_ui_react_components_HierarchyPanel.__name__ = "hide.presentation.ui.react.components.HierarchyPanel";
@@ -120276,27 +120555,126 @@ hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_pr
 		var _gthis = this;
 		var scene = hide_presentation_ui_react_hooks_UseService.sceneService();
 		var eventBus = hide_presentation_ui_react_hooks_UseService.eventBus();
-		this.setState({ root : scene.getRoot(), selectedId : null});
+		this.setState({ root : scene.getRoot(), selectedId : null, searchQuery : ""});
 		this.subscribe(eventBus,hide_shared_events_ObjectChanged,function(_) {
-			_gthis.setState({ root : scene.getRoot(), selectedId : _gthis.state.selectedId});
+			_gthis.setState({ root : scene.getRoot(), selectedId : _gthis.state.selectedId, searchQuery : _gthis.state.searchQuery});
 		});
 		this.subscribe(eventBus,hide_shared_events_ObjectSelected,function(e) {
-			haxe_Log.trace("🖥️ [Hierarchy] Received ObjectSelected: " + e.objectId,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 40, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "componentDidMount"});
-			_gthis.setState({ root : _gthis.state.root, selectedId : e.objectId});
+			haxe_Log.trace("🖥️ [Hierarchy] Received ObjectSelected: " + e.objectId,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 46, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "componentDidMount"});
+			_gthis.setState({ root : _gthis.state.root, selectedId : e.objectId, searchQuery : _gthis.state.searchQuery});
 		});
+	}
+	,handleSearchChange: function(e) {
+		var target = js_Boot.__cast(e.target , HTMLInputElement);
+		this.setState({ root : this.state.root, selectedId : this.state.selectedId, searchQuery : target.value.toLowerCase()});
+	}
+	,clearSearch: function() {
+		this.setState({ root : this.state.root, selectedId : this.state.selectedId, searchQuery : ""});
+		var input = window.document.getElementById("hierarchy-search-input");
+		if(input != null) {
+			input.focus();
+		}
+	}
+	,matchesSearch: function(obj,query) {
+		if(query == "") {
+			return true;
+		}
+		if(obj.name.toLowerCase().indexOf(query) != -1) {
+			return true;
+		}
+		var _g = 0;
+		var _g1 = obj.children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			if(this.matchesSearch(child,query)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	,getObjectType: function(obj) {
+		if(obj.name.indexOf("Camera") != -1) {
+			return hide_presentation_ui_react_components_ObjectType.Camera;
+		}
+		if(obj.name.indexOf("Light") != -1) {
+			return hide_presentation_ui_react_components_ObjectType.Light;
+		}
+		if(obj.name == "Player") {
+			return hide_presentation_ui_react_components_ObjectType.Player;
+		}
+		return hide_presentation_ui_react_components_ObjectType.Default;
 	}
 	,render: function() {
 		if(this.state.root == null) {
 			return React.createElement("div",{ style : { padding : "10px", color : "#888"}},"No scene loaded");
 		}
+		var hasQuery = this.state.searchQuery.length > 0;
+		var clearIcon;
+		if(hasQuery) {
+			var clearIcon1 = React.createElement("line",{ y2 : "18", y1 : "6", x2 : "6", x1 : "18"});
+			var clearIcon2 = React.createElement("line",{ y2 : "18", y1 : "6", x2 : "18", x1 : "6"});
+			var clearIcon3 = React.createElement("svg",{ width : "14", viewBox : "0 0 24 24", strokeWidth : "2", strokeLinejoin : "round", strokeLinecap : "round", stroke : "currentColor", height : "14", fill : "none"},clearIcon1,clearIcon2);
+			clearIcon = React.createElement("button",{ title : "Clear search", style : { background : "transparent", border : "none", color : "#888", cursor : "pointer", padding : "2px", display : "flex", alignItems : "center", justifyContent : "center", borderRadius : "3px"}, onMouseOver : function(e) {
+				e.currentTarget.style.color = "#fff";
+			}, onMouseOut : function(e) {
+				e.currentTarget.style.color = "#888";
+			}, onClick : $bind(this,this.clearSearch)},clearIcon3);
+		} else {
+			clearIcon = null;
+		}
+		var tmp = React.createElement("circle",{ r : "8", cy : "11", cx : "11"});
+		var tmp1 = React.createElement("line",{ y2 : "16.65", y1 : "21", x2 : "16.65", x1 : "21"});
+		var tmp2 = React.createElement("svg",{ width : "14", viewBox : "0 0 24 24", strokeWidth : "2", strokeLinejoin : "round", strokeLinecap : "round", stroke : "#888", height : "14", fill : "none"},tmp,tmp1);
+		var tmp = React.createElement("input",{ value : this.state.searchQuery, type : "text", style : { width : "100%", padding : "4px 8px", background : "#2a2a2a", border : "1px solid #444", borderRadius : "3px", color : "#d4d4d4", outline : "none", boxSizing : "border-box"}, placeholder : "Search objects...", onChange : $bind(this,this.handleSearchChange)});
+		var tmp1 = React.createElement("div",{ style : { padding : "6px", borderBottom : "1px solid #2a2a2a", display : "flex", alignItems : "center", gap : "4px", background : "#2a2a2a"}},tmp2,tmp,clearIcon);
 		var tmp = this.renderObject(this.state.root,0);
-		return React.createElement("div",{ style : { padding : "10px", color : "#d4d4d4", background : "#383838", height : "100%", fontFamily : "sans-serif", fontSize : "13px"}},tmp);
+		var tmp2 = React.createElement("div",{ style : { flex : 1, overflowY : "auto", padding : "4px 0"}},tmp);
+		return React.createElement("div",{ style : { display : "flex", flexDirection : "column", height : "100%", background : "#383838"}},tmp1,"=",tmp2);
+	}
+	,highlightText: function(text,query) {
+		if(query == "" || text.toLowerCase().indexOf(query) == -1) {
+			return React.createElement("span",{ },text);
+		}
+		var lowerText = text.toLowerCase();
+		var lowerQuery = query.toLowerCase();
+		var parts = [];
+		var lastIndex = 0;
+		var index = 0;
+		while(true) {
+			index = lowerText.indexOf(lowerQuery,lastIndex);
+			if(!(index != -1)) {
+				break;
+			}
+			if(index > lastIndex) {
+				parts.push(React.createElement("span",{ key : "t" + parts.length},text.substring(lastIndex,index)));
+			}
+			parts.push(React.createElement("span",{ key : "h" + parts.length, style : { backgroundColor : "#facc15", color : "#000", borderRadius : "2px", padding : "0 2px", fontWeight : "bold"}},text.substring(index,index + query.length)));
+			lastIndex = index + query.length;
+		}
+		if(lastIndex < text.length) {
+			parts.push(React.createElement("span",{ key : "e" + parts.length},text.substring(lastIndex)));
+		}
+		return React.createElement("span",{ },parts);
 	}
 	,renderObject: function(obj,depth) {
+		if(!this.matchesSearch(obj,this.state.searchQuery)) {
+			return React.createElement("div",{ key : obj.id});
+		}
 		var isSelected = this.state.selectedId == obj.id;
 		var hasChildren = obj.children != null && obj.children.length > 0;
 		var paddingLeft = depth * 16;
-		var rowStyle = { padding : "3px 8px", paddingLeft : paddingLeft + 8 + "px", cursor : "pointer", borderRadius : "3px", background : isSelected ? "#2d5c8a" : "transparent"};
+		var rowStyle = { padding : "3px 8px", paddingLeft : paddingLeft + 8 + "px", cursor : "pointer", borderRadius : "3px", background : isSelected ? "#2d5c8a" : "transparent", display : "flex", alignItems : "center"};
+		var iconType = hide_presentation_ui_react_components_ObjectType.Default;
+		if(obj.name.indexOf("Camera") != -1) {
+			iconType = hide_presentation_ui_react_components_ObjectType.Camera;
+		} else if(obj.name.indexOf("Light") != -1) {
+			iconType = hide_presentation_ui_react_components_ObjectType.Light;
+		} else if(obj.name == "Player") {
+			iconType = hide_presentation_ui_react_components_ObjectType.Player;
+		} else if(obj.components.length > 0) {
+			iconType = hide_presentation_ui_react_components_ObjectType.Mesh;
+		}
 		var childrenList;
 		if(hasChildren) {
 			var _g = [];
@@ -120313,20 +120691,20 @@ hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_pr
 		}
 		var _g = this;
 		var id = obj.id;
-		var tmp = function() {
+		var tmp = { style : rowStyle, onClick : function() {
 			_g.handleSelect(id);
-		};
-		return React.createElement("div",{ key : obj.id},React.createElement("div",{ style : rowStyle, onClick : tmp},hasChildren ? "▼ " : "  ","🎭 ",obj.name),childrenList);
+		}};
+		return React.createElement("div",{ key : obj.id},React.createElement("div",tmp,React.createElement("span",{ style : { width : "16px", textAlign : "center", fontSize : "10px", marginRight : "4px", color : "#888"}},hasChildren ? "▼" : " "),React.createElement(hide_presentation_ui_react_components_HierarchyIcon,{ type : iconType}),this.highlightText(obj.name,this.state.searchQuery)),childrenList);
 	}
 	,handleSelect: function(id) {
-		haxe_Log.trace("🎯 [Hierarchy] Selecting object: " + id,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 94, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "handleSelect"});
+		haxe_Log.trace("🎯 [Hierarchy] Selecting object: " + id,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 283, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "handleSelect"});
 		hide_presentation_ui_react_hooks_UseService.sceneService().select(id);
 	}
 	,__class__: hide_presentation_ui_react_components_HierarchyPanel
 });
 var hide_presentation_ui_react_components_InspectorPanel = function() {
 	hide_presentation_ui_react_BaseReactComponent.call(this);
-	this.state = { selectedObject : null};
+	this.state = { selectedObject : null, collapsedComponents : new haxe_ds_StringMap()};
 };
 $hxClasses["hide.presentation.ui.react.components.InspectorPanel"] = hide_presentation_ui_react_components_InspectorPanel;
 hide_presentation_ui_react_components_InspectorPanel.__name__ = "hide.presentation.ui.react.components.InspectorPanel";
@@ -120336,21 +120714,31 @@ hide_presentation_ui_react_components_InspectorPanel.prototype = $extend(hide_pr
 		var _gthis = this;
 		var eventBus = hide_presentation_ui_react_hooks_UseService.eventBus();
 		var scene = hide_presentation_ui_react_hooks_UseService.sceneService();
+		var initialObj = scene.getSelected();
+		this.setState({ selectedObject : initialObj, collapsedComponents : new haxe_ds_StringMap()});
 		this.subscribe(eventBus,hide_shared_events_ObjectSelected,function(e) {
-			haxe_Log.trace("🔍 [Inspector] Received ObjectSelected: " + e.objectId,{ fileName : "hide/presentation/ui/react/components/InspectorPanel.hx", lineNumber : 36, className : "hide.presentation.ui.react.components.InspectorPanel", methodName : "componentDidMount"});
+			haxe_Log.trace("🔍 [Inspector] Received ObjectSelected: " + e.objectId,{ fileName : "hide/presentation/ui/react/components/InspectorPanel.hx", lineNumber : 48, className : "hide.presentation.ui.react.components.InspectorPanel", methodName : "componentDidMount"});
 			var obj = e.objectId != null ? scene.getObject(e.objectId) : null;
-			_gthis.setState({ selectedObject : obj});
+			if(_gthis.state.selectedObject == obj) {
+				return;
+			}
+			_gthis.setState({ selectedObject : obj, collapsedComponents : _gthis.state.collapsedComponents});
 		});
 		this.subscribe(eventBus,hide_shared_events_ObjectChanged,function(e) {
 			if(_gthis.state.selectedObject != null && _gthis.state.selectedObject.id == e.objectId) {
 				var fresh = scene.getObject(e.objectId);
-				_gthis.setState({ selectedObject : fresh});
+				_gthis.setState({ selectedObject : fresh, collapsedComponents : _gthis.state.collapsedComponents});
 			}
 		});
-		var current = scene.getSelected();
-		if(current != null) {
-			this.setState({ selectedObject : current});
+	}
+	,toggleCollapse: function(componentKey) {
+		var isCollapsed = this.state.collapsedComponents.h[componentKey];
+		if(isCollapsed == null) {
+			isCollapsed = false;
 		}
+		var newMap = haxe_ds_StringMap.createCopy(this.state.collapsedComponents.h);
+		newMap.h[componentKey] = !isCollapsed;
+		this.setState({ selectedObject : this.state.selectedObject, collapsedComponents : newMap});
 	}
 	,render: function() {
 		var _gthis = this;
@@ -120360,12 +120748,12 @@ hide_presentation_ui_react_components_InspectorPanel.prototype = $extend(hide_pr
 			var header1 = React.createElement("input",{ type : "checkbox", onChange : function(_) {
 				_gthis.toggleActive(obj.id);
 			}, defaultChecked : obj.isActive});
-			var header2 = React.createElement("b",{ style : { color : "#fff"}},obj.name);
-			var header3 = React.createElement("span",{ style : { marginLeft : "auto", color : "#888", fontSize : "11px"}},"id: ",obj.id);
-			var header4 = React.createElement("div",{ style : { display : "flex", alignItems : "center", gap : "8px"}},header1,header2,header3);
-			header = React.createElement("div",{ style : { padding : "8px", background : "#2a2a2a", borderRadius : "3px", marginBottom : "8px"}},header4);
+			var header2 = React.createElement("b",{ },obj.name);
+			var header3 = React.createElement("span",{ className : "inspector-id"},"id: ",obj.id);
+			var header4 = React.createElement("div",{ className : "inspector-header-content"},header1,header2,header3);
+			header = React.createElement("div",{ className : "inspector-header"},header4);
 		} else {
-			header = React.createElement("div",{ style : { padding : "20px", textAlign : "center", color : "#888"}},"No object selected");
+			header = React.createElement("div",{ className : "inspector-empty"},"No object selected");
 		}
 		var componentsList;
 		if(obj != null) {
@@ -120378,90 +120766,116 @@ hide_presentation_ui_react_components_InspectorPanel.prototype = $extend(hide_pr
 				++_g1;
 				_g.push(this.renderComponent(obj.id,c));
 			}
-			var componentsList2 = React.createElement("button",{ style : { background : "#4a4a4a", color : "#fff", border : "1px solid #555", padding : "4px 12px", borderRadius : "3px", cursor : "pointer"}},"Add Component");
-			var componentsList3 = React.createElement("div",{ style : { marginTop : "10px", textAlign : "center"}},componentsList2);
-			componentsList = React.createElement("div",{ style : { overflowY : "auto", maxHeight : "calc(100% - 60px)"}},componentsList1,_g,componentsList3);
+			var componentsList2 = React.createElement("button",{ className : "btn-add-component"},"Add Component");
+			var componentsList3 = React.createElement("div",{ className : "inspector-add-btn-wrapper"},componentsList2);
+			componentsList = React.createElement("div",{ className : "inspector-components"},componentsList1,_g,componentsList3);
 		} else {
 			componentsList = React.createElement("div",{ });
 		}
-		return React.createElement("div",{ style : { padding : "10px", color : "#d4d4d4", background : "#383838", height : "100%", fontFamily : "sans-serif", fontSize : "13px"}},header,componentsList);
+		return React.createElement("div",{ className : "inspector-panel"},header,componentsList);
 	}
 	,renderTransform: function(obj) {
 		var _gthis = this;
 		var t = obj.transform;
-		var tmp = React.createElement("div",{ style : { padding : "6px 8px", background : "#3a3a3a", fontWeight : "bold", borderBottom : "1px solid #222"}},"🔽 Transform");
-		var tmp1 = this.renderVector3("Position",t.x,t.y,t.z,function(x,y,z) {
+		var compId = "transform";
+		var isCollapsed = this.state.collapsedComponents.h[compId] == true;
+		var posInputs = this.renderVector3("Position",t.x,t.y,t.z,function(x,y,z) {
 			_gthis.setTransform(obj.id,x,y,z,t.rotX,t.rotY,t.rotZ,t.scaleX,t.scaleY,t.scaleZ);
 		});
-		var tmp2 = this.renderVector3("Rotation",t.rotX,t.rotY,t.rotZ,function(x,y,z) {
+		var rotInputs = this.renderVector3("Rotation",t.rotX,t.rotY,t.rotZ,function(x,y,z) {
 			_gthis.setTransform(obj.id,t.x,t.y,t.z,x,y,z,t.scaleX,t.scaleY,t.scaleZ);
 		});
-		var tmp3 = this.renderVector3("Scale",t.scaleX,t.scaleY,t.scaleZ,function(x,y,z) {
+		var scaleInputs = this.renderVector3("Scale",t.scaleX,t.scaleY,t.scaleZ,function(x,y,z) {
 			_gthis.setTransform(obj.id,t.x,t.y,t.z,t.rotX,t.rotY,t.rotZ,x,y,z);
 		});
-		var tmp4 = React.createElement("div",{ style : { padding : "8px"}},tmp1,tmp2,tmp3);
-		return React.createElement("div",{ style : { background : "#2a2a2a", borderRadius : "3px", marginBottom : "6px"}},tmp,tmp4);
+		var componentContent = !isCollapsed ? React.createElement("div",{ className : "component-body"},posInputs,rotInputs,scaleInputs) : null;
+		var tmp = React.createElement("span",{ style : { width : "16px", textAlign : "center", fontSize : "10px", marginRight : "4px"}},isCollapsed ? "▶" : "▼");
+		var tmp1 = React.createElement(hide_presentation_ui_react_components_ComponentIcon,{ className : "hide.engine.domain.entities.Transform"});
+		var tmp2 = React.createElement("div",{ style : { cursor : "pointer"}, onClick : function(_) {
+			_gthis.toggleCollapse(compId);
+		}, className : "component-title"},tmp,tmp1,"Transform");
+		return React.createElement("div",{ className : "component-block"},tmp2,componentContent);
 	}
 	,renderComponent: function(objId,comp) {
 		var _gthis = this;
 		var c = js_Boot.getClass(comp);
-		switch(c.__name__) {
+		var className = c.__name__;
+		var uniqueKey = className + "_" + comp.id;
+		var isCollapsed = this.state.collapsedComponents.h[uniqueKey] == true;
+		var titleContent;
+		switch(className) {
+		case "hide.engine.domain.entities.MeshRenderer":
+			titleContent = "Mesh Renderer";
+			break;
+		case "hide.engine.domain.entities.Rigidbody":
+			titleContent = "Rigidbody";
+			break;
+		default:
+			titleContent = comp.name;
+		}
+		var bodyContent;
+		switch(className) {
 		case "hide.engine.domain.entities.MeshRenderer":
 			var m = comp;
-			var tmp = { key : comp.id, style : { background : "#2a2a2a", borderRadius : "3px", marginBottom : "6px"}};
-			var tmp1 = React.createElement("div",{ style : { padding : "6px 8px", background : "#3a3a3a", fontWeight : "bold", borderBottom : "1px solid #222"}},"🔽 Mesh Renderer");
-			var tmp2 = this.renderStringField("Mesh",m.meshPath,function(v) {
+			var bodyContent1 = this.renderStringField("Mesh",m.meshPath,function(v) {
 				_gthis.setMesh(objId,v,m.materialPath);
 			});
-			var tmp3 = this.renderStringField("Material",m.materialPath,function(v) {
+			var bodyContent2 = this.renderStringField("Material",m.materialPath,function(v) {
 				_gthis.setMesh(objId,m.meshPath,v);
 			});
-			return React.createElement("div",tmp,tmp1,React.createElement("div",{ style : { padding : "8px"}},tmp2,tmp3));
+			bodyContent = React.createElement("div",{ className : "component-body"},bodyContent1,bodyContent2);
+			break;
 		case "hide.engine.domain.entities.Rigidbody":
 			var r = comp;
-			var tmp = { key : comp.id, style : { background : "#2a2a2a", borderRadius : "3px", marginBottom : "6px"}};
-			var tmp1 = React.createElement("div",{ style : { padding : "6px 8px", background : "#3a3a3a", fontWeight : "bold", borderBottom : "1px solid #222"}},"🔽 Rigidbody");
-			var tmp2 = this.renderNumberField("Mass",r.mass,function(v) {
+			var bodyContent1 = this.renderNumberField("Mass",r.mass,function(v) {
 				_gthis.setRigidbody(objId,v,r.useGravity);
 			});
-			var tmp3 = React.createElement("span",{ style : { width : "60px", color : "#aaa"}},"Gravity");
-			var tmp4 = React.createElement("input",{ type : "checkbox", onChange : function(_) {
+			var bodyContent2 = React.createElement("label",{ },"Gravity");
+			var bodyContent3 = React.createElement("input",{ type : "checkbox", onChange : function(_) {
 				_gthis.setRigidbody(objId,r.mass,!r.useGravity);
 			}, defaultChecked : r.useGravity});
-			var tmp5 = React.createElement("div",{ style : { display : "flex", gap : "4px", marginBottom : "4px"}},tmp3,tmp4);
-			return React.createElement("div",tmp,tmp1,React.createElement("div",{ style : { padding : "8px"}},tmp2,tmp5));
+			var bodyContent4 = React.createElement("div",{ className : "field-row checkbox-row"},bodyContent2,bodyContent3);
+			bodyContent = React.createElement("div",{ className : "component-body"},bodyContent1,bodyContent4);
+			break;
 		default:
-			return React.createElement("div",{ key : comp.id, style : { background : "#2a2a2a", borderRadius : "3px", marginBottom : "6px", padding : "8px", color : "#888"}},"Unknown component: ",comp.name);
+			bodyContent = React.createElement("div",{ className : "component-body"},"Unknown component: ",comp.name);
 		}
+		var tmp = { key : uniqueKey, className : "component-block"};
+		var tmp1 = React.createElement("span",{ style : { width : "16px", textAlign : "center", fontSize : "10px", marginRight : "4px"}},isCollapsed ? "▶" : "▼");
+		var tmp2 = React.createElement(hide_presentation_ui_react_components_ComponentIcon,{ className : className});
+		return React.createElement("div",tmp,React.createElement("div",{ style : { cursor : "pointer", display : "flex", alignItems : "center"}, onClick : function(_) {
+			_gthis.toggleCollapse(uniqueKey);
+		}, className : "component-title"},tmp1,tmp2,titleContent),!isCollapsed ? bodyContent : null);
 	}
 	,renderVector3: function(label,x,y,z,onChange) {
 		var _gthis = this;
-		var tmp = React.createElement("span",{ style : { width : "60px", color : "#aaa"}},label);
-		var tmp1 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, onBlur : function(e) {
+		var tmp = React.createElement("label",{ className : "field-label"},label);
+		var tmp1 = React.createElement("input",{ onBlur : function(e) {
 			onChange(_gthis.safeParse(e.target.value,0),y,z);
-		}, defaultValue : x});
-		var tmp2 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, onBlur : function(e) {
+		}, defaultValue : x, className : "num-input"});
+		var tmp2 = React.createElement("input",{ onBlur : function(e) {
 			onChange(x,_gthis.safeParse(e.target.value,0),z);
-		}, defaultValue : y});
-		var tmp3 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, onBlur : function(e) {
+		}, defaultValue : y, className : "num-input"});
+		var tmp3 = React.createElement("input",{ onBlur : function(e) {
 			onChange(x,y,_gthis.safeParse(e.target.value,0));
-		}, defaultValue : z});
-		return React.createElement("div",{ style : { display : "flex", gap : "4px", marginBottom : "4px"}},tmp,tmp1,tmp2,tmp3);
+		}, defaultValue : z, className : "num-input"});
+		var tmp4 = React.createElement("div",{ className : "vector-inputs"},tmp1,tmp2,tmp3);
+		return React.createElement("div",{ className : "field-row vector-row"},tmp,tmp4);
 	}
 	,renderStringField: function(label,value,onChange) {
-		var tmp = React.createElement("span",{ style : { width : "60px", color : "#aaa"}},label);
-		var tmp1 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, onBlur : function(e) {
+		var tmp = React.createElement("label",{ className : "field-label"},label);
+		var tmp1 = React.createElement("input",{ onBlur : function(e) {
 			onChange(e.target.value);
-		}, defaultValue : value});
-		return React.createElement("div",{ style : { display : "flex", gap : "4px", marginBottom : "4px"}},tmp,tmp1);
+		}, defaultValue : value, className : "text-input"});
+		return React.createElement("div",{ className : "field-row"},tmp,tmp1);
 	}
 	,renderNumberField: function(label,value,onChange) {
 		var _gthis = this;
-		var tmp = React.createElement("span",{ style : { width : "60px", color : "#aaa"}},label);
-		var tmp1 = React.createElement("input",{ style : { flex : 1, background : "#1a1a1a", border : "1px solid #555", color : "#fff", padding : "2px 4px", borderRadius : "2px"}, onBlur : function(e) {
+		var tmp = React.createElement("label",{ className : "field-label"},label);
+		var tmp1 = React.createElement("input",{ onBlur : function(e) {
 			onChange(_gthis.safeParse(e.target.value,0));
-		}, defaultValue : value});
-		return React.createElement("div",{ style : { display : "flex", gap : "4px", marginBottom : "4px"}},tmp,tmp1);
+		}, defaultValue : value, className : "num-input full-width"});
+		return React.createElement("div",{ className : "field-row"},tmp,tmp1);
 	}
 	,setTransform: function(objId,px,py,pz,rx,ry,rz,sx,sy,sz) {
 		hide_presentation_ui_react_hooks_UseService.sceneService().setTransform(objId,new hide_engine_domain_entities_Transform(px,py,pz,rx,ry,rz,sx,sy,sz));
@@ -122954,31 +123368,31 @@ hxd_Math.colorLerp = function(c1,c2,k) {
 	return a << 24 | r << 16 | g << 8 | b;
 };
 hxd_Math.angle = function(da) {
-	da %= 6.28318530717958623;
+	da %= 6.2831853071795862;
 	if(da > 3.14159265358979323) {
-		da -= 6.28318530717958623;
-	} else if(da <= -3.14159265358979312) {
-		da += 6.28318530717958623;
+		da -= 6.2831853071795862;
+	} else if(da <= -3.1415926535897931) {
+		da += 6.2831853071795862;
 	}
 	return da;
 };
 hxd_Math.angleLerp = function(a,b,k) {
 	var da = b - a;
-	da %= 6.28318530717958623;
+	da %= 6.2831853071795862;
 	if(da > 3.14159265358979323) {
-		da -= 6.28318530717958623;
-	} else if(da <= -3.14159265358979312) {
-		da += 6.28318530717958623;
+		da -= 6.2831853071795862;
+	} else if(da <= -3.1415926535897931) {
+		da += 6.2831853071795862;
 	}
 	return a + da * k;
 };
 hxd_Math.angleMove = function(a,b,max) {
 	var da = b - a;
-	da %= 6.28318530717958623;
+	da %= 6.2831853071795862;
 	if(da > 3.14159265358979323) {
-		da -= 6.28318530717958623;
-	} else if(da <= -3.14159265358979312) {
-		da += 6.28318530717958623;
+		da -= 6.2831853071795862;
+	} else if(da <= -3.1415926535897931) {
+		da += 6.2831853071795862;
 	}
 	var da1 = da;
 	if(da1 > -max && da1 < max) {
@@ -126163,7 +126577,7 @@ var hxd_clipper__$Clipper_ClipperBase = function() {
 $hxClasses["hxd.clipper._Clipper.ClipperBase"] = hxd_clipper__$Clipper_ClipperBase;
 hxd_clipper__$Clipper_ClipperBase.__name__ = "hxd.clipper._Clipper.ClipperBase";
 hxd_clipper__$Clipper_ClipperBase.nearZero = function(v) {
-	if(v > -1e-20) {
+	if(v > -1e-020) {
 		return v < 1E-20;
 	} else {
 		return false;
@@ -129578,7 +129992,7 @@ var hxd_clipper_ClipperOffset = function(miterLimit,arcTolerance) {
 	if(miterLimit == null) {
 		miterLimit = 2.0;
 	}
-	this.two_pi = 6.28318530717958623;
+	this.two_pi = 6.2831853071795862;
 	this.def_arc_tolerance = 0.25;
 	this.MiterLimit = miterLimit;
 	this.ArcTolerance = arcTolerance;
@@ -129711,7 +130125,7 @@ hxd_clipper_ClipperOffset.prototype = {
 		var polygons = null;
 		this.m_destPolys = polygons == null ? [] : polygons;
 		this.m_delta = delta;
-		if(delta > -1e-20 && delta < 1E-20) {
+		if(delta > -1e-020 && delta < 1E-20) {
 			var _g = 0;
 			var _g1 = this.m_polyNodes.childs;
 			while(_g < _g1.length) {
@@ -133339,7 +133753,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 			x = 0.;
 		}
 		var P1 = new h3d_VectorImpl(x,y,z);
-		var F = 0.0174532925199432955;
+		var F = 0.017453292519943295;
 		var allTimes = new haxe_ds_IntMap();
 		if(animNode != null) {
 			var _g = 0;
@@ -133387,7 +133801,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 					var values = hxd_fmt_fbx_FbxTools.getFloats(hxd_fmt_fbx_FbxTools.get(dataCurves[0],"KeyValueFloat"));
 					switch(cname) {
 					case "FieldOfView":
-						var ratio = 1.77777777777777768;
+						var ratio = 1.7777777777777777;
 						var fov = 45.;
 						var _g4 = 0;
 						var _g5 = hxd_fmt_fbx_FbxTools.getAll(this.getChild(model,"NodeAttribute"),"Properties70.P");
@@ -134112,7 +134526,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 			return d;
 		}
 		d = new hxd_fmt_fbx_DefaultMatrixes();
-		var F = 0.0174532925199432955;
+		var F = 0.017453292519943295;
 		var _g = 0;
 		var _g1 = hxd_fmt_fbx_FbxTools.getAll(model,"Properties70.P");
 		while(_g < _g1.length) {
@@ -137716,7 +138130,7 @@ hxd_fmt_fbx_HMDOut.prototype = $extend(hxd_fmt_fbx_BaseLibrary.prototype,{
 			if(o.model != null && hxd_fmt_fbx_FbxTools.getType(o.model) == "Camera") {
 				var props = this.getChild(o.model,"NodeAttribute");
 				var fov = 45.;
-				var ratio = 1.77777777777777768;
+				var ratio = 1.7777777777777777;
 				var _g1 = 0;
 				var _g2 = hxd_fmt_fbx_FbxTools.getAll(props,"Properties70.P");
 				while(_g1 < _g2.length) {
@@ -180725,6 +181139,12 @@ var js_node_zlib_Gzip = require("zlib").Gzip;
 var js_node_zlib_Inflate = require("zlib").Inflate;
 var js_node_zlib_InflateRaw = require("zlib").InflateRaw;
 var js_node_zlib_Unzip = require("zlib").Unzip;
+var react_Partial = function() { };
+$hxClasses["react.Partial"] = react_Partial;
+react_Partial.__name__ = "react.Partial";
+var react_PartialMacro = function() { };
+$hxClasses["react.PartialMacro"] = react_PartialMacro;
+react_PartialMacro.__name__ = "react.PartialMacro";
 var React = require("react");
 var ReactDOM = require("react-dom");
 var react_ReactMacro = function() { };
@@ -184237,7 +184657,7 @@ h3d_scene_DynamicJointData.tmpVec2 = (function($this) {
 }(this));
 h3d_scene_DynamicJointData.tmpQ = new h3d_Quat();
 h3d_scene_DynamicJointData.tmpQ2 = new h3d_Quat();
-h3d_scene_Skin.FIXED_DT = 0.0166666666666666664;
+h3d_scene_Skin.FIXED_DT = 0.016666666666666666;
 h3d_scene_Skin.MIN_SHADER_BONES = 32;
 h3d_scene_Skin.TMP_MAT = new h3d_MatrixImpl();
 h3d_scene_pbr_IrradBase.SRC = "HXSMF2gzZC5zY2VuZS5wYnIuSXJyYWRCYXNlCwEFaW5wdXQNAQICCHBvc2l0aW9uBQoBAQADAnV2BQoBAQABAAAEBWZsaXBZAwIAAAUGb3V0cHV0DQICBghwb3NpdGlvbgUMBAUABwVjb2xvcgUMBAUABAAACApwaXhlbENvbG9yBQwEAAAJDGNhbGN1bGF0ZWRVVgUKBAAACgtzYW1wbGVzQml0cwECAAEAAAAAAAsIX19pbml0X18OBgAADAZ2ZXJ0ZXgOBgAADQxfcmV2ZXJzZWJpdHMOBgAADgpoYW1tZXJzbGV5DgYAAA8TaW1wb3J0YW5jZVNhbXBsZUdHWA4GAAAFAgsAAAUCBgQCBwUMAggFDAUMBgQCCQUKAgMFCgUKAAAMAAAFAQYEAgYFDAkDKw4ECgICBQoAAAMGAQoCAgUKBAADAgQDAwEDAAAAAAAAAAADAQMAAAAAAADwPwMFDAUMAAMNARABaQEEAAABBQYIEQFyAQQAAAYMBAYQAhABAQIQAAAAAQEBBAYSAhABAQIQAAAAAQEBAQAGBAIRAQYMBAYQBAYLAhEBAQL/AP8AAQEBAQIIAAAAAQEBBAYSBAYLAhEBAQIA/wD/AQEBAQIIAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQIPDw8PAQEBAQIEAAAAAQEBBAYSBAYLAhEBAQLw8PDwAQEBAQIEAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQIzMzMzAQEBAQICAAAAAQEBBAYSBAYLAhEBAQLMzMzMAQEBAQICAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQJVVVVVAQEBAQIBAAAAAQEBBAYSBAYLAhEBAQKqqqqqAQEBAQIBAAAAAQEBAQENAhEBAAADDgISAWkBBAAAEwNtYXgBBAAABQoFAggUAnJpAwQAAAYBCQMnDgEJAg0OAQISAQEDAQMAAAAAAADwPQMDAA0JAykOAgYCCQMnDgECEgEDCQMnDgECEwEDAwIUAwUKAAADDwMVCXJvdWdobmVzcwMEAAAWAXAFCgQAABcBbgULBAAABQsFCQgYAWEDBAAABgECFQMCFQMDAAgZA3BoaQMEAAAGAQYBAQMAAAAAAAAAQAMBAxgtRFT7IQlAAwMKAhYFCgAAAwMACBoEY29zVAMEAAAJAxUOAgkDDQ4BBgIEBgMBAwAAAAAAAPA/AwoCFgUKBAADAwMEBgABAwAAAAAAAPA/AwYBBAYDBgECGAMCGAMDAQMAAAAAAADwPwMDAwoCFgUKBAADAwMDAwMBAwAAAAAAAPA/AwMACBsEc2luVAMEAAAJAw0OAQYDAQMAAAAAAADwPwMGAQIaAwIaAwMDAwAIHARsdGFuBQsEAAAJAyoOAwYBAhsDCQMDDgECGQMDAwYBAhsDCQMCDgECGQMDAwIaAwULAAgdAnVwBQsEAAALBgkJAw8OAQoCFwULCAADAwEDK4cW2c737z8DAgkDKg4DAQMAAAAAAAAAAAMBAwAAAAAAAAAAAwEDAAAAAAAA8D8DBQsJAyoOAwEDAAAAAAAA8D8DAQMAAAAAAAAAAAMBAwAAAAAAAAAAAwULBQsACB4EdGFuWAULBAAACQMgDgEJAx8OAgIdBQsCFwULBQsFCwAIHwR0YW5ZBQsEAAAJAyAOAQkDHw4CAhcFCwIeBQsFCwULAA0JAyAOAQQGAAYABgECHgULCgIcBQsAAAMFCwYBAh8FCwoCHAULBAADBQsFCwYBAhcFCwoCHAULCAADBQsFCwULBQsAAA";
@@ -184502,6 +184922,8 @@ haxe_zip_InflateImpl.FIXED_HUFFMAN = null;
 hide_engine_infrastructure_HeapsRenderer.isSystemInitialized = false;
 hide_engine_infrastructure_ShaderPreviewRenderer.isInitialized = false;
 hide_presentation_ui_react_BaseReactComponent.displayName = "BaseReactComponent";
+hide_presentation_ui_react_components_ComponentIcon.displayName = "ComponentIcon";
+hide_presentation_ui_react_components_HierarchyIcon.displayName = "HierarchyIcon";
 hide_presentation_ui_react_components_HierarchyPanel.displayName = "HierarchyPanel";
 hide_presentation_ui_react_components_InspectorPanel.displayName = "InspectorPanel";
 hide_presentation_ui_react_components_ShaderEditorPanel.displayName = "ShaderEditorPanel";
@@ -184772,8 +185194,8 @@ hxd_impl_BufferFlags.UniformReadWrite = 3;
 hxd_impl_BufferFlags.Uniform = 4;
 hxd_poly2tri_Constants.kAlpha = 0.3;
 hxd_poly2tri_Constants.EPSILON = 1e-24;
-hxd_poly2tri_Constants.PI_2 = 1.57079632679489656;
-hxd_poly2tri_Constants.PI_3div4 = 2.35619449019234484;
+hxd_poly2tri_Constants.PI_2 = 1.5707963267948966;
+hxd_poly2tri_Constants.PI_3div4 = 2.3561944901923448;
 hxd_poly2tri_Orientation.CW = 1;
 hxd_poly2tri_Orientation.CCW = -1;
 hxd_poly2tri_Orientation.COLLINEAR = 0;

@@ -1,5 +1,5 @@
 /* =========================================
-   HIDE IDE - Unity Style Theme
+   HIDE IDE - Unity Style Theme (Enhanced)
    ========================================= */
 
 :root {
@@ -102,8 +102,10 @@ body {
 
 .menu-shortcut {
     color: var(--unity-text-muted);
-    font-size: 12px;
-    margin-left: auto;
+    font-size: 11px;
+    margin-left: 16px;
+    font-family: 'Consolas', monospace;
+    opacity: 0.8;
 }
 
 /* Dropdown Menu */
@@ -114,12 +116,12 @@ body {
     left: 0;
     background-color: var(--menu-dropdown-bg);
     border: 1px solid var(--menu-border);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
     list-style: none;
     margin: 0;
     padding: 4px 0;
     min-width: 220px;
-    z-index: 1000;
+    z-index: 9999;
     border-radius: 0 0 4px 4px;
     -webkit-app-region: no-drag;
 }
@@ -165,6 +167,7 @@ body {
     border-bottom: 1px solid var(--unity-border);
     height: 36px;
     flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .toolbar-group {
@@ -184,11 +187,19 @@ body {
     cursor: pointer;
     font-size: 14px;
     border-radius: 3px;
-    transition: background 0.15s;
+    transition: all 0.15s ease;
+    position: relative;
+    overflow: hidden;
 }
 
 .toolbar-button:hover {
     background: var(--unity-bg-light);
+    border-color: #555;
+}
+
+.toolbar-button:active {
+    transform: translateY(1px);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
 }
 
 .toolbar-select {
@@ -203,53 +214,81 @@ body {
    GoldenLayout Borders & Splitters
    ========================================= */
 
-/* Глобальный box-sizing: обязательно для корректных рамок */
 * { 
     box-sizing: border-box; 
 }
 
 /* === 1. Границы панелей === */
-
-/* Рамка вокруг содержимого панели */
 .lm_content {
-    background: var(--unity-panel-bg) !important; /* #3c3c3c - чуть светлее фона */
-    border: 1px solid #111 !important; /* Жесткая темная рамка */
-    border-top: none !important; /* Стыкуется с заголовком */
-}
-
-/* Рамка заголовка панели (вкладок) */
-.lm_header {
-    background: var(--unity-header-bg) !important; /* #4a4a4a */
+    background: var(--unity-panel-bg) !important;
     border: 1px solid #111 !important;
-    border-bottom: none !important; /* Стыкуется с контентом */
-    border-right: 1px solid #111 !important; /* Вертикальное разделение между заголовками */
+    border-top: none !important;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.15) !important; /* Глубина контента */
 }
 
-/* === 2. Активная вкладка (должна сливаться с контентом) === */
+.lm_header {
+    background: linear-gradient(to bottom, var(--unity-header-bg), #3a3a3a) !important;
+    border: 1px solid #111 !important;
+    border-bottom: none !important;
+    border-right: 1px solid #111 !important;
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,0.2) !important; /* Объем заголовка */
+}
+
+/* === 2. Активная вкладка === */
 .lm_tab.lm_active {
-    background: var(--unity-panel-bg) !important; /* Цвет контента */
-    border-bottom: 1px solid var(--unity-panel-bg) !important; /* Скрываем линию снизу */
-    border-top: 2px solid var(--unity-accent) !important; /* Синяя полоска сверху (акцент) */
+    background: var(--unity-panel-bg) !important;
+    border-bottom: 1px solid var(--unity-panel-bg) !important;
+    border-top: 2px solid var(--unity-accent) !important;
     color: #fff !important;
 }
 
 /* === 3. Разделители (Splitters) === */
-/* Делаем их черными линиями, которые становятся синими при наведении */
 .lm_splitter {
     background: #111 !important; 
     z-index: 10;
+    transition: background 0.2s ease;
 }
 
 .lm_splitter:hover {
-    background: var(--unity-accent) !important; /* Синий при наведении (#4a90d9) */
+    background: var(--unity-accent) !important;
 }
 
 /* === 4. Текст и иконки === */
 .lm_tab {
     background: var(--unity-header-bg) !important;
     color: var(--unity-text-muted) !important;
-    border-right: 1px solid #111 !important; /* Граница между вкладками */
+    border-right: 1px solid #111 !important;
+    transition: color 0.15s ease;
 }
+
+.lm_tab:hover {
+    color: var(--unity-text) !important;
+}
+
+/* === 5. Скроллбары внутри GoldenLayout === */
+.lm_content::-webkit-scrollbar,
+.lm_items::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.lm_content::-webkit-scrollbar-track,
+.lm_items::-webkit-scrollbar-track {
+    background: var(--unity-bg-dark);
+}
+
+.lm_content::-webkit-scrollbar-thumb,
+.lm_items::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+    border: 2px solid var(--unity-bg-dark);
+}
+
+.lm_content::-webkit-scrollbar-thumb:hover,
+.lm_items::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
 /* =========================================
    Status Bar
    ========================================= */
@@ -297,4 +336,203 @@ footer,
 #electron-version,
 #haxe-version {
     display: none !important;
+}
+
+/* =========================================
+   Global Scrollbars (Fallback)
+   ========================================= */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #2a2a2a; }
+::-webkit-scrollbar-thumb { 
+    background: #555; 
+    border-radius: 4px; 
+    border: 2px solid #2a2a2a;
+}
+::-webkit-scrollbar-thumb:hover { background: #777; }
+
+/* =========================================
+   Inputs & Interactive Elements
+   ========================================= */
+
+input:focus, 
+select:focus, 
+textarea:focus {
+    outline: none;
+    border-color: var(--unity-accent) !important;
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.3) !important;
+    transition: all 0.2s ease;
+}
+
+button.add-component {
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+button.add-component:hover {
+    background-color: #4a4a4a;
+}
+
+button.add-component:active {
+    transform: scale(0.98);
+}
+
+/* =========================================
+   Inspector Panel - Adaptive Layout
+   ========================================= */
+
+.inspector-panel {
+    padding: 10px;
+    color: var(--unity-text);
+    background: var(--unity-panel-bg);
+    height: 100%;
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 12px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.inspector-header {
+    background: #2a2a2a;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    padding: 8px;
+}
+
+.inspector-header-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inspector-id {
+    margin-left: auto;
+    color: var(--unity-text-muted);
+    font-size: 11px;
+    font-family: monospace;
+}
+
+.inspector-empty {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--unity-text-muted);
+}
+
+/* Component Blocks */
+.component-block {
+    background: #2a2a2a;
+    border-radius: 4px;
+    margin-bottom: 6px;
+    overflow: hidden;
+}
+
+.component-title {
+    padding: 6px 8px;
+    background: #3a3a3a;
+    font-weight: 600;
+    border-bottom: 1px solid #222;
+    cursor: pointer;
+    user-select: none;
+}
+
+.component-body {
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+/* Field Rows - КЛЮЧЕВОЙ МОМЕНТ АДАПТИВНОСТИ */
+.field-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 22px;
+}
+
+/* Лейбл занимает столько места, сколько нужно тексту, но не меньше 50px */
+.field-label {
+    width: 70px;
+    flex-shrink: 0;
+    color: var(--unity-text-muted);
+    font-size: 11px;
+}
+
+/* Инпуты растягиваются на оставшееся место */
+.text-input, .num-input {
+    flex: 1;
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    min-width: 0; /* Важно для flex-контейнеров! */
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.text-input:focus, .num-input:focus {
+    outline: none;
+    border-color: var(--unity-accent);
+    box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2);
+}
+
+/* Vector Inputs - Адаптивная сетка */
+.vector-inputs {
+    flex: 1;
+    display: flex;
+    gap: 4px;
+    min-width: 0;
+}
+
+/* Если места мало, векторы переносятся */
+@media (max-width: 280px) {
+    .vector-inputs {
+        flex-wrap: wrap;
+    }
+    
+    .vector-inputs .num-input {
+        flex: 1 1 calc(50% - 4px);
+        min-width: 40px;
+    }
+}
+
+/* Checkbox row */
+.checkbox-row label {
+    flex: 1;
+    color: var(--unity-text-muted);
+}
+
+/* Add Component Button */
+.inspector-add-btn-wrapper {
+    margin-top: 12px;
+    text-align: center;
+}
+
+.btn-add-component {
+    background: #3a3a3a;
+    color: var(--unity-text);
+    border: 1px solid #444;
+    padding: 5px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.15s ease;
+}
+
+.btn-add-component:hover {
+    background: #4a4a4a;
+    border-color: #555;
+}
+
+.btn-add-component:active {
+    transform: scale(0.97);
+    background: #2a2a2a;
+}
+
+/* Unknown component */
+.component-block.unknown {
+    padding: 8px;
+    color: var(--unity-text-muted);
+    font-style: italic;
 }
