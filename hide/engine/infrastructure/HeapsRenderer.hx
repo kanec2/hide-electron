@@ -20,7 +20,7 @@ class HeapsRenderer implements IRenderer implements Service {
         this.viewportService = viewportService;
     }
     
-    public function init(container:Dynamic):Void {
+    public function init():Void {
         // ✅ ШАГ 1: Создаём скрытый canvas #webgl для hxd.Window и h3d.Engine
         ensureDummyCanvas();
         

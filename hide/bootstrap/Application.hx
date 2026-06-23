@@ -2,7 +2,7 @@ package hide.bootstrap;
 import hx.injection.Service;
 import hx.injection.ServiceCollection;
 import hx.injection.ServiceProvider;
-
+import hide.engine.domain.services.IRenderer;
 import hide.presentation.Ide;
 // bootstrap/Application.hx
 class Application {
@@ -18,6 +18,8 @@ class Application {
         
         // 4. Запускаем IDE
         var ide = provider.getService(Ide);
+        var renderer = provider.getService(IRenderer);
+        renderer.init();
         ide.startup();  // ← теперь это работает, т.к. startup() публичный
         
         // 5. Загружаем плагины

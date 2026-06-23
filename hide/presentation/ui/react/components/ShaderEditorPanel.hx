@@ -32,9 +32,29 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     override function componentDidMount():Void {
         initLiteGraph();
         // ✅ Передаём DOM-контейнер в engine layer
-        var previewContainer = js.Browser.document.getElementById("heaps-preview-container");
-        previewRenderer.init(previewContainer);
+        //var previewContainer = js.Browser.document.getElementById("heaps-preview-container");
+        previewRenderer.init();
+        // ✅ 2. Получаем сервис вьюпортов через UseService
+        // Вам нужно добавить viewportService() в UseService.hx, если его там нет
+        var viewportService = UseService.viewportService(); 
         
+        // ✅ 3. Регистрируем сцену превью как отдельный вьюпорт
+        // Размер 400x300 соответствует контейнеру preview
+        var vp = viewportService.register("shader-preview", previewRenderer.scene, 400, 300);
+        trace('🔍 [ShaderPanel] Viewport registered: ${vp != null}, canvas: ${vp.canvas != null}');
+        // ✅ 4. Вставляем canvas вьюпорта в DOM
+        var previewContainer = js.Browser.document.getElementById("heaps-preview-container");
+        if (previewContainer != null && vp.canvas != null) {
+            previewContainer.appendChild(vp.canvas);
+            
+            // Стили для корректного отображения внутри flex-контейнера
+            vp.canvas.style.width = "100%";
+            vp.canvas.style.height = "100%";
+            vp.canvas.style.display = "block";
+            trace('✅ [ShaderPanel] Canvas appended to DOM');
+        } else {
+            trace('❌ [ShaderPanel] Container or canvas is NULL!');
+        }
         registerShaderNodes();
     }
     
@@ -157,7 +177,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         return jsx('
             <div style={{height: "300px", background: "#000", position: "relative"}}>
                 <div id="heaps-preview-container" 
-                    style={{width: "100%", height: "100%"}}>
+                    style={{width: "100%", height: "100%", display: "block"}}>
                 </div>
                 <div style={{
                     position: "absolute",

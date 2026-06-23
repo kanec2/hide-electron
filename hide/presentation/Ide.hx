@@ -37,6 +37,7 @@ import hide.shared.types.Result;
 import hide.domain.services.ILayoutEngine;
 
 import hide.engine.domain.services.ISceneService;
+import hide.engine.infrastructure.ViewportService;
 import hide.infrastructure.external.SceneViewFactory;
 
 import hx.injection.Service;
@@ -83,6 +84,7 @@ class Ide implements Service {
     private var sceneEditorService:SceneEditorService;
     private var sceneViewFactory:SceneViewFactory;
     private var shaderPreviewRenderer:ShaderPreviewRenderer;
+    private var viewportService:ViewportService;
     private var viewModules:Iterable<IViewModule>;
     public function new(
         windowService:WindowService,
@@ -105,6 +107,7 @@ class Ide implements Service {
         sceneEditorService:SceneEditorService,
         sceneViewFactory:SceneViewFactory,
         shaderPreviewRenderer:ShaderPreviewRenderer,
+        viewportService:ViewportService,
         viewModules:Iterable<IViewModule>
     ) {
         this.windowService = windowService;
@@ -127,6 +130,7 @@ class Ide implements Service {
         this.sceneEditorService = sceneEditorService;
         this.sceneViewFactory = sceneViewFactory;
         this.shaderPreviewRenderer = shaderPreviewRenderer;
+        this.viewportService = viewportService;
         this.viewModules = viewModules;
         inst = this;
         
@@ -349,4 +353,5 @@ class Ide implements Service {
     public function get_layoutEngine():ILayoutEngine return layoutEngine;
     public function get_sceneService():ISceneService return sceneService;
     public function get_shaderPreviewRenderer():ShaderPreviewRenderer return shaderPreviewRenderer;
+    public function get_viewportService():ViewportService return viewportService;
 }

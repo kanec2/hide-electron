@@ -115,10 +115,15 @@ engine/domain/services/IResourceLoader.hx
 engine/domain/services/ISceneService.hx
 engine/infrastructure/EngineEventBusImpl.hx
 engine/infrastructure/HeapsMaterialSetup.hx
+engine/infrastructure/HeapsRenderer_b.hx
 engine/infrastructure/HeapsRenderer.hx
 engine/infrastructure/HeapsRenderer3D.hx
 engine/infrastructure/SceneServiceImpl.hx
+engine/infrastructure/SceneViewFactory.hx
+engine/infrastructure/SceneViewportController.hx
 engine/infrastructure/ShaderPreviewRenderer.hx
+engine/infrastructure/Viewport.hx
+engine/infrastructure/ViewportService.hx
 infrastructure/BrowserDomAccess.hx
 infrastructure/config/PackageJsonLoader.hx
 infrastructure/config/ProjectConfigParser.hx
@@ -217,6 +222,9 @@ presentation/ui/Dialog.hx
 presentation/ui/Element.hx
 presentation/ui/MenuBuilder.hx
 presentation/ui/react/BaseReactComponent.hx
+presentation/ui/react/components/ComponentIcon.hx
+presentation/ui/react/components/ContextMenu.hx
+presentation/ui/react/components/HierarchyIcon.hx
 presentation/ui/react/components/HierarchyPanel.hx
 presentation/ui/react/components/InspectorPanel.hx
 presentation/ui/react/components/ShaderEditorPanel.hx
@@ -1774,6 +1782,8 @@ typedef WindowBounds = {
 // engine/bootstrap/EngineModule.hx
 package hide.engine.bootstrap;
 
+import hide.engine.infrastructure.SceneViewportController;
+import hide.engine.infrastructure.ViewportService;
 import hide.engine.infrastructure.ShaderPreviewRenderer;
 import hx.injection.ServiceCollection;
 import hide.engine.domain.services.ISceneService;
@@ -1799,6 +1809,8 @@ class EngineModule {
         collection.addSingleton(IEngineEventBus, EngineEventBusImpl);
         collection.addSingleton(ISceneService, SceneServiceImpl);
         collection.addSingleton(IRenderer, HeapsRenderer);
+        collection.addSingleton(ViewportService);  // ← НОВОЕ
+        collection.addSingleton(SceneViewportController); // ← НОВОЕ
         collection.addSingleton(ShaderPreviewRenderer); // ← НОВОЕ
         // IRenderer и IEngineResourceLoader НЕ регистрируем здесь —
         // они платформенно-зависимые, их регистрирует AppModule IDE
@@ -2004,7 +2016,7 @@ import hx.injection.Service;
  
 interface IRenderer extends Service {
     function init(container:Dynamic):Void;
-    function renderScene(root:SceneObject):Void;
+    //function renderScene(root:SceneObject):Void;
     function onResize(width:Int, height:Int):Void;
     function dispose():Void;
 }
@@ -2149,7 +2161,7 @@ class HeapsMaterialSetup extends h3d.mat.MaterialSetup {
 }
 </file>
 
-<file path="engine/infrastructure/HeapsRenderer.hx">
+<file path="engine/infrastructure/HeapsRenderer_b.hx">
 // hide/engine/infrastructure/HeapsRenderer.hx
 package hide.engine.infrastructure;
 import h3d.col.Collider;
@@ -2167,7 +2179,7 @@ import h3d.prim.Cube;
 import h3d.Quat;
 import hx.injection.Service;
 
-class HeapsRenderer implements IRenderer implements Service {
+class HeapsRenderer_B implements IRenderer implements Service {
     private var engine:h3d.Engine;
     private var sevents:hxd.SceneEvents;  // ← НОВОЕ ПОЛЕ
     private var s3d:h3d.scene.Scene;
@@ -2737,6 +2749,112 @@ class HeapsRenderer implements IRenderer implements Service {
 }
 </file>
 
+<file path="engine/infrastructure/HeapsRenderer.hx">
+// hide/engine/infrastructure/HeapsRenderer.hx
+package hide.engine.infrastructure;
+
+import hide.engine.domain.services.IRenderer;
+import hide.engine.domain.services.IEngineEventBus;
+import hx.injection.Service;
+
+/**
+ * Менеджер движка Heaps.
+ * Создаёт ОДИН h3d.Engine и ОДИН render loop.
+ * НЕ знает ничего о сценах, объектах, выделении или мыши.
+ */
+class HeapsRenderer implements IRenderer implements Service {
+    private var engine:h3d.Engine;
+    private var viewportService:ViewportService;
+    private var isEngineReady:Bool = false;
+    private static var isSystemInitialized:Bool = false;
+    
+    public function new(viewportService:ViewportService) {
+        this.viewportService = viewportService;
+    }
+    
+    public function init(container:Dynamic):Void {
+        // ✅ ШАГ 1: Создаём скрытый canvas #webgl для hxd.Window и h3d.Engine
+        ensureDummyCanvas();
+        
+        // ✅ ШАГ 2: Инициализируем движок
+        initEngine();
+    }
+
+    private function ensureDummyCanvas():Void {
+        if (js.Browser.document.getElementById("webgl") == null) {
+            var dummyCanvas = js.Browser.document.createCanvasElement();
+            dummyCanvas.id = "webgl";
+            dummyCanvas.width = 16;
+            dummyCanvas.height = 16;
+            dummyCanvas.style.position = "absolute";
+            dummyCanvas.style.top = "-9999px";
+            dummyCanvas.style.left = "-9999px";
+            dummyCanvas.style.visibility = "hidden";
+            js.Browser.document.body.appendChild(dummyCanvas);
+            trace("🎨 [HeapsRenderer] Created hidden #webgl canvas for hxd.Window");
+        }
+    }
+
+    private function initEngine():Void {
+        var existingEngine = h3d.Engine.getCurrent();
+        if (existingEngine != null) {
+            trace("🎨 [HeapsRenderer] Using existing engine");
+            this.engine = existingEngine;
+            // ✅ ВАЖНО: если engine уже создан, но driver ещё null, ждём
+            if (@:privateAccess engine.driver != null) {
+                onEngineReady();
+            } else {
+                haxe.Timer.delay(onEngineReady, 0);
+            }
+        } else {
+            if (!isSystemInitialized) {
+                hxd.System.start(function() {
+                    this.engine = @:privateAccess new h3d.Engine();
+                    engine.onReady = onEngineReady;
+                    engine.init();
+                    isSystemInitialized = true;
+                });
+            } else {
+                this.engine = @:privateAccess new h3d.Engine();
+                engine.onReady = onEngineReady;
+                engine.init();
+            }
+        }
+    }
+    
+    private function onEngineReady():Void {
+        // ✅ ЗАЩИТА: ждём, пока driver действительно готов
+        if (engine == null || @:privateAccess engine.driver == null) {
+            trace("⏳ [HeapsRenderer] Engine created but driver not ready, retrying...");
+            haxe.Timer.delay(onEngineReady, 50);
+            return;
+        }
+        hxd.System.setLoop(mainLoop);
+        engine.backgroundColor = 0xFF2a2a2a;
+        isEngineReady = true;
+        trace("🎨 [HeapsRenderer] Engine ready. Render loop started.");
+    }
+    
+    private function mainLoop():Void {
+        hxd.Timer.update();
+        if (engine != null) {
+            viewportService.renderAll(engine);
+        }
+    }
+    
+    public function onResize(width:Int, height:Int):Void {
+        viewportService.resizeAll(width, height);
+    }
+    
+    public function dispose():Void {
+        if (engine != null) {
+            engine.dispose();
+            engine = null;
+        }
+    }
+}
+</file>
+
 <file path="engine/infrastructure/HeapsRenderer3D.hx">
 // hide/engine/infrastructure/HeapsRenderer3D.hx
 package hide.engine.infrastructure;
@@ -2973,6 +3091,330 @@ class SceneServiceImpl implements ISceneService implements Service {
 }
 </file>
 
+<file path="engine/infrastructure/SceneViewFactory.hx">
+// hide/infrastructure/external/SceneViewFactory.hx
+package hide.infrastructure.external;
+
+import hide.domain.services.IViewFactory;
+import hide.domain.services.IElement;
+import hide.infrastructure.external.HtmlElement;
+import hide.engine.infrastructure.SceneViewportController;
+import hx.injection.Service;
+
+class SceneViewFactory implements IViewFactory implements Service {
+    private var sceneViewportController:SceneViewportController;
+    
+    public function new(sceneViewportController:SceneViewportController) {
+        this.sceneViewportController = sceneViewportController;
+    }
+    
+    public function create(container:IElement, state:Dynamic):Dynamic {
+        var htmlEl:HtmlElement = cast container;
+        var domNode = htmlEl.getElement();
+        
+        // Просто привязываем контроллер к DOM
+        sceneViewportController.attachTo(domNode);
+        
+        trace("🎬 [SceneViewFactory] Scene viewport created");
+        return sceneViewportController;
+    }
+}
+</file>
+
+<file path="engine/infrastructure/SceneViewportController.hx">
+// hide/engine/infrastructure/SceneViewportController.hx
+package hide.engine.infrastructure;
+
+import hide.engine.domain.services.ISceneService;
+import hide.engine.domain.services.IEngineEventBus;
+import hide.engine.domain.entities.SceneObject;
+import hide.engine.domain.entities.Transform;
+import hide.engine.domain.entities.MeshRenderer;
+import h3d.scene.Object;
+import h3d.scene.Mesh;
+import h3d.scene.fwd.DirLight;
+import h3d.prim.Cube;
+import h3d.Quat;
+import hx.injection.Service;
+
+/**
+ * Контроллер viewport'а Scene Editor.
+ * Отвечает за:
+ * - Создание сцены для Scene Editor
+ * - Построение дерева объектов (buildObjectTree)
+ * - Визуальное выделение (selection outline)
+ * - Обработку кликов мыши (picking)
+ */
+class SceneViewportController implements Service {
+    private var sceneService:ISceneService;
+    private var viewportService:ViewportService;
+    private var engineEventBus:IEngineEventBus;
+    
+    private var viewport:Null<Viewport>;
+    private var scene:h3d.scene.Scene;
+    private var sceneRoot:h3d.scene.Object;
+    
+    // Selection & Mesh mapping
+    private var meshToDomainId:Map<h3d.scene.Mesh, String>;
+    private var bboxPrim:h3d.prim.Cube;
+    private var selectionOutline:Null<h3d.scene.Mesh> = null;
+    private var selectedMeshRef:Null<h3d.scene.Mesh> = null;
+    private var meshOriginalColor:Map<h3d.scene.Mesh, h3d.Vector>;
+    private var currentSelectedId:Null<String> = null;
+    private var isInteractiveClicked:Bool = false;
+    
+    private var container:Dynamic;
+    private var isAttached:Bool = false;
+
+    public function new(
+        sceneService:ISceneService,
+        viewportService:ViewportService,
+        engineEventBus:IEngineEventBus
+    ) {
+        this.sceneService = sceneService;
+        this.viewportService = viewportService;
+        this.engineEventBus = engineEventBus;
+        
+        this.meshToDomainId = new Map();
+        this.meshOriginalColor = new Map();
+        this.bboxPrim = new h3d.prim.Cube(1, 1, 1, false);
+        bboxPrim.addNormals();
+        bboxPrim.addUVs();
+        
+        // Подписки на события движка
+        engineEventBus.onObjectSelected(onObjectSelected);
+        engineEventBus.onSceneChanged(onSceneChanged);
+    }
+    
+    /**
+     * Вызывается из SceneViewFactory для привязки к DOM-контейнеру.
+     */
+    public function attachTo(container:Dynamic):Void {
+        this.container = container;
+        
+        // ✅ ПРОВЕРКА: engine должен быть инициализирован
+        var engine = h3d.Engine.getCurrent();
+        if (engine == null || @:privateAccess engine.driver == null) {
+            trace("⏳ [SceneViewport] Engine not ready, retrying in 50ms...");
+            haxe.Timer.delay(function() attachTo(container), 50);
+            return;
+        }
+        
+        if (isAttached) {
+            trace("⚠️ [SceneViewport] Already attached");
+            return;
+        }
+        isAttached = true;
+        
+        scene = new h3d.scene.Scene();
+        scene.renderer.shadows = false;
+        @:privateAccess scene.ctx.globals.fastSet(
+            hxsl.Globals.allocID("shadow.proj"),
+            new h3d.Matrix()
+        );
+        
+        sceneRoot = new h3d.scene.Object(scene);
+        
+        var camera = scene.camera;
+        camera.pos.set(8, 8, 8);
+        camera.target.set(0, 0, 0);
+        camera.fovY = 45;
+        camera.zNear = 0.1;
+        camera.zFar = 1000;
+        camera.update();
+        
+        var light = new DirLight(new h3d.Vector(-0.5, -0.5, -1), scene);
+        
+        // Регистрируем viewport
+        viewport = viewportService.register("scene-editor", scene, 800, 600);
+        container.appendChild(viewport.canvas);
+        
+        setupMouseClickHandler();
+        
+        // Первичный рендер
+        renderSceneInternal(sceneService.getRoot());
+        
+        trace(" [SceneViewportController] Attached to container");
+    }
+    
+    private function onSceneChanged():Void {
+        renderSceneInternal(sceneService.getRoot());
+    }
+    
+    private function onObjectSelected(id:Null<String>):Void {
+        currentSelectedId = id;
+        if (id == null) {
+            clearSelectionVisuals();
+        } else {
+            if (meshToDomainId.iterator().hasNext()) {
+                updateSelectionVisuals(id);
+            }
+        }
+    }
+    
+    // === ЛОГИКА ПОСТРОЕНИЯ ДЕРЕВА ===
+    
+    private function renderSceneInternal(root:SceneObject):Void {
+        var savedSelectionId = currentSelectedId;
+        clearSelectionVisuals();
+        
+        var toRemove:Array<h3d.scene.Object> = [];
+        for (child in sceneRoot) {
+            if (child != sceneRoot) toRemove.push(child);
+        }
+        for (child in toRemove) child.remove();
+        
+        meshToDomainId.clear();
+        meshOriginalColor.clear();
+        
+        buildObjectTree(root, sceneRoot);
+        
+        if (savedSelectionId != null) {
+            haxe.Timer.delay(function() updateSelectionVisuals(savedSelectionId), 0);
+        }
+    }
+    
+    private function buildObjectTree(obj:SceneObject, h3dParent:h3d.scene.Object):Void {
+        if (!obj.isActive) return;
+        
+        var h3dObj = new h3d.scene.Object(h3dParent);
+        h3dObj.name = obj.name;
+        applyTransform(h3dObj, obj.transform);
+        
+        for (comp in obj.components) {
+            if (Std.isOfType(comp, MeshRenderer)) {
+                var mesh = createMeshPrimitive();
+                if (mesh != null) {
+                    meshToDomainId.set(mesh, obj.id);
+                    h3dObj.addChild(mesh);
+                    @:privateAccess mesh.syncPos();
+                    
+                    var localBounds = mesh.getBounds(null, mesh);
+                    if (!localBounds.isEmpty()) {
+                        var interaction = new h3d.scene.Interactive(localBounds, mesh);
+                        interaction.onClick = function(e:hxd.Event) {
+                            isInteractiveClicked = true;
+                            sceneService.select(obj.id);
+                            e.cancel = true;
+                        }
+                        interaction.onOver = function(e:hxd.Event) {
+                            if (selectedMeshRef != mesh) mesh.material.color.setColor(0x6ab0ff);
+                        }
+                        interaction.onOut = function(e:hxd.Event) {
+                            if (selectedMeshRef != mesh) {
+                                if (meshOriginalColor.exists(mesh)) {
+                                    var orig = meshOriginalColor.get(mesh);
+                                    mesh.material.color.set(orig.x, orig.y, orig.z);
+                                } else {
+                                    mesh.material.color.setColor(0x4a90e2);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        for (child in obj.children) buildObjectTree(child, h3dObj);
+    }
+    
+    private function applyTransform(h3dObj:h3d.scene.Object, t:Transform):Void {
+        h3dObj.x = t.x; h3dObj.y = t.y; h3dObj.z = t.z;
+        var q = new Quat();
+        q.initRotation(t.rotX * Math.PI / 180, t.rotY * Math.PI / 180, t.rotZ * Math.PI / 180);
+        h3dObj.setRotationQuat(q);
+        h3dObj.scaleX = t.scaleX; h3dObj.scaleY = t.scaleY; h3dObj.scaleZ = t.scaleZ;
+    }
+    
+    private function createMeshPrimitive():Null<Mesh> {
+        var cube = new Cube(1, 1, 1, false);
+        cube.addNormals(); cube.addUVs();
+        var mesh = new Mesh(cube);
+        mesh.material.color.setColor(0x4a90e2);
+        mesh.material.mainPass.enableLights = true;
+        return mesh;
+    }
+    
+    // === ЛОГИКА ВЫДЕЛЕНИЯ ===
+    
+    private function updateSelectionVisuals(id:Null<String>):Void {
+        clearSelectionVisuals();
+        if (id == null) return;
+        
+        var targetMesh:Null<h3d.scene.Mesh> = null;
+        for (mesh => domainId in meshToDomainId) {
+            if (domainId == id) { targetMesh = mesh; break; }
+        }
+        if (targetMesh == null) return;
+        
+        if (!meshOriginalColor.exists(targetMesh)) {
+            var orig = new h3d.Vector();
+            orig.set(targetMesh.material.color.x, targetMesh.material.color.y, targetMesh.material.color.z);
+            meshOriginalColor.set(targetMesh, orig);
+        }
+        
+        targetMesh.material.color.setColor(0x6ab0ff);
+        var worldBounds = targetMesh.getBounds();
+        if (worldBounds.isEmpty()) return;
+        
+        var sizeX = worldBounds.xMax - worldBounds.xMin;
+        var sizeY = worldBounds.yMax - worldBounds.yMin;
+        var sizeZ = worldBounds.zMax - worldBounds.zMin;
+        
+        selectionOutline = new h3d.scene.Mesh(bboxPrim, sceneRoot);
+        selectionOutline.material.mainPass.wireframe = true;
+        selectionOutline.material.color.setColor(0xFF6600);
+        selectionOutline.material.mainPass.depth(false, Always);
+        selectionOutline.material.mainPass.culling = None;
+        selectionOutline.material.mainPass.setBlendMode(AlphaAdd);
+        
+        selectionOutline.x = worldBounds.xMin;
+        selectionOutline.y = worldBounds.yMin;
+        selectionOutline.z = worldBounds.zMin;
+        selectionOutline.scaleX = sizeX * 1.05;
+        selectionOutline.scaleY = sizeY * 1.05;
+        selectionOutline.scaleZ = sizeZ * 1.05;
+        
+        selectedMeshRef = targetMesh;
+    }
+    
+    private function clearSelectionVisuals():Void {
+        if (selectionOutline != null) {
+            selectionOutline.remove();
+            selectionOutline = null;
+        }
+        for (mesh => origColor in meshOriginalColor) {
+            if (mesh != null && mesh.material != null) {
+                mesh.material.color.set(origColor.x, origColor.y, origColor.z);
+            }
+        }
+        meshOriginalColor.clear();
+        currentSelectedId = null;
+    }
+    
+    // === МЫШЬ ===
+    
+    private function setupMouseClickHandler():Void {
+        var window = hxd.Window.getInstance();
+        window.addEventTarget(function(e:hxd.Event) {
+            if (e.kind == EPush && e.button == 0) {
+                isInteractiveClicked = false;
+                haxe.Timer.delay(function() {
+                    if (!isInteractiveClicked) sceneService.deselect();
+                }, 0);
+            }
+        });
+    }
+    
+    public function dispose():Void {
+        if (viewport != null) {
+            viewportService.removeViewport(viewport.id);
+            viewport = null;
+        }
+    }
+}
+</file>
+
 <file path="engine/infrastructure/ShaderPreviewRenderer.hx">
 // engine/infrastructure/ShaderPreviewRenderer.hx
 package hide.engine.infrastructure;
@@ -3040,7 +3482,11 @@ class ShaderPreviewRenderer implements Service {
     
     private function onEngineReady():Void {
         s3d = new h3d.scene.Scene();
-        
+        s3d.renderer.shadows = false;
+        @:privateAccess s3d.ctx.globals.fastSet(
+            hxsl.Globals.allocID("shadow.proj"),
+            new h3d.Matrix() // пустая матрица
+        );
         // Камера
         var camera = s3d.camera;
         camera.pos.set(0, 2, 3);
@@ -3099,6 +3545,159 @@ class ShaderPreviewRenderer implements Service {
             canvas.parentElement.removeChild(canvas);
             canvas = null;
         }
+    }
+}
+</file>
+
+<file path="engine/infrastructure/Viewport.hx">
+package hide.engine.infrastructure;
+
+import h3d.scene.Scene;
+import h3d.mat.Texture;
+
+/**
+ * Один viewport = сцена + камера + render target + canvas
+ */
+class Viewport {
+    public var id:String;
+    public var scene:Scene;
+    public var renderTarget:Texture;
+    public var canvas:js.html.CanvasElement;
+    public var enabled:Bool = true;
+    public var width:Int;
+    public var height:Int;
+    
+    public function new(id:String, scene:Scene, width:Int, height:Int) {
+        this.id = id;
+        this.scene = scene;
+        this.width = width;
+        this.height = height;
+        
+        // Создаём RenderTexture (GPU-side)
+        renderTarget = new Texture(width, height, [Target]);
+        renderTarget.depthBuffer = new Texture(width, height, Depth24Stencil8);
+        
+        // Создаём canvas для отображения
+        canvas = js.Browser.document.createCanvasElement();
+        canvas.width = width;
+        canvas.height = height;
+    }
+    
+    /**
+     * Копирует RenderTexture → Canvas (пока через CPU)
+     */
+    public function blitToCanvas():Void {
+        var pixels = renderTarget.capturePixels();
+        var ctx = canvas.getContext("2d");
+        if (ctx == null) return;
+        
+        var imageData = ctx.createImageData(width, height);
+        var bytes = pixels.bytes; // ✅ Получаем байты из hxd.Pixels
+        var data = imageData.data;
+        
+        // Копируем байты. Heaps обычно возвращает RGBA.
+        // Если цвета будут инвертированы (синий вместо красного), поменяй местами R и B ниже.
+        var len = width * height * 4;
+        for (i in 0...len) {
+            data[i] = bytes.get(i);
+        }
+        
+        ctx.putImageData(imageData, 0, 0);
+    }
+    
+    public function resize(w:Int, h:Int):Void {
+        width = w;
+        height = h;
+        canvas.width = w;
+        canvas.height = h;
+        renderTarget.dispose();
+        renderTarget = new Texture(w, h, [Target]);
+        renderTarget.depthBuffer = new Texture(w, h, Depth24Stencil8);
+    }
+    
+    public function dispose():Void {
+        renderTarget.dispose();
+        if (canvas != null && canvas.parentElement != null) {
+            canvas.parentElement.removeChild(canvas);
+        }
+    }
+}
+</file>
+
+<file path="engine/infrastructure/ViewportService.hx">
+// hide/engine/infrastructure/ViewportService.hx
+package hide.engine.infrastructure;
+
+import h3d.scene.Scene;
+import h3d.Camera;
+import h3d.mat.Texture;
+import hx.injection.Service;
+
+/**
+ * Управляет всеми viewport'ами IDE.
+ * Один движок, много сцен, много RenderTexture.
+ */
+class ViewportService implements Service {
+    private var viewports:Map<String, Viewport>;
+    
+    public function new() {
+        viewports = new Map();
+    }
+    
+    /**
+     * Регистрирует новый viewport (Scene, Shader, Animation, 2D...)
+     */
+    public function register(id:String, scene:Scene, width:Int, height:Int):Viewport {
+        if (viewports.exists(id)) {
+            trace('⚠️ Viewport $id already exists, reusing');
+            return viewports.get(id);
+        }
+        
+        var vp = new Viewport(id, scene, width, height);
+        viewports.set(id, vp);
+        trace('✅ Viewport registered: $id (${width}x${height})');
+        return vp;
+    }
+    
+    /**
+     * Рендерит ВСЕ viewport'ы в их RenderTexture.
+     * Вызывается из главного render loop HeapsRenderer.
+     */
+    public function renderAll(engine:h3d.Engine):Void {
+        for (vp in viewports) {
+            if (!vp.enabled) continue;
+            
+            // 1. Рендерим сцену в RenderTexture
+            engine.pushTarget(vp.renderTarget);
+            vp.scene.render(engine);
+            engine.popTarget();
+            
+            // 2. Копируем в canvas (пока через capturePixels)
+            vp.blitToCanvas();
+        }
+    }
+    
+    public function getViewport(id:String):Null<Viewport> {
+        return viewports.get(id);
+    }
+        // ✅ ДОБАВЛЯЕМ ЭТОТ МЕТОД
+    public function resizeAll(width:Int, height:Int):Void {
+        for (vp in viewports) {
+            vp.resize(width, height);
+        }
+    }
+    public function removeViewport(id:String):Void {
+        if (viewports.exists(id)) {
+            var vp = viewports.get(id);
+            vp.dispose();
+            viewports.remove(id);
+            trace('🗑️ Viewport removed: $id');
+        }
+    }
+    
+    public function dispose():Void {
+        for (vp in viewports) vp.dispose();
+        viewports.clear();
     }
 }
 </file>
@@ -4667,10 +5266,11 @@ package hide.infrastructure.external.litegraph;
 import js.html.CanvasElement;
 import js.html.Element;
 
-@:jsRequire("litegraph.js")
+@:jsRequire("litegraph.js", "LiteGraph")
 extern class LiteGraph {
     // Constants
     static var VERSION:Float;
+    
     static var CANVAS_GRID_SIZE:Float;
     static var NODE_TITLE_HEIGHT:Float;
     static var NODE_TITLE_TEXT_Y:Float;
@@ -5292,52 +5892,29 @@ extern class Window {
 <file path="infrastructure/external/SceneViewFactory.hx">
 // hide/infrastructure/external/SceneViewFactory.hx
 package hide.infrastructure.external;
+
 import hide.domain.services.IViewFactory;
 import hide.domain.services.IElement;
 import hide.infrastructure.external.HtmlElement;
-import hide.engine.domain.services.IRenderer;
-import hide.engine.domain.services.ISceneService;
-import hide.shared.types.IEventBus;
-import hide.shared.events.SceneChanged;
+import hide.engine.infrastructure.SceneViewportController;
 import hx.injection.Service;
 
-/**
- * Фабрика для Scene View.
- * Создаёт canvas, инициализирует рендерер, подписывается на изменения сцены.
- */
 class SceneViewFactory implements IViewFactory implements Service {
-    private var renderer:IRenderer;
-    private var sceneService:ISceneService;
-    private var eventBus:IEventBus;
+    private var sceneViewportController:SceneViewportController;
     
-    public function new(
-        renderer:IRenderer,
-        sceneService:ISceneService,
-        eventBus:IEventBus
-    ) {
-        this.renderer = renderer;
-        this.sceneService = sceneService;
-        this.eventBus = eventBus;
+    public function new(sceneViewportController:SceneViewportController) {
+        this.sceneViewportController = sceneViewportController;
     }
     
     public function create(container:IElement, state:Dynamic):Dynamic {
         var htmlEl:HtmlElement = cast container;
         var domNode = htmlEl.getElement();
         
-        // 1. Инициализируем рендерер
-        renderer.init(domNode);
+        // Просто привязываем контроллер к DOM
+        sceneViewportController.attachTo(domNode);
         
-        // 2. Подписываемся на изменения сцены
-        eventBus.subscribe(SceneChanged, function(_) {
-            renderer.renderScene(sceneService.getRoot());
-        });
-        
-        // 3. Первичный рендер
-        renderer.renderScene(sceneService.getRoot());
-        
-        trace("🎬 [SceneViewFactory] Scene view created");
-        
-        return renderer;
+        trace("🎬 [SceneViewFactory] Scene viewport created");
+        return sceneViewportController;
     }
 }
 </file>
@@ -11576,6 +12153,226 @@ class BaseReactComponent<P, S> extends ReactComponentOfPropsAndState<P, S> {
 }
 </file>
 
+<file path="presentation/ui/react/components/ComponentIcon.hx">
+package hide.presentation.ui.react.components;
+
+import react.ReactComponent;
+import react.ReactMacro.jsx;
+
+typedef ComponentIconProps = {
+    var className: String; // Полное имя класса, например "hide.engine.domain.entities.MeshRenderer"
+}
+
+class ComponentIcon extends ReactComponentOfProps<ComponentIconProps> {
+    
+    override function render(): ReactElement {
+        var color = "#9ca3af"; // default gray
+        var svgPath = "";
+
+        switch (props.className) {
+            case "hide.engine.domain.entities.MeshRenderer":
+                color = "#60a5fa"; // blue-400 (как в Hierarchy)
+                // Иконка куба/меши
+                svgPath = "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96L12 12.01l8.73-5.05 M12 22.08V12";
+            case "hide.engine.domain.entities.Rigidbody":
+                color = "#facc15"; // yellow-400
+                // Иконка физики/гравитации (шар со стрелкой вниз)
+                svgPath = "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm0-4a2 2 0 1 1 0-4 2 2 0 0 1 0 4z"; 
+                // Альтернатива: простая стрелка вниз для гравитации
+                // svgPath = "M12 5v14m-7-7l7 7 7-7";
+            case "hide.engine.domain.entities.Transform":
+                 color = "#d1d5db"; // gray-300
+                 // Иконка осей координат или перемещения
+                 svgPath = "M3 12h18M12 3v18m-9-9l4-4m5 5l4-4m-9 9l4 4m5-5l4 4";
+            default:
+                // Иконка для неизвестного компонента (шестеренка или пазл)
+                svgPath = "M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z";
+        }
+
+        return jsx('
+            <svg 
+                width="14" 
+                height="14" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke={color} 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                style={{ marginRight: "6px", flexShrink: "0", verticalAlign: "middle" }}
+            >
+                <path d={svgPath} />
+            </svg>
+        ');
+    }
+}
+</file>
+
+<file path="presentation/ui/react/components/ContextMenu.hx">
+package hide.presentation.ui.react.components;
+
+import react.ReactComponent;
+import react.ReactMacro.jsx;
+
+typedef MenuItem = {
+    var label: String;
+    var ?icon: String;       // Опционально: класс иконки или SVG path
+    var ?disabled: Bool;     // Если true, пункт некликабелен
+    var ?separator: Bool;    // Если true, рисует разделительную линию
+    var action: Void->Void;  // Функция, вызываемая при клике
+}
+
+typedef ContextMenuProps = {
+    var x: Float;            // Координата X экрана
+    var y: Float;            // Координата Y экрана
+    var items: Array<MenuItem>;
+    var onClose: Void->Void; // Коллбэк для закрытия меню
+}
+
+class ContextMenu extends ReactComponentOfProps<ContextMenuProps> {
+    
+    override function componentDidMount(): Void {
+        // Закрытие по клику вне меню или Esc
+        js.Browser.document.addEventListener("mousedown", handleGlobalClick);
+        js.Browser.window.addEventListener("keydown", handleKeyDown);
+    }
+
+    override function componentWillUnmount(): Void {
+        js.Browser.document.removeEventListener("mousedown", handleGlobalClick);
+        js.Browser.window.removeEventListener("keydown", handleKeyDown);
+    }
+
+    private function handleGlobalClick(e:js.html.MouseEvent): Void {
+        // Проверяем, был ли клик внутри самого меню
+        var target = cast(e.target, js.html.Element);
+        if (target != null && target.closest(".context-menu-root") == null) {
+            props.onClose();
+        }
+    }
+
+    private function handleKeyDown(e:js.html.KeyboardEvent): Void {
+        if (e.key == "Escape") {
+            props.onClose();
+        }
+    }
+
+    override function render(): ReactElement {
+        return jsx('
+            <div 
+                className="context-menu-root"
+                style={{
+                    position: "fixed",
+                    left: props.x + "px",
+                    top: props.y + "px",
+                    zIndex: 9999,
+                    background: "#252526",
+                    border: "1px solid #454545",
+                    boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+                    borderRadius: "4px",
+                    padding: "4px 0",
+                    minWidth: "180px",
+                    fontSize: "12px",
+                    color: "#cccccc"
+                }}
+            >
+                {[for (item in props.items) renderItem(item)]}
+            </div>
+        ');
+    }
+
+    private function renderItem(item: MenuItem): ReactElement {
+        if (item.separator) {
+            return jsx('<div key={"sep-" + item.label} style={{height: "1px", background: "#454545", margin: "4px 0"}} />');
+        }
+
+        var isDisabled = item.disabled == true;
+        var innerElement = item.icon != null ? jsx('<span style={{width: "16px", textAlign: "center"}}>{item.icon}</span>') : jsx('<span style={{width: "16px"}}></span>');
+        return jsx('
+            <div 
+                key={item.label}
+                className={isDisabled ? "context-item disabled" : "context-item"}
+                onClick={!isDisabled ? item.action : null}
+                style={{
+                    padding: "4px 12px",
+                    cursor: isDisabled ? "default" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    opacity: isDisabled ? 0.5 : 1,
+                    transition: "background 0.1s"
+                }}
+                onMouseOver={!isDisabled ? function(e) untyped e.currentTarget.style.background = "#094771" : null}
+                onMouseOut={!isDisabled ? function(e) untyped e.currentTarget.style.background = "transparent" : null}
+            >
+                {innerElement}
+                <span>{item.label}</span>
+            </div>
+        ');
+    }
+}
+</file>
+
+<file path="presentation/ui/react/components/HierarchyIcon.hx">
+package hide.presentation.ui.react.components;
+
+import react.ReactComponent;
+import react.ReactMacro.jsx;
+import hide.presentation.ui.react.BaseReactComponent;
+// Простой enum для типизации типов объектов
+enum ObjectType {
+    Camera;
+    Light;
+    Mesh;
+    Player;
+    Default;
+}
+
+typedef IconProps = {
+    var type: ObjectType;
+}
+
+class HierarchyIcon extends ReactComponentOfProps<IconProps> {
+    
+    override function render(): ReactElement {
+        var color = "#9ca3af"; // default gray
+        var svgPath = "";
+
+        switch (props.type) {
+            case Camera:
+                color = "#60a5fa"; // blue-400
+                svgPath = "M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z M12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z";
+            case Light:
+                color = "#facc15"; // yellow-400
+                svgPath = "M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z";
+            case Player:
+                color = "#4ade80"; // green-400
+                svgPath = "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2 M12 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8z";
+            case Mesh:
+                color = "#d1d5db"; // gray-300
+                svgPath = "M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z M3.27 6.96L12 12.01l8.73-5.05 M12 22.08V12";
+            default:
+                svgPath = "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8";
+        }
+
+        return jsx('
+            <svg 
+                width="16" 
+                height="16" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke={color} 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                style={{ marginRight: "6px", flexShrink: "0" }}
+            >
+                <path d={svgPath} />
+            </svg>
+        ');
+    }
+}
+</file>
+
 <file path="presentation/ui/react/components/HierarchyPanel.hx">
 package hide.presentation.ui.react.components;
 
@@ -11583,6 +12380,8 @@ import react.ReactComponent;
 import react.ReactMacro.jsx;
 import hide.presentation.ui.react.BaseReactComponent;
 import hide.presentation.ui.react.hooks.UseService;
+import hide.presentation.ui.react.components.HierarchyIcon;
+import hide.presentation.ui.react.components.ContextMenu;
 import hide.shared.events.ObjectSelected;
 import hide.engine.domain.entities.SceneObject;
 
@@ -11594,12 +12393,19 @@ typedef HierarchyProps = {
 typedef HierarchyState = {
     var root: Null<SceneObject>;
     var selectedId: Null<String>;
+    var searchQuery: String; // <-- НОВОЕ: строка поиска
+    var contextMenu: Null<{x: Float, y: Float, objId: String}>; // <-- НОВОЕ
 }
 
 class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> {
     public function new() {
         super();
-        state = { root: null, selectedId: null };
+        state = { 
+            root: null, 
+            selectedId: null,
+            searchQuery: "", // <-- Инициализируем пустым
+            contextMenu: null 
+        };
     }
 
     override function componentDidMount(): Void {
@@ -11607,33 +12413,302 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
         var eventBus = UseService.eventBus();
 
         // 1. Загружаем реальное дерево сцены
-        setState({ root: scene.getRoot(), selectedId: null });
+        setState({ root: scene.getRoot(), selectedId: null, searchQuery: "",contextMenu:state.contextMenu });
 
         // 2. Подписываемся на изменения сцены (добавление/удаление объектов)
         subscribe(eventBus, hide.shared.events.ObjectChanged, function(_) {
-            setState({ root: scene.getRoot(), selectedId: state.selectedId });
+            setState({ root: scene.getRoot(), selectedId: state.selectedId, searchQuery: state.searchQuery,contextMenu:state.contextMenu });
         });
 
         // 3. Подписываемся на внешний выбор (например, кликом в 3D-вью)
         subscribe(eventBus, ObjectSelected, function(e:ObjectSelected) {
             trace('🖥️ [Hierarchy] Received ObjectSelected: ${e.objectId}');
-            setState({ root: state.root, selectedId: e.objectId });
+            setState({ root: state.root, selectedId: e.objectId, searchQuery: state.searchQuery,contextMenu:state.contextMenu });
         });
     }
 
+    // ===== Обработчик изменения поиска =====
+    private function handleSearchChange(e: js.html.Event): Void {
+        var target = cast(e.target, js.html.InputElement);
+        setState({ 
+            root: state.root, 
+            selectedId: state.selectedId, 
+            searchQuery: target.value.toLowerCase() ,
+            contextMenu:state.contextMenu
+        });
+    }
+
+    // ✅ НОВОЕ: Очистка поиска
+    private function clearSearch(): Void {
+        setState({ 
+            root: state.root, 
+            selectedId: state.selectedId, 
+            searchQuery: "",
+            contextMenu:state.contextMenu
+        });
+        
+        // Опционально: можно сразу вернуть фокус в инпут
+        var input = js.Browser.document.getElementById("hierarchy-search-input");
+        if (input != null) {
+            untyped input.focus();
+        }
+    }
+
+    // ===== Проверка на соответствие запросу =====
+    private function matchesSearch(obj: SceneObject, query: String): Bool {
+        if (query == "") return true;
+        
+        // Проверяем имя объекта
+        if (obj.name.toLowerCase().indexOf(query) != -1) return true;
+        
+        // Рекурсивно проверяем детей (чтобы родитель оставался видимым, если найден ребенок)
+        for (child in obj.children) {
+            if (matchesSearch(child, query)) return true;
+        }
+        
+        return false;
+    }
+
+    private function getObjectType(obj: SceneObject): ObjectType {
+        // Логика определения типа. Можно расширять под ваши нужды.
+        if (obj.name.indexOf("Camera") != -1) return Camera;
+        if (obj.name.indexOf("Light") != -1) return Light;
+        if (obj.name == "Player") return Player;
+        
+        // Проверяем наличие компонентов
+        /*for (c in obj.components) {
+            if (Std.isOfType(c, MeshRenderer)) return Mesh;
+        }*/
+        
+        return Default;
+    }
     override function render(): ReactElement {
         if (state.root == null) {
             return jsx('<div style={{padding:"10px",color:"#888"}}>No scene loaded</div>');
         }
 
+        // Проверяем, есть ли что очищать
+        var hasQuery = state.searchQuery.length > 0;
+        var clearIcon = hasQuery ? jsx('
+            <button 
+                onClick={clearSearch}
+                title="Clear search"
+                style={{
+                    background: "transparent",
+                    border: "none",
+                    color: "#888",
+                    cursor: "pointer",
+                    padding: "2px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    borderRadius: "3px"
+                }}
+                onMouseOver={function(e) untyped e.currentTarget.style.color = "#fff"}
+                onMouseOut={function(e) untyped e.currentTarget.style.color = "#888"}
+            >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        ') : null;
+
+        var ctxMenu = state.contextMenu != null ? jsx('
+            <ContextMenu 
+                x={state.contextMenu.x} 
+                y={state.contextMenu.y} 
+                items={getHierarchyContextMenu(state.contextMenu.objId)}
+                onClose={function() setState({root: state.root, selectedId: state.selectedId, searchQuery: state.searchQuery, contextMenu: null})}
+            />
+        ') : null;
         return jsx('
-            <div style={{padding:"10px",color:"#d4d4d4",background:"#383838",height:"100%",fontFamily:"sans-serif",fontSize:"13px"}}>
-                {renderObject(state.root, 0)}
+            <div style={{display: "flex", flexDirection: "column", height: "100%", background: "#383838"}}>
+                <div style={{padding: "6px", 
+                    borderBottom: "1px solid #2a2a2a",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    background: "#2a2a2a"
+                }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input 
+                        type="text" 
+                        placeholder="Search objects..." 
+                        value={state.searchQuery}
+                        onChange={handleSearchChange}
+                        style={{
+                            width: "100%", 
+                            padding: "4px 8px", 
+                            background: "#2a2a2a", 
+                            border: "1px solid #444", 
+                            borderRadius: "3px", 
+                            color: "#d4d4d4",
+                            outline: "none",
+                            boxSizing: "border-box"
+                        }}
+                    />
+                    {clearIcon}
+                </div>
+
+                <div style={{flex: 1, overflowY: "auto", padding: "4px 0"}}>
+                    {renderObject(state.root, 0)}
+                </div>
+                {ctxMenu}
             </div>
         ');
     }
 
+    // Метод для генерации пунктов меню
+    private function getHierarchyContextMenu(objId: String): Array<hide.presentation.ui.react.components.ContextMenu.MenuItem> {
+        var scene = UseService.sceneService();
+        var obj = scene.getObject(objId);
+        if (obj == null) return [];
+
+        var isRoot = obj.parent == null;
+        var closeMenu = function() {
+            setState({
+                root: state.root,
+                selectedId: state.selectedId,
+                searchQuery: state.searchQuery,
+                contextMenu: null // ✅ Закрываем меню после действия
+            });
+        };
+        return [
+            {
+                label: "Rename",
+                icon: "✏️",
+                action: function() {
+                    var newName = js.Browser.window.prompt("Enter new name:", obj.name);
+                    if (newName != null && newName.length > 0) {
+                        scene.rename(objId, newName);
+                    }
+                    closeMenu();
+                }
+            },
+            {
+                label: "Duplicate",
+                icon: "📋",
+                action: function() {
+                    // TODO: Реализовать дублирование через сервис сцены
+                    trace("Duplicate requested for: " + obj.name);
+                    closeMenu();
+                }
+            },
+            { separator: true, label: "sep1", action: function(){} },
+            {
+                label: "Create Empty Child",
+                icon: "➕",
+                action: function() {
+                    // TODO: Создать пустой объект и добавить как ребенка
+                    trace("Create child for: " + obj.name);
+                    closeMenu();
+                }
+            },
+            { separator: true, label: "sep2", action: function(){} },
+            {
+                label: "Delete",
+                icon: "🗑️",
+                disabled: isRoot, // Корневой объект нельзя удалить
+                action: function() {
+                    if (js.Browser.window.confirm("Delete '" + obj.name + "'?")) {
+                        // TODO: Удаление объекта
+                        trace("Delete requested for: " + obj.name);
+                        closeMenu();
+                    }
+                }
+            }
+        ];
+    }
+
+    // Обработчик правого клика на строке объекта
+    // Добавьте этот пропс в div строки объекта в renderObject():
+    // onContextMenu={function(e) handleContextMenu(e, obj.id)}
+    private function handleContextMenu(e: js.html.MouseEvent, objId: String): Void {
+        e.preventDefault();
+        e.stopPropagation();
+        // ✅ ЗАЩИТА ОТ ВЫХОДА ЗА ГРАНИЦЫ ЭКРАНА
+        var menuWidth = 200; // Примерная ширина меню
+        var menuHeight = 250; // Примерная высота
+        var winW = js.Browser.window.innerWidth;
+        var winH = js.Browser.window.innerHeight;
+        
+        var x = e.clientX;
+        var y = e.clientY;
+        
+        // Если меню не помещается справа — показываем слева от курсора
+        if (x + menuWidth > winW) {
+            x = winW - menuWidth - 10;
+        }
+        
+        // Если меню не помещается снизу — показываем выше курсора
+        if (y + menuHeight > winH) {
+            y = winH - menuHeight - 10;
+        }
+        setState({
+            root: state.root,
+            selectedId: state.selectedId,
+            searchQuery: state.searchQuery,
+            contextMenu: { x: x, y: y, objId: objId }
+        });
+    }
+    /**
+     * Разбивает текст на массив ReactElement, подсвечивая совпадения желтым цветом.
+     */
+    private function highlightText(text: String, query: String): ReactElement {
+        if (query == "" || text.toLowerCase().indexOf(query) == -1) {
+            return jsx('<span>{text}</span>');
+        }
+
+        var lowerText = text.toLowerCase();
+        var lowerQuery = query.toLowerCase();
+        var parts: Array<ReactElement> = [];
+        var lastIndex = 0;
+        var index = 0;
+
+        // Находим все вхождения (для простоты берем первое, так как indexOf не глобальный)
+        // Для множественных совпадений можно использовать EReg с флагом 'g'
+        while ((index = lowerText.indexOf(lowerQuery, lastIndex)) != -1) {
+            // Добавляем текст ДО совпадения
+            if (index > lastIndex) {
+                parts.push(jsx('<span key={"t" + parts.length}>{text.substring(lastIndex, index)}</span>'));
+            }
+            
+            // Добавляем ПОДСВЕЧЕННОЕ совпадение
+            parts.push(jsx('
+                <span 
+                    key={"h" + parts.length} 
+                    style={{
+                        backgroundColor: "#facc15", 
+                        color: "#000", 
+                        borderRadius: "2px", 
+                        padding: "0 2px",
+                        fontWeight: "bold"
+                    }}
+                >
+                    {text.substring(index, index + query.length)}
+                </span>
+            '));
+            
+            lastIndex = index + query.length;
+        }
+
+        // Добавляем остаток текста
+        if (lastIndex < text.length) {
+            parts.push(jsx('<span key={"e" + parts.length}>{text.substring(lastIndex)}</span>'));
+        }
+
+        return jsx('<span>{parts}</span>');
+    }
     private function renderObject(obj: SceneObject, depth: Int): ReactElement {
+        // ✅ Если идет поиск и этот узел (включая всех его потомков) не подходит — скрываем его полностью
+        if (!matchesSearch(obj, state.searchQuery)) {
+            return jsx('<div key={obj.id}></div>'); 
+        }
+
         var isSelected = state.selectedId == obj.id;
         var hasChildren = obj.children != null && obj.children.length > 0;
         var paddingLeft = depth * 16;
@@ -11643,9 +12718,19 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
             paddingLeft: (paddingLeft + 8) + "px",
             cursor: "pointer",
             borderRadius: "3px",
-            background: isSelected ? "#2d5c8a" : "transparent"
+            background: isSelected ? "#2d5c8a" : "transparent",
+            display: "flex",
+            alignItems: "center"
         };
 
+        // Определяем тип для иконки (упрощенная логика, можно расширить)
+        var iconType = ObjectType.Default;
+        if (obj.name.indexOf("Camera") != -1) iconType = Camera;
+        else if (obj.name.indexOf("Light") != -1) iconType = Light;
+        else if (obj.name == "Player") iconType = Player;
+        else if (obj.components.length > 0) iconType = Mesh;
+
+        // Рендерим детей только если они есть и проходят фильтр
         var childrenList: ReactElement = if (hasChildren) {
             jsx('<div>{[for (child in obj.children) renderObject(child, depth + 1)]}</div>');
         } else {
@@ -11653,14 +12738,25 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
         };
 
         return jsx('
-            <div key={obj.id}>
-                <div
+             <div key={obj.id}>
+                 <div
                     style={rowStyle}
-                    onClick={handleSelect.bind(obj.id)}>
-                    {hasChildren ? "▼ " : "  "}🎭 {obj.name}
-                </div>
+                    onClick={function(_) handleSelect(obj.id)}
+                    onContextMenu={function(e:js.html.MouseEvent) handleContextMenu(e, obj.id)}
+                    >
+                    
+
+                    <span style={{width: "16px", textAlign: "center", fontSize: "10px", marginRight: "4px", color: "#888"}}>
+                        {hasChildren ? "▼" : " "}
+                    </span>
+                    
+
+                    <HierarchyIcon type={iconType} />
+
+                    {highlightText(obj.name, state.searchQuery)}
+                 </div>
                 {childrenList}
-            </div>
+             </div>
         ');
     }
 
@@ -11689,6 +12785,7 @@ import hide.engine.domain.entities.SceneObject;
 import hide.engine.domain.entities.Transform;
 import hide.engine.domain.entities.MeshRenderer;
 import hide.engine.domain.entities.Rigidbody;
+import hide.presentation.ui.react.components.ComponentIcon; // Не забудьте импортировать иконку
 
 typedef InspectorProps = {
     var initialState: Dynamic;
@@ -11697,71 +12794,98 @@ typedef InspectorProps = {
 
 typedef InspectorState = {
     var selectedObject: Null<SceneObject>;
+    var collapsedComponents: Map<String, Bool>;
 }
 
 class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> {
+    
     public function new() {
         super();
-        state = { selectedObject: null };
+        state = { 
+            selectedObject: null,
+            collapsedComponents: new Map() 
+        };
     }
 
     override function componentDidMount(): Void {
         var eventBus = UseService.eventBus();
         var scene = UseService.sceneService();
 
-        // 1. Подписываемся на выбор объекта
-        // Подписываемся на выбор объекта
-        subscribe(eventBus, ObjectSelected, function(e:ObjectSelected) {
-            trace('🔍 [Inspector] Received ObjectSelected: ${e.objectId}');
-            var obj = e.objectId != null ? scene.getObject(e.objectId) : null;
-            setState({ selectedObject: obj });
+        // 1. Синхронная инициализация при монтировании
+        var initialObj = scene.getSelected();
+        setState({ 
+            selectedObject: initialObj,
+            collapsedComponents: new Map() 
         });
 
-        // 2. Подписываемся на изменения объекта (обновляем UI)
+        // 2. Подписка на выбор объекта
+        subscribe(eventBus, ObjectSelected, function(e:ObjectSelected) {
+            trace('🔍 [Inspector] Received ObjectSelected: ${e.objectId}');
+            
+            var obj = e.objectId != null ? scene.getObject(e.objectId) : null;
+            
+            // Оптимизация: не обновляем, если объект тот же самый (по ссылке)
+            if (state.selectedObject == obj) return;
+            
+            // ✅ СОХРАНЯЕМ collapsedComponents
+            setState({ 
+                selectedObject: obj,
+                collapsedComponents: state.collapsedComponents 
+            });
+        });
+
+        // 3. Подписка на изменения свойств
         subscribe(eventBus, ObjectChanged, function(e:ObjectChanged) {
             if (state.selectedObject != null && state.selectedObject.id == e.objectId) {
                 var fresh = scene.getObject(e.objectId);
-                setState({ selectedObject: fresh });
+                // ✅ СОХРАНЯЕМ collapsedComponents
+                setState({ 
+                    selectedObject: fresh,
+                    collapsedComponents: state.collapsedComponents 
+                });
             }
         });
-
-        // 3. Если уже что-то выбрано при монтировании — покажем сразу
-        var current = scene.getSelected();
-        if (current != null) {
-            setState({ selectedObject: current});
-        }
     }
 
+    // ===== Сворачивание =====
+    private function toggleCollapse(componentKey: String): Void {
+        var isCollapsed = state.collapsedComponents.get(componentKey);
+        if (isCollapsed == null) isCollapsed = false;
+        
+        var newMap = state.collapsedComponents.copy();
+        newMap.set(componentKey, !isCollapsed);
+        
+        setState({ 
+            selectedObject: state.selectedObject,
+            collapsedComponents: newMap 
+        });
+    }
+
+    // ===== Рендеринг =====
     override function render(): ReactElement {
         var obj = state.selectedObject;
 
         var header: ReactElement = if (obj != null) {
             jsx('
-                <div style={{padding:"8px",background:"#2a2a2a",borderRadius:"3px",marginBottom:"8px"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:"8px"}}>
-                        <input type="checkbox" defaultChecked={obj.isActive}
-                            onChange={function(_) toggleActive(obj.id)} />
-                        <b style={{color:"#fff"}}>{obj.name}</b>
-                        <span style={{marginLeft:"auto",color:"#888",fontSize:"11px"}}>
-                            id: {obj.id}
-                        </span>
+                <div className="inspector-header">
+                    <div className="inspector-header-content">
+                        <input type="checkbox" defaultChecked={obj.isActive} onChange={function(_) toggleActive(obj.id)} />
+                        <b>{obj.name}</b>
+                        <span className="inspector-id">id: {obj.id}</span>
                     </div>
                 </div>
             ');
         } else {
-            jsx('<div style={{padding:"20px",textAlign:"center",color:"#888"}}>No object selected</div>');
+            jsx('<div className="inspector-empty">No object selected</div>');
         };
 
         var componentsList: ReactElement = if (obj != null) {
             jsx('
-                <div style={{overflowY:"auto",maxHeight:"calc(100% - 60px)"}}>
+                <div className="inspector-components">
                     {renderTransform(obj)}
                     {[for (c in obj.components) renderComponent(obj.id, c)]}
-                    <div style={{marginTop:"10px",textAlign:"center"}}>
-                        <button style={{background:"#4a4a4a",color:"#fff",border:"1px solid #555",
-                            padding:"4px 12px",borderRadius:"3px",cursor:"pointer"}}>
-                            Add Component
-                        </button>
+                    <div className="inspector-add-btn-wrapper">
+                        <button className="btn-add-component">Add Component</button>
                     </div>
                 </div>
             ');
@@ -11770,94 +12894,134 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
         };
 
         return jsx('
-            <div style={{padding:"10px",color:"#d4d4d4",background:"#383838",
-                height:"100%",fontFamily:"sans-serif",fontSize:"13px"}}>
+            <div className="inspector-panel">
                 {header}
                 {componentsList}
             </div>
         ');
     }
 
-    // ===== Transform (всегда есть у каждого объекта) =====
     private function renderTransform(obj: SceneObject): ReactElement {
         var t = obj.transform;
+        var compId = "transform"; // Уникальный ID для Transform
+        var isCollapsed = state.collapsedComponents.get(compId) == true;
+        // 1. Сначала выполняем все вызовы функций и сохраняем результаты в переменные
+        var posInputs = renderVector3("Position", t.x, t.y, t.z, 
+            function(x,y,z) setTransform(obj.id, x,y,z, t.rotX,t.rotY,t.rotZ, t.scaleX,t.scaleY,t.scaleZ));
+        
+        var rotInputs = renderVector3("Rotation", t.rotX, t.rotY, t.rotZ, 
+            function(x,y,z) setTransform(obj.id, t.x,t.y,t.z, x,y,z, t.scaleX,t.scaleY,t.scaleZ));
+            
+        var scaleInputs = renderVector3("Scale", t.scaleX, t.scaleY, t.scaleZ, 
+            function(x,y,z) setTransform(obj.id, t.x,t.y,t.z, t.rotX,t.rotY,t.rotZ, x,y,z));
+
+        var componentContent = !isCollapsed ? jsx('
+                    <div className="component-body">
+                        {posInputs}
+                        {rotInputs}
+                        {scaleInputs}
+                    </div>
+                ') : null;
+        // 2. Используем эти переменные внутри jsx()
         return jsx('
-            <div style={{background:"#2a2a2a",borderRadius:"3px",marginBottom:"6px"}}>
-                <div style={{padding:"6px 8px",background:"#3a3a3a",fontWeight:"bold",
-                    borderBottom:"1px solid #222"}}>
-                    🔽 Transform
+            <div className="component-block">
+                <div 
+                    className="component-title" 
+                    onClick={function(_) toggleCollapse(compId)}
+                    style={{cursor: "pointer"}}
+                >
+                    <span style={{width: "16px", textAlign: "center", fontSize: "10px", marginRight: "4px"}}>
+                        {isCollapsed ? "▶" : "▼"}
+                    </span>
+                    <ComponentIcon className="hide.engine.domain.entities.Transform" />
+                
+                    Transform
                 </div>
-                <div style={{padding:"8px"}}>
-                    {renderVector3("Position", t.x, t.y, t.z, function(x,y,z) setTransform(obj.id, x,y,z, t.rotX,t.rotY,t.rotZ, t.scaleX,t.scaleY,t.scaleZ))}
-                    {renderVector3("Rotation", t.rotX, t.rotY, t.rotZ, function(x,y,z) setTransform(obj.id, t.x,t.y,t.z, x,y,z, t.scaleX,t.scaleY,t.scaleZ))}
-                    {renderVector3("Scale", t.scaleX, t.scaleY, t.scaleZ, function(x,y,z) setTransform(obj.id, t.x,t.y,t.z, t.rotX,t.rotY,t.rotZ, x,y,z))}
-                </div>
+                {componentContent}
             </div>
         ');
     }
 
-    // ===== Компоненты (MeshRenderer, Rigidbody, ...) =====
+    // ===== Компоненты (с иконками и уникальными ключами) =====
     private function renderComponent(objId: String, comp: hide.engine.domain.entities.SceneComponent): ReactElement {
-        return switch (Type.getClassName(Type.getClass(comp))) {
+        var className = Type.getClassName(Type.getClass(comp));
+        // ✅ УНИКАЛЬНЫЙ КЛЮЧ: Тип + ID
+        var uniqueKey = className + "_" + comp.id; 
+        
+        var isCollapsed = state.collapsedComponents.get(uniqueKey) == true;
+
+        var titleContent = switch (className) {
+            case "hide.engine.domain.entities.MeshRenderer": "Mesh Renderer";
+            case "hide.engine.domain.entities.Rigidbody": "Rigidbody";
+            default: comp.name;
+        };
+
+        var bodyContent: ReactElement = switch (className) {
             case "hide.engine.domain.entities.MeshRenderer":
                 var m: MeshRenderer = cast comp;
                 jsx('
-                    <div key={comp.id} style={{background:"#2a2a2a",borderRadius:"3px",marginBottom:"6px"}}>
-                        <div style={{padding:"6px 8px",background:"#3a3a3a",fontWeight:"bold",borderBottom:"1px solid #222"}}>
-                            🔽 Mesh Renderer
-                        </div>
-                        <div style={{padding:"8px"}}>
-                            {renderStringField("Mesh", m.meshPath, function(v) setMesh(objId, v, m.materialPath))}
-                            {renderStringField("Material", m.materialPath, function(v) setMesh(objId, m.meshPath, v))}
-                        </div>
+                    <div className="component-body">
+                        {renderStringField("Mesh", m.meshPath, function(v) setMesh(objId, v, m.materialPath))}
+                        {renderStringField("Material", m.materialPath, function(v) setMesh(objId, m.meshPath, v))}
                     </div>
                 ');
             case "hide.engine.domain.entities.Rigidbody":
                 var r: Rigidbody = cast comp;
                 jsx('
-                    <div key={comp.id} style={{background:"#2a2a2a",borderRadius:"3px",marginBottom:"6px"}}>
-                        <div style={{padding:"6px 8px",background:"#3a3a3a",fontWeight:"bold",borderBottom:"1px solid #222"}}>
-                            🔽 Rigidbody
-                        </div>
-                        <div style={{padding:"8px"}}>
-                            {renderNumberField("Mass", r.mass, function(v) setRigidbody(objId, v, r.useGravity))}
-                            <div style={{display:"flex",gap:"4px",marginBottom:"4px"}}>
-                                <span style={{width:"60px",color:"#aaa"}}>Gravity</span>
-                                <input type="checkbox" defaultChecked={r.useGravity}
-                                    onChange={function(_) setRigidbody(objId, r.mass, !r.useGravity)} />
-                            </div>
+                    <div className="component-body">
+                        {renderNumberField("Mass", r.mass, function(v) setRigidbody(objId, v, r.useGravity))}
+                        <div className="field-row checkbox-row">
+                            <label>Gravity</label>
+                            <input type="checkbox" defaultChecked={r.useGravity}
+                                onChange={function(_) setRigidbody(objId, r.mass, !r.useGravity)} />
                         </div>
                     </div>
                 ');
             default:
-                jsx('
-                    <div key={comp.id} style={{background:"#2a2a2a",borderRadius:"3px",marginBottom:"6px",padding:"8px",color:"#888"}}>
-                        Unknown component: {comp.name}
-                    </div>
-                ');
+                jsx('<div className="component-body">Unknown component: {comp.name}</div>');
         };
+
+        return jsx('
+            <div key={uniqueKey} className="component-block">
+                <div 
+                    className="component-title" 
+                    onClick={function(_) toggleCollapse(uniqueKey)}
+                    style={{cursor: "pointer", display: "flex", alignItems: "center"}}
+                >
+                    <span style={{width: "16px", textAlign: "center", fontSize: "10px", marginRight: "4px"}}>
+                        {isCollapsed ? "▶" : "▼"}
+                    </span>
+                    <ComponentIcon className={className} />
+                    {titleContent}
+                </div>
+                
+                {!isCollapsed ? bodyContent : null}
+            </div>
+        ');
     }
 
-    // ===== Поля ввода =====
+    // ===== Поля ввода (адаптивные) =====
     private function renderVector3(label: String, x: Float, y: Float, z: Float, onChange: Float->Float->Float->Void): ReactElement {
         return jsx('
-            <div style={{display:"flex",gap:"4px",marginBottom:"4px"}}>
-                <span style={{width:"60px",color:"#aaa"}}>{label}</span>
-                <input defaultValue={x} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
-                    onBlur={function(e) onChange(safeParse(e.target.value,0), y, z)} />
-                <input defaultValue={y} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
-                    onBlur={function(e) onChange(x, safeParse(e.target.value,0), z)} />
-                <input defaultValue={z} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
-                    onBlur={function(e) onChange(x, y, safeParse(e.target.value,0))} />
+            <div className="field-row vector-row">
+                <label className="field-label">{label}</label>
+                <div className="vector-inputs">
+                    <input defaultValue={x} className="num-input"
+                        onBlur={function(e) onChange(safeParse(e.target.value,0), y, z)} />
+                    <input defaultValue={y} className="num-input"
+                        onBlur={function(e) onChange(x, safeParse(e.target.value,0), z)} />
+                    <input defaultValue={z} className="num-input"
+                        onBlur={function(e) onChange(x, y, safeParse(e.target.value,0))} />
+                </div>
             </div>
         ');
     }
 
     private function renderStringField(label: String, value: String, onChange: String->Void): ReactElement {
         return jsx('
-            <div style={{display:"flex",gap:"4px",marginBottom:"4px"}}>
-                <span style={{width:"60px",color:"#aaa"}}>{label}</span>
-                <input defaultValue={value} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
+            <div className="field-row">
+                <label className="field-label">{label}</label>
+                <input defaultValue={value} className="text-input"
                     onBlur={function(e) onChange(e.target.value)} />
             </div>
         ');
@@ -11865,29 +13029,21 @@ class InspectorPanel extends BaseReactComponent<InspectorProps, InspectorState> 
 
     private function renderNumberField(label: String, value: Float, onChange: Float->Void): ReactElement {
         return jsx('
-            <div style={{display:"flex",gap:"4px",marginBottom:"4px"}}>
-                <span style={{width:"60px",color:"#aaa"}}>{label}</span>
-                <input defaultValue={value} style={{flex:1,background:"#1a1a1a",border:"1px solid #555",color:"#fff",padding:"2px 4px",borderRadius:"2px"}}
+            <div className="field-row">
+                <label className="field-label">{label}</label>
+                <input defaultValue={value} className="num-input full-width"
                     onBlur={function(e) onChange(safeParse(e.target.value,0))} />
             </div>
         ');
     }
 
-    // ===== Команды в SceneService =====
-    private function setTransform(objId: String,
-        px:Float, py:Float, pz:Float,
-        rx:Float, ry:Float, rz:Float,
-        sx:Float, sy:Float, sz:Float): Void {
-        UseService.sceneService().setTransform(objId,
-            new Transform(px, py, pz, rx, ry, rz, sx, sy, sz));
+    // ===== Логика =====
+    private function setTransform(objId: String, px:Float, py:Float, pz:Float, rx:Float, ry:Float, rz:Float, sx:Float, sy:Float, sz:Float): Void {
+        UseService.sceneService().setTransform(objId, new Transform(px, py, pz, rx, ry, rz, sx, sy, sz));
     }
 
     private function setMesh(objId: String, meshPath: String, matPath: String): Void {
         UseService.sceneService().setMeshRenderer(objId, meshPath, matPath);
-        // ✅ Движок сам:
-        //   - удалит старый MeshRenderer
-        //   - добавит новый
-        //   - опубликует ObjectChanged через IEngineEventBus → IDE EventBus
     }
 
     private function setRigidbody(objId: String, mass: Float, gravity: Bool): Void {

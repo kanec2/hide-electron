@@ -1,6 +1,7 @@
 package hide.presentation.ui.react.hooks;
 
 import hide.engine.infrastructure.ShaderPreviewRenderer;
+import hide.engine.infrastructure.ViewportService;
 import hide.presentation.Ide;
 import hide.application.services.WindowService;
 import hide.application.services.MenuService;
@@ -9,6 +10,7 @@ import hide.application.services.PluginManager;
 import hide.shared.types.IEventBus;
 import hide.domain.services.ILayoutEngine;
 import hide.engine.domain.services.ISceneService;
+
 /**
  * Статический доступ к сервисам из React-компонентов.
  * Использует глобальный инстанс Ide как Service Locator.
@@ -39,5 +41,8 @@ class UseService {
     }
     public static function shaderPreviewRenderer():ShaderPreviewRenderer {
         return Ide.inst.get_shaderPreviewRenderer();
+    }
+    public static function viewportService():ViewportService {
+        return Ide.inst.get_viewportService(); // Убедитесь, что геттер есть в Ide.hx
     }
 }

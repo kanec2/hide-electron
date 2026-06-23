@@ -27,8 +27,14 @@ class Viewport {
         
         // Создаём canvas для отображения
         canvas = js.Browser.document.createCanvasElement();
+        // ✅ Явно задаем внутренние размеры буфера
         canvas.width = width;
         canvas.height = height;
+        
+        // ✅ Стили для отображения
+        canvas.style.width = "100%";
+        canvas.style.height = "100%";
+        canvas.style.display = "block";
     }
     
     /**
@@ -36,21 +42,38 @@ class Viewport {
      */
     public function blitToCanvas():Void {
         var pixels = renderTarget.capturePixels();
-        var ctx = canvas.getContext("2d");
-        if (ctx == null) return;
+    
+        // ✅ Диагностика: проверяем, есть ли реальные данные
+        if (pixels == null || pixels.bytes.length == 0) {
+            trace('⚠️ [Viewport $id] capturePixels returned EMPTY data!');
+            return;
+        }
         
+        var ctx = canvas.getContext("2d");
+        if (ctx == null) {
+            trace('⚠️ [Viewport $id] Canvas 2D context is NULL!');
+            return;
+        }
+
         var imageData = ctx.createImageData(width, height);
-        var bytes = pixels.bytes; // ✅ Получаем байты из hxd.Pixels
+        var bytes = pixels.bytes;
         var data = imageData.data;
         
-        // Копируем байты. Heaps обычно возвращает RGBA.
-        // Если цвета будут инвертированы (синий вместо красного), поменяй местами R и B ниже.
         var len = width * height * 4;
         for (i in 0...len) {
             data[i] = bytes.get(i);
         }
         
         ctx.putImageData(imageData, 0, 0);
+        
+        // ✅ Временная рамка для диагностики
+        ctx.strokeStyle = "#00ff00";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(0, 0, width, height);
+            // ✅ ОТЛАДКА: Рисуем текст
+        ctx.fillStyle = "#00ff00";
+        ctx.font = "20px monospace";
+        ctx.fillText("VIEWPORT ACTIVE", 10, 30);
     }
     
     public function resize(w:Int, h:Int):Void {

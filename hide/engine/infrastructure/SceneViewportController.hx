@@ -109,7 +109,18 @@ class SceneViewportController implements Service {
         
         // Первичный рендер
         renderSceneInternal(sceneService.getRoot());
-        
+        trace('🔍 [Debug] Scene root children count: ${@:privateAccess sceneRoot.children.length}');
+        for (child in sceneRoot) {
+            trace('   └─ ${child.name} (${Type.getClassName(Type.getClass(child))})');
+            // Временная проверка: красим все объекты в ярко-розовый
+            for (c in child) {
+                if (Std.isOfType(c, h3d.scene.Mesh)) {
+                    var mesh:h3d.scene.Mesh = cast c;
+                    mesh.material.color.setColor(0xFF00FF); // Ярко-розовый
+                    trace("      🎨 Mesh colored PINK");
+                }
+            }
+        }
         trace(" [SceneViewportController] Attached to container");
     }
     

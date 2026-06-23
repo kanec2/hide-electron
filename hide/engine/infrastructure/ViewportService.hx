@@ -40,12 +40,20 @@ class ViewportService implements Service {
         for (vp in viewports) {
             if (!vp.enabled) continue;
             
-            // 1. Рендерим сцену в RenderTexture
+            // ✅ 1. Переключаем вывод на текстуру вьюпорта
             engine.pushTarget(vp.renderTarget);
-            vp.scene.render(engine);
-            engine.popTarget();
             
-            // 2. Копируем в canvas (пока через capturePixels)
+            // ✅ 2. ОБЯЗАТЕЛЬНО очищаем цвет и глубину!
+            // Без этого сцена рисуется поверх мусора из предыдущего кадра
+            engine.clear(0xFF2a2a2a, 1.0); 
+            
+            // ✅ 3. Рендерим сцену
+            vp.scene.render(engine);
+            
+            // ✅ 4. Возвращаем основной таргет
+            engine.popTarget();
+
+            // 5. Копируем в canvas
             vp.blitToCanvas();
         }
     }
