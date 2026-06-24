@@ -43,18 +43,22 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         var vp = viewportService.register("shader-preview", previewRenderer.scene, 400, 300);
         trace('🔍 [ShaderPanel] Viewport registered: ${vp != null}, canvas: ${vp.canvas != null}');
         // ✅ 4. Вставляем canvas вьюпорта в DOM
-        var previewContainer = js.Browser.document.getElementById("heaps-preview-container");
-        if (previewContainer != null && vp.canvas != null) {
-            previewContainer.appendChild(vp.canvas);
+        // ✅ ИСПРАВЛЕНИЕ: ждём, пока React 17 завершит рендеринг DOM
+        haxe.Timer.delay(function() {
+            var previewContainer = js.Browser.document.getElementById("heaps-preview-container");
+            trace('🔍 [ShaderPanel] previewContainer: ${previewContainer != null}');
             
-            // Стили для корректного отображения внутри flex-контейнера
-            vp.canvas.style.width = "100%";
-            vp.canvas.style.height = "100%";
-            vp.canvas.style.display = "block";
-            trace('✅ [ShaderPanel] Canvas appended to DOM');
-        } else {
-            trace('❌ [ShaderPanel] Container or canvas is NULL!');
-        }
+            if (previewContainer != null && vp.canvas != null) {
+                previewContainer.appendChild(vp.canvas);
+                vp.canvas.style.width = "100%";
+                vp.canvas.style.height = "100%";
+                vp.canvas.style.display = "block";
+                trace('✅ [ShaderPanel] Canvas appended to DOM');
+            } else {
+                trace('❌ [ShaderPanel] Container or canvas is NULL! ' +
+                    'previewContainer=${previewContainer != null}, canvas=${vp.canvas != null}');
+            }
+        }, 50); // 50мс достаточно для React 18
         registerShaderNodes();
     }
     

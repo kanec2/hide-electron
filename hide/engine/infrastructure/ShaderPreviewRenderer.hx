@@ -52,6 +52,11 @@ class ShaderPreviewRenderer implements Service {
         previewMesh = new Mesh(sphere, s3d);
         previewMesh.material.color.setColor(0xFFFFFF);
         previewMesh.material.mainPass.enableLights = true;
+        previewMesh.material.getPass("shadow").isStatic = true;
+        var color = new h3d.Vector(Math.random(), Math.random(), Math.random());
+        color.normalize();
+        previewMesh.material.color.set(color.x, color.y, color.z);
+
 
         trace("✅ [ShaderPreview] Scene initialized (no engine created)");
     }
