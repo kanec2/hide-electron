@@ -1,11 +1,13 @@
 // hide/presentation/ui/react/components/ShaderEditorPanel.hx
 package hide.presentation.ui.react.components;
+import hide.engine.infrastructure.ShaderGraphCompiler;
 import hide.engine.infrastructure.ShaderPreviewRenderer;
 import react.ReactComponent;
 import react.ReactMacro.jsx;
 import hide.presentation.ui.react.BaseReactComponent;
 import hide.presentation.ui.react.hooks.UseService;
 import hide.infrastructure.external.litegraph.*;
+import hide.presentation.ui.react.components.ShaderNodePalette;
 
 typedef ShaderEditorProps = {
     var initialState: Dynamic;
@@ -14,6 +16,7 @@ typedef ShaderEditorProps = {
 
 typedef ShaderEditorState = {
     var graph: Dynamic;
+    var selectedNode: Dynamic; // ← НОВОЕ
 }
 
 class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEditorState> {
@@ -21,12 +24,15 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     private var graph:LGraph;
     private var graphCanvas:LGraphCanvas;
     private var previewRenderer:ShaderPreviewRenderer; // ← инжектируем
-    
+
+    private var litegraphContainerRef:Dynamic;
+
     public function new() {
         super();
         // ✅ Получаем рендерер из DI, а не создаём h3d.Engine вручную!
         previewRenderer = UseService.shaderPreviewRenderer();
-        state = { graph: null };
+        litegraphContainerRef = untyped React.createRef();
+        state = { graph: null, selectedNode: null };
     }
     
     override function componentDidMount():Void {
@@ -58,20 +64,81 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                 trace('❌ [ShaderPanel] Container or canvas is NULL! ' +
                     'previewContainer=${previewContainer != null}, canvas=${vp.canvas != null}');
             }
-        }, 50); // 50мс достаточно для React 18
-        registerShaderNodes();
-    }
-    
-    private function initLiteGraph():Void {
-        // Создаём canvas для редактора нод
-        liteGraphCanvas = cast js.Browser.document.createElement("canvas");
-        liteGraphCanvas.id = "shader-graph-canvas";
-        liteGraphCanvas.width = 800;
-        liteGraphCanvas.height = 600;
-        liteGraphCanvas.style.cssText = 'width:100%;height:100%;background:#1a1a1a;';
+        }, 50); // 50мс достаточно для React 17
         
-        var container = js.Browser.document.getElementById("litegraph-container");
-        if (container != null) {
+        
+        // ✅ НОВОЕ: Подписки на изменения графа с дебаунсом
+        setupGraphListeners();
+    }
+
+    private var recompileTimer:Null<haxe.Timer> = null;
+
+    private function setupGraphListeners():Void {
+        if (graph == null) return;
+        
+        // Любое изменение графа → перекомпиляция с дебаунсом 100мс
+        graph.onAfterStep = function() {
+            scheduleRecompile();
+        };
+        
+        // Также реагируем на конкретные события
+        graph.onNodeAdded = function(_) scheduleRecompile();
+        graph.onNodeRemoved = function(_) scheduleRecompile();
+        //graph.onConnectionChange = function(_) scheduleRecompile();
+        
+        // И на изменение свойств нод (widget changes)
+        // LiteGraph вызывает onNodeChanged при изменении properties
+        untyped graph.onNodeChanged = function(_) scheduleRecompile();
+    }
+
+    private function scheduleRecompile():Void {
+        // Отменяем предыдущий таймер (дебаунс)
+        if (recompileTimer != null) {
+            recompileTimer.stop();
+        }
+        recompileTimer = haxe.Timer.delay(compileAndApply, 100);
+    }
+
+    private function compileAndApply():Void {
+        trace("🔨 [ShaderEditor] Recompiling shader graph...");
+        
+        // 1. Компилируем граф в ShaderData
+        var shaderData = ShaderGraphCompiler.compile(graph);
+        
+        // 2. Применяем к превью
+        previewRenderer.applyShaderData(shaderData);
+        
+        trace("✅ [ShaderEditor] Shader updated");
+    }
+
+    private function initLiteGraph():Void {
+        var container:js.html.Element = litegraphContainerRef.current;
+        if (container == null) {
+            trace("❌ [ShaderEditor] #litegraph-container not found!");
+            return;
+        }
+        // ✅ Ждём, пока React завершит рендер и контейнер получит размеры
+        haxe.Timer.delay(function() {
+            // ✅ Получаем реальные размеры контейнера
+            var rect = container.getBoundingClientRect();
+            var w = Std.int(rect.width);
+            var h = Std.int(rect.height);
+            
+            if (w < 100 || h < 100) {
+                trace('⚠️ [ShaderEditor] Container too small: ${w}x${h}, retrying...');
+                haxe.Timer.delay(function() initLiteGraph(), 100);
+                return;
+            }
+            
+            trace(' [ShaderEditor] Container size: ${w}x${h}');
+            // Создаём canvas для редактора нод
+            liteGraphCanvas = cast js.Browser.document.createElement("canvas");
+            liteGraphCanvas.id = "shader-graph-canvas";
+            liteGraphCanvas.width = w;
+            liteGraphCanvas.height = h;
+            //liteGraphCanvas.style.cssText = 'width:100%;height:100%;background:#1a1a1a;';
+            
+
             container.appendChild(liteGraphCanvas);
             
             // Создаём граф
@@ -79,19 +146,74 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             
             // Создаём canvas для рендеринга графа
             graphCanvas = new LGraphCanvas(liteGraphCanvas, graph);
-            
-            // Настраиваем
             graphCanvas.show_info = true;
             graphCanvas.allow_dragcanvas = true;
             graphCanvas.allow_zoomcanvas = true;
+            // ✅ Явно задаём размер canvas для LGraphCanvas
+            graphCanvas.resize(w, h);
             
+            // ✅ Обработчики drag & drop из палитры
+            setupDragAndDrop(container);
+            // В initLiteGraph() добавьте обработчик выбора ноды:
+            graphCanvas.onSelectionChange = function(nodes: Array<Dynamic>) {
+                if (nodes != null && nodes.length > 0) {
+                    setState({
+                        graph: graph,
+                        selectedNode: nodes[0]
+                    });
+                } else {
+                    setState({
+                        graph: graph,
+                        selectedNode: null
+                    });
+                }
+            };
+            // Настраиваем
+            registerShaderNodes();
+            // Создаём обязательную ноду Material Output
+            var outputNode = LiteGraph.createNode("material/output");
+            if (outputNode != null) {
+                outputNode.pos = [w / 2 - 100, h / 2 - 50];
+                graph.add(outputNode);
+                trace("✅ Material Output node created");
+            }
+            // В методе initLiteGraph(), после создания graphCanvas:
+
+
+            // ==========================
             // Запускаем граф
             graph.start();
             
-            state = { graph: graph };
-        }
+            state = { graph: graph, selectedNode: null };
+            trace("✅ [ShaderEditor] LiteGraph initialized");
+        }, 100); // 100мс достаточно для React 17
     }
-    
+    /**
+     * Обработка drag & drop из палитры нод в canvas графа
+     */
+    private function setupDragAndDrop(container:js.html.Element):Void {
+        container.addEventListener("dragover", function(e:js.html.DragEvent) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = "copy";
+        });
+        
+        container.addEventListener("drop", function(e:js.html.DragEvent) {
+            e.preventDefault();
+            var nodeType = e.dataTransfer.getData("nodeType");
+            if (nodeType != null && nodeType != "") {
+                // ✅ Конвертируем координаты мыши в координаты графа
+                var graphPos = graphCanvas.convertEventToCanvasOffset(e);
+                
+                // ✅ Создаём ноду в точке drop
+                var node = LiteGraph.createNode(nodeType);
+                if (node != null) {
+                    node.pos = [graphPos[0], graphPos[1]];
+                    graph.add(node);
+                    trace("✅ Node created: " + nodeType + " at " + graphPos[0] + "," + graphPos[1]);
+                }
+            }
+        });
+    }
     private function registerShaderNodes():Void {
         // ✅ ПРАВИЛЬНЫЙ СПОСОБ: используем js.Syntax.code для создания JS-функций,
         // где `this` ссылается на экземпляр ноды, а не на ShaderEditorPanel
@@ -121,6 +243,17 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         js.Syntax.code("Vec3Node.prototype.onExecute = function() { this.setOutputData(0, [this.properties.x, this.properties.y, this.properties.z]); }");
         LiteGraph.registerNodeType("value/vec3", Vec3Node);
         
+        // === Нода: Material Output (ОБЯЗАТЕЛЬНАЯ) ===
+        var OutputNode = js.Syntax.code("(function() { 
+            this.title = 'Material Output'; 
+            this.addInput('Albedo', 'vec3'); 
+            this.addInput('Metallic', 'float'); 
+            this.addInput('Roughness', 'float'); 
+            this.addInput('Normal', 'vec3');
+            this.addInput('Emissive', 'vec3');
+            this.color = '#4a9';  // выделяем визуально
+        })");
+        LiteGraph.registerNodeType("material/output", OutputNode);
         trace("✅ [ShaderEditor] Shader nodes registered");
     }
 
@@ -149,6 +282,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     private function renderMainArea():ReactElement {
         return jsx('
             <div style={{display: "flex", flex: 1, overflow: "hidden"}}>
+                {renderNodePalette()}    
                 {renderNodeEditor()}
                 {renderRightPanel()}
             </div>
@@ -157,12 +291,21 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
 
     private function renderNodeEditor():ReactElement {
         return jsx('
-            <div id="litegraph-container" 
+            <div ref={litegraphContainerRef}
                 style={{flex: 1, position: "relative", background: "#1a1a1a"}}>
             </div>
         ');
     }
-
+    // Добавьте новый метод:
+    private function renderNodePalette():ReactElement {
+        return jsx('
+            <ShaderNodePalette 
+                onNodeDragStart={function(nodeType:String) {
+                    trace("📦 Dragging node: " + nodeType);
+                }}
+            />
+        ');
+    }
     private function renderRightPanel():ReactElement {
         return jsx('
             <div style={{
@@ -199,6 +342,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         ');
     }
 
+    /*
     private function renderProperties():ReactElement {
         return jsx('
             <div style={{flex: 1, padding: "10px", background: "#2a2a2a", overflowY: "auto"}}>
@@ -206,6 +350,18 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                     Properties
                 </h3>
                 {renderPropertiesContent()}
+            </div>
+        ');
+    }
+*/
+    // В renderProperties() замените заглушку на:
+    private function renderProperties(): ReactElement {
+        return jsx('
+            <div style={{flex: 1, padding: "10px", background: "#2a2a2a", overflowY: "auto"}}>
+                <h3 style={{margin: "0 0 10px 0", color: "#fff", fontSize: "14px"}}>
+                    Properties
+                </h3>
+                <NodePropertiesPanel selectedNode={state.selectedNode} />
             </div>
         ');
     }
@@ -245,6 +401,6 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     override function componentWillUnmount():Void {
         if (graph != null) graph.stop();
         previewRenderer.dispose(); // ← освобождаем ресурсы engine layer
-        super.componentWillUnmount();
+        //super.componentWillUnmount();
     }
 }

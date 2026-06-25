@@ -15,6 +15,9 @@ class ShaderPreviewRenderer implements Service {
     public var scene(get, never):h3d.scene.Scene;
     private function get_scene():h3d.scene.Scene return s3d;
 
+    // ✅ НОВОЕ: храним текущие параметры
+    private var currentShaderData:ShaderData;
+
     public function new() {}
 
     /**
@@ -53,6 +56,7 @@ class ShaderPreviewRenderer implements Service {
         previewMesh.material.color.setColor(0xFFFFFF);
         previewMesh.material.mainPass.enableLights = true;
         previewMesh.material.getPass("shadow").isStatic = true;
+
         var color = new h3d.Vector(Math.random(), Math.random(), Math.random());
         color.normalize();
         previewMesh.material.color.set(color.x, color.y, color.z);
@@ -60,7 +64,24 @@ class ShaderPreviewRenderer implements Service {
 
         trace("✅ [ShaderPreview] Scene initialized (no engine created)");
     }
-
+    /**
+     * Применяет скомпилированные данные графа к материалу.
+     * Вызывается из React-компонента при изменении графа.
+     */
+    public function applyShaderData(data:ShaderData):Void {
+        if (previewMesh == null || data == null) return;
+        
+        currentShaderData = data;
+        
+        // 1. Albedo (цвет)
+        previewMesh.material.color.set(data.albedo.x, data.albedo.y, data.albedo.z);
+        
+        // 2. Metallic и Roughness через шейдерные uniform'ы
+        // В Heaps это делается через custom shader (см. ниже)
+        
+        trace('🎨 [ShaderPreview] Applied: albedo=(${data.albedo.x}, ${data.albedo.y}, ${data.albedo.z}), ' +
+              'metallic=${data.metallic}, roughness=${data.roughness}');
+    }
     /**
      * Обновляет материал сферы.
      * Вызывается из React-компонента при изменении графа.

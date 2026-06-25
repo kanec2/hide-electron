@@ -1,6 +1,6 @@
 // infrastructure/external/litegraph/LGraphGroup.hx
 package hide.infrastructure.external.litegraph;
-
+@:jsRequire("litegraph.js", "LGraphGroup")
 extern class LGraphGroup {
     var title:String;
     var pos:Array<Float>;

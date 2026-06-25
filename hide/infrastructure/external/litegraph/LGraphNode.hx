@@ -1,6 +1,6 @@
 // infrastructure/external/litegraph/LGraphNode.hx
 package hide.infrastructure.external.litegraph;
-
+@:jsRequire("litegraph.js", "LGraphNode")
 extern class LGraphNode {
     var id:Int;
     var type:String;

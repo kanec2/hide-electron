@@ -3,7 +3,7 @@ package hide.infrastructure.external.litegraph;
 
 import js.html.CanvasElement;
 import js.html.Element;
-
+@:jsRequire("litegraph.js", "LGraphCanvas")
 extern class LGraphCanvas {
     var canvas:CanvasElement;
     var graph:LGraph;

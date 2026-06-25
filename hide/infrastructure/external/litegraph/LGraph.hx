@@ -1,6 +1,6 @@
 // infrastructure/external/litegraph/LGraph.hx
 package hide.infrastructure.external.litegraph;
-
+@:jsRequire("litegraph.js", "LGraph")
 extern class LGraph {
     var _version:Float;
     var state:Float;

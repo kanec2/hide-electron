@@ -1,6 +1,6 @@
 // infrastructure/external/litegraph/LGraphLink.hx
 package hide.infrastructure.external.litegraph;
-
+@:jsRequire("litegraph.js", "LGraphLink")
 extern class LGraphLink {
     var id:Int;
     var origin_id:Int;

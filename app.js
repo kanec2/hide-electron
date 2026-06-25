@@ -110925,6 +110925,181 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 	}
 	,__class__: hide_engine_infrastructure_SceneViewportController
 };
+var hide_engine_infrastructure_ShaderGraphCompiler = function() { };
+$hxClasses["hide.engine.infrastructure.ShaderGraphCompiler"] = hide_engine_infrastructure_ShaderGraphCompiler;
+hide_engine_infrastructure_ShaderGraphCompiler.__name__ = "hide.engine.infrastructure.ShaderGraphCompiler";
+hide_engine_infrastructure_ShaderGraphCompiler.compile = function(graph) {
+	var x = 0.8;
+	var y = 0.8;
+	var z = 0.8;
+	if(z == null) {
+		z = 0.;
+	}
+	if(y == null) {
+		y = 0.;
+	}
+	if(x == null) {
+		x = 0.;
+	}
+	var this1 = new h3d_VectorImpl(x,y,z);
+	var x = 0;
+	var y = 0;
+	var z = 1;
+	if(z == null) {
+		z = 0.;
+	}
+	if(y == null) {
+		y = 0.;
+	}
+	if(x == null) {
+		x = 0.;
+	}
+	var this2 = new h3d_VectorImpl(x,y,z);
+	var x = 0;
+	var y = 0;
+	var z = 0;
+	if(z == null) {
+		z = 0.;
+	}
+	if(y == null) {
+		y = 0.;
+	}
+	if(x == null) {
+		x = 0.;
+	}
+	var result = { albedo : this1, metallic : 0.0, roughness : 0.5, normal : this2, emissive : new h3d_VectorImpl(x,y,z), hasTexture : false, texturePath : null};
+	if(graph == null || graph.nodes == null) {
+		return result;
+	}
+	var outputNode = null;
+	var _g = 0;
+	var _g1 = graph.nodes;
+	while(_g < _g1.length) {
+		var node = _g1[_g];
+		++_g;
+		if(node.type == "material/output") {
+			outputNode = node;
+			break;
+		}
+	}
+	if(outputNode == null) {
+		haxe_Log.trace("⚠️ [Compiler] No 'material/output' node found",{ fileName : "hide/engine/infrastructure/ShaderGraphCompiler.hx", lineNumber : 37, className : "hide.engine.infrastructure.ShaderGraphCompiler", methodName : "compile"});
+		return result;
+	}
+	haxe_Log.trace("🔍 [Compiler] Starting graph traversal from output node",{ fileName : "hide/engine/infrastructure/ShaderGraphCompiler.hx", lineNumber : 42, className : "hide.engine.infrastructure.ShaderGraphCompiler", methodName : "compile"});
+	hide_engine_infrastructure_ShaderGraphCompiler.traverseNode(outputNode,graph,result);
+	return result;
+};
+hide_engine_infrastructure_ShaderGraphCompiler.traverseNode = function(node,graph,result,visited) {
+	if(visited == null) {
+		visited = new haxe_ds_IntMap();
+	}
+	if(visited.h.hasOwnProperty(node.id)) {
+		return null;
+	}
+	visited.h[node.id] = true;
+	haxe_Log.trace("  🔎 Visiting node: " + node.title + " (type: " + node.type + ")",{ fileName : "hide/engine/infrastructure/ShaderGraphCompiler.hx", lineNumber : 62, className : "hide.engine.infrastructure.ShaderGraphCompiler", methodName : "traverseNode"});
+	hide_engine_infrastructure_ShaderGraphCompiler.processNode(node,result);
+	if(node.inputs != null) {
+		var _g = 0;
+		var _g1 = node.inputs.length;
+		while(_g < _g1) {
+			var i = _g++;
+			var link = node.getInputLink(i);
+			if(link != null) {
+				var originNode = graph.getNodeById(link.origin_id);
+				if(originNode != null) {
+					var inputData = hide_engine_infrastructure_ShaderGraphCompiler.traverseNode(originNode,graph,result,visited);
+					hide_engine_infrastructure_ShaderGraphCompiler.connectNodes(originNode,node,i,inputData,result);
+				}
+			}
+		}
+	}
+	return hide_engine_infrastructure_ShaderGraphCompiler.getNodeOutput(node,result);
+};
+hide_engine_infrastructure_ShaderGraphCompiler.processNode = function(node,result) {
+	switch(node.type) {
+	case "material/output":
+		break;
+	case "texture/sample":
+		var texPath = node.properties != null ? node.properties.texture : null;
+		if(texPath != null && texPath != "") {
+			result.hasTexture = true;
+			result.texturePath = texPath;
+		}
+		break;
+	case "value/float":
+		break;
+	case "value/vec3":
+		break;
+	default:
+	}
+};
+hide_engine_infrastructure_ShaderGraphCompiler.getNodeOutput = function(node,result) {
+	switch(node.type) {
+	case "texture/sample":
+		var x = 1;
+		var y = 1;
+		var z = 1;
+		if(z == null) {
+			z = 0.;
+		}
+		if(y == null) {
+			y = 0.;
+		}
+		if(x == null) {
+			x = 0.;
+		}
+		return new h3d_VectorImpl(x,y,z);
+	case "value/float":
+		if(node.properties != null) {
+			return node.properties.value;
+		} else {
+			return 0.0;
+		}
+		break;
+	case "value/vec3":
+		if(node.properties != null) {
+			var x = node.properties.x;
+			var y = node.properties.y;
+			var z = node.properties.z;
+			if(z == null) {
+				z = 0.;
+			}
+			if(y == null) {
+				y = 0.;
+			}
+			if(x == null) {
+				x = 0.;
+			}
+			return new h3d_VectorImpl(x,y,z);
+		} else {
+			var x = 0;
+			var y = 0;
+			var z = 0;
+			if(z == null) {
+				z = 0.;
+			}
+			if(y == null) {
+				y = 0.;
+			}
+			if(x == null) {
+				x = 0.;
+			}
+			return new h3d_VectorImpl(x,y,z);
+		}
+		break;
+	default:
+		return null;
+	}
+};
+hide_engine_infrastructure_ShaderGraphCompiler.connectNodes = function(origin,target,inputSlot,inputData,result) {
+	if(inputData == null) {
+		return;
+	}
+	var inputName = target.inputs != null && target.inputs.length > inputSlot ? target.inputs[inputSlot].name : "";
+	var tmp = target.type == "material/output";
+};
 var hide_engine_infrastructure_ShaderPreviewRenderer = function() {
 };
 $hxClasses["hide.engine.infrastructure.ShaderPreviewRenderer"] = hide_engine_infrastructure_ShaderPreviewRenderer;
@@ -110936,6 +111111,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 	,get_scene: function() {
 		return this.s3d;
 	}
+	,currentShaderData: null
 	,init: function() {
 		if(this.s3d != null) {
 			return;
@@ -111060,13 +111236,37 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		_this.y = y;
 		_this.z = z;
 		_this.w = 1.;
-		haxe_Log.trace("✅ [ShaderPreview] Scene initialized (no engine created)",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 62, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "init"});
+		haxe_Log.trace("✅ [ShaderPreview] Scene initialized (no engine created)",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 65, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "init"});
+	}
+	,applyShaderData: function(data) {
+		if(this.previewMesh == null || data == null) {
+			return;
+		}
+		this.currentShaderData = data;
+		var _this = this.previewMesh.material.mshader.color__;
+		var x = data.albedo.x;
+		var y = data.albedo.y;
+		var z = data.albedo.z;
+		if(z == null) {
+			z = 0.;
+		}
+		if(y == null) {
+			y = 0.;
+		}
+		if(x == null) {
+			x = 0.;
+		}
+		_this.x = x;
+		_this.y = y;
+		_this.z = z;
+		_this.w = 1.;
+		haxe_Log.trace("🎨 [ShaderPreview] Applied: albedo=(" + data.albedo.x + ", " + data.albedo.y + ", " + data.albedo.z + "), " + ("metallic=" + data.metallic + ", roughness=" + data.roughness),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 82, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "applyShaderData"});
 	}
 	,updateMaterial: function(shaderData) {
 		if(this.previewMesh == null) {
 			return;
 		}
-		haxe_Log.trace("🎨 [ShaderPreview] Material updated",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 72, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
+		haxe_Log.trace("🎨 [ShaderPreview] Material updated",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 92, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
 	}
 	,dispose: function() {
 		if(this.s3d != null) {
@@ -111622,6 +111822,11 @@ hide_infrastructure_external_StubPropertiesFactory.prototype = {
 	}
 	,__class__: hide_infrastructure_external_StubPropertiesFactory
 };
+var hide_infrastructure_external_litegraph_LGraph = require("litegraph.js").LGraph;
+var hide_infrastructure_external_litegraph_LGraphCanvas = require("litegraph.js").LGraphCanvas;
+var hide_infrastructure_external_litegraph_LGraphGroup = require("litegraph.js").LGraphGroup;
+var hide_infrastructure_external_litegraph_LGraphLink = require("litegraph.js").LGraphLink;
+var hide_infrastructure_external_litegraph_LGraphNode = require("litegraph.js").LGraphNode;
 var hide_infrastructure_external_litegraph_LiteGraph = require("litegraph.js").LiteGraph;
 var hide_infrastructure_platform_electron_ElectronFileDialogAdapter = function(ipcBridge) {
 	this.ipcBridge = ipcBridge;
@@ -113237,10 +113442,65 @@ hide_presentation_ui_react_components_InspectorPanel.prototype = $extend(hide_pr
 	}
 	,__class__: hide_presentation_ui_react_components_InspectorPanel
 });
+var hide_presentation_ui_react_components_NodePropertiesPanel = function() {
+	hide_presentation_ui_react_BaseReactComponent.call(this);
+	this.state = { selectedNode : null, properties : null};
+};
+$hxClasses["hide.presentation.ui.react.components.NodePropertiesPanel"] = hide_presentation_ui_react_components_NodePropertiesPanel;
+hide_presentation_ui_react_components_NodePropertiesPanel.__name__ = "hide.presentation.ui.react.components.NodePropertiesPanel";
+hide_presentation_ui_react_components_NodePropertiesPanel.__super__ = hide_presentation_ui_react_BaseReactComponent;
+hide_presentation_ui_react_components_NodePropertiesPanel.prototype = $extend(hide_presentation_ui_react_BaseReactComponent.prototype,{
+	render: function() {
+		if(this.state.selectedNode == null) {
+			return React.createElement("div",{ style : { color : "#888", fontSize : "12px", padding : "10px"}},"Select a node to edit properties");
+		}
+		var tmp = React.createElement("h4",{ style : { margin : "0 0 10px 0", color : "#fff"}},this.state.selectedNode.title);
+		var tmp1 = this.renderProperties();
+		return React.createElement("div",{ style : { padding : "10px"}},tmp,tmp1);
+	}
+	,renderProperties: function() {
+		var props = this.state.selectedNode.properties;
+		if(props == null) {
+			return React.createElement("div",{ style : { color : "#666"}},"No properties");
+		}
+		var fields = [];
+		var _g = 0;
+		var _g1 = Reflect.fields(props);
+		while(_g < _g1.length) {
+			var key = _g1[_g];
+			++_g;
+			var value = Reflect.field(props,key);
+			fields.push(this.renderPropertyField(key,value));
+		}
+		return React.createElement("div",{ },fields);
+	}
+	,renderPropertyField: function(key,value) {
+		var _gthis = this;
+		var defaultValue = value;
+		return React.createElement("div",{ key : key, style : { marginBottom : "8px"}},React.createElement("label",{ style : { display : "block", color : "#aaa", fontSize : "11px", marginBottom : "4px"}},key),React.createElement("input",{ type : "text", style : { width : "100%", padding : "4px 8px", background : "#1a1a1a", border : "1px solid #444", borderRadius : "3px", color : "#fff", boxSizing : "border-box"}, onChange : function(e) {
+			_gthis.handlePropertyChange(key,e.target.value);
+		}, defaultValue : Std.string(value)}));
+	}
+	,handlePropertyChange: function(key,value) {
+		if(this.state.selectedNode != null) {
+			var parsed = value;
+			var floatVal = parseFloat(value);
+			if(!isNaN(floatVal)) {
+				parsed = floatVal;
+			}
+			Reflect.setProperty(this.state.selectedNode.properties,key,parsed);
+			this.state.selectedNode.setDirtyCanvas(true,true);
+			haxe_Log.trace("🔄 Property changed: " + key + " = " + Std.string(parsed),{ fileName : "hide/presentation/ui/react/components/NodePropertiesPanel.hx", lineNumber : 99, className : "hide.presentation.ui.react.components.NodePropertiesPanel", methodName : "handlePropertyChange"});
+		}
+	}
+	,__class__: hide_presentation_ui_react_components_NodePropertiesPanel
+});
 var hide_presentation_ui_react_components_ShaderEditorPanel = function() {
+	this.recompileTimer = null;
 	hide_presentation_ui_react_BaseReactComponent.call(this);
 	this.previewRenderer = hide_presentation_ui_react_hooks_UseService.shaderPreviewRenderer();
-	this.state = { graph : null};
+	this.litegraphContainerRef = React.createRef();
+	this.state = { graph : null, selectedNode : null};
 };
 $hxClasses["hide.presentation.ui.react.components.ShaderEditorPanel"] = hide_presentation_ui_react_components_ShaderEditorPanel;
 hide_presentation_ui_react_components_ShaderEditorPanel.__name__ = "hide.presentation.ui.react.components.ShaderEditorPanel";
@@ -113250,44 +113510,128 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 	,graph: null
 	,graphCanvas: null
 	,previewRenderer: null
+	,litegraphContainerRef: null
 	,componentDidMount: function() {
 		this.initLiteGraph();
 		this.previewRenderer.init();
 		var viewportService = hide_presentation_ui_react_hooks_UseService.viewportService();
 		var vp = viewportService.register("shader-preview",this.previewRenderer.get_scene(),400,300);
-		haxe_Log.trace("🔍 [ShaderPanel] Viewport registered: " + Std.string(vp != null) + ", canvas: " + Std.string(vp.canvas != null),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 44, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "componentDidMount"});
+		haxe_Log.trace("🔍 [ShaderPanel] Viewport registered: " + Std.string(vp != null) + ", canvas: " + Std.string(vp.canvas != null),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 50, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "componentDidMount"});
 		haxe_Timer.delay(function() {
 			var previewContainer = window.document.getElementById("heaps-preview-container");
-			haxe_Log.trace("🔍 [ShaderPanel] previewContainer: " + Std.string(previewContainer != null),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 49, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "componentDidMount"});
+			haxe_Log.trace("🔍 [ShaderPanel] previewContainer: " + Std.string(previewContainer != null),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 55, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "componentDidMount"});
 			if(previewContainer != null && vp.canvas != null) {
 				previewContainer.appendChild(vp.canvas);
 				vp.canvas.style.width = "100%";
 				vp.canvas.style.height = "100%";
 				vp.canvas.style.display = "block";
-				haxe_Log.trace("✅ [ShaderPanel] Canvas appended to DOM",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 56, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "componentDidMount"});
+				haxe_Log.trace("✅ [ShaderPanel] Canvas appended to DOM",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 62, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "componentDidMount"});
 			} else {
-				haxe_Log.trace("❌ [ShaderPanel] Container or canvas is NULL! " + ("previewContainer=" + Std.string(previewContainer != null) + ", canvas=" + Std.string(vp.canvas != null)),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 58, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "componentDidMount"});
+				haxe_Log.trace("❌ [ShaderPanel] Container or canvas is NULL! " + ("previewContainer=" + Std.string(previewContainer != null) + ", canvas=" + Std.string(vp.canvas != null)),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 64, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "componentDidMount"});
 			}
 		},50);
-		this.registerShaderNodes();
+		this.setupGraphListeners();
+	}
+	,recompileTimer: null
+	,setupGraphListeners: function() {
+		var _gthis = this;
+		if(this.graph == null) {
+			return;
+		}
+		this.graph.onAfterStep = function() {
+			_gthis.scheduleRecompile();
+		};
+		this.graph.onNodeAdded = function(_) {
+			_gthis.scheduleRecompile();
+		};
+		this.graph.onNodeRemoved = function(_) {
+			_gthis.scheduleRecompile();
+		};
+		this.graph.onNodeChanged = function(_) {
+			_gthis.scheduleRecompile();
+		};
+	}
+	,scheduleRecompile: function() {
+		if(this.recompileTimer != null) {
+			this.recompileTimer.stop();
+		}
+		this.recompileTimer = haxe_Timer.delay($bind(this,this.compileAndApply),100);
+	}
+	,compileAndApply: function() {
+		haxe_Log.trace("🔨 [ShaderEditor] Recompiling shader graph...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 103, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		var shaderData = hide_engine_infrastructure_ShaderGraphCompiler.compile(this.graph);
+		this.previewRenderer.applyShaderData(shaderData);
+		haxe_Log.trace("✅ [ShaderEditor] Shader updated",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 111, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
 	}
 	,initLiteGraph: function() {
-		this.liteGraphCanvas = window.document.createElement("canvas");
-		this.liteGraphCanvas.id = "shader-graph-canvas";
-		this.liteGraphCanvas.width = 800;
-		this.liteGraphCanvas.height = 600;
-		this.liteGraphCanvas.style.cssText = "width:100%;height:100%;background:#1a1a1a;";
-		var container = window.document.getElementById("litegraph-container");
-		if(container != null) {
-			container.appendChild(this.liteGraphCanvas);
-			this.graph = new hide.infrastructure.external.litegraph.LGraph();
-			this.graphCanvas = new hide.infrastructure.external.litegraph.LGraphCanvas(this.liteGraphCanvas,this.graph);
-			this.graphCanvas.show_info = true;
-			this.graphCanvas.allow_dragcanvas = true;
-			this.graphCanvas.allow_zoomcanvas = true;
-			this.graph.start();
-			this.state = { graph : this.graph};
+		var _gthis = this;
+		var container = this.litegraphContainerRef.current;
+		if(container == null) {
+			haxe_Log.trace("❌ [ShaderEditor] #litegraph-container not found!",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 117, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+			return;
 		}
+		haxe_Timer.delay(function() {
+			var rect = container.getBoundingClientRect();
+			var w = rect.width | 0;
+			var h = rect.height | 0;
+			if(w < 100 || h < 100) {
+				haxe_Log.trace("⚠️ [ShaderEditor] Container too small: " + w + "x" + h + ", retrying...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 128, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Timer.delay(function() {
+					_gthis.initLiteGraph();
+				},100);
+				return;
+			}
+			haxe_Log.trace(" [ShaderEditor] Container size: " + w + "x" + h,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 133, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+			_gthis.liteGraphCanvas = window.document.createElement("canvas");
+			_gthis.liteGraphCanvas.id = "shader-graph-canvas";
+			_gthis.liteGraphCanvas.width = w;
+			_gthis.liteGraphCanvas.height = h;
+			container.appendChild(_gthis.liteGraphCanvas);
+			_gthis.graph = new hide_infrastructure_external_litegraph_LGraph();
+			_gthis.graphCanvas = new hide_infrastructure_external_litegraph_LGraphCanvas(_gthis.liteGraphCanvas,_gthis.graph);
+			_gthis.graphCanvas.show_info = true;
+			_gthis.graphCanvas.allow_dragcanvas = true;
+			_gthis.graphCanvas.allow_zoomcanvas = true;
+			_gthis.graphCanvas.resize(w,h);
+			_gthis.setupDragAndDrop(container);
+			_gthis.graphCanvas.onSelectionChange = function(nodes) {
+				if(nodes != null && nodes.length > 0) {
+					_gthis.setState({ graph : _gthis.graph, selectedNode : nodes[0]});
+				} else {
+					_gthis.setState({ graph : _gthis.graph, selectedNode : null});
+				}
+			};
+			_gthis.registerShaderNodes();
+			var outputNode = hide_infrastructure_external_litegraph_LiteGraph.createNode("material/output");
+			if(outputNode != null) {
+				outputNode.pos = [w / 2 - 100,h / 2 - 50];
+				_gthis.graph.add(outputNode);
+				haxe_Log.trace("✅ Material Output node created",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 178, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+			}
+			_gthis.graph.start();
+			_gthis.state = { graph : _gthis.graph, selectedNode : null};
+			haxe_Log.trace("✅ [ShaderEditor] LiteGraph initialized",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 188, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+		},100);
+	}
+	,setupDragAndDrop: function(container) {
+		var _gthis = this;
+		container.addEventListener("dragover",function(e) {
+			e.preventDefault();
+			e.dataTransfer.dropEffect = "copy";
+		});
+		container.addEventListener("drop",function(e) {
+			e.preventDefault();
+			var nodeType = e.dataTransfer.getData("nodeType");
+			if(nodeType != null && nodeType != "") {
+				var graphPos = _gthis.graphCanvas.convertEventToCanvasOffset(e);
+				var node = hide_infrastructure_external_litegraph_LiteGraph.createNode(nodeType);
+				if(node != null) {
+					node.pos = [graphPos[0],graphPos[1]];
+					_gthis.graph.add(node);
+					haxe_Log.trace("✅ Node created: " + nodeType + " at " + graphPos[0] + "," + graphPos[1],{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 212, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupDragAndDrop"});
+				}
+			}
+		});
 	}
 	,registerShaderNodes: function() {
 		var TextureSampleNode = (function() { this.title = 'Texture Sample'; this.addInput('UV', 'vec2'); this.addOutput('RGBA', 'vec4'); this.properties = { texture: '' }; });
@@ -113305,7 +113649,17 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		var Vec3Node = (function() { this.title = 'Vector3'; this.addOutput('Vector', 'vec3'); this.properties = { x: 0.0, y: 0.0, z: 0.0 }; });
 		Vec3Node.prototype.onExecute = function() { this.setOutputData(0, [this.properties.x, this.properties.y, this.properties.z]); }
 		hide_infrastructure_external_litegraph_LiteGraph.registerNodeType("value/vec3",Vec3Node);
-		haxe_Log.trace("✅ [ShaderEditor] Shader nodes registered",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 124, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "registerShaderNodes"});
+		var OutputNode = (function() { 
+            this.title = 'Material Output'; 
+            this.addInput('Albedo', 'vec3'); 
+            this.addInput('Metallic', 'float'); 
+            this.addInput('Roughness', 'float'); 
+            this.addInput('Normal', 'vec3');
+            this.addInput('Emissive', 'vec3');
+            this.color = '#4a9';  // выделяем визуально
+        });
+		hide_infrastructure_external_litegraph_LiteGraph.registerNodeType("material/output",OutputNode);
+		haxe_Log.trace("✅ [ShaderEditor] Shader nodes registered",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 257, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "registerShaderNodes"});
 	}
 	,render: function() {
 		var tmp = this.renderToolbar();
@@ -113321,12 +113675,18 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		return React.createElement("div",{ style : { padding : "8px", background : "#2a2a2a", borderBottom : "1px solid #1a1a1a", display : "flex", gap : "8px"}},tmp,tmp1,tmp2,tmp3,tmp4);
 	}
 	,renderMainArea: function() {
-		var tmp = this.renderNodeEditor();
-		var tmp1 = this.renderRightPanel();
-		return React.createElement("div",{ style : { display : "flex", flex : 1, overflow : "hidden"}},tmp,tmp1);
+		var tmp = this.renderNodePalette();
+		var tmp1 = this.renderNodeEditor();
+		var tmp2 = this.renderRightPanel();
+		return React.createElement("div",{ style : { display : "flex", flex : 1, overflow : "hidden"}},tmp,"    ",tmp1,tmp2);
 	}
 	,renderNodeEditor: function() {
-		return React.createElement("div",{ style : { flex : 1, position : "relative", background : "#1a1a1a"}, id : "litegraph-container"});
+		return React.createElement("div",{ ref : this.litegraphContainerRef, style : { flex : 1, position : "relative", background : "#1a1a1a"}});
+	}
+	,renderNodePalette: function() {
+		return React.createElement(hide_presentation_ui_react_components_ShaderNodePalette,{ onNodeDragStart : function(nodeType) {
+			haxe_Log.trace("📦 Dragging node: " + nodeType,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 301, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "renderNodePalette"});
+		}});
 	}
 	,renderRightPanel: function() {
 		var tmp = this.renderPreview();
@@ -113340,25 +113700,25 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 	}
 	,renderProperties: function() {
 		var tmp = React.createElement("h3",{ style : { margin : "0 0 10px 0", color : "#fff", fontSize : "14px"}},"Properties");
-		var tmp1 = this.renderPropertiesContent();
+		var tmp1 = React.createElement(hide_presentation_ui_react_components_NodePropertiesPanel,{ selectedNode : this.state.selectedNode});
 		return React.createElement("div",{ style : { flex : 1, padding : "10px", background : "#2a2a2a", overflowY : "auto"}},tmp,tmp1);
 	}
 	,renderPropertiesContent: function() {
 		return React.createElement("div",{ style : { color : "#888", fontSize : "12px"}},"Select a node to edit properties");
 	}
 	,onCompile: function() {
-		haxe_Log.trace("🔨 Compile shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 224, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onCompile"});
+		haxe_Log.trace("🔨 Compile shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 380, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onCompile"});
 	}
 	,onSave: function() {
-		haxe_Log.trace("💾 Save shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 229, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onSave"});
+		haxe_Log.trace("💾 Save shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 385, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onSave"});
 	}
 	,onExportHLSL: function() {
-		haxe_Log.trace("📤 Export HLSL",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 234, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onExportHLSL"});
+		haxe_Log.trace("📤 Export HLSL",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 390, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onExportHLSL"});
 	}
 	,onClearGraph: function() {
 		if(this.graph != null) {
 			this.graph.clear();
-			haxe_Log.trace("🧹 Graph cleared",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 241, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onClearGraph"});
+			haxe_Log.trace("🧹 Graph cleared",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 397, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onClearGraph"});
 		}
 	}
 	,componentWillUnmount: function() {
@@ -113366,9 +113726,71 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			this.graph.stop();
 		}
 		this.previewRenderer.dispose();
-		hide_presentation_ui_react_BaseReactComponent.prototype.componentWillUnmount.call(this);
 	}
 	,__class__: hide_presentation_ui_react_components_ShaderEditorPanel
+});
+var hide_presentation_ui_react_components_ShaderNodePalette = function(props,context) {
+	React_Component.call(this,props,context);
+};
+$hxClasses["hide.presentation.ui.react.components.ShaderNodePalette"] = hide_presentation_ui_react_components_ShaderNodePalette;
+hide_presentation_ui_react_components_ShaderNodePalette.__name__ = "hide.presentation.ui.react.components.ShaderNodePalette";
+hide_presentation_ui_react_components_ShaderNodePalette.__super__ = React_Component;
+hide_presentation_ui_react_components_ShaderNodePalette.prototype = $extend(React_Component.prototype,{
+	getCategories: function() {
+		return [{ name : "Input/Output", nodes : [{ type : "material/output", label : "Material Output", description : "Final shader output", color : "#4a9"},{ type : "value/float", label : "Float", description : "Float value", color : "#6a6"},{ type : "value/vec3", label : "Vector3", description : "3D vector", color : "#66a"},{ type : "value/color", label : "Color", description : "RGB color", color : "#a66"}]},{ name : "Math", nodes : [{ type : "math/add", label : "Add", description : "Add two values", color : "#aa6"},{ type : "math/subtract", label : "Subtract", description : "Subtract values", color : "#aa6"},{ type : "math/multiply", label : "Multiply", description : "Multiply values", color : "#aa6"},{ type : "math/divide", label : "Divide", description : "Divide values", color : "#aa6"},{ type : "math/lerp", label : "Lerp", description : "Linear interpolation", color : "#aa6"}]},{ name : "Texture", nodes : [{ type : "texture/sample", label : "Sample Texture", description : "Sample texture at UV", color : "#a6a"},{ type : "texture/normal", label : "Normal Map", description : "Normal map sample", color : "#a6a"}]},{ name : "PBR", nodes : [{ type : "pbr/albedo", label : "Albedo", description : "Base color", color : "#6aa"},{ type : "pbr/metallic", label : "Metallic", description : "Metallic value", color : "#6aa"},{ type : "pbr/roughness", label : "Roughness", description : "Roughness value", color : "#6aa"},{ type : "pbr/normal", label : "Normal", description : "Normal vector", color : "#6aa"}]}];
+	}
+	,handleDragStart: function(nodeType,e) {
+		e.dataTransfer.setData("nodeType",nodeType);
+		e.dataTransfer.effectAllowed = "copy";
+		this.props.onNodeDragStart(nodeType);
+		haxe_Log.trace("📦 Dragging node: " + nodeType,{ fileName : "hide/presentation/ui/react/components/ShaderNodePalette.hx", lineNumber : 68, className : "hide.presentation.ui.react.components.ShaderNodePalette", methodName : "handleDragStart"});
+	}
+	,render: function() {
+		var categories = this.getCategories();
+		var tmp = React.createElement("h3",{ style : { margin : 0, color : "#fff", fontSize : "13px"}},"📦 Nodes");
+		var tmp1 = React.createElement("div",{ style : { padding : "10px", borderBottom : "1px solid #1a1a1a", background : "#1a1a1a"}},tmp);
+		var _g = [];
+		var _g1 = 0;
+		while(_g1 < categories.length) {
+			var category = categories[_g1];
+			++_g1;
+			_g.push(this.renderCategory(category));
+		}
+		return React.createElement("div",{ style : { width : "220px", background : "#2a2a2a", borderRight : "1px solid #1a1a1a", overflowY : "auto", userSelect : "none"}},tmp1,_g);
+	}
+	,renderCategory: function(category) {
+		var tmp = { key : category.name, style : { marginBottom : "8px"}};
+		var tmp1 = React.createElement("div",{ style : { padding : "6px 10px", background : "#333", color : "#aaa", fontSize : "11px", fontWeight : "bold", textTransform : "uppercase", letterSpacing : "0.5px"}},category.name);
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = category.nodes;
+		while(_g1 < _g2.length) {
+			var node = _g2[_g1];
+			++_g1;
+			_g.push(this.renderNodeItem(node));
+		}
+		return React.createElement("div",tmp,tmp1,React.createElement("div",{ },_g));
+	}
+	,renderNodeItem: function(node) {
+		var _gthis = this;
+		var tmp = { key : node.type, style : { padding : "8px 10px", margin : "2px 6px", background : "#3a3a3a", borderRadius : "4px", cursor : "grab", border : "1px solid transparent", transition : "all 0.15s"}, onMouseOver : function(e) {
+			var el = js_Boot.__cast(e.currentTarget , HTMLElement);
+			el.style.background = "#4a4a4a";
+			el.style.borderColor = node.color;
+		}, onMouseOut : function(e) {
+			var el = js_Boot.__cast(e.currentTarget , HTMLElement);
+			el.style.background = "#3a3a3a";
+			el.style.borderColor = "transparent";
+		}, onDragStart : function(e) {
+			_gthis.handleDragStart(node.type,e);
+		}, draggable : true};
+		var tmp1 = React.createElement("div",{ style : { width : "12px", height : "12px", borderRadius : "3px", background : node.color, flexShrink : 0}});
+		var tmp2 = React.createElement("div",{ style : { color : "#fff", fontSize : "12px", fontWeight : "500"}},node.label);
+		var tmp3 = React.createElement("div",{ style : { color : "#888", fontSize : "10px", marginTop : "2px"}},node.description);
+		var tmp4 = React.createElement("div",{ style : { flex : 1}},tmp2,tmp3);
+		return React.createElement("div",tmp,React.createElement("div",{ style : { display : "flex", alignItems : "center", gap : "8px"}},tmp1,tmp4));
+	}
+	,__class__: hide_presentation_ui_react_components_ShaderNodePalette
 });
 var hide_presentation_ui_react_components_WelcomePanel = function() {
 	hide_presentation_ui_react_BaseReactComponent.call(this);
@@ -177176,7 +177598,9 @@ hide_presentation_ui_react_components_ContextMenu.displayName = "ContextMenu";
 hide_presentation_ui_react_components_HierarchyIcon.displayName = "HierarchyIcon";
 hide_presentation_ui_react_components_HierarchyPanel.displayName = "HierarchyPanel";
 hide_presentation_ui_react_components_InspectorPanel.displayName = "InspectorPanel";
+hide_presentation_ui_react_components_NodePropertiesPanel.displayName = "NodePropertiesPanel";
 hide_presentation_ui_react_components_ShaderEditorPanel.displayName = "ShaderEditorPanel";
+hide_presentation_ui_react_components_ShaderNodePalette.displayName = "ShaderNodePalette";
 hide_presentation_ui_react_components_WelcomePanel.displayName = "WelcomePanel";
 hx_injection_ServiceProvider.DefaultType = "";
 hxd_InputFormat.DFloat = 1;
