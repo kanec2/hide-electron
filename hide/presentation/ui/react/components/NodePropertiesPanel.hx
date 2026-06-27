@@ -6,6 +6,7 @@ import hide.presentation.ui.react.BaseReactComponent;
 
 typedef NodePropertiesProps = {
     var selectedNode: Dynamic; // LGraphNode
+    var onPropertyChange: Void->Void; // ← НОВОЕ
 }
 
 typedef NodePropertiesState = {
@@ -23,7 +24,8 @@ class NodePropertiesPanel extends BaseReactComponent<NodePropertiesProps, NodePr
     }
 
     override function render(): ReactElement {
-        if (state.selectedNode == null) {
+        // ✅ ИСПРАВЛЕНО: используем props.selectedNode, а не state
+        if (props.selectedNode == null) {
             return jsx('
                 <div style={{color: "#888", fontSize: "12px", padding: "10px"}}>
                     Select a node to edit properties
@@ -34,7 +36,7 @@ class NodePropertiesPanel extends BaseReactComponent<NodePropertiesProps, NodePr
         return jsx('
             <div style={{padding: "10px"}}>
                 <h4 style={{margin: "0 0 10px 0", color: "#fff"}}>
-                    {state.selectedNode.title}
+                    {props.selectedNode.title}
                 </h4>
                 {renderProperties()}
             </div>
@@ -42,7 +44,7 @@ class NodePropertiesPanel extends BaseReactComponent<NodePropertiesProps, NodePr
     }
 
     private function renderProperties(): ReactElement {
-        var props = state.selectedNode.properties;
+        var props = props.selectedNode.properties;
         if (props == null) {
             return jsx('<div style={{color: "#666"}}>No properties</div>');
         }
@@ -81,7 +83,7 @@ class NodePropertiesPanel extends BaseReactComponent<NodePropertiesProps, NodePr
             </div>
         ');
     }
-
+/*
     private function handlePropertyChange(key: String, value: String): Void {
         if (state.selectedNode != null) {
             // Конвертируем строку в нужный тип
@@ -97,6 +99,24 @@ class NodePropertiesPanel extends BaseReactComponent<NodePropertiesProps, NodePr
             state.selectedNode.setDirtyCanvas(true, true);
             
             trace('🔄 Property changed: $key = $parsed');
+        }
+    }
+*/
+    private function handlePropertyChange(key: String, value: String): Void {
+        if (props.selectedNode != null) {
+            var parsed: Dynamic = value;
+            var floatVal = Std.parseFloat(value);
+            if (!Math.isNaN(floatVal)) {
+                parsed = floatVal;
+            }
+            
+            Reflect.setProperty(props.selectedNode.properties, key, parsed);
+            props.selectedNode.setDirtyCanvas(true, true);
+            
+            // ✅ УВЕДОМЛЯЕМ PARENT ОБ ИЗМЕНЕНИИ
+            if (props.onPropertyChange != null) {
+                props.onPropertyChange();
+            }
         }
     }
 }

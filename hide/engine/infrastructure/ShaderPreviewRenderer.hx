@@ -86,10 +86,17 @@ class ShaderPreviewRenderer implements Service {
      * Обновляет материал сферы.
      * Вызывается из React-компонента при изменении графа.
      */
-    public function updateMaterial(shaderData:Dynamic):Void {
+    public function updateMaterial(shaderData: Dynamic): Void {
         if (previewMesh == null) return;
-        // TODO: применение шейдера
-        trace("🎨 [ShaderPreview] Material updated");
+        
+        if (shaderData.albedo != null) {
+            previewMesh.material.color.set(
+                shaderData.albedo.x,
+                shaderData.albedo.y,
+                shaderData.albedo.z
+            );
+            trace('🎨 [ShaderPreview] Color updated to (${shaderData.albedo.x}, ${shaderData.albedo.y}, ${shaderData.albedo.z})');
+        }
     }
 
     public function dispose():Void {

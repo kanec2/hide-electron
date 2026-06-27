@@ -84,8 +84,17 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         // Также реагируем на конкретные события
         graph.onNodeAdded = function(_) scheduleRecompile();
         graph.onNodeRemoved = function(_) scheduleRecompile();
-        //graph.onConnectionChange = function(_) scheduleRecompile();
-        
+
+        // ✅ НОВОЕ: Реагируем на подключение/отключение нод С ЗАДЕРЖКОЙ
+        untyped graph.onConnectionChange = function(node:Dynamic, action:String, link:Dynamic) {
+            trace('🔗 [ShaderEditor] onConnectionChange called!');
+            trace('   node: ${node != null ? node.title : "null"}');
+            trace('   action: $action');
+            trace('   link: ${link != null ? "exists" : "null"}');
+            
+            // ✅ ЗАДЕРЖКА: даём LiteGraph время обновить связи
+            haxe.Timer.delay(scheduleRecompile, 100);
+        };
         // И на изменение свойств нод (widget changes)
         // LiteGraph вызывает onNodeChanged при изменении properties
         untyped graph.onNodeChanged = function(_) scheduleRecompile();
@@ -101,14 +110,98 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
 
     private function compileAndApply():Void {
         trace("🔨 [ShaderEditor] Recompiling shader graph...");
+        if (graph == null || previewRenderer == null) return;
         
-        // 1. Компилируем граф в ShaderData
-        var shaderData = ShaderGraphCompiler.compile(graph);
+        // ✅ ИСПРАВЛЕНО: в LiteGraph массив нод хранится в _nodes, а не nodes
+        var nodes:Dynamic = untyped graph._nodes;
+        if (nodes == null) {
+            // Фоллбэк: пробуем graph.nodes
+            nodes = untyped graph.nodes;
+        }
         
-        // 2. Применяем к превью
-        previewRenderer.applyShaderData(shaderData);
+        if (nodes == null) {
+            trace("⚠️ [ShaderEditor] graph._nodes is undefined, skipping compile");
+            return;
+        }
         
-        trace("✅ [ShaderEditor] Shader updated");
+        var nodesArray:Array<Dynamic> = cast nodes;
+        
+        // ✅ 1. Ищем ноду Material Output
+        var outputNode:Dynamic = null;
+        for (node in nodesArray) {
+            if (node.type == "material/output") {
+                outputNode = node;
+                break;
+            }
+        }
+        if (outputNode == null) {
+            trace("️ [ShaderEditor] No Material Output node found");
+            return;
+        }
+        // ✅ ОТЛАДКА: смотрим все входы Material Output
+        trace('🔍 [ShaderEditor] Material Output inputs:');
+        if (outputNode.inputs != null) {
+            for (i in 0...outputNode.inputs.length) {
+                var input = outputNode.inputs[i];
+                var link = outputNode.getInputLink(i);
+                trace('   [$i] ${input.name}: linked=${link != null}');
+                if (link != null) {
+                    trace('       origin_id=${link.origin_id}, origin_slot=${link.origin_slot}');
+                }
+            }
+        }
+        // 2. Проверяем, что подключено к Albedo (slot 0)
+        var albedoLink = outputNode.getInputLink(0);
+        
+        if (albedoLink == null) {
+            // ✅ Ничего не подключено — сбрасываем на дефолтный цвет (серый)
+            trace("⚪ [ShaderEditor] Albedo not connected — resetting to default");
+            previewRenderer.updateMaterial({
+                albedo: { x: 0.5, y: 0.5, z: 0.5 }
+            });
+            return;
+        }
+
+        // ✅ 3. Получаем ноду, подключенную к Albedo
+        var sourceNode = graph.getNodeById(albedoLink.origin_id);
+        
+        if (sourceNode == null) {
+            trace("⚠️ [ShaderEditor] Source node not found");
+            previewRenderer.updateMaterial({
+                albedo: { x: 0.5, y: 0.5, z: 0.5 }
+            });
+            return;
+        }
+        
+        trace("🔍 [ShaderEditor] Albedo source: ${sourceNode.type} (${sourceNode.title})");
+        
+        // 4. Обрабатываем в зависимости от типа ноды
+        if (sourceNode.type == "value/vec3") {
+            var x = Reflect.field(sourceNode.properties, "x");
+            var y = Reflect.field(sourceNode.properties, "y");
+            var z = Reflect.field(sourceNode.properties, "z");
+            
+            previewRenderer.updateMaterial({
+                albedo: { x: x, y: y, z: z }
+            });
+            
+            trace('🎨 [ShaderEditor] Applied color from Vector3: ($x, $y, $z)');
+        } else if (sourceNode.type == "value/color") {
+            var r = Reflect.field(sourceNode.properties, "r");
+            var g = Reflect.field(sourceNode.properties, "g");
+            var b = Reflect.field(sourceNode.properties, "b");
+            
+            previewRenderer.updateMaterial({
+                albedo: { x: r, y: g, z: b }
+            });
+            
+            trace('🎨 [ShaderEditor] Applied color from Color: ($r, $g, $b)');
+        } else {
+            trace("⚠️ [ShaderEditor] Unsupported node type for Albedo: ${sourceNode.type}");
+            previewRenderer.updateMaterial({
+                albedo: { x: 0.5, y: 0.5, z: 0.5 }
+            });
+        }
     }
 
     private function initLiteGraph():Void {
@@ -141,6 +234,36 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
 
             container.appendChild(liteGraphCanvas);
             
+            // ✅ Обработка клика по canvas для выделения ноды
+            liteGraphCanvas.addEventListener("click", function(e:js.html.MouseEvent) {
+                trace('🖱️ [ShaderEditor] Canvas clicked');
+                
+                // ✅ ПРАВИЛЬНАЯ ПРОВЕРКА: selected_nodes — объект
+                if (graphCanvas.selected_nodes != null) {
+                    var keys = Reflect.fields(graphCanvas.selected_nodes);
+                    if (keys.length > 0) {
+                        var firstKey = keys[0];
+                        var selected = Reflect.field(graphCanvas.selected_nodes, firstKey);
+                        trace('🎯 [ShaderEditor] Selected after click: ${selected.title}');
+                        setState({
+                            graph: graph,
+                            selectedNode: selected
+                        });
+                    } else {
+                        trace('🔍 [ShaderEditor] No selection after click');
+                        setState({
+                            graph: graph,
+                            selectedNode: null
+                        });
+                    }
+                } else {
+                    trace('🔍 [ShaderEditor] selected_nodes is null');
+                    setState({
+                        graph: graph,
+                        selectedNode: null
+                    });
+                }
+            });
             // Создаём граф
             graph = new LGraph();
             
@@ -155,17 +278,59 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             // ✅ Обработчики drag & drop из палитры
             setupDragAndDrop(container);
             // В initLiteGraph() добавьте обработчик выбора ноды:
-            graphCanvas.onSelectionChange = function(nodes: Array<Dynamic>) {
-                if (nodes != null && nodes.length > 0) {
-                    setState({
-                        graph: graph,
-                        selectedNode: nodes[0]
-                    });
+            // ✅ Подписка на выбор ноды
+            // ✅ ИСПРАВЛЕННАЯ ВЕРСИЯ: selected_nodes — это объект, а не массив!
+            graphCanvas.onSelectionChange = function(nodes:Dynamic) {
+                trace('🔍 [ShaderEditor] onSelectionChange called');
+                trace('   nodes type: ${js.Lib.typeof(nodes)}');
+                
+                // ✅ ПРАВИЛЬНАЯ ПРОВЕРКА: nodes — это объект {id: node}
+                if (nodes != null) {
+                    var keys = Reflect.fields(nodes);
+                    trace('   selected nodes count: ${keys.length}');
+                    
+                    if (keys.length > 0) {
+                        // Берём первую выделенную ноду
+                        var firstKey = keys[0];
+                        var node = Reflect.field(nodes, firstKey);
+                        trace('🎯 [ShaderEditor] Node selected: ${node.title} (id: ${node.id})');
+                        
+                        setState({
+                            graph: graph,
+                            selectedNode: node
+                        });
+                    } else {
+                        trace('🔍 [ShaderEditor] No node selected');
+                        setState({
+                            graph: graph,
+                            selectedNode: null
+                        });
+                    }
                 } else {
+                    trace('🔍 [ShaderEditor] nodes is null');
                     setState({
                         graph: graph,
                         selectedNode: null
                     });
+                }
+            };
+
+            // ✅ ДОПОЛНИТЕЛЬНО: подписка на клик по ноде
+            graphCanvas.onNodeMoved = function(node:LGraphNode) {
+                trace('🖱️ [ShaderEditor] Node moved: ${node.title}');
+                
+                // ✅ ПРАВИЛЬНАЯ ПРОВЕРКА: selected_nodes — объект
+                if (graphCanvas.selected_nodes != null) {
+                    var keys = Reflect.fields(graphCanvas.selected_nodes);
+                    if (keys.length > 0) {
+                        var firstKey = keys[0];
+                        var selected = Reflect.field(graphCanvas.selected_nodes, firstKey);
+                        trace('🎯 [ShaderEditor] After move, selected: ${selected.title}');
+                        setState({
+                            graph: graph,
+                            selectedNode: selected
+                        });
+                    }
                 }
             };
             // Настраиваем
@@ -174,6 +339,13 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             var outputNode = LiteGraph.createNode("material/output");
             if (outputNode != null) {
                 outputNode.pos = [w / 2 - 100, h / 2 - 50];
+                
+                // ✅ ДОБАВЬ ЭТО: подписка на изменение связей
+                untyped outputNode.onConnectionsChange = function(type:Int, slot:Int, isConnected:Bool, link_info:Dynamic, input_info:Dynamic) {
+                    trace('🔗 [ShaderEditor] Material Output connection changed: slot $slot, connected: $isConnected');
+                    scheduleRecompile();
+                };
+                
                 graph.add(outputNode);
                 trace("✅ Material Output node created");
             }
@@ -201,15 +373,19 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             e.preventDefault();
             var nodeType = e.dataTransfer.getData("nodeType");
             if (nodeType != null && nodeType != "") {
-                // ✅ Конвертируем координаты мыши в координаты графа
                 var graphPos = graphCanvas.convertEventToCanvasOffset(e);
-                
-                // ✅ Создаём ноду в точке drop
                 var node = LiteGraph.createNode(nodeType);
                 if (node != null) {
                     node.pos = [graphPos[0], graphPos[1]];
+                    
+                    // ✅ ДОБАВЬ ЭТО: подписка на изменение связей ноды
+                    untyped node.onConnectionsChange = function(type:Int, slot:Int, isConnected:Bool, link_info:Dynamic, input_info:Dynamic) {
+                        trace('🔗 [ShaderEditor] Connection changed on node: ${node.title}, slot: $slot, connected: $isConnected');
+                        scheduleRecompile();
+                    };
+                    
                     graph.add(node);
-                    trace("✅ Node created: " + nodeType + " at " + graphPos[0] + "," + graphPos[1]);
+                    trace("✅ Node created: " + nodeType);
                 }
             }
         });
@@ -361,17 +537,22 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                 <h3 style={{margin: "0 0 10px 0", color: "#fff", fontSize: "14px"}}>
                     Properties
                 </h3>
-                <NodePropertiesPanel selectedNode={state.selectedNode} />
+                <NodePropertiesPanel 
+                    selectedNode={state.selectedNode}
+                    onPropertyChange={onNodePropertyChanged}
+                />
             </div>
         ');
     }
 
+    // ✅ НОВЫЙ МЕТОД: вызывается при изменении свойства ноды
+    private function onNodePropertyChanged(): Void {
+        trace("🔄 [ShaderEditor] Node property changed, recompiling...");
+        compileAndApply();
+    }
     private function renderPropertiesContent():ReactElement {
-        // Позже здесь будет рендеринг свойств выбранной ноды
         return jsx('
-            <div style={{color: "#888", fontSize: "12px"}}>
-                Select a node to edit properties
-            </div>
+            <NodePropertiesPanel selectedNode={state.selectedNode} />
         ');
     }
 

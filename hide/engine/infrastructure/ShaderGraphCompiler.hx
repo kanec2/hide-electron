@@ -22,11 +22,30 @@ class ShaderGraphCompiler {
             texturePath: null
         };
         
-        if (graph == null || graph.nodes == null) return result;
+        // ✅ ЗАЩИТА 1: проверяем что граф существует
+        if (graph == null) {
+            trace("⚠️ [Compiler] Graph is null");
+            return result;
+        }
+        
+        // ✅ ЗАЩИТА 2: graph.nodes может быть undefined в LiteGraph
+        // Используем untyped для безопасного доступа
+        var nodes:Dynamic = untyped graph.nodes;
+        if (nodes == null) {
+            trace("⚠️ [Compiler] graph.nodes is null/undefined");
+            return result;
+        }
+        
+        // ✅ ЗАЩИТА 3: приводим к массиву и проверяем длину
+        var nodesArray:Array<Dynamic> = cast nodes;
+        if (nodesArray.length == 0) {
+            trace("⚠️ [Compiler] No nodes in graph");
+            return result;
+        }
         
         // 1. Ищем выходную ноду (Material Output)
-        var outputNode:LGraphNode = null;
-        for (node in graph.nodes) {
+        var outputNode:Dynamic = null;
+        for (node in nodesArray) {
             if (node.type == "material/output") {
                 outputNode = node;
                 break;
