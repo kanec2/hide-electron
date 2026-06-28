@@ -1,6 +1,7 @@
 // hide/engine/infrastructure/HeapsRenderer.hx
 package hide.engine.infrastructure;
 
+import h3d.Engine;
 import hide.engine.domain.services.IRenderer;
 import hide.engine.domain.services.IEngineEventBus;
 import hx.injection.Service;
@@ -44,6 +45,7 @@ class HeapsRenderer implements IRenderer implements Service {
     }
 
     private function initEngine():Void {
+        Engine.ANTIALIASING = 4;
         var existingEngine = h3d.Engine.getCurrent();
         if (existingEngine != null) {
             trace("🎨 [HeapsRenderer] Using existing engine");
@@ -77,6 +79,7 @@ class HeapsRenderer implements IRenderer implements Service {
             haxe.Timer.delay(onEngineReady, 50);
             return;
         }
+        
         hxd.System.setLoop(mainLoop);
         engine.backgroundColor = 0xFF2a2a2a;
         isEngineReady = true;

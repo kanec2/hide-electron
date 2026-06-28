@@ -1,5 +1,7 @@
 package hide.engine.infrastructure;
 
+import h3d.mat.Data.TextureFormat;
+import h3d.mat.Data.TextureFlags;
 import h3d.scene.Scene;
 import h3d.mat.Texture;
 
@@ -22,8 +24,15 @@ class Viewport {
         this.height = height;
         
         // Создаём RenderTexture (GPU-side)
-        renderTarget = new Texture(width, height, [Target]);
-        renderTarget.depthBuffer = new Texture(width, height, Depth24Stencil8);
+        // ✅ ИСПОЛЬЗУЕМ RGBA32F для лучшего качества (float precision)
+        // Или RGBA16U для хорошего качества + производительности
+        // ✅ ПРАВИЛЬНО: используем только существующие флаги
+        // Target — для render target
+        // Dynamic — если часто обновляем (наш случай)
+        renderTarget = new Texture(width, height, [Target, Dynamic]);
+        // ✅ Включаем билинейную фильтрацию для сглаживания
+        renderTarget.filter = Linear;
+        renderTarget.depthBuffer = new Texture(width, height,[], TextureFormat.Depth24Stencil8);
         
         // Создаём canvas для отображения
         canvas = js.Browser.document.createCanvasElement();
@@ -31,10 +40,11 @@ class Viewport {
         canvas.width = width;
         canvas.height = height;
         
-        // ✅ Стили для отображения
+        // ✅ ВАЖНО: CSS стили для масштабирования без размытия
         canvas.style.width = "100%";
         canvas.style.height = "100%";
         canvas.style.display = "block";
+        canvas.style.imageRendering = "auto";
     }
     
     /**
@@ -59,9 +69,14 @@ class Viewport {
         var bytes = pixels.bytes;
         var data = imageData.data;
         
-        var len = width * height * 4;
+        var len = width * height;
         for (i in 0...len) {
-            data[i] = bytes.get(i);
+            var srcIdx = i * 4;
+            var dstIdx = i * 4;
+            data[dstIdx]     = bytes.get(srcIdx + 2); // R
+            data[dstIdx + 1] = bytes.get(srcIdx + 1); // G
+            data[dstIdx + 2] = bytes.get(srcIdx);     // B
+            data[dstIdx + 3] = bytes.get(srcIdx + 3); // A
         }
         
         ctx.putImageData(imageData, 0, 0);
@@ -82,7 +97,7 @@ class Viewport {
         canvas.width = w;
         canvas.height = h;
         renderTarget.dispose();
-        renderTarget = new Texture(w, h, [Target]);
+        renderTarget = new Texture(w, h, [Target, Dynamic]);
         renderTarget.depthBuffer = new Texture(w, h, Depth24Stencil8);
     }
     

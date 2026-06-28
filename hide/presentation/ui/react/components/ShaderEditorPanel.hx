@@ -46,7 +46,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         
         // ✅ 3. Регистрируем сцену превью как отдельный вьюпорт
         // Размер 400x300 соответствует контейнеру preview
-        var vp = viewportService.register("shader-preview", previewRenderer.scene, 400, 300);
+        var vp = viewportService.register("shader-preview", previewRenderer.scene, 800, 600); // Было 400x300
         trace('🔍 [ShaderPanel] Viewport registered: ${vp != null}, canvas: ${vp.canvas != null}');
         // ✅ 4. Вставляем canvas вьюпорта в DOM
         // ✅ ИСПРАВЛЕНИЕ: ждём, пока React 17 завершит рендеринг DOM
@@ -107,7 +107,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         }
         recompileTimer = haxe.Timer.delay(compileAndApply, 100);
     }
-
+    /*
     private function compileAndApply():Void {
         trace("🔨 [ShaderEditor] Recompiling shader graph...");
         if (graph == null || previewRenderer == null) return;
@@ -202,6 +202,168 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                 albedo: { x: 0.5, y: 0.5, z: 0.5 }
             });
         }
+    }*/
+    private function compileAndApply():Void {
+        trace("🔨 [ShaderEditor] Recompiling shader graph...");
+        if (graph == null || previewRenderer == null) return;
+        
+        // 1. Ищем Material Output
+        var outputNode:Dynamic = null;
+        var nodesArray:Array<Dynamic> = untyped graph._nodes;
+        if (nodesArray == null) return;
+        
+        for (node in nodesArray) {
+            if (node.type == "material/output") {
+                outputNode = node;
+                break;
+            }
+        }
+        
+        if (outputNode == null) {
+            trace("⚠️ [ShaderEditor] No Material Output found");
+            return;
+        }
+        
+        // 2. Вычисляем ВСЕ PBR-параметры через рекурсию
+        var albedo = evaluateInput(outputNode, 0, new Map());      // slot 0 = Albedo (vec3)
+        var metallic = evaluateInput(outputNode, 1, new Map());    // slot 1 = Metallic (float)
+        var roughness = evaluateInput(outputNode, 2, new Map());   // slot 2 = Roughness (float)
+        var normal = evaluateInput(outputNode, 3, new Map());      // slot 3 = Normal (vec3) - пока игнорируем
+        var emissive = evaluateInput(outputNode, 4, new Map());    // slot 4 = Emissive (vec3)
+        
+        trace('📊 [ShaderEditor] PBR Evaluated:');
+        trace('   Albedo: $albedo');
+        trace('   Metallic: $metallic');
+        trace('   Roughness: $roughness');
+        trace('   Emissive: $emissive');
+        
+        // 3. Применяем к превью
+        previewRenderer.updateMaterial({
+            albedo: albedo,
+            metallic: metallic,
+            roughness: roughness,
+            emissive: emissive
+        });
+        
+        trace("✅ [ShaderEditor] PBR Shader updated");
+    }
+    /**
+     * Рекурсивно вычисляет значение выхода ноды.
+     * Возвращает:
+     *   - Float для value/float
+     *   - {x, y, z} для value/vec3, value/color
+     *   - результат операции для math/operation
+     *   - null если не вычислили
+     */
+    private function evaluateNode(node:Dynamic, outputSlot:Int, ?visited:Map<Int, Bool>):Dynamic {
+        if (node == null) return null;
+        
+        if (visited == null) visited = new Map();
+        if (visited.exists(node.id)) {
+            trace('⚠️ [ShaderEditor] Cycle detected at node ${node.title}');
+            return null;
+        }
+        visited.set(node.id, true);
+        
+        return switch (node.type) {
+            // === ЛИСТОВЫЕ НОДЫ ===
+            case "value/float":
+                Reflect.field(node.properties, "value");
+                
+            case "value/vec3":
+                {
+                    x: Reflect.field(node.properties, "x"),
+                    y: Reflect.field(node.properties, "y"),
+                    z: Reflect.field(node.properties, "z")
+                };
+                
+            case "value/color":
+                {
+                    x: Reflect.field(node.properties, "r"),
+                    y: Reflect.field(node.properties, "g"),
+                    z: Reflect.field(node.properties, "b")
+                };
+            
+            // === MATH ОПЕРАЦИИ ===
+            case "math/operation" | "math/add" | "math/subtract" | "math/multiply" | "math/divide" | "math/lerp":
+                evaluateMathNode(node, visited);
+            
+            default:
+                trace('⚠️ [ShaderEditor] Unsupported node type: ${node.type}');
+                null;
+        };
+    }
+
+    private function evaluateMathNode(node:Dynamic, visited:Map<Int, Bool>):Dynamic {
+        var a = evaluateInput(node, 0, visited);
+        var b = evaluateInput(node, 1, visited);
+        
+        if (a == null) a = 0;
+        if (b == null) b = 0;
+        
+        var operation = Reflect.field(node.properties, "operation");
+        
+        // Определяем операцию по типу ноды или свойству
+        if (operation == null) {
+            operation = switch (node.type) {
+                case "math/add": "add";
+                case "math/subtract": "subtract";
+                case "math/multiply": "multiply";
+                case "math/divide": "divide";
+                case "math/lerp": "lerp";
+                default: "add";
+            };
+        }
+        
+        return switch (operation) {
+            case "add":
+                if (Std.is(a, Float) && Std.is(b, Float)) a + b;
+                else if (isVec3(a) && isVec3(b)) { x: toVec3(a).x + toVec3(b).x, y: toVec3(a).y + toVec3(b).y, z: toVec3(a).z + toVec3(b).z };
+                else if (isVec3(a) && Std.is(b, Float)) { x: toVec3(a).x + b, y: toVec3(a).y + b, z: toVec3(a).z + b };
+                else null;
+                
+            case "subtract":
+                if (Std.is(a, Float) && Std.is(b, Float)) a - b;
+                else if (isVec3(a) && isVec3(b)) { x: toVec3(a).x - toVec3(b).x, y: toVec3(a).y - toVec3(b).y, z: toVec3(a).z - toVec3(b).z };
+                else null;
+                
+            case "multiply":
+                if (Std.is(a, Float) && Std.is(b, Float)) a * b;
+                else if (isVec3(a) && Std.is(b, Float)) { x: toVec3(a).x * b, y: toVec3(a).y * b, z: toVec3(a).z * b };
+                else if (isVec3(a) && isVec3(b)) { x: toVec3(a).x * toVec3(b).x, y: toVec3(a).y * toVec3(b).y, z: toVec3(a).z * toVec3(b).z };
+                else null;
+                
+            case "divide":
+                if (Std.is(a, Float) && Std.is(b, Float) && b != 0) a / b;
+                else if (isVec3(a) && Std.is(b, Float) && b != 0) { x: toVec3(a).x / b, y: toVec3(a).y / b, z: toVec3(a).z / b };
+                else null;
+                
+            case "lerp":
+                // Упрощённо: (a + b) / 2
+                if (Std.is(a, Float) && Std.is(b, Float)) (a + b) / 2;
+                else null;
+                
+            default: null;
+        };
+    }
+    function toVec3(param:Dynamic) {
+        return cast(param,h3d.Vector);
+    }
+    /**
+     * Вычисляет значение ВХОДА ноды, рекурсивно спускаясь по связи.
+     */
+    private function evaluateInput(node:Dynamic, inputSlot:Int, visited:Map<Int, Bool>):Dynamic {
+        var link = node.getInputLink(inputSlot);
+        if (link == null) return null;
+        
+        var sourceNode = graph.getNodeById(link.origin_id);
+        if (sourceNode == null) return null;
+        
+        return evaluateNode(sourceNode, link.origin_slot, visited);
+    }
+
+    private function isVec3(v:Dynamic):Bool {
+        return v != null && Reflect.hasField(v, "x") && Reflect.hasField(v, "y") && Reflect.hasField(v, "z");
     }
 
     private function initLiteGraph():Void {
@@ -419,6 +581,88 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         js.Syntax.code("Vec3Node.prototype.onExecute = function() { this.setOutputData(0, [this.properties.x, this.properties.y, this.properties.z]); }");
         LiteGraph.registerNodeType("value/vec3", Vec3Node);
         
+        // === Нода: Color ===
+        var ColorNode = js.Syntax.code("(function() { 
+            this.title = 'Color'; 
+            this.addOutput('Color', 'vec3'); 
+            this.properties = { r: 1.0, g: 1.0, b: 1.0 }; 
+        })");
+        js.Syntax.code("ColorNode.prototype.onExecute = function() { 
+            this.setOutputData(0, [this.properties.r, this.properties.g, this.properties.b]); 
+        }");
+        LiteGraph.registerNodeType("value/color", ColorNode);
+
+        // === Ноды: Math (отдельные для каждой операции) ===
+        // === Нода: Add ===
+        var AddNode = js.Syntax.code("
+                (function() { 
+                    this.title = 'Add'; this.addInput('A', 'float'); this.addInput('B', 'float'); this.addOutput('Result', 'float'); this.properties = { operation: 'add' }; 
+                })
+            ");
+        js.Syntax.code("AddNode.prototype.onExecute = function() { 
+                    var a = this.getInputData(0); if (a == null) a = 0; 
+                    var b = this.getInputData(1); if (b == null) b = 0; 
+                    var result = a + b; 
+                    this.setOutputData(0, result); 
+                }");
+        LiteGraph.registerNodeType("math/add", AddNode);
+
+        // === Нода: Subtract ===
+        var SubtractNode = js.Syntax.code("
+                (function() { 
+                    this.title = 'Subtract'; this.addInput('A', 'float'); this.addInput('B', 'float'); this.addOutput('Result', 'float'); this.properties = { operation: 'subtract' }; 
+                })
+            ");
+        js.Syntax.code("SubtractNode.prototype.onExecute = function() { 
+                    var a = this.getInputData(0); if (a == null) a = 0; 
+                    var b = this.getInputData(1); if (b == null) b = 0; 
+                    var result = a - b; 
+                    this.setOutputData(0, result); 
+                }");
+        LiteGraph.registerNodeType("math/subtract", SubtractNode);
+
+        // === Нода: Multiply ===
+        var MultiplyNode = js.Syntax.code("
+                (function() { 
+                    this.title = 'Multiply'; this.addInput('A', 'float'); this.addInput('B', 'float'); this.addOutput('Result', 'float'); this.properties = { operation: 'multiply' }; 
+                })
+            ");
+        js.Syntax.code("MultiplyNode.prototype.onExecute = function() { 
+                    var a = this.getInputData(0); if (a == null) a = 0; 
+                    var b = this.getInputData(1); if (b == null) b = 0; 
+                    var result = a * b;
+                    this.setOutputData(0, result); 
+                }");
+        LiteGraph.registerNodeType("math/multiply", MultiplyNode);    
+
+        // === Нода: Divide ===
+        var DivideNode = js.Syntax.code("
+                (function() { 
+                    this.title = 'Divide'; this.addInput('A', 'float'); this.addInput('B', 'float'); this.addOutput('Result', 'float'); this.properties = { operation: 'divide' }; 
+                })
+            ");
+        js.Syntax.code("DivideNode.prototype.onExecute = function() { 
+                    var a = this.getInputData(0); if (a == null) a = 0; 
+                    var b = this.getInputData(1); if (b == null) b = 0; 
+                    var result = b != 0 ? a / b : 0; 
+                    this.setOutputData(0, result); 
+                }");
+        LiteGraph.registerNodeType("math/divide", DivideNode);
+
+        // === Нода: Lerp ===
+        var LerpNode = js.Syntax.code("
+                (function() { 
+                    this.title = 'Lerp'; this.addInput('A', 'float'); this.addInput('B', 'float'); this.addOutput('Result', 'float'); this.properties = { operation: 'lerp' }; 
+                })
+            ");
+        js.Syntax.code("LerpNode.prototype.onExecute = function() { 
+                    var a = this.getInputData(0); if (a == null) a = 0; 
+                    var b = this.getInputData(1); if (b == null) b = 0; 
+                    var result = a + (b - a) * 0.5; 
+                    this.setOutputData(0, result); 
+                }");
+        LiteGraph.registerNodeType("math/lerp", LerpNode);    
+
         // === Нода: Material Output (ОБЯЗАТЕЛЬНАЯ) ===
         var OutputNode = js.Syntax.code("(function() { 
             this.title = 'Material Output'; 
@@ -498,9 +742,17 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
 
     private function renderPreview():ReactElement {
         return jsx('
-            <div style={{height: "300px", background: "#000", position: "relative"}}>
+            <div style={{
+                    height: "400px",  // Было 300px
+                    background: "#1a1a1a",  // Тёмный фон вместо чёрного
+                    position: "relative",
+                    border: "1px solid #333"
+                }}>
                 <div id="heaps-preview-container" 
-                    style={{width: "100%", height: "100%", display: "block"}}>
+                    style={{width: "100%", 
+                    height: "100%", 
+                    display: "block",
+                    background: "#1a1a1a"}}>
                 </div>
                 <div style={{
                     position: "absolute",
