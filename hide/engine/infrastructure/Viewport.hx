@@ -16,7 +16,7 @@ class Viewport {
     public var enabled:Bool = true;
     public var width:Int;
     public var height:Int;
-    
+    public var frameCount:Int = 0;  // ✅ НОВОЕ ПОЛЕ
     public function new(id:String, scene:Scene, width:Int, height:Int) {
         this.id = id;
         this.scene = scene;
@@ -31,7 +31,7 @@ class Viewport {
         // Dynamic — если часто обновляем (наш случай)
         renderTarget = new Texture(width, height, [Target, Dynamic]);
         // ✅ Включаем билинейную фильтрацию для сглаживания
-        renderTarget.filter = Linear;
+        renderTarget.filter = Nearest;
         renderTarget.depthBuffer = new Texture(width, height,[], TextureFormat.Depth24Stencil8);
         
         // Создаём canvas для отображения
@@ -44,13 +44,20 @@ class Viewport {
         canvas.style.width = "100%";
         canvas.style.height = "100%";
         canvas.style.display = "block";
-        canvas.style.imageRendering = "auto";
+        canvas.style.objectFit = "contain"; // ← НОВОЕ: сохраняет пропорции
+        canvas.style.imageRendering = "pixelated";  // ← БЫЛО "auto"
+        canvas.style.background = "#1a1a1a"; // ← НОВОЕ: фон на случай прозрачности
     }
     
     /**
      * Копирует RenderTexture → Canvas (пока через CPU)
      */
     public function blitToCanvas():Void {
+        // ✅ BLIT РАЗ В 30 КАДРОВ (вместо 5!)
+        if (frameCount % 30 != 0) {
+            frameCount++;
+            return;
+        }
         var pixels = renderTarget.capturePixels();
     
         // ✅ Диагностика: проверяем, есть ли реальные данные
@@ -73,6 +80,7 @@ class Viewport {
         for (i in 0...len) {
             var srcIdx = i * 4;
             var dstIdx = i * 4;
+            // ✅ BGRA → RGBA конвертация
             data[dstIdx]     = bytes.get(srcIdx + 2); // R
             data[dstIdx + 1] = bytes.get(srcIdx + 1); // G
             data[dstIdx + 2] = bytes.get(srcIdx);     // B
@@ -92,13 +100,23 @@ class Viewport {
     }
     
     public function resize(w:Int, h:Int):Void {
+        if (w < 1) w = 1;
+        if (h < 1) h = 1;
+        
         width = w;
         height = h;
         canvas.width = w;
         canvas.height = h;
+        
         renderTarget.dispose();
         renderTarget = new Texture(w, h, [Target, Dynamic]);
-        renderTarget.depthBuffer = new Texture(w, h, Depth24Stencil8);
+        renderTarget.depthBuffer = new Texture(w, h, [], TextureFormat.Depth24Stencil8);
+        
+        // Обновляем камеру под новый aspect ratio
+        if (scene != null) {
+            scene.camera.screenRatio = w / h;
+            scene.camera.update();
+        }
     }
     
     public function dispose():Void {

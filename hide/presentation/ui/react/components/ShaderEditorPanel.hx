@@ -37,37 +37,37 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     
     override function componentDidMount():Void {
         initLiteGraph();
-        // ✅ Передаём DOM-контейнер в engine layer
-        //var previewContainer = js.Browser.document.getElementById("heaps-preview-container");
-        previewRenderer.init();
-        // ✅ 2. Получаем сервис вьюпортов через UseService
-        // Вам нужно добавить viewportService() в UseService.hx, если его там нет
-        var viewportService = UseService.viewportService(); 
         
-        // ✅ 3. Регистрируем сцену превью как отдельный вьюпорт
-        // Размер 400x300 соответствует контейнеру preview
-        var vp = viewportService.register("shader-preview", previewRenderer.scene, 800, 600); // Было 400x300
-        trace('🔍 [ShaderPanel] Viewport registered: ${vp != null}, canvas: ${vp.canvas != null}');
-        // ✅ 4. Вставляем canvas вьюпорта в DOM
-        // ✅ ИСПРАВЛЕНИЕ: ждём, пока React 17 завершит рендеринг DOM
+        // ✅ АСИНХРОННАЯ инициализация (не блокирует React!)
         haxe.Timer.delay(function() {
-            var previewContainer = js.Browser.document.getElementById("heaps-preview-container");
-            trace('🔍 [ShaderPanel] previewContainer: ${previewContainer != null}');
+            previewRenderer.init();
             
-            if (previewContainer != null && vp.canvas != null) {
-                previewContainer.appendChild(vp.canvas);
-                vp.canvas.style.width = "100%";
-                vp.canvas.style.height = "100%";
-                vp.canvas.style.display = "block";
-                trace('✅ [ShaderPanel] Canvas appended to DOM');
-            } else {
-                trace('❌ [ShaderPanel] Container or canvas is NULL! ' +
-                    'previewContainer=${previewContainer != null}, canvas=${vp.canvas != null}');
-            }
-        }, 50); // 50мс достаточно для React 17
+            var viewportService = UseService.viewportService();
+            
+            haxe.Timer.delay(function() {
+                var previewContainer = js.Browser.document.getElementById("heaps-preview-container");
+                
+                if (previewContainer != null) {
+                    var rect = previewContainer.getBoundingClientRect();
+                    var w = Std.int(rect.width);
+                    var h = Std.int(rect.height);
+                    
+                    if (w < 50) w = 300;
+                    if (h < 50) h = 300;
+                    
+                    var vp = viewportService.register("shader-preview", previewRenderer.scene, w, h);
+                    
+                    if (vp != null && vp.canvas != null) {
+                        previewContainer.appendChild(vp.canvas);
+                        vp.canvas.style.width = "100%";
+                        vp.canvas.style.height = "100%";
+                        vp.canvas.style.display = "block";
+                        vp.canvas.style.imageRendering = "pixelated";
+                    }
+                }
+            }, 16);
+        }, 16);  // ← ЗАДЕРЖКА чтобы не блокировать React
         
-        
-        // ✅ НОВОЕ: Подписки на изменения графа с дебаунсом
         setupGraphListeners();
     }
 

@@ -54,7 +54,13 @@ class ViewportService implements Service {
             engine.popTarget();
 
             // 5. Копируем в canvas
-            vp.blitToCanvas();
+            // ✅ КОПИРУЕМ ТОЛЬКО ЕСЛИ НУЖНО (например, раз в 10 кадров)
+            // ИЛИ вообще не копируем — canvas обновляется сам через WebGL
+            // Если нужно именно blit — делайте реже:
+            if (vp.frameCount % 10 == 0) {  // Каждые 10 кадров
+                vp.blitToCanvas();
+            }
+            vp.frameCount++;
         }
     }
     
@@ -79,6 +85,15 @@ class ViewportService implements Service {
     public function dispose():Void {
         for (vp in viewports) vp.dispose();
         viewports.clear();
+    }
+    /**
+     * ✅ НОВОЕ: ресайз конкретного viewport
+     */
+    public function resizeViewport(id:String, w:Int, h:Int):Void {
+        var vp = viewports.get(id);
+        if (vp != null) {
+            vp.resize(w, h);
+        }
     }
 }
 

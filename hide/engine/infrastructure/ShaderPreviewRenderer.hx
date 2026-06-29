@@ -40,63 +40,90 @@ class ShaderPreviewRenderer implements Service {
         // ✅ Настраиваем PBR Renderer
         var renderer:Renderer = cast(s3d.renderer, Renderer);
         
-        // ✅ Создаём минимальный Environment (белый cubemap для базового освещения)
-        var envMap = new h3d.mat.Texture(256, 256, [Cube]);
-        // Заполняем все 6 граней белым цветом
-        for (face in 0...6) {
-            var pixels = hxd.Pixels.alloc(256, 256, h3d.mat.Texture.nativeFormat);
-            for (i in 0...pixels.width * pixels.height) {
-                pixels.setPixel(i % pixels.width, Std.int(i / pixels.width), 0xFFFFFFFF);
-            }
-            envMap.uploadPixels(pixels, 0, face);
-        }
-        
-        env = new Environment(envMap);
-        env.compute();
+        // ✅ ПРОСТОЙ ENVIRONMENT — быстро создаётся
+        env = createSimpleEnvironment();
         renderer.env = env;
 
-        // Заглушка для теней (как в SceneViewportController)
+        // Заглушка для теней
         @:privateAccess s3d.ctx.globals.fastSet(
             hxsl.Globals.allocID("shadow.proj"),
             new h3d.Matrix()
         );
+       
         // ✅ Добавьте больше источников света
-        var dirLight = new DirLight(new h3d.Vector(-0.5, -0.5, -1), s3d);
+        // ✅ ОСВЕЩЕНИЕ — 2 источника
+        var dirLight = new DirLight(new h3d.Vector(-0.5, -0.8, -0.3), s3d);
         dirLight.enableSpecular = true;
-        dirLight.color.set(1, 1, 1);
+        dirLight.color.set(1.0, 1.0, 1.0);
+
+        var fillLight = new DirLight(new h3d.Vector(0.5, 0.3, 0.5), s3d);
+        fillLight.enableSpecular = false;
+        fillLight.color.set(0.3, 0.3, 0.35);
 
         // Камера
         var camera = s3d.camera;
-        camera.pos.set(0, 2, 4);  // Чуть дальше
+        camera.pos.set(0, 0, 3);
         camera.target.set(0, 0, 0);
-        camera.fovY = 60;  // Шире угол
+        camera.fovY = 45;
         camera.zNear = 0.1;
         camera.zFar = 100;
         camera.update();
 
+
         // Свет
         // ✅ PBR Point Light вместо DirLight
-        var light = new h3d.scene.pbr.PointLight(s3d);
+        /*var light = new h3d.scene.pbr.PointLight(s3d);
         light.setPosition(3, 2, 4);
         light.range = 20;
-        light.power = 2;
+        light.power = 2;*/
 
 
          // Сфера для превью
-        var sphere = new Sphere(1, 64, 64);
+        // ✅ СФЕРА — МЕНЬШЕ СЕГМЕНТОВ (быстрее загрузка)
+        var sphere = new Sphere(1, 16, 16);  // ← БЫЛО 32x32, ТЕПЕРЬ 16x16
         sphere.addNormals();
         sphere.addUVs();
         previewMesh = new Mesh(sphere, s3d);
         
-        // ✅ Добавляем PBR PropsValues шейдер (metalness, roughness)
-        pbrValues = new PropsValues(0.0, 0.5); // metalness=0, roughness=0.5
+        pbrValues = new PropsValues(0.0, 0.5);
         previewMesh.material.mainPass.addShader(pbrValues);
-        
-        // Базовый цвет (albedo)
         previewMesh.material.color.set(0.8, 0.8, 0.8);
         
-        trace("✅ [ShaderPreview] PBR Scene initialized");
+        trace("✅ [ShaderPreview] PBR Scene initialized (FAST)");
     }
+
+    /**
+     * ✅ ПРОСТОЙ environment — серый градиент
+     * Создаётся БЫСТРО (небольшая текстура)
+     */
+    private function createSimpleEnvironment():Environment {
+        var size = 16;  // ← БЫЛО 64, ТЕПЕРЬ 16 (в 16 раз быстрее!)
+        var envMap = new h3d.mat.Texture(size, size, [Cube]);
+        
+        for (face in 0...6) {
+            var pixels = hxd.Pixels.alloc(size, size, h3d.mat.Texture.nativeFormat);
+            for (y in 0...size) {
+                for (x in 0...size) {
+                    var t = y / size;
+                    var r = 0.3 + 0.2 * (1 - t);
+                    var g = 0.3 + 0.2 * (1 - t);
+                    var b = 0.35 + 0.25 * (1 - t);
+                    
+                    var idx = (y * size + x) * 4;
+                    pixels.bytes.set(idx, Std.int(r * 255));
+                    pixels.bytes.set(idx + 1, Std.int(g * 255));
+                    pixels.bytes.set(idx + 2, Std.int(b * 255));
+                    pixels.bytes.set(idx + 3, 255);
+                }
+            }
+            envMap.uploadPixels(pixels, 0, face);
+        }
+        
+        var env = new Environment(envMap);
+        env.compute();
+        return env;
+    }
+
     /**
      * Применяет скомпилированные данные графа к материалу.
      * Вызывается из React-компонента при изменении графа.
