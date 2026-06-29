@@ -9397,7 +9397,7 @@ h2d_col_Polygon.makeCircle = function(x,y,radius,npoints) {
 	if(npoints < 3) {
 		npoints = 3;
 	}
-	var angle = 6.2831853071795862 / npoints;
+	var angle = 6.28318530717958623 / npoints;
 	var points = [];
 	var _g = 0;
 	var _g1 = npoints;
@@ -17250,18 +17250,18 @@ h3d_VectorImpl.prototype = {
 		if(saturation == null) {
 			saturation = 1.;
 		}
-		var r = hue % 6.2831853071795862;
-		hue = r >= 0 ? r : r + 6.2831853071795862;
+		var r = hue % 6.28318530717958623;
+		hue = r >= 0 ? r : r + 6.28318530717958623;
 		var f = 2 * brightness - 1;
 		var c = (1 - (f < 0 ? -f : f)) * saturation;
 		var f = hue * 3 / 3.14159265358979323 % 2. - 1;
 		var x = c * (1 - (f < 0 ? -f : f));
 		var m = brightness - c / 2;
-		if(hue < 1.0471975511965976) {
+		if(hue < 1.04719755119659763) {
 			this.x = c;
 			this.y = x;
 			this.z = 0;
-		} else if(hue < 2.0943951023931953) {
+		} else if(hue < 2.09439510239319526) {
 			this.x = x;
 			this.y = c;
 			this.z = 0;
@@ -17269,11 +17269,11 @@ h3d_VectorImpl.prototype = {
 			this.x = 0;
 			this.y = c;
 			this.z = x;
-		} else if(hue < 4.1887902047863905) {
+		} else if(hue < 4.18879020478639053) {
 			this.x = 0;
 			this.y = x;
 			this.z = c;
-		} else if(hue < 5.2359877559829888) {
+		} else if(hue < 5.23598775598298882) {
 			this.x = x;
 			this.y = 0;
 			this.z = c;
@@ -17319,7 +17319,7 @@ h3d_VectorImpl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -17362,7 +17362,7 @@ h3d_VectorImpl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -17856,18 +17856,18 @@ h3d_Vector4Impl.prototype = {
 		if(saturation == null) {
 			saturation = 1.;
 		}
-		var r = hue % 6.2831853071795862;
-		hue = r >= 0 ? r : r + 6.2831853071795862;
+		var r = hue % 6.28318530717958623;
+		hue = r >= 0 ? r : r + 6.28318530717958623;
 		var f = 2 * brightness - 1;
 		var c = (1 - (f < 0 ? -f : f)) * saturation;
 		var f = hue * 3 / 3.14159265358979323 % 2. - 1;
 		var x = c * (1 - (f < 0 ? -f : f));
 		var m = brightness - c / 2;
-		if(hue < 1.0471975511965976) {
+		if(hue < 1.04719755119659763) {
 			this.x = c;
 			this.y = x;
 			this.z = 0;
-		} else if(hue < 2.0943951023931953) {
+		} else if(hue < 2.09439510239319526) {
 			this.x = x;
 			this.y = c;
 			this.z = 0;
@@ -17875,11 +17875,11 @@ h3d_Vector4Impl.prototype = {
 			this.x = 0;
 			this.y = c;
 			this.z = x;
-		} else if(hue < 4.1887902047863905) {
+		} else if(hue < 4.18879020478639053) {
 			this.x = 0;
 			this.y = x;
 			this.z = c;
-		} else if(hue < 5.2359877559829888) {
+		} else if(hue < 5.23598775598298882) {
 			this.x = x;
 			this.y = 0;
 			this.z = c;
@@ -17927,7 +17927,7 @@ h3d_Vector4Impl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -17974,7 +17974,7 @@ h3d_Vector4Impl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -31413,15 +31413,15 @@ h3d_col_OrientedBounds.prototype = $extend(h3d_col_Collider.prototype,{
 		var rpz = dx * this.zx + dy * this.zy + dz * this.zz;
 		var tmp;
 		var f = this.hx;
-		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-010) {
+		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-10) {
 			var f = this.hy;
-			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-010;
+			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-10;
 		} else {
 			tmp = false;
 		}
 		if(tmp) {
 			var f = this.hz;
-			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-010;
+			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-10;
 		} else {
 			return false;
 		}
@@ -31441,15 +31441,15 @@ h3d_col_OrientedBounds.prototype = $extend(h3d_col_Collider.prototype,{
 		var rpz = dx * this.zx + dy * this.zy + dz * this.zz;
 		var tmp;
 		var f = this.hx;
-		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-010 - s.r) {
+		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-10 - s.r) {
 			var f = this.hy;
-			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-010 - s.r;
+			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-10 - s.r;
 		} else {
 			tmp = false;
 		}
 		if(tmp) {
 			var f = this.hz;
-			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-010 - s.r;
+			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-10 - s.r;
 		} else {
 			return false;
 		}
@@ -70553,7 +70553,7 @@ h3d_scene_FPSCameraController.prototype = $extend(h3d_scene_CameraController.pro
 		var ty = this.targetOffset.y + this.curPos.x / this.curOffset.w * Math.sin(this.curPos.y) * Math.sin(this.curPos.z);
 		var tz = this.targetOffset.z + this.curPos.x / this.curOffset.w * Math.cos(this.curPos.z);
 		this.targetPos.y = this.curPos.y - dtheta;
-		var min = 0.031415926535897934;
+		var min = 0.0314159265358979339;
 		var f = this.curPos.z - dphi;
 		var min1 = min;
 		var max = 3.14159265358979323 - min;
@@ -91935,7 +91935,7 @@ h3d_shader_Shadow.prototype = $extend(hxsl_Shader.prototype,{
 	,__class__: h3d_shader_Shadow
 });
 var h3d_shader_SignedDistanceField = function() {
-	this.smoothing__ = 0.041666666666666664;
+	this.smoothing__ = 0.0416666666666666644;
 	this.alphaCutoff__ = 0.5;
 	this.autoSmoothing__ = false;
 	this.channel__ = 0;
@@ -110527,8 +110527,8 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 							return function(e) {
 								if(_gthis.selectedMeshRef != mesh[0]) {
 									var _this = mesh[0].material.mshader.color__;
-									_this.x = 0.41568627450980394;
-									_this.y = 0.69019607843137254;
+									_this.x = 0.415686274509803944;
+									_this.y = 0.690196078431372539;
 									_this.z = 1.;
 									_this.w = 0.;
 								}
@@ -110558,9 +110558,9 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 										_this.w = 1.;
 									} else {
 										var _this = mesh[0].material.mshader.color__;
-										_this.x = 0.29019607843137257;
-										_this.y = 0.56470588235294117;
-										_this.z = 0.88627450980392153;
+										_this.x = 0.290196078431372573;
+										_this.y = 0.564705882352941169;
+										_this.z = 0.886274509803921529;
 										_this.w = 0.;
 									}
 								}
@@ -110685,9 +110685,9 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 		cube.addUVs();
 		var mesh = new h3d_scene_Mesh(cube);
 		var _this = mesh.material.mshader.color__;
-		_this.x = 0.29019607843137257;
-		_this.y = 0.56470588235294117;
-		_this.z = 0.88627450980392153;
+		_this.x = 0.290196078431372573;
+		_this.y = 0.564705882352941169;
+		_this.z = 0.886274509803921529;
 		_this.w = 0.;
 		mesh.material.passes.set_enableLights(true);
 		return mesh;
@@ -110736,8 +110736,8 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 			this.meshOriginalColor.set(targetMesh,orig);
 		}
 		var _this = targetMesh.material.mshader.color__;
-		_this.x = 0.41568627450980394;
-		_this.y = 0.69019607843137254;
+		_this.x = 0.415686274509803944;
+		_this.y = 0.690196078431372539;
 		_this.z = 1.;
 		_this.w = 0.;
 		var worldBounds = targetMesh.getBounds();
@@ -111127,14 +111127,14 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 	}
 	,currentShaderData: null
 	,init: function() {
+		var _gthis = this;
 		if(this.s3d != null) {
 			return;
 		}
 		this.s3d = new h3d_scene_Scene();
 		this.s3d.renderer.shadows = false;
 		var renderer = js_Boot.__cast(this.s3d.renderer , h3d_scene_pbr_Renderer);
-		this.env = this.createSimpleEnvironment();
-		renderer.env = this.env;
+		this.env = null;
 		var _this = this.s3d.ctx.globals;
 		var id = hxsl_Globals.allocID("shadow.proj");
 		var this1 = new h3d_MatrixImpl();
@@ -111236,7 +111236,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		camera.zNear = 0.1;
 		camera.zFar = 100;
 		camera.update();
-		var sphere = new h3d_prim_Sphere(1,16,16);
+		var sphere = new h3d_prim_Sphere(1,128,128);
 		sphere.addNormals();
 		sphere.addUVs();
 		this.previewMesh = new h3d_scene_Mesh(sphere,null,this.s3d);
@@ -111259,39 +111259,47 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		_this.y = y;
 		_this.z = z;
 		_this.w = 1.;
-		haxe_Log.trace("✅ [ShaderPreview] PBR Scene initialized (FAST)",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 92, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "init"});
+		this.previewMesh.material.passes.set_enableLights(true);
+		haxe_Log.trace("✅ [ShaderPreview] PBR Scene initialized (FAST)",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 96, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "init"});
+		haxe_Timer.delay(function() {
+			_gthis.initEnvironmentAsync();
+		},100);
 	}
-	,createSimpleEnvironment: function() {
-		var size = 16;
-		var envMap = new h3d_mat_Texture(size,size,[h3d_mat_TextureFlags.Cube]);
+	,initEnvironmentAsync: function() {
+		if(this.env != null) {
+			return;
+		}
+		haxe_Log.trace("⏳ [ShaderPreview] Creating environment async...",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 110, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
+		var size = 512;
+		var envMap = this.createEnvMap();
+		this.env = new h3d_scene_pbr_Environment(envMap);
+		this.env.compute();
+		var renderer = js_Boot.__cast(this.s3d.renderer , h3d_scene_pbr_Renderer);
+		renderer.env = this.env;
+		haxe_Log.trace("✅ [ShaderPreview] Environment ready",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 121, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
+	}
+	,createEnvMap: function() {
+		var envMap = new h3d_mat_Texture(512,512,[h3d_mat_TextureFlags.Cube]);
 		var _g = 0;
 		while(_g < 6) {
 			var face = _g++;
-			var pixels = hxd_Pixels.alloc(size,size,h3d_mat_Texture.nativeFormat);
+			var pixels = hxd_Pixels.alloc(512,512,h3d_mat_Texture.nativeFormat);
 			var _g1 = 0;
-			var _g2 = size;
-			while(_g1 < _g2) {
+			while(_g1 < 512) {
 				var y = _g1++;
-				var _g3 = 0;
-				var _g4 = size;
-				while(_g3 < _g4) {
-					var x = _g3++;
-					var t = y / size;
-					var r = 0.3 + 0.2 * (1 - t);
-					var g = 0.3 + 0.2 * (1 - t);
-					var b = 0.35 + 0.25 * (1 - t);
-					var idx = (y * size + x) * 4;
-					pixels.bytes.b[idx] = r * 255 | 0;
-					pixels.bytes.b[idx + 1] = g * 255 | 0;
-					pixels.bytes.b[idx + 2] = b * 255 | 0;
-					pixels.bytes.b[idx + 3] = 255;
+				var _g2 = 0;
+				while(_g2 < 512) {
+					var x = _g2++;
+					var t = y / 512;
+					var r = 0.5 + t * 0.3;
+					var g = 0.6 + t * 0.2;
+					var b = 0.8 + t * 0.2;
+					pixels.setPixel(x,y,-16777216 | (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0));
 				}
 			}
 			envMap.uploadPixels(pixels,0,face);
 		}
-		var env = new h3d_scene_pbr_Environment(envMap);
-		env.compute();
-		return env;
+		return envMap;
 	}
 	,applyShaderData: function(data) {
 		if(this.previewMesh == null || data == null) {
@@ -111315,7 +111323,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		_this.y = y;
 		_this.z = z;
 		_this.w = 1.;
-		haxe_Log.trace("🎨 [ShaderPreview] Applied: albedo=(" + data.albedo.x + ", " + data.albedo.y + ", " + data.albedo.z + "), " + ("metallic=" + data.metallic + ", roughness=" + data.roughness),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 142, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "applyShaderData"});
+		haxe_Log.trace("🎨 [ShaderPreview] Applied: albedo=(" + data.albedo.x + ", " + data.albedo.y + ", " + data.albedo.z + "), " + ("metallic=" + data.metallic + ", roughness=" + data.roughness),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 165, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "applyShaderData"});
 	}
 	,updateMaterial: function(shaderData) {
 		if(this.previewMesh == null || this.pbrValues == null) {
@@ -111390,7 +111398,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 			this.pbrValues.roughnessValue__ = 0.5;
 		}
 		var tmp = shaderData.emissive != null && this.isVec3(shaderData.emissive);
-		haxe_Log.trace("🎨 [ShaderPreview] PBR Updated: albedo=(" + this.previewMesh.material.mshader.color__.x + ", " + this.previewMesh.material.mshader.color__.y + ", " + this.previewMesh.material.mshader.color__.z + "), " + ("metalness=" + this.pbrValues.metalnessValue__ + ", roughness=" + this.pbrValues.roughnessValue__),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 193, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
+		haxe_Log.trace("🎨 [ShaderPreview] PBR Updated: albedo=(" + this.previewMesh.material.mshader.color__.x + ", " + this.previewMesh.material.mshader.color__.y + ", " + this.previewMesh.material.mshader.color__.z + "), " + ("metalness=" + this.pbrValues.metalnessValue__ + ", roughness=" + this.pbrValues.roughnessValue__),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 216, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
 	}
 	,isVec3: function(v) {
 		if(v != null && Object.prototype.hasOwnProperty.call(v,"x") && Object.prototype.hasOwnProperty.call(v,"y")) {
@@ -111431,8 +111439,11 @@ var hide_engine_infrastructure_Viewport = function(id,scene,width,height) {
 	this.canvas.style.height = "100%";
 	this.canvas.style.display = "block";
 	this.canvas.style.objectFit = "contain";
-	this.canvas.style.imageRendering = "pixelated";
 	this.canvas.style.background = "#1a1a1a";
+	this.canvas.style.imageRendering = "pixelated";
+	this.canvas.style.imageRendering = "crisp-edges";
+	this.canvas.style["image-rendering"] = "pixelated";
+	this.canvas.setAttribute("style","width: " + this.canvas.width + "px; " + "height: " + this.canvas.height + "px; " + "image-rendering: pixelated; " + "image-rendering: crisp-edges; " + "display: block;");
 };
 $hxClasses["hide.engine.infrastructure.Viewport"] = hide_engine_infrastructure_Viewport;
 hide_engine_infrastructure_Viewport.__name__ = "hide.engine.infrastructure.Viewport";
@@ -111452,12 +111463,12 @@ hide_engine_infrastructure_Viewport.prototype = {
 		}
 		var pixels = this.renderTarget.capturePixels();
 		if(pixels == null || pixels.bytes.length == 0) {
-			haxe_Log.trace("⚠️ [Viewport " + this.id + "] capturePixels returned EMPTY data!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 65, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
+			haxe_Log.trace("⚠️ [Viewport " + this.id + "] capturePixels returned EMPTY data!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 78, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
 			return;
 		}
 		var ctx = this.canvas.getContext("2d");
 		if(ctx == null) {
-			haxe_Log.trace("⚠️ [Viewport " + this.id + "] Canvas 2D context is NULL!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 71, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
+			haxe_Log.trace("⚠️ [Viewport " + this.id + "] Canvas 2D context is NULL!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 84, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
 			return;
 		}
 		var imageData = ctx.createImageData(this.width,this.height);
@@ -111921,7 +111932,7 @@ hide_infrastructure_external_StubConsoleFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubConsoleFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubConsoleFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>🖥️ Console</h2>\r\n                <p>Console output will appear here.</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>🖥️ Console</h2>\n                <p>Console output will appear here.</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -111936,7 +111947,7 @@ hide_infrastructure_external_StubEditorFactory.__name__ = "hide.infrastructure.e
 hide_infrastructure_external_StubEditorFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubEditorFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>📝 Stub Editor</h2>\r\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\r\n                <p>Состояние: " + JSON.stringify(state) + "</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>📝 Stub Editor</h2>\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\n                <p>Состояние: " + JSON.stringify(state) + "</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -111951,7 +111962,7 @@ hide_infrastructure_external_StubGameFactory.__name__ = "hide.infrastructure.ext
 hide_infrastructure_external_StubGameFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubGameFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\r\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\r\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\r\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\r\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\r\n                    Resolution: 1920×1080 | Stats: OFF\r\n                </div>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\n                    Resolution: 1920×1080 | Stats: OFF\n                </div>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -111966,7 +111977,7 @@ hide_infrastructure_external_StubProjectFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubProjectFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubProjectFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\r\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\r\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\r\n                </div>\r\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\r\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\r\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                            ▼ 📁 Assets\r\n                        </div>\r\n                        <div style='padding-left:16px;'>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Materials\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Prefabs\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scenes\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scripts\r\n                            </div>\r\n                            <div style='padding-left:16px;'>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                📁 Textures\r\n                            </div>\r\n                        </div>\r\n                    </div>\r\n                </div>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\n                </div>\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                            ▼ 📁 Assets\n                        </div>\n                        <div style='padding-left:16px;'>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Materials\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Prefabs\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scenes\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scripts\n                            </div>\n                            <div style='padding-left:16px;'>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                📁 Textures\n                            </div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -111981,7 +111992,7 @@ hide_infrastructure_external_StubPropertiesFactory.__name__ = "hide.infrastructu
 hide_infrastructure_external_StubPropertiesFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubPropertiesFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\r\n                <h2>⚙️ Properties</h2>\r\n                <p>Object properties will appear here.</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\n                <h2>⚙️ Properties</h2>\n                <p>Object properties will appear here.</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -114164,7 +114175,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		return React.createElement("div",{ style : { width : "400px", display : "flex", flexDirection : "column", borderLeft : "1px solid #1a1a1a"}},tmp,tmp1);
 	}
 	,renderPreview: function() {
-		var tmp = React.createElement("div",{ style : { width : "100%", height : "100%", display : "block", background : "#1a1a1a"}, id : "heaps-preview-container"});
+		var tmp = React.createElement("div",{ style : { width : "100%", height : "100%", display : "block", background : "#1a1a1a", imageRendering : "crisp-edges"}, id : "heaps-preview-container"});
 		var tmp1 = React.createElement("div",{ style : { position : "absolute", top : "8px", right : "8px", padding : "4px 8px", background : "rgba(0,0,0,0.5)", color : "#fff", fontSize : "12px", borderRadius : "3px"}},"Preview");
 		return React.createElement("div",{ style : { height : "400px", background : "#1a1a1a", position : "relative", border : "1px solid #333"}},tmp,tmp1);
 	}
@@ -114174,25 +114185,25 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		return React.createElement("div",{ style : { flex : 1, padding : "10px", background : "#2a2a2a", overflowY : "auto"}},tmp,tmp1);
 	}
 	,onNodePropertyChanged: function() {
-		haxe_Log.trace("🔄 [ShaderEditor] Node property changed, recompiling...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 802, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onNodePropertyChanged"});
+		haxe_Log.trace("🔄 [ShaderEditor] Node property changed, recompiling...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 803, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onNodePropertyChanged"});
 		this.compileAndApply();
 	}
 	,renderPropertiesContent: function() {
 		return React.createElement(hide_presentation_ui_react_components_NodePropertiesPanel,{ selectedNode : this.state.selectedNode});
 	}
 	,onCompile: function() {
-		haxe_Log.trace("🔨 Compile shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 813, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onCompile"});
+		haxe_Log.trace("🔨 Compile shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 814, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onCompile"});
 	}
 	,onSave: function() {
-		haxe_Log.trace("💾 Save shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 818, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onSave"});
+		haxe_Log.trace("💾 Save shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 819, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onSave"});
 	}
 	,onExportHLSL: function() {
-		haxe_Log.trace("📤 Export HLSL",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 823, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onExportHLSL"});
+		haxe_Log.trace("📤 Export HLSL",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 824, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onExportHLSL"});
 	}
 	,onClearGraph: function() {
 		if(this.graph != null) {
 			this.graph.clear();
-			haxe_Log.trace("🧹 Graph cleared",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 830, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onClearGraph"});
+			haxe_Log.trace("🧹 Graph cleared",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 831, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onClearGraph"});
 		}
 	}
 	,componentWillUnmount: function() {
@@ -116616,31 +116627,31 @@ hxd_Math.colorLerp = function(c1,c2,k) {
 	return a << 24 | r << 16 | g << 8 | b;
 };
 hxd_Math.angle = function(da) {
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	return da;
 };
 hxd_Math.angleLerp = function(a,b,k) {
 	var da = b - a;
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	return a + da * k;
 };
 hxd_Math.angleMove = function(a,b,max) {
 	var da = b - a;
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	var da1 = da;
 	if(da1 > -max && da1 < max) {
@@ -119825,7 +119836,7 @@ var hxd_clipper__$Clipper_ClipperBase = function() {
 $hxClasses["hxd.clipper._Clipper.ClipperBase"] = hxd_clipper__$Clipper_ClipperBase;
 hxd_clipper__$Clipper_ClipperBase.__name__ = "hxd.clipper._Clipper.ClipperBase";
 hxd_clipper__$Clipper_ClipperBase.nearZero = function(v) {
-	if(v > -1e-020) {
+	if(v > -1e-20) {
 		return v < 1E-20;
 	} else {
 		return false;
@@ -123240,7 +123251,7 @@ var hxd_clipper_ClipperOffset = function(miterLimit,arcTolerance) {
 	if(miterLimit == null) {
 		miterLimit = 2.0;
 	}
-	this.two_pi = 6.2831853071795862;
+	this.two_pi = 6.28318530717958623;
 	this.def_arc_tolerance = 0.25;
 	this.MiterLimit = miterLimit;
 	this.ArcTolerance = arcTolerance;
@@ -123373,7 +123384,7 @@ hxd_clipper_ClipperOffset.prototype = {
 		var polygons = null;
 		this.m_destPolys = polygons == null ? [] : polygons;
 		this.m_delta = delta;
-		if(delta > -1e-020 && delta < 1E-20) {
+		if(delta > -1e-20 && delta < 1E-20) {
 			var _g = 0;
 			var _g1 = this.m_polyNodes.childs;
 			while(_g < _g1.length) {
@@ -127001,7 +127012,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 			x = 0.;
 		}
 		var P1 = new h3d_VectorImpl(x,y,z);
-		var F = 0.017453292519943295;
+		var F = 0.0174532925199432955;
 		var allTimes = new haxe_ds_IntMap();
 		if(animNode != null) {
 			var _g = 0;
@@ -127049,7 +127060,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 					var values = hxd_fmt_fbx_FbxTools.getFloats(hxd_fmt_fbx_FbxTools.get(dataCurves[0],"KeyValueFloat"));
 					switch(cname) {
 					case "FieldOfView":
-						var ratio = 1.7777777777777777;
+						var ratio = 1.77777777777777768;
 						var fov = 45.;
 						var _g4 = 0;
 						var _g5 = hxd_fmt_fbx_FbxTools.getAll(this.getChild(model,"NodeAttribute"),"Properties70.P");
@@ -127774,7 +127785,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 			return d;
 		}
 		d = new hxd_fmt_fbx_DefaultMatrixes();
-		var F = 0.017453292519943295;
+		var F = 0.0174532925199432955;
 		var _g = 0;
 		var _g1 = hxd_fmt_fbx_FbxTools.getAll(model,"Properties70.P");
 		while(_g < _g1.length) {
@@ -131378,7 +131389,7 @@ hxd_fmt_fbx_HMDOut.prototype = $extend(hxd_fmt_fbx_BaseLibrary.prototype,{
 			if(o.model != null && hxd_fmt_fbx_FbxTools.getType(o.model) == "Camera") {
 				var props = this.getChild(o.model,"NodeAttribute");
 				var fov = 45.;
-				var ratio = 1.7777777777777777;
+				var ratio = 1.77777777777777768;
 				var _g1 = 0;
 				var _g2 = hxd_fmt_fbx_FbxTools.getAll(props,"Properties70.P");
 				while(_g1 < _g2.length) {
@@ -177803,7 +177814,7 @@ h3d_scene_DynamicJointData.tmpVec2 = (function($this) {
 }(this));
 h3d_scene_DynamicJointData.tmpQ = new h3d_Quat();
 h3d_scene_DynamicJointData.tmpQ2 = new h3d_Quat();
-h3d_scene_Skin.FIXED_DT = 0.016666666666666666;
+h3d_scene_Skin.FIXED_DT = 0.0166666666666666664;
 h3d_scene_Skin.MIN_SHADER_BONES = 32;
 h3d_scene_Skin.TMP_MAT = new h3d_MatrixImpl();
 h3d_scene_pbr_IrradBase.SRC = "HXSMF2gzZC5zY2VuZS5wYnIuSXJyYWRCYXNlCwEFaW5wdXQNAQICCHBvc2l0aW9uBQoBAQADAnV2BQoBAQABAAAEBWZsaXBZAwIAAAUGb3V0cHV0DQICBghwb3NpdGlvbgUMBAUABwVjb2xvcgUMBAUABAAACApwaXhlbENvbG9yBQwEAAAJDGNhbGN1bGF0ZWRVVgUKBAAACgtzYW1wbGVzQml0cwECAAEAAAAAAAsIX19pbml0X18OBgAADAZ2ZXJ0ZXgOBgAADQxfcmV2ZXJzZWJpdHMOBgAADgpoYW1tZXJzbGV5DgYAAA8TaW1wb3J0YW5jZVNhbXBsZUdHWA4GAAAFAgsAAAUCBgQCBwUMAggFDAUMBgQCCQUKAgMFCgUKAAAMAAAFAQYEAgYFDAkDKw4ECgICBQoAAAMGAQoCAgUKBAADAgQDAwEDAAAAAAAAAAADAQMAAAAAAADwPwMFDAUMAAMNARABaQEEAAABBQYIEQFyAQQAAAYMBAYQAhABAQIQAAAAAQEBBAYSAhABAQIQAAAAAQEBAQAGBAIRAQYMBAYQBAYLAhEBAQL/AP8AAQEBAQIIAAAAAQEBBAYSBAYLAhEBAQIA/wD/AQEBAQIIAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQIPDw8PAQEBAQIEAAAAAQEBBAYSBAYLAhEBAQLw8PDwAQEBAQIEAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQIzMzMzAQEBAQICAAAAAQEBBAYSBAYLAhEBAQLMzMzMAQEBAQICAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQJVVVVVAQEBAQIBAAAAAQEBBAYSBAYLAhEBAQKqqqqqAQEBAQIBAAAAAQEBAQENAhEBAAADDgISAWkBBAAAEwNtYXgBBAAABQoFAggUAnJpAwQAAAYBCQMnDgEJAg0OAQISAQEDAQMAAAAAAADwPQMDAA0JAykOAgYCCQMnDgECEgEDCQMnDgECEwEDAwIUAwUKAAADDwMVCXJvdWdobmVzcwMEAAAWAXAFCgQAABcBbgULBAAABQsFCQgYAWEDBAAABgECFQMCFQMDAAgZA3BoaQMEAAAGAQYBAQMAAAAAAAAAQAMBAxgtRFT7IQlAAwMKAhYFCgAAAwMACBoEY29zVAMEAAAJAxUOAgkDDQ4BBgIEBgMBAwAAAAAAAPA/AwoCFgUKBAADAwMEBgABAwAAAAAAAPA/AwYBBAYDBgECGAMCGAMDAQMAAAAAAADwPwMDAwoCFgUKBAADAwMDAwMBAwAAAAAAAPA/AwMACBsEc2luVAMEAAAJAw0OAQYDAQMAAAAAAADwPwMGAQIaAwIaAwMDAwAIHARsdGFuBQsEAAAJAyoOAwYBAhsDCQMDDgECGQMDAwYBAhsDCQMCDgECGQMDAwIaAwULAAgdAnVwBQsEAAALBgkJAw8OAQoCFwULCAADAwEDK4cW2c737z8DAgkDKg4DAQMAAAAAAAAAAAMBAwAAAAAAAAAAAwEDAAAAAAAA8D8DBQsJAyoOAwEDAAAAAAAA8D8DAQMAAAAAAAAAAAMBAwAAAAAAAAAAAwULBQsACB4EdGFuWAULBAAACQMgDgEJAx8OAgIdBQsCFwULBQsFCwAIHwR0YW5ZBQsEAAAJAyAOAQkDHw4CAhcFCwIeBQsFCwULAA0JAyAOAQQGAAYABgECHgULCgIcBQsAAAMFCwYBAh8FCwoCHAULBAADBQsFCwYBAhcFCwoCHAULCAADBQsFCwULBQsAAA";
@@ -178342,8 +178353,8 @@ hxd_impl_BufferFlags.UniformReadWrite = 3;
 hxd_impl_BufferFlags.Uniform = 4;
 hxd_poly2tri_Constants.kAlpha = 0.3;
 hxd_poly2tri_Constants.EPSILON = 1e-24;
-hxd_poly2tri_Constants.PI_2 = 1.5707963267948966;
-hxd_poly2tri_Constants.PI_3div4 = 2.3561944901923448;
+hxd_poly2tri_Constants.PI_2 = 1.57079632679489656;
+hxd_poly2tri_Constants.PI_3div4 = 2.35619449019234484;
 hxd_poly2tri_Orientation.CW = 1;
 hxd_poly2tri_Orientation.CCW = -1;
 hxd_poly2tri_Orientation.COLLINEAR = 0;

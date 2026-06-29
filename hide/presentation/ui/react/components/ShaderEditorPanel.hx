@@ -752,7 +752,8 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                     style={{width: "100%", 
                     height: "100%", 
                     display: "block",
-                    background: "#1a1a1a"}}>
+                    background: "#1a1a1a",
+                    imageRendering: "crisp-edges" }}>
                 </div>
                 <div style={{
                     position: "absolute",

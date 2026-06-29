@@ -41,8 +41,10 @@ class ShaderPreviewRenderer implements Service {
         var renderer:Renderer = cast(s3d.renderer, Renderer);
         
         // ✅ ПРОСТОЙ ENVIRONMENT — быстро создаётся
-        env = createSimpleEnvironment();
-        renderer.env = env;
+        // ✅ БЫСТРАЯ инициализация БЕЗ env.compute()
+        // Environment создадим асинхронно ПОЗЖЕ
+        env = null;
+    
 
         // Заглушка для теней
         @:privateAccess s3d.ctx.globals.fastSet(
@@ -80,7 +82,9 @@ class ShaderPreviewRenderer implements Service {
 
          // Сфера для превью
         // ✅ СФЕРА — МЕНЬШЕ СЕГМЕНТОВ (быстрее загрузка)
-        var sphere = new Sphere(1, 16, 16);  // ← БЫЛО 32x32, ТЕПЕРЬ 16x16
+        // Было: new Sphere(1, 32, 32) или 64,64
+        // ✅ Сделай больше:
+        var sphere = new Sphere(1, 128, 128);  // 128 сегментов по ширине и высоте
         sphere.addNormals();
         sphere.addUVs();
         previewMesh = new Mesh(sphere, s3d);
@@ -88,40 +92,59 @@ class ShaderPreviewRenderer implements Service {
         pbrValues = new PropsValues(0.0, 0.5);
         previewMesh.material.mainPass.addShader(pbrValues);
         previewMesh.material.color.set(0.8, 0.8, 0.8);
-        
+        previewMesh.material.mainPass.enableLights = true;
         trace("✅ [ShaderPreview] PBR Scene initialized (FAST)");
-    }
 
+        // ✅ АСИНХРОННО создаём environment через 100мс (не блокирует UI!)
+        haxe.Timer.delay(function() {
+            initEnvironmentAsync();
+        }, 100);
+    }
+    /**
+     * ✅ АСИНХРОННАЯ инициализация environment
+     * Вызывается после того, как UI уже отрисовался
+     */
+    private function initEnvironmentAsync():Void {
+        if (env != null) return;
+        
+        trace("⏳ [ShaderPreview] Creating environment async...");
+        
+        var size = 512;
+        var envMap = createEnvMap();
+        
+        env = new Environment(envMap);
+        env.compute();  // ← Тяжёлая операция, но теперь она НЕ блокирует открытие
+        
+        var renderer:Renderer = cast(s3d.renderer, Renderer);
+        renderer.env = env;
+        
+        trace("✅ [ShaderPreview] Environment ready");
+    }
     /**
      * ✅ ПРОСТОЙ environment — серый градиент
      * Создаётся БЫСТРО (небольшая текстура)
      */
-    private function createSimpleEnvironment():Environment {
-        var size = 16;  // ← БЫЛО 64, ТЕПЕРЬ 16 (в 16 раз быстрее!)
-        var envMap = new h3d.mat.Texture(size, size, [Cube]);
+    private function createEnvMap():h3d.mat.Texture {
+        // ✅ 512x512 вместо 256x256
+        var envMap = new h3d.mat.Texture(512, 512, [Cube]);
         
+        // Заполни градиентом (небо/земля)
         for (face in 0...6) {
-            var pixels = hxd.Pixels.alloc(size, size, h3d.mat.Texture.nativeFormat);
-            for (y in 0...size) {
-                for (x in 0...size) {
-                    var t = y / size;
-                    var r = 0.3 + 0.2 * (1 - t);
-                    var g = 0.3 + 0.2 * (1 - t);
-                    var b = 0.35 + 0.25 * (1 - t);
-                    
-                    var idx = (y * size + x) * 4;
-                    pixels.bytes.set(idx, Std.int(r * 255));
-                    pixels.bytes.set(idx + 1, Std.int(g * 255));
-                    pixels.bytes.set(idx + 2, Std.int(b * 255));
-                    pixels.bytes.set(idx + 3, 255);
+            var pixels = hxd.Pixels.alloc(512, 512, h3d.mat.Texture.nativeFormat);
+            for (y in 0...512) {
+                for (x in 0...512) {
+                    var t = y / 512;
+                    // Градиент от светло-голубого (небо) к тёмному (земля)
+                    var r = 0.5 + t * 0.3;
+                    var g = 0.6 + t * 0.2;
+                    var b = 0.8 + t * 0.2;
+                    pixels.setPixel(x, y, 0xFF000000 | (Std.int(r * 255) << 16) | (Std.int(g * 255) << 8) | Std.int(b * 255));
                 }
             }
             envMap.uploadPixels(pixels, 0, face);
         }
         
-        var env = new Environment(envMap);
-        env.compute();
-        return env;
+        return envMap;
     }
 
     /**
