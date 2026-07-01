@@ -23,16 +23,18 @@ class Viewport {
         this.width = width;
         this.height = height;
         
+        var renderWidth = width ;
+        var renderHeight = height ;
         // Создаём RenderTexture (GPU-side)
         // ✅ ИСПОЛЬЗУЕМ RGBA32F для лучшего качества (float precision)
         // Или RGBA16U для хорошего качества + производительности
         // ✅ ПРАВИЛЬНО: используем только существующие флаги
         // Target — для render target
         // Dynamic — если часто обновляем (наш случай)
-        renderTarget = new Texture(width, height, [Target, Dynamic]);
+        renderTarget = new Texture(renderWidth, renderHeight, [Target, Dynamic]);
         // ✅ Включаем билинейную фильтрацию для сглаживания
-        renderTarget.filter = Nearest;
-        renderTarget.depthBuffer = new Texture(width, height,[], TextureFormat.Depth24Stencil8);
+        renderTarget.filter = AnisotropicLinear;
+        renderTarget.depthBuffer = new Texture(renderWidth, renderHeight,[], TextureFormat.Depth24Stencil8);
         
         // Создаём canvas для отображения
         canvas = js.Browser.document.createCanvasElement();
@@ -67,6 +69,8 @@ class Viewport {
         }
         
         var ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
         if (ctx == null) {
             trace('⚠️ [Viewport $id] Canvas 2D context is NULL!');
             return;

@@ -1,6 +1,7 @@
 // engine/infrastructure/ShaderPreviewRenderer.hx
 package hide.engine.infrastructure;
 
+import h3d.mat.Data.Face;
 import h3d.scene.pbr.Renderer;
 import h3d.shader.pbr.PropsValues;
 import h3d.scene.pbr.Environment;
@@ -54,23 +55,25 @@ class ShaderPreviewRenderer implements Service {
        
         // ✅ Добавьте больше источников света
         // ✅ ОСВЕЩЕНИЕ — 2 источника
-        var dirLight = new DirLight(new h3d.Vector(-0.5, -0.8, -0.3), s3d);
+        /*var dirLight = new DirLight(new h3d.Vector(-0.5, -0.8, -0.3), s3d);
         dirLight.enableSpecular = true;
         dirLight.color.set(1.0, 1.0, 1.0);
 
         var fillLight = new DirLight(new h3d.Vector(0.5, 0.3, 0.5), s3d);
         fillLight.enableSpecular = false;
-        fillLight.color.set(0.3, 0.3, 0.35);
+        fillLight.color.set(0.3, 0.3, 0.35);*/
+        var light = new h3d.scene.pbr.PointLight(s3d);
+        light.setPosition(10, 10, 10);  // Дальше от сферы
+        light.range = 50;
+        light.power = 2;
 
         // Камера
         var camera = s3d.camera;
-        camera.pos.set(0, 0, 3);
-        camera.target.set(0, 0, 0);
-        camera.fovY = 45;
-        camera.zNear = 0.1;
-        camera.zFar = 100;
-        camera.update();
-
+        // Убедись, что камера смотрит правильно
+        s3d.camera.pos.set(0, 0, 5);
+        s3d.camera.target.set(0, 0, 0);
+        s3d.camera.up.set(0, 1, 0);  // ✅ Явно установи up вектор
+        s3d.camera.update();
 
         // Свет
         // ✅ PBR Point Light вместо DirLight
@@ -84,15 +87,20 @@ class ShaderPreviewRenderer implements Service {
         // ✅ СФЕРА — МЕНЬШЕ СЕГМЕНТОВ (быстрее загрузка)
         // Было: new Sphere(1, 32, 32) или 64,64
         // ✅ Сделай больше:
-        var sphere = new Sphere(1, 128, 128);  // 128 сегментов по ширине и высоте
+        var sphere = new Sphere(1, 32, 32);  // 128 сегментов по ширине и высоте
         sphere.addNormals();
         sphere.addUVs();
+        // ✅ Добавь тангенсы для правильного PBR
+        sphere.addTangents();
         previewMesh = new Mesh(sphere, s3d);
         
         pbrValues = new PropsValues(0.0, 0.5);
         previewMesh.material.mainPass.addShader(pbrValues);
         previewMesh.material.color.set(0.8, 0.8, 0.8);
         previewMesh.material.mainPass.enableLights = true;
+        previewMesh.material.mainPass.setPassName("default");
+        previewMesh.material.mainPass.culling = Face.None;
+        
         trace("✅ [ShaderPreview] PBR Scene initialized (FAST)");
 
         // ✅ АСИНХРОННО создаём environment через 100мс (не блокирует UI!)
@@ -117,7 +125,8 @@ class ShaderPreviewRenderer implements Service {
         
         var renderer:Renderer = cast(s3d.renderer, Renderer);
         renderer.env = env;
-        
+        env.power = 1.0;  // ✅ Настраиваем яркость через environment
+        //cast(s3d.lightSystem, h3d.scene.fwd.LightSystem).ambientLight.set(0.5, 0.5, 0.5);
         trace("✅ [ShaderPreview] Environment ready");
     }
     /**
@@ -126,23 +135,19 @@ class ShaderPreviewRenderer implements Service {
      */
     private function createEnvMap():h3d.mat.Texture {
         // ✅ 512x512 вместо 256x256
-        var envMap = new h3d.mat.Texture(512, 512, [Cube]);
-        
-        // Заполни градиентом (небо/земля)
-        for (face in 0...6) {
-            var pixels = hxd.Pixels.alloc(512, 512, h3d.mat.Texture.nativeFormat);
-            for (y in 0...512) {
-                for (x in 0...512) {
-                    var t = y / 512;
-                    // Градиент от светло-голубого (небо) к тёмному (земля)
-                    var r = 0.5 + t * 0.3;
-                    var g = 0.6 + t * 0.2;
-                    var b = 0.8 + t * 0.2;
-                    pixels.setPixel(x, y, 0xFF000000 | (Std.int(r * 255) << 16) | (Std.int(g * 255) << 8) | Std.int(b * 255));
-                }
-            }
-            envMap.uploadPixels(pixels, 0, face);
-        }
+        var envMap = new h3d.mat.Texture(256, 256, [Cube]);
+    
+        // Заполни белым/серым цветом (нейтральное освещение)
+        inline function set(face:Int, res:hxd.res.Image) {
+			var pix = res.getPixels();
+			envMap.uploadPixels(pix, 0, face);
+		}
+		set(0, hxd.Res.front);
+		set(1, hxd.Res.back);
+		set(2, hxd.Res.right);
+		set(3, hxd.Res.left);
+		set(4, hxd.Res.top);
+		set(5, hxd.Res.bottom);
         
         return envMap;
     }

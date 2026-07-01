@@ -111139,71 +111139,59 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		var id = hxsl_Globals.allocID("shadow.proj");
 		var this1 = new h3d_MatrixImpl();
 		_this.map.h[id] = this1;
-		var x = -0.5;
-		var y = -0.8;
-		var z = -0.3;
-		if(z == null) {
-			z = 0.;
+		var light = new h3d_scene_pbr_PointLight(this.s3d);
+		if(light.x != 10) {
+			var f = 1;
+			var b = true;
+			if(b) {
+				light.flags |= f;
+			} else {
+				light.flags &= ~f;
+			}
+			var c = b;
+			if(c && (light.flags & 131072) != 0) {
+				var f = 262144;
+				light.flags |= f;
+			}
 		}
-		if(y == null) {
-			y = 0.;
+		light.x = 10;
+		if(light.y != 10) {
+			var f = 1;
+			var b = true;
+			if(b) {
+				light.flags |= f;
+			} else {
+				light.flags &= ~f;
+			}
+			var c = b;
+			if(c && (light.flags & 131072) != 0) {
+				var f = 262144;
+				light.flags |= f;
+			}
 		}
-		if(x == null) {
-			x = 0.;
+		light.y = 10;
+		if(light.z != 10) {
+			var f = 1;
+			var b = true;
+			if(b) {
+				light.flags |= f;
+			} else {
+				light.flags &= ~f;
+			}
+			var c = b;
+			if(c && (light.flags & 131072) != 0) {
+				var f = 262144;
+				light.flags |= f;
+			}
 		}
-		var dirLight = new h3d_scene_fwd_DirLight(new h3d_VectorImpl(x,y,z),this.s3d);
-		dirLight.set_enableSpecular(true);
-		var _this = dirLight.get_color();
-		var x = 1.0;
-		var y = 1.0;
-		var z = 1.0;
-		if(z == null) {
-			z = 0.;
-		}
-		if(y == null) {
-			y = 0.;
-		}
-		if(x == null) {
-			x = 0.;
-		}
-		_this.x = x;
-		_this.y = y;
-		_this.z = z;
-		var x = 0.5;
-		var y = 0.3;
-		var z = 0.5;
-		if(z == null) {
-			z = 0.;
-		}
-		if(y == null) {
-			y = 0.;
-		}
-		if(x == null) {
-			x = 0.;
-		}
-		var fillLight = new h3d_scene_fwd_DirLight(new h3d_VectorImpl(x,y,z),this.s3d);
-		fillLight.set_enableSpecular(false);
-		var _this = fillLight.get_color();
-		var x = 0.3;
-		var y = 0.3;
-		var z = 0.35;
-		if(z == null) {
-			z = 0.;
-		}
-		if(y == null) {
-			y = 0.;
-		}
-		if(x == null) {
-			x = 0.;
-		}
-		_this.x = x;
-		_this.y = y;
-		_this.z = z;
+		light.z = 10;
+		light.set_range(50);
+		light.power = 2;
 		var camera = this.s3d.camera;
-		var _this = camera.pos;
+		var _this = this.s3d.camera.pos;
 		var x = 0;
 		var y = 0;
-		var z = 3;
+		var z = 5;
 		if(z == null) {
 			z = 0.;
 		}
@@ -111216,7 +111204,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		_this.x = x;
 		_this.y = y;
 		_this.z = z;
-		var _this = camera.target;
+		var _this = this.s3d.camera.target;
 		var x = 0;
 		var y = 0;
 		var z = 0;
@@ -111232,13 +111220,27 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		_this.x = x;
 		_this.y = y;
 		_this.z = z;
-		camera.fovY = 45;
-		camera.zNear = 0.1;
-		camera.zFar = 100;
-		camera.update();
-		var sphere = new h3d_prim_Sphere(1,128,128);
+		var _this = this.s3d.camera.up;
+		var x = 0;
+		var y = 1;
+		var z = 0;
+		if(z == null) {
+			z = 0.;
+		}
+		if(y == null) {
+			y = 0.;
+		}
+		if(x == null) {
+			x = 0.;
+		}
+		_this.x = x;
+		_this.y = y;
+		_this.z = z;
+		this.s3d.camera.update();
+		var sphere = new h3d_prim_Sphere(1,32,32);
 		sphere.addNormals();
 		sphere.addUVs();
+		sphere.addTangents();
 		this.previewMesh = new h3d_scene_Mesh(sphere,null,this.s3d);
 		this.pbrValues = new h3d_shader_pbr_PropsValues(0.0,0.5);
 		this.previewMesh.material.passes.addShader(this.pbrValues);
@@ -111260,7 +111262,9 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		_this.z = z;
 		_this.w = 1.;
 		this.previewMesh.material.passes.set_enableLights(true);
-		haxe_Log.trace("✅ [ShaderPreview] PBR Scene initialized (FAST)",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 96, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "init"});
+		this.previewMesh.material.passes.setPassName("default");
+		this.previewMesh.material.passes.set_culling(h3d_mat_Face.None);
+		haxe_Log.trace("✅ [ShaderPreview] PBR Scene initialized (FAST)",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 104, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "init"});
 		haxe_Timer.delay(function() {
 			_gthis.initEnvironmentAsync();
 		},100);
@@ -111269,32 +111273,47 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		if(this.env != null) {
 			return;
 		}
-		haxe_Log.trace("⏳ [ShaderPreview] Creating environment async...",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 110, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
+		haxe_Log.trace("⏳ [ShaderPreview] Creating environment async...",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 118, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
 		var size = 512;
 		var envMap = this.createEnvMap();
 		this.env = new h3d_scene_pbr_Environment(envMap);
 		this.env.compute();
 		var renderer = js_Boot.__cast(this.s3d.renderer , h3d_scene_pbr_Renderer);
 		renderer.env = this.env;
-		haxe_Log.trace("✅ [ShaderPreview] Environment ready",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 121, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
+		this.env.power = 1.0;
+		var _this = (js_Boot.__cast(this.s3d.lightSystem , h3d_scene_fwd_LightSystem)).ambientLight;
+		var x = 0.5;
+		var y = 0.5;
+		var z = 0.5;
+		if(z == null) {
+			z = 0.;
+		}
+		if(y == null) {
+			y = 0.;
+		}
+		if(x == null) {
+			x = 0.;
+		}
+		_this.x = x;
+		_this.y = y;
+		_this.z = z;
+		haxe_Log.trace("✅ [ShaderPreview] Environment ready",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 130, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
 	}
 	,createEnvMap: function() {
-		var envMap = new h3d_mat_Texture(512,512,[h3d_mat_TextureFlags.Cube]);
+		var envMap = new h3d_mat_Texture(256,256,[h3d_mat_TextureFlags.Cube]);
 		var _g = 0;
 		while(_g < 6) {
 			var face = _g++;
-			var pixels = hxd_Pixels.alloc(512,512,h3d_mat_Texture.nativeFormat);
+			var pixels = hxd_Pixels.alloc(256,256,h3d_mat_Texture.nativeFormat);
 			var _g1 = 0;
-			while(_g1 < 512) {
+			while(_g1 < 256) {
 				var y = _g1++;
 				var _g2 = 0;
-				while(_g2 < 512) {
+				while(_g2 < 256) {
 					var x = _g2++;
-					var t = y / 512;
-					var r = 0.5 + t * 0.3;
-					var g = 0.6 + t * 0.2;
-					var b = 0.8 + t * 0.2;
-					pixels.setPixel(x,y,-16777216 | (r * 255 | 0) << 16 | (g * 255 | 0) << 8 | (b * 255 | 0));
+					var intensity = 0.5 + y / 256 * 0.3;
+					var col = intensity * 255 | 0;
+					pixels.setPixel(x,y,-16777216 | col << 16 | col << 8 | col);
 				}
 			}
 			envMap.uploadPixels(pixels,0,face);
@@ -111323,7 +111342,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		_this.y = y;
 		_this.z = z;
 		_this.w = 1.;
-		haxe_Log.trace("🎨 [ShaderPreview] Applied: albedo=(" + data.albedo.x + ", " + data.albedo.y + ", " + data.albedo.z + "), " + ("metallic=" + data.metallic + ", roughness=" + data.roughness),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 165, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "applyShaderData"});
+		haxe_Log.trace("🎨 [ShaderPreview] Applied: albedo=(" + data.albedo.x + ", " + data.albedo.y + ", " + data.albedo.z + "), " + ("metallic=" + data.metallic + ", roughness=" + data.roughness),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 172, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "applyShaderData"});
 	}
 	,updateMaterial: function(shaderData) {
 		if(this.previewMesh == null || this.pbrValues == null) {
@@ -111398,7 +111417,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 			this.pbrValues.roughnessValue__ = 0.5;
 		}
 		var tmp = shaderData.emissive != null && this.isVec3(shaderData.emissive);
-		haxe_Log.trace("🎨 [ShaderPreview] PBR Updated: albedo=(" + this.previewMesh.material.mshader.color__.x + ", " + this.previewMesh.material.mshader.color__.y + ", " + this.previewMesh.material.mshader.color__.z + "), " + ("metalness=" + this.pbrValues.metalnessValue__ + ", roughness=" + this.pbrValues.roughnessValue__),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 216, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
+		haxe_Log.trace("🎨 [ShaderPreview] PBR Updated: albedo=(" + this.previewMesh.material.mshader.color__.x + ", " + this.previewMesh.material.mshader.color__.y + ", " + this.previewMesh.material.mshader.color__.z + "), " + ("metalness=" + this.pbrValues.metalnessValue__ + ", roughness=" + this.pbrValues.roughnessValue__),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 223, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
 	}
 	,isVec3: function(v) {
 		if(v != null && Object.prototype.hasOwnProperty.call(v,"x") && Object.prototype.hasOwnProperty.call(v,"y")) {
@@ -111429,9 +111448,11 @@ var hide_engine_infrastructure_Viewport = function(id,scene,width,height) {
 	this.scene = scene;
 	this.width = width;
 	this.height = height;
-	this.renderTarget = new h3d_mat_Texture(width,height,[h3d_mat_TextureFlags.Target,h3d_mat_TextureFlags.Dynamic]);
-	this.renderTarget.set_filter(h3d_mat_Filter.Nearest);
-	this.renderTarget.depthBuffer = new h3d_mat_Texture(width,height,[],hxd_PixelFormat.Depth24Stencil8);
+	var renderWidth = width;
+	var renderHeight = height;
+	this.renderTarget = new h3d_mat_Texture(renderWidth,renderHeight,[h3d_mat_TextureFlags.Target,h3d_mat_TextureFlags.Dynamic]);
+	this.renderTarget.set_filter(h3d_mat_Filter.AnisotropicLinear);
+	this.renderTarget.depthBuffer = new h3d_mat_Texture(renderWidth,renderHeight,[],hxd_PixelFormat.Depth24Stencil8);
 	this.canvas = window.document.createElement("canvas");
 	this.canvas.width = width;
 	this.canvas.height = height;
@@ -111439,11 +111460,8 @@ var hide_engine_infrastructure_Viewport = function(id,scene,width,height) {
 	this.canvas.style.height = "100%";
 	this.canvas.style.display = "block";
 	this.canvas.style.objectFit = "contain";
-	this.canvas.style.background = "#1a1a1a";
 	this.canvas.style.imageRendering = "pixelated";
-	this.canvas.style.imageRendering = "crisp-edges";
-	this.canvas.style["image-rendering"] = "pixelated";
-	this.canvas.setAttribute("style","width: " + this.canvas.width + "px; " + "height: " + this.canvas.height + "px; " + "image-rendering: pixelated; " + "image-rendering: crisp-edges; " + "display: block;");
+	this.canvas.style.background = "#1a1a1a";
 };
 $hxClasses["hide.engine.infrastructure.Viewport"] = hide_engine_infrastructure_Viewport;
 hide_engine_infrastructure_Viewport.__name__ = "hide.engine.infrastructure.Viewport";
@@ -111463,12 +111481,14 @@ hide_engine_infrastructure_Viewport.prototype = {
 		}
 		var pixels = this.renderTarget.capturePixels();
 		if(pixels == null || pixels.bytes.length == 0) {
-			haxe_Log.trace("⚠️ [Viewport " + this.id + "] capturePixels returned EMPTY data!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 78, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
+			haxe_Log.trace("⚠️ [Viewport " + this.id + "] capturePixels returned EMPTY data!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 67, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
 			return;
 		}
 		var ctx = this.canvas.getContext("2d");
+		ctx.imageSmoothingEnabled = true;
+		ctx.imageSmoothingQuality = "high";
 		if(ctx == null) {
-			haxe_Log.trace("⚠️ [Viewport " + this.id + "] Canvas 2D context is NULL!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 84, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
+			haxe_Log.trace("⚠️ [Viewport " + this.id + "] Canvas 2D context is NULL!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 75, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
 			return;
 		}
 		var imageData = ctx.createImageData(this.width,this.height);
