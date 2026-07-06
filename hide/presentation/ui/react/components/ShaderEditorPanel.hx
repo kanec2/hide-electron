@@ -1,5 +1,6 @@
 // hide/presentation/ui/react/components/ShaderEditorPanel.hx
 package hide.presentation.ui.react.components;
+import hide.domain.valueobjects.FilePath;
 import hide.engine.infrastructure.ShaderGraphCompiler;
 import hide.engine.infrastructure.ShaderPreviewRenderer;
 import react.ReactComponent;
@@ -8,6 +9,10 @@ import hide.presentation.ui.react.BaseReactComponent;
 import hide.presentation.ui.react.hooks.UseService;
 import hide.infrastructure.external.litegraph.*;
 import hide.presentation.ui.react.components.ShaderNodePalette;
+import hide.engine.infrastructure.ShaderGraphSerializer;
+import js.node.Fs;
+import js.node.Path;
+
 
 typedef ShaderEditorProps = {
     var initialState: Dynamic;
@@ -26,6 +31,16 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     private var previewRenderer:ShaderPreviewRenderer; // ← инжектируем
 
     private var litegraphContainerRef:Dynamic;
+    // В начале класса:
+    private var currentFilePath:Null<String> = null;
+    private var isDirty:Bool = false;
+    private var originalTitle:String = "Shader Editor";
+
+    // В начале класса:
+    private var undoStack:Array<String> = [];
+    private var redoStack:Array<String> = [];
+    private var maxUndoSteps:Int = 50;
+    private var isUndoRedoInProgress:Bool = false;  // Защита от рекурсии
 
     public function new() {
         super();
@@ -43,7 +58,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             previewRenderer.init();
             
             var viewportService = UseService.viewportService();
-            
+
             haxe.Timer.delay(function() {
                 var previewContainer = js.Browser.document.getElementById("heaps-preview-container");
                 
@@ -72,23 +87,156 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                 }
             }, 16);
         }, 16);  // ← ЗАДЕРЖКА чтобы не блокировать React
-        
+
         setupGraphListeners();
+        // ✅ Клавиатурные шорткаты
+        setupKeyboardShortcuts();
+    }
+
+    private function setupKeyboardShortcuts():Void {
+        js.Browser.window.addEventListener("keydown", function(e:js.html.KeyboardEvent) {
+            var ctrl = e.ctrlKey || e.metaKey; // metaKey для Mac
+            
+            if (ctrl && !e.shiftKey) {
+                switch (e.key.toLowerCase()) {
+                    case "s":
+                        e.preventDefault();
+                        onSave();
+                    case "o":
+                        e.preventDefault();
+                        onLoad();
+                    case "z":
+                        e.preventDefault();
+                        onUndo();
+                    case "y":
+                        e.preventDefault();
+                        onRedo();
+                    case "n":
+                        e.preventDefault();
+                        onNew();
+                }
+            }
+            
+            if (ctrl && e.shiftKey && e.key.toLowerCase() == "s") {
+                e.preventDefault();
+                onSaveAs();
+            }
+        });
+    }
+
+    private function onSave():Void {
+        if (graph == null) return;
+        
+        if (currentFilePath != null) {
+            saveToFile(currentFilePath);
+        } else {
+            onSaveAs();
+        }
+    }
+
+    private function onSaveAs():Void {
+        if (graph == null) return;
+        
+        var fileDialog = UseService.fileDialog();
+        fileDialog.showSave({
+            filters: [
+                { name: "Shader Graph", extensions: ["shadergraph", "json"] }
+            ],
+            defaultPath: "new_shader.shadergraph"
+        }).handle(function(path:Null<String>) {
+            if (path != null) {
+                saveToFile(path);
+            }
+        });
+    }
+
+    private function saveToFile(path:String):Void {
+        try {
+            var data = ShaderGraphSerializer.serialize(graph, graphCanvas);
+            var json = ShaderGraphSerializer.toJson(data);
+            
+            var fileSystem = UseService.fileSystem();
+            fileSystem.writeText(new FilePath(path), json);
+            
+            currentFilePath = path;
+            isDirty = false;
+            updateTitle();
+            trace(' [ShaderEditor] Saved to: $path');
+        } catch (e:Dynamic) {
+            trace("❌ [ShaderEditor] Save error: " + Std.string(e));
+        }
+    }
+
+    private function onLoad():Void {
+        var fileDialog = UseService.fileDialog();
+        fileDialog.showOpen({
+            filters: [
+                { name: "Shader Graph", extensions: ["shadergraph", "json"] }
+            ]
+        }).handle(function(path:Null<String>) {
+            if (path != null) {
+                loadFromFile(path);
+            }
+        });
+    }
+
+    private function loadFromFile(path:String):Void {
+        try {
+            var fileSystem = UseService.fileSystem();
+            var json = fileSystem.readText(new FilePath(path));
+            var data = ShaderGraphSerializer.fromJson(json);
+            
+            ShaderGraphSerializer.deserialize(data, graph, graphCanvas);
+            restoreNodeCallbacks();
+            
+            currentFilePath = path;
+            isDirty = false;
+            updateTitle();
+            compileAndApply();
+            
+            trace('📂 [ShaderEditor] Loaded from: $path');
+        } catch (e:Dynamic) {
+            trace("❌ [ShaderEditor] Load error: " + Std.string(e));
+        }
+    }
+
+    /**
+     * Восстанавливает onConnectionsChange на всех нодах после загрузки
+     */
+    private function restoreNodeCallbacks():Void {
+        var nodes:Array<Dynamic> = untyped graph._nodes;
+        if (nodes == null) return;
+        
+        for (node in nodes) {
+            untyped node.onConnectionsChange = function(type:Int, slot:Int, isConnected:Bool, link_info:Dynamic, input_info:Dynamic) {
+                trace('🔗 [ShaderEditor] Connection changed on node: ${node.title}');
+                scheduleRecompile();
+            };
+        }
+        trace('✅ [ShaderEditor] Restored callbacks on ${nodes.length} nodes');
     }
 
     private var recompileTimer:Null<haxe.Timer> = null;
 
     private function setupGraphListeners():Void {
         if (graph == null) return;
+        // ✅ Единый обработчик: и markDirty, и scheduleRecompile
+        var onGraphChanged = function() {
+            if (isUndoRedoInProgress) return;  // Не сохраняем во время undo/redo
         
-        // Любое изменение графа → перекомпиляция с дебаунсом 100мс
-        graph.onAfterStep = function() {
+            saveUndoState();  // ← Сохраняем состояние ПЕРЕД изменением
+
+            if (!isDirty) {
+                isDirty = true;
+                updateTitle();
+            }
             scheduleRecompile();
         };
-        
+        // Любое изменение графа → перекомпиляция с дебаунсом 100мс
+        graph.onAfterStep = function() scheduleRecompile();
         // Также реагируем на конкретные события
-        graph.onNodeAdded = function(_) scheduleRecompile();
-        graph.onNodeRemoved = function(_) scheduleRecompile();
+        graph.onNodeAdded = function(_) onGraphChanged();
+        graph.onNodeRemoved = function(_) onGraphChanged();
 
         // ✅ НОВОЕ: Реагируем на подключение/отключение нод С ЗАДЕРЖКОЙ
         untyped graph.onConnectionChange = function(node:Dynamic, action:String, link:Dynamic) {
@@ -98,11 +246,11 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             trace('   link: ${link != null ? "exists" : "null"}');
             
             // ✅ ЗАДЕРЖКА: даём LiteGraph время обновить связи
-            haxe.Timer.delay(scheduleRecompile, 100);
+            haxe.Timer.delay(onGraphChanged, 100);
         };
         // И на изменение свойств нод (widget changes)
         // LiteGraph вызывает onNodeChanged при изменении properties
-        untyped graph.onNodeChanged = function(_) scheduleRecompile();
+        untyped graph.onNodeChanged = function(_) onGraphChanged();
     }
 
     private function scheduleRecompile():Void {
@@ -485,7 +633,14 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             // ✅ ДОПОЛНИТЕЛЬНО: подписка на клик по ноде
             graphCanvas.onNodeMoved = function(node:LGraphNode) {
                 trace('🖱️ [ShaderEditor] Node moved: ${node.title}');
-                
+                // ✅ Сохраняем undo state после перемещения
+                if (!isUndoRedoInProgress) {
+                    saveUndoState();
+                    if (!isDirty) {
+                        isDirty = true;
+                        updateTitle();
+                    }
+                }
                 // ✅ ПРАВИЛЬНАЯ ПРОВЕРКА: selected_nodes — объект
                 if (graphCanvas.selected_nodes != null) {
                     var keys = Reflect.fields(graphCanvas.selected_nodes);
@@ -516,9 +671,17 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                 graph.add(outputNode);
                 trace("✅ Material Output node created");
             }
+
+            // ✅ Сохраняем начальное состояние (пустой граф с Material Output)
+            haxe.Timer.delay(function() {
+                saveUndoState();
+                trace('✅ [ShaderEditor] Initial undo state saved');
+            }, 200);
             // В методе initLiteGraph(), после создания graphCanvas:
 
-
+            // ✅ Включаем undo/redo (сохраняет до 50 состояний)
+            //untyped graph.actionHistory_enabled = true;
+            
             // ==========================
             // Запускаем граф
             graph.start();
@@ -695,11 +858,17 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     private function renderToolbar():ReactElement {
         return jsx('
             <div style={{padding: "8px", background: "#2a2a2a", borderBottom: "1px solid #1a1a1a", display: "flex", gap: "8px"}}>
-                <button onClick={onCompile}>Compile</button>
+                <button onClick={onNew}>New</button>
+                <button onClick={onLoad}>Load</button>
                 <button onClick={onSave}>Save</button>
-                <button onClick={onExportHLSL}>Export HLSL</button>
+                <button onClick={onSaveAs}>Save As</button>
+                <div style={{width: "1px", background: "#444"}}></div>
+                <button onClick={onUndo}>Undo</button>
+                <button onClick={onRedo}>Redo</button>
                 <div style={{flex: 1}}></div>
-                <button onClick={onClearGraph}>Clear Graph</button>
+                <button onClick={onCompile}>Compile</button>
+                <button onClick={onExportHLSL}>Export HLSL</button>
+                <button onClick={onClearGraph}>Clear</button>
             </div>
         ');
     }
@@ -805,7 +974,14 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
 
     // ✅ НОВЫЙ МЕТОД: вызывается при изменении свойства ноды
     private function onNodePropertyChanged(): Void {
+        if (isUndoRedoInProgress) return;
+    
+        saveUndoState();  // ← Сохраняем перед изменением
         trace("🔄 [ShaderEditor] Node property changed, recompiling...");
+        if (!isDirty) {
+            isDirty = true;
+            updateTitle();
+        }
         compileAndApply();
     }
     private function renderPropertiesContent():ReactElement {
@@ -814,16 +990,136 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         ');
     }
 
+    private function updateTitle():Void {
+        var filename = currentFilePath != null ? currentFilePath.split("/").pop() : "Untitled";
+        var dirty = isDirty ? " ●" : "";
+        var title = '${filename}${dirty} - Shader Editor';
+        
+        UseService.windowService().setTitle(title);
+        trace('🏷️ [ShaderEditor] Title: $title');
+    }
+
+    private function onNew():Void {
+        if (isDirty) {
+            var confirmed = js.Browser.window.confirm("Unsaved changes will be lost. Continue?");
+            if (!confirmed) return;
+        }
+        graph.clear();
+        currentFilePath = null;
+        isDirty = false;
+        updateTitle();
+        
+        // Пересоздаём Material Output
+        var w = liteGraphCanvas.width;
+        var h = liteGraphCanvas.height;
+        var outputNode = LiteGraph.createNode("material/output");
+        if (outputNode != null) {
+            outputNode.pos = [w / 2 - 100, h / 2 - 50];
+            untyped outputNode.onConnectionsChange = function(type, slot, isConnected, link_info, input_info) {
+                scheduleRecompile();
+            };
+            graph.add(outputNode);
+        }
+        trace("🆕 [ShaderEditor] New graph");
+    }
+
+    private function onUndo():Void {
+        if (undoStack.length == 0) {
+            trace('⚠️ [ShaderEditor] Nothing to undo');
+            return;
+        }
+        
+        try {
+            isUndoRedoInProgress = true;
+            
+            // Сохраняем текущее состояние в redo
+            redoStack.push(haxe.Json.stringify(graph.serialize()));
+            
+            // Восстанавливаем предыдущее состояние
+            var json = undoStack.pop();
+            graph.configure(haxe.Json.parse(json));
+            restoreNodeCallbacks();
+            
+            if (!isDirty) {
+                isDirty = true;
+                updateTitle();
+            }
+            compileAndApply();
+            
+            trace('↶ Undo (${undoStack.length} states remaining)');
+        } catch (e:Dynamic) {
+            trace('❌ [ShaderEditor] Undo error: $e');
+        } 
+        isUndoRedoInProgress = false;
+        
+    }
+
+    /**
+     * Сохраняет текущее состояние графа в undo stack.
+     * Вызывается перед каждым изменением.
+     */
+    private function saveUndoState():Void {
+        if (graph == null || isUndoRedoInProgress) return;
+        
+        try {
+            var json = haxe.Json.stringify(graph.serialize());
+            
+            // ✅ Дедупликация: не сохраняем, если состояние не изменилось
+            if (undoStack.length > 0 && undoStack[undoStack.length - 1] == json) {
+                return;
+            }
+            undoStack.push(json);
+            
+            // Ограничиваем размер стека
+            if (undoStack.length > maxUndoSteps) {
+                undoStack.shift();
+            }
+            
+            // Новое действие очищает redo stack
+            redoStack = [];
+        } catch (e:Dynamic) {
+            trace('⚠️ [ShaderEditor] Failed to save undo state: $e');
+        }
+    }
+
+    private function onRedo():Void {
+        if (redoStack.length == 0) {
+            trace('⚠️ [ShaderEditor] Nothing to redo');
+            return;
+        }
+        
+        try {
+            isUndoRedoInProgress = true;
+            
+            // Сохраняем текущее состояние в undo
+            undoStack.push(haxe.Json.stringify(graph.serialize()));
+            
+            // Восстанавливаем следующее состояние
+            var json = redoStack.pop();
+            graph.configure(haxe.Json.parse(json));
+            restoreNodeCallbacks();
+            
+            if (!isDirty) {
+                isDirty = true;
+                updateTitle();
+            }
+            compileAndApply();
+            
+            trace('↷ Redo (${redoStack.length} states remaining)');
+        } catch (e:Dynamic) {
+            trace('❌ [ShaderEditor] Redo error: $e');
+        }
+            
+        isUndoRedoInProgress = false;
+        
+    }
+
     // Обработчики событий для toolbar
     private function onCompile():Void {
         trace("🔨 Compile shader graph");
         // TODO: компиляция графа в HXSL
     }
 
-    private function onSave():Void {
-        trace("💾 Save shader graph");
-        // TODO: сохранение .shader файла
-    }
 
     private function onExportHLSL():Void {
         trace("📤 Export HLSL");

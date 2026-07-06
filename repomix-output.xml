@@ -142,6 +142,8 @@ engine/
     SceneViewportController.hx
     ShaderData.hx
     ShaderGraphCompiler.hx
+    ShaderGraphData.hx
+    ShaderGraphSerializer.hx
     ShaderPreviewRenderer.hx
     Viewport.hx
     ViewportService.hx
@@ -287,6 +289,13 @@ presentation/
     PrefabView.hx
     ScriptEditorView.hx
   Ide.hx
+res/
+  back.jpg
+  bottom.jpg
+  front.jpg
+  left.jpg
+  right.jpg
+  top.jpg
 shared/
   events/
     ErrorOccurred.hx
@@ -1870,6 +1879,8 @@ class EngineModule {
         collection.addSingleton(ViewportService);  // ← НОВОЕ
         collection.addSingleton(SceneViewportController); // ← НОВОЕ
         collection.addSingleton(ShaderPreviewRenderer); // ← НОВОЕ
+        // initialize embeded ressources
+		hxd.Res.initEmbed();
         // IRenderer и IEngineResourceLoader НЕ регистрируем здесь —
         // они платформенно-зависимые, их регистрирует AppModule IDE
     }
@@ -3749,10 +3760,84 @@ class ShaderGraphCompiler {
 }
 </file>
 
+<file path="engine/infrastructure/ShaderGraphData.hx">
+package hide.engine.infrastructure;
+
+typedef ShaderGraphData = {
+    var version:String;
+    var createdAt:String;
+    var modifiedAt:String;
+    var graph:Dynamic;  // LiteGraph serialize() output
+    var ?viewport:{ x:Float, y:Float, scale:Float };
+}
+</file>
+
+<file path="engine/infrastructure/ShaderGraphSerializer.hx">
+package hide.engine.infrastructure;
+
+import hide.infrastructure.external.litegraph.LGraph;
+import hide.infrastructure.external.litegraph.LGraphCanvas;
+
+class ShaderGraphSerializer {
+    public static var VERSION = "1.0";
+    
+    /**
+     * Сериализует граф в JSON
+     */
+    public static function serialize(graph:LGraph, ?graphCanvas:LGraphCanvas):ShaderGraphData {
+        return {
+            version: VERSION,
+            createdAt: Date.now().toString(),
+            modifiedAt: Date.now().toString(),
+            graph: graph.serialize(),
+            viewport: graphCanvas != null ? {
+                x: graphCanvas.ds.offset[0],
+                y: graphCanvas.ds.offset[1],
+                scale: graphCanvas.ds.scale
+            } : null
+        };
+    }
+    
+    /**
+     * Десериализует JSON обратно в граф
+     */
+    public static function deserialize(data:ShaderGraphData, graph:LGraph, ?graphCanvas:LGraphCanvas):Void {
+        if (data.version != VERSION) {
+            trace('⚠️ [Serializer] Version mismatch: expected $VERSION, got ${data.version}');
+        }
+        
+        graph.configure(data.graph);
+        
+        // Восстанавливаем позицию камеры
+        if (data.viewport != null && graphCanvas != null) {
+            graphCanvas.ds.offset[0] = data.viewport.x;
+            graphCanvas.ds.offset[1] = data.viewport.y;
+            graphCanvas.ds.scale = data.viewport.scale;
+            graphCanvas.setDirty(true, true);
+        }
+    }
+    
+    /**
+     * Конвертирует в JSON-строку
+     */
+    public static function toJson(data:ShaderGraphData):String {
+        return haxe.Json.stringify(data, "\t");
+    }
+    
+    /**
+     * Парсит JSON-строку
+     */
+    public static function fromJson(json:String):ShaderGraphData {
+        return haxe.Json.parse(json);
+    }
+}
+</file>
+
 <file path="engine/infrastructure/ShaderPreviewRenderer.hx">
 // engine/infrastructure/ShaderPreviewRenderer.hx
 package hide.engine.infrastructure;
 
+import h3d.mat.Data.Face;
 import h3d.scene.pbr.Renderer;
 import h3d.shader.pbr.PropsValues;
 import h3d.scene.pbr.Environment;
@@ -3773,6 +3858,20 @@ class ShaderPreviewRenderer implements Service {
 
     // ✅ НОВОЕ: храним текущие параметры
     private var currentShaderData:ShaderData;
+
+    // ✅ Orbit Camera параметры
+    private var theta:Float = 0.5;      // Горизонтальный угол (yaw)
+    private var phi:Float = 0.3;        // Вертикальный угол (pitch)
+    private var distance:Float = 3.5;   // Расстояние от центра
+    private var isDragging:Bool = false;
+    private var lastMouseX:Float = 0;
+    private var lastMouseY:Float = 0;
+    
+    // ✅ Ограничения
+    private var minDistance:Float = 1.5;
+    private var maxDistance:Float = 10.0;
+    private var minPhi:Float = -1.5;    // ~-86 градусов
+    private var maxPhi:Float = 1.5;     // ~86 градусов
 
     public function new() {
         // ✅ ВАЖНО: устанавливаем PBR MaterialSetup ДО создания сцены
@@ -3806,24 +3905,28 @@ class ShaderPreviewRenderer implements Service {
        
         // ✅ Добавьте больше источников света
         // ✅ ОСВЕЩЕНИЕ — 2 источника
-        var dirLight = new DirLight(new h3d.Vector(-0.5, -0.8, -0.3), s3d);
+        /*var dirLight = new DirLight(new h3d.Vector(-0.5, -0.8, -0.3), s3d);
         dirLight.enableSpecular = true;
         dirLight.color.set(1.0, 1.0, 1.0);
 
         var fillLight = new DirLight(new h3d.Vector(0.5, 0.3, 0.5), s3d);
         fillLight.enableSpecular = false;
-        fillLight.color.set(0.3, 0.3, 0.35);
+        fillLight.color.set(0.3, 0.3, 0.35);*/
+        var light = new h3d.scene.pbr.PointLight(s3d);
+        light.setPosition(10, 10, 10);  // Дальше от сферы
+        light.range = 50;
+        light.power = 2;
 
         // Камера
         var camera = s3d.camera;
-        camera.pos.set(0, 0, 3);
-        camera.target.set(0, 0, 0);
-        camera.fovY = 45;
-        camera.zNear = 0.1;
-        camera.zFar = 100;
-        camera.update();
+        // Убедись, что камера смотрит правильно
+        s3d.camera.pos.set(0, 0, 5);
+        s3d.camera.target.set(0, 0, 0);
+        s3d.camera.up.set(0, 1, 0);  // ✅ Явно установи up вектор
+        s3d.camera.update();
 
-
+        // ✅ Начальная позиция камеры через orbit параметры
+        updateCameraPosition();
         // Свет
         // ✅ PBR Point Light вместо DirLight
         /*var light = new h3d.scene.pbr.PointLight(s3d);
@@ -3834,14 +3937,21 @@ class ShaderPreviewRenderer implements Service {
 
          // Сфера для превью
         // ✅ СФЕРА — МЕНЬШЕ СЕГМЕНТОВ (быстрее загрузка)
-        var sphere = new Sphere(1, 16, 16);  // ← БЫЛО 32x32, ТЕПЕРЬ 16x16
+        // Было: new Sphere(1, 32, 32) или 64,64
+        // ✅ Сделай больше:
+        var sphere = new Sphere(1, 32, 32);  // 128 сегментов по ширине и высоте
         sphere.addNormals();
         sphere.addUVs();
+        // ✅ Добавь тангенсы для правильного PBR
+        sphere.addTangents();
         previewMesh = new Mesh(sphere, s3d);
         
         pbrValues = new PropsValues(0.0, 0.5);
         previewMesh.material.mainPass.addShader(pbrValues);
         previewMesh.material.color.set(0.8, 0.8, 0.8);
+        previewMesh.material.mainPass.enableLights = true;
+        previewMesh.material.mainPass.setPassName("default");
+        previewMesh.material.mainPass.culling = Face.None;
         
         trace("✅ [ShaderPreview] PBR Scene initialized (FAST)");
 
@@ -3859,68 +3969,124 @@ class ShaderPreviewRenderer implements Service {
         
         trace("⏳ [ShaderPreview] Creating environment async...");
         
-        var size = 32;
-        var envMap = new h3d.mat.Texture(size, size, [Cube]);
-        
-        for (face in 0...6) {
-            var pixels = hxd.Pixels.alloc(size, size, h3d.mat.Texture.nativeFormat);
-            for (y in 0...size) {
-                for (x in 0...size) {
-                    var t = y / size;
-                    var r = 0.3 + 0.2 * (1 - t);
-                    var g = 0.3 + 0.2 * (1 - t);
-                    var b = 0.35 + 0.25 * (1 - t);
-                    
-                    var idx = (y * size + x) * 4;
-                    pixels.bytes.set(idx, Std.int(r * 255));
-                    pixels.bytes.set(idx + 1, Std.int(g * 255));
-                    pixels.bytes.set(idx + 2, Std.int(b * 255));
-                    pixels.bytes.set(idx + 3, 255);
-                }
-            }
-            envMap.uploadPixels(pixels, 0, face);
-        }
+        var size = 512;
+        var envMap = createEnvMap();
         
         env = new Environment(envMap);
         env.compute();  // ← Тяжёлая операция, но теперь она НЕ блокирует открытие
         
         var renderer:Renderer = cast(s3d.renderer, Renderer);
         renderer.env = env;
-        
+        env.power = 1.0;  // ✅ Настраиваем яркость через environment
+        //cast(s3d.lightSystem, h3d.scene.fwd.LightSystem).ambientLight.set(0.5, 0.5, 0.5);
         trace("✅ [ShaderPreview] Environment ready");
     }
     /**
      * ✅ ПРОСТОЙ environment — серый градиент
      * Создаётся БЫСТРО (небольшая текстура)
      */
-    private function createSimpleEnvironment():Environment {
-        var size = 16;  // ← БЫЛО 64, ТЕПЕРЬ 16 (в 16 раз быстрее!)
-        var envMap = new h3d.mat.Texture(size, size, [Cube]);
+    private function createEnvMap():h3d.mat.Texture {
+        // ✅ 512x512 вместо 256x256
+        var envMap = new h3d.mat.Texture(256, 256, [Cube]);
+    
+        // Заполни белым/серым цветом (нейтральное освещение)
+        inline function set(face:Int, res:hxd.res.Image) {
+			var pix = res.getPixels();
+			envMap.uploadPixels(pix, 0, face);
+		}
+		set(0, hxd.Res.front);
+		set(1, hxd.Res.back);
+		set(2, hxd.Res.right);
+		set(3, hxd.Res.left);
+		set(4, hxd.Res.top);
+		set(5, hxd.Res.bottom);
         
-        for (face in 0...6) {
-            var pixels = hxd.Pixels.alloc(size, size, h3d.mat.Texture.nativeFormat);
-            for (y in 0...size) {
-                for (x in 0...size) {
-                    var t = y / size;
-                    var r = 0.3 + 0.2 * (1 - t);
-                    var g = 0.3 + 0.2 * (1 - t);
-                    var b = 0.35 + 0.25 * (1 - t);
-                    
-                    var idx = (y * size + x) * 4;
-                    pixels.bytes.set(idx, Std.int(r * 255));
-                    pixels.bytes.set(idx + 1, Std.int(g * 255));
-                    pixels.bytes.set(idx + 2, Std.int(b * 255));
-                    pixels.bytes.set(idx + 3, 255);
-                }
+        return envMap;
+    }
+/**
+     * ✅ НОВОЕ: Подключает управление камерой к canvas
+     * Вызывается из ShaderEditorPanel после регистрации viewport
+     */
+    public function setupOrbitControls(canvas:js.html.CanvasElement):Void {
+        trace("🎮 [ShaderPreview] Setting up orbit controls");
+        
+        // Mouse down - начало вращения
+        canvas.addEventListener("mousedown", function(e:js.html.MouseEvent) {
+            if (e.button == 0) { // Только левая кнопка
+                isDragging = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                canvas.style.cursor = "grabbing";
             }
-            envMap.uploadPixels(pixels, 0, face);
-        }
+        });
         
-        var env = new Environment(envMap);
-        env.compute();
-        return env;
+        // Mouse move - вращение
+        canvas.addEventListener("mousemove", function(e:js.html.MouseEvent) {
+            if (!isDragging) return;
+            
+            var dx = e.clientX - lastMouseX;
+            var dy = e.clientY - lastMouseY;
+            
+            // Чувствительность вращения
+            var sensitivity = 0.01;
+            theta -= dx * sensitivity;
+            phi += dy * sensitivity;
+            
+            // Ограничиваем phi чтобы не было gimbal lock
+            phi = Math.max(minPhi, Math.min(maxPhi, phi));
+            
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            
+            updateCameraPosition();
+        });
+        
+        // Mouse up - конец вращения
+        canvas.addEventListener("mouseup", function(e:js.html.MouseEvent) {
+            isDragging = false;
+            canvas.style.cursor = "grab";
+        });
+        
+        // Mouse leave - сброс dragging
+        canvas.addEventListener("mouseleave", function(e:js.html.MouseEvent) {
+            isDragging = false;
+            canvas.style.cursor = "grab";
+        });
+        
+        // Wheel - зум
+        canvas.addEventListener("wheel", function(e:js.html.WheelEvent) {
+            e.preventDefault();
+            
+            var zoomSpeed = 0.005;
+            distance += e.deltaY * zoomSpeed;
+            distance = Math.max(minDistance, Math.min(maxDistance, distance));
+            
+            updateCameraPosition();
+        }, { passive: false });
+        
+        // Начальный курсор
+        canvas.style.cursor = "grab";
+        
+        trace("✅ [ShaderPreview] Orbit controls attached");
     }
 
+    /**
+     * ✅ Обновляет позицию камеры на основе theta, phi, distance
+     */
+    private function updateCameraPosition():Void {
+        if (s3d == null) return;
+        
+        var cam = s3d.camera;
+        
+        // Сферические → Декартовы координаты
+        var x = distance * Math.cos(phi) * Math.sin(theta);
+        var y = distance * Math.sin(phi);
+        var z = distance * Math.cos(phi) * Math.cos(theta);
+        
+        cam.pos.set(x, y, z);
+        cam.target.set(0, 0, 0); // Смотрим в центр (где сфера)
+        cam.update();
+    }
     /**
      * Применяет скомпилированные данные графа к материалу.
      * Вызывается из React-компонента при изменении графа.
@@ -4025,22 +4191,25 @@ class Viewport {
     public var width:Int;
     public var height:Int;
     public var frameCount:Int = 0;  // ✅ НОВОЕ ПОЛЕ
+
     public function new(id:String, scene:Scene, width:Int, height:Int) {
         this.id = id;
         this.scene = scene;
         this.width = width;
         this.height = height;
         
+        var renderWidth = width;
+        var renderHeight = height;
         // Создаём RenderTexture (GPU-side)
         // ✅ ИСПОЛЬЗУЕМ RGBA32F для лучшего качества (float precision)
         // Или RGBA16U для хорошего качества + производительности
         // ✅ ПРАВИЛЬНО: используем только существующие флаги
         // Target — для render target
         // Dynamic — если часто обновляем (наш случай)
-        renderTarget = new Texture(width, height, [Target, Dynamic]);
+        renderTarget = new Texture(renderWidth, renderHeight, [Target, Dynamic]);
         // ✅ Включаем билинейную фильтрацию для сглаживания
-        renderTarget.filter = Nearest;
-        renderTarget.depthBuffer = new Texture(width, height,[], TextureFormat.Depth24Stencil8);
+        renderTarget.filter = AnisotropicLinear;
+        renderTarget.depthBuffer = new Texture(renderWidth, renderHeight,[], TextureFormat.Depth24Stencil8);
         
         // Создаём canvas для отображения
         canvas = js.Browser.document.createCanvasElement();
@@ -4061,11 +4230,12 @@ class Viewport {
      * Копирует RenderTexture → Canvas (пока через CPU)
      */
     public function blitToCanvas():Void {
-        // ✅ BLIT РАЗ В 30 КАДРОВ (вместо 5!)
-        if (frameCount % 30 != 0) {
+
+        // ✅ Blit раз в 2 кадра для плавности
+        /*if (frameCount % 2 != 0) {
             frameCount++;
             return;
-        }
+        }*/
         var pixels = renderTarget.capturePixels();
     
         // ✅ Диагностика: проверяем, есть ли реальные данные
@@ -4075,6 +4245,8 @@ class Viewport {
         }
         
         var ctx = canvas.getContext("2d");
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
         if (ctx == null) {
             trace('⚠️ [Viewport $id] Canvas 2D context is NULL!');
             return;
@@ -4085,14 +4257,16 @@ class Viewport {
         var data = imageData.data;
         
         var len = width * height;
-        for (i in 0...len) {
-            var srcIdx = i * 4;
-            var dstIdx = i * 4;
-            // ✅ BGRA → RGBA конвертация
+        // ✅ Оптимизированная конвертация BGRA → RGBA
+        var i = 0;
+        while (i < len) {
+            var srcIdx = i << 2;  // i * 4 (bit shift быстрее)
+            var dstIdx = i << 2;
             data[dstIdx]     = bytes.get(srcIdx + 2); // R
             data[dstIdx + 1] = bytes.get(srcIdx + 1); // G
             data[dstIdx + 2] = bytes.get(srcIdx);     // B
             data[dstIdx + 3] = bytes.get(srcIdx + 3); // A
+            i++;
         }
         
         ctx.putImageData(imageData, 0, 0);
@@ -4196,9 +4370,11 @@ class ViewportService implements Service {
             // ✅ КОПИРУЕМ ТОЛЬКО ЕСЛИ НУЖНО (например, раз в 10 кадров)
             // ИЛИ вообще не копируем — canvas обновляется сам через WebGL
             // Если нужно именно blit — делайте реже:
-            if (vp.frameCount % 10 == 0) {  // Каждые 10 кадров
+            if (vp.frameCount % 2 == 0) {  // Каждые 10 кадров
                 vp.blitToCanvas();
             }
+            // ✅ Копируем в canvas через GPU (без CPU!)
+            //vp.renderToCanvas(engine);
             vp.frameCount++;
         }
     }
@@ -13263,6 +13439,10 @@ import hide.presentation.ui.react.BaseReactComponent;
 import hide.presentation.ui.react.hooks.UseService;
 import hide.infrastructure.external.litegraph.*;
 import hide.presentation.ui.react.components.ShaderNodePalette;
+import hide.engine.infrastructure.ShaderGraphSerializer;
+import js.node.Fs;
+import js.node.Path;
+
 
 typedef ShaderEditorProps = {
     var initialState: Dynamic;
@@ -13281,6 +13461,10 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     private var previewRenderer:ShaderPreviewRenderer; // ← инжектируем
 
     private var litegraphContainerRef:Dynamic;
+    // В начале класса:
+    private var currentFilePath:Null<String> = null;
+    private var isDirty:Bool = false;
+    private var originalTitle:String = "Shader Editor";
 
     public function new() {
         super();
@@ -13298,7 +13482,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             previewRenderer.init();
             
             var viewportService = UseService.viewportService();
-            
+
             haxe.Timer.delay(function() {
                 var previewContainer = js.Browser.document.getElementById("heaps-preview-container");
                 
@@ -13318,12 +13502,153 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                         vp.canvas.style.height = "100%";
                         vp.canvas.style.display = "block";
                         vp.canvas.style.imageRendering = "pixelated";
+
+                        // ✅ НОВОЕ: Подключаем orbit controls к canvas viewport'а
+                        previewRenderer.setupOrbitControls(vp.canvas);
+                        
+                        trace('✅ [ShaderPanel] Canvas appended with orbit controls');
                     }
                 }
             }, 16);
         }, 16);  // ← ЗАДЕРЖКА чтобы не блокировать React
-        
+
         setupGraphListeners();
+        // ✅ Клавиатурные шорткаты
+        setupKeyboardShortcuts();
+    }
+
+    private function setupKeyboardShortcuts():Void {
+        js.Browser.window.addEventListener("keydown", function(e:js.html.KeyboardEvent) {
+            var ctrl = e.ctrlKey || e.metaKey; // metaKey для Mac
+            
+            if (ctrl && !e.shiftKey) {
+                switch (e.key.toLowerCase()) {
+                    case "s":
+                        e.preventDefault();
+                        onSave();
+                    case "o":
+                        e.preventDefault();
+                        onLoad();
+                    case "z":
+                        e.preventDefault();
+                        onUndo();
+                    case "y":
+                        e.preventDefault();
+                        onRedo();
+                    case "n":
+                        e.preventDefault();
+                        onNew();
+                }
+            }
+            
+            if (ctrl && e.shiftKey && e.key.toLowerCase() == "s") {
+                e.preventDefault();
+                onSaveAs();
+            }
+        });
+    }
+
+    private function onSave():Void {
+        if (graph == null) return;
+        
+        if (currentFilePath != null) {
+            saveToFile(currentFilePath);
+        } else {
+            onSaveAs();
+        }
+    }
+
+    private function onSaveAs():Void {
+        if (graph == null) return;
+        
+        untyped __js__("require('electron').remote").dialog.showSaveDialog({
+            title: "Save Shader Graph",
+            defaultPath: "new_shader.shadergraph",
+            filters: [
+                { name: "Shader Graph", extensions: ["shadergraph"] },
+                { name: "JSON", extensions: ["json"] },
+                { name: "All Files", extensions: ["*"] }
+            ]
+        }).then(function(result) {
+            if (!result.canceled && result.filePath != null) {
+                saveToFile(result.filePath);
+            }
+        }).catchError(function(err) {
+            trace("❌ Save dialog error: " + err);
+        });
+    }
+
+    private function saveToFile(path:String):Void {
+        try {
+            var data = ShaderGraphSerializer.serialize(graph, graphCanvas);
+            var json = ShaderGraphSerializer.toJson(data);
+            
+            Fs.writeFileSync(path, json, "utf8");
+            
+            currentFilePath = path;
+            isDirty = false;
+            updateTitle();
+            
+            trace('💾 [ShaderEditor] Saved to: $path');
+        } catch (e:Dynamic) {
+            trace("❌ [ShaderEditor] Save error: " + Std.string(e));
+        }
+    }
+
+    private function onLoad():Void {
+        untyped __js__("require('electron').remote").dialog.showOpenDialog({
+            title: "Open Shader Graph",
+            filters: [
+                { name: "Shader Graph", extensions: ["shadergraph", "json"] },
+                { name: "All Files", extensions: ["*"] }
+            ],
+            properties: ["openFile"]
+        }).then(function(result) {
+            if (!result.canceled && result.filePaths.length > 0) {
+                loadFromFile(result.filePaths[0]);
+            }
+        }).catchError(function(err) {
+            trace("❌ Load dialog error: " + err);
+        });
+    }
+
+    private function loadFromFile(path:String):Void {
+        try {
+            var json = Fs.readFileSync(path, "utf8");
+            var data = ShaderGraphSerializer.fromJson(json);
+            
+            ShaderGraphSerializer.deserialize(data, graph, graphCanvas);
+            
+            // Пере-регистрируем callbacks на всех нодах
+            restoreNodeCallbacks();
+            
+            currentFilePath = path;
+            isDirty = false;
+            updateTitle();
+            
+            // Перекомпилируем превью
+            compileAndApply();
+            
+            trace('📂 [ShaderEditor] Loaded from: $path');
+        } catch (e:Dynamic) {
+            trace("❌ [ShaderEditor] Load error: " + Std.string(e));
+        }
+    }
+
+    /**
+     * Восстанавливает onConnectionsChange на всех нодах после загрузки
+     */
+    private function restoreNodeCallbacks():Void {
+        var nodes:Array<Dynamic> = untyped graph._nodes;
+        if (nodes == null) return;
+        
+        for (node in nodes) {
+            untyped node.onConnectionsChange = function(type:Int, slot:Int, isConnected:Bool, link_info:Dynamic, input_info:Dynamic) {
+                trace('🔗 [ShaderEditor] Connection changed on node: ${node.title}');
+                scheduleRecompile();
+            };
+        }
+        trace('✅ [ShaderEditor] Restored callbacks on ${nodes.length} nodes');
     }
 
     private var recompileTimer:Null<haxe.Timer> = null;
@@ -13353,6 +13678,21 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         // И на изменение свойств нод (widget changes)
         // LiteGraph вызывает onNodeChanged при изменении properties
         untyped graph.onNodeChanged = function(_) scheduleRecompile();
+
+        // Отмечаем граф как изменённый при любом действии
+        var markDirty = function(_) {
+            if (!isDirty) {
+                isDirty = true;
+                updateTitle();
+            }
+            scheduleRecompile();
+        };
+        
+        graph.onAfterStep = function() scheduleRecompile();
+        graph.onNodeAdded = markDirty;
+        graph.onNodeRemoved = markDirty;
+        untyped graph.onConnectionChange = markDirty;
+        untyped graph.onNodeChanged = markDirty;
     }
 
     private function scheduleRecompile():Void {
@@ -13768,7 +14108,8 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             }
             // В методе initLiteGraph(), после создания graphCanvas:
 
-
+            // ✅ Включаем undo/redo (сохраняет до 50 состояний)
+            untyped graph.support_undo = true;
             // ==========================
             // Запускаем граф
             graph.start();
@@ -13945,11 +14286,17 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     private function renderToolbar():ReactElement {
         return jsx('
             <div style={{padding: "8px", background: "#2a2a2a", borderBottom: "1px solid #1a1a1a", display: "flex", gap: "8px"}}>
-                <button onClick={onCompile}>Compile</button>
+                <button onClick={onNew}>New</button>
+                <button onClick={onLoad}>Load</button>
                 <button onClick={onSave}>Save</button>
-                <button onClick={onExportHLSL}>Export HLSL</button>
+                <button onClick={onSaveAs}>Save As</button>
+                <div style={{width: "1px", background: "#444"}}></div>
+                <button onClick={onUndo}>Undo</button>
+                <button onClick={onRedo}>Redo</button>
                 <div style={{flex: 1}}></div>
-                <button onClick={onClearGraph}>Clear Graph</button>
+                <button onClick={onCompile}>Compile</button>
+                <button onClick={onExportHLSL}>Export HLSL</button>
+                <button onClick={onClearGraph}>Clear</button>
             </div>
         ');
     }
@@ -14007,7 +14354,8 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                     style={{width: "100%", 
                     height: "100%", 
                     display: "block",
-                    background: "#1a1a1a"}}>
+                    background: "#1a1a1a",
+                    imageRendering: "crisp-edges" }}>
                 </div>
                 <div style={{
                     position: "absolute",
@@ -14055,6 +14403,10 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     // ✅ НОВЫЙ МЕТОД: вызывается при изменении свойства ноды
     private function onNodePropertyChanged(): Void {
         trace("🔄 [ShaderEditor] Node property changed, recompiling...");
+        if (!isDirty) {
+            isDirty = true;
+            updateTitle();
+        }
         compileAndApply();
     }
     private function renderPropertiesContent():ReactElement {
@@ -14063,16 +14415,67 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         ');
     }
 
+    private function updateTitle():Void {
+        var filename = currentFilePath != null ? Path.basename(currentFilePath) : "Untitled";
+        var dirty = isDirty ? " ●" : "";
+        var title = '${filename}${dirty} - Shader Editor';
+        
+        // Обновляем заголовок Electron окна
+        try {
+            untyped __js__("require('electron').remote").getCurrentWindow().setTitle(title);
+        } catch (e:Dynamic) {
+            // Если не работает, просто логируем
+        }
+        trace('🏷️ [ShaderEditor] Title: $title');
+    }
+    private function onNew():Void {
+        if (isDirty) {
+            var confirmed = js.Browser.window.confirm("Unsaved changes will be lost. Continue?");
+            if (!confirmed) return;
+        }
+        graph.clear();
+        currentFilePath = null;
+        isDirty = false;
+        updateTitle();
+        
+        // Пересоздаём Material Output
+        var w = liteGraphCanvas.width;
+        var h = liteGraphCanvas.height;
+        var outputNode = LiteGraph.createNode("material/output");
+        if (outputNode != null) {
+            outputNode.pos = [w / 2 - 100, h / 2 - 50];
+            untyped outputNode.onConnectionsChange = function(type, slot, isConnected, link_info, input_info) {
+                scheduleRecompile();
+            };
+            graph.add(outputNode);
+        }
+        trace("🆕 [ShaderEditor] New graph");
+    }
+    private function onUndo():Void {
+        if (graph != null) {
+            untyped graph.undo();
+            isDirty = true;
+            updateTitle();
+            compileAndApply();
+            trace("↶ Undo");
+        }
+    }
+
+    private function onRedo():Void {
+        if (graph != null) {
+            untyped graph.redo();
+            isDirty = true;
+            updateTitle();
+            compileAndApply();
+            trace("↷ Redo");
+        }
+    }
     // Обработчики событий для toolbar
     private function onCompile():Void {
         trace("🔨 Compile shader graph");
         // TODO: компиляция графа в HXSL
     }
 
-    private function onSave():Void {
-        trace("💾 Save shader graph");
-        // TODO: сохранение .shader файла
-    }
 
     private function onExportHLSL():Void {
         trace("📤 Export HLSL");

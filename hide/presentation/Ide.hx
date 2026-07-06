@@ -1,5 +1,6 @@
 package hide.presentation;
 
+import hide.domain.services.IFileSystem;
 import hide.application.services.IViewModule;
 import hide.engine.infrastructure.ShaderPreviewRenderer;
 import hide.presentation.controllers.ToolbarController;
@@ -77,6 +78,7 @@ class Ide implements Service {
     private var pluginManager:PluginManager;
     private var eventBus:IEventBus;
     private var fileDialog:IFileDialog;
+    private var fileSystem:IFileSystem;
     private var platform:IPlatform;
     private var windowController:WindowController;
     private var toolbarController:ToolbarController;
@@ -86,6 +88,8 @@ class Ide implements Service {
     private var shaderPreviewRenderer:ShaderPreviewRenderer;
     private var viewportService:ViewportService;
     private var viewModules:Iterable<IViewModule>;
+
+
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -98,6 +102,7 @@ class Ide implements Service {
         pluginManager:PluginManager,
         eventBus:IEventBus,
         fileDialog:IFileDialog,
+        fileSystem:IFileSystem,
         platform:IPlatform,
         layoutEngine:ILayoutEngine,
         menuController:MenuController,
@@ -121,6 +126,7 @@ class Ide implements Service {
         this.pluginManager = pluginManager;
         this.eventBus = eventBus;
         this.fileDialog = fileDialog;
+        this.fileSystem = fileSystem;
         this.platform = platform;
         this.layoutEngine = layoutEngine;
         this.menuController = menuController;
@@ -354,4 +360,7 @@ class Ide implements Service {
     public function get_sceneService():ISceneService return sceneService;
     public function get_shaderPreviewRenderer():ShaderPreviewRenderer return shaderPreviewRenderer;
     public function get_viewportService():ViewportService return viewportService;
+    // Геттеры:
+    public function get_fileSystem():IFileSystem return fileSystem;
+    public function get_fileDialog():IFileDialog return fileDialog;
 }

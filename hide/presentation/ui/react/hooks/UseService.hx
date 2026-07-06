@@ -10,6 +10,8 @@ import hide.application.services.PluginManager;
 import hide.shared.types.IEventBus;
 import hide.domain.services.ILayoutEngine;
 import hide.engine.domain.services.ISceneService;
+import hide.domain.services.IFileSystem;
+import hide.domain.services.IFileDialog;
 
 /**
  * Статический доступ к сервисам из React-компонентов.
@@ -44,5 +46,12 @@ class UseService {
     }
     public static function viewportService():ViewportService {
         return Ide.inst.get_viewportService(); // Убедитесь, что геттер есть в Ide.hx
+    }
+    public static function fileSystem():IFileSystem {
+        return Ide.inst.get_fileSystem();
+    }
+
+    public static function fileDialog():IFileDialog {
+        return Ide.inst.get_fileDialog();
     }
 }

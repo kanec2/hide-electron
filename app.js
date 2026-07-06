@@ -9397,7 +9397,7 @@ h2d_col_Polygon.makeCircle = function(x,y,radius,npoints) {
 	if(npoints < 3) {
 		npoints = 3;
 	}
-	var angle = 6.2831853071795862 / npoints;
+	var angle = 6.28318530717958623 / npoints;
 	var points = [];
 	var _g = 0;
 	var _g1 = npoints;
@@ -17250,18 +17250,18 @@ h3d_VectorImpl.prototype = {
 		if(saturation == null) {
 			saturation = 1.;
 		}
-		var r = hue % 6.2831853071795862;
-		hue = r >= 0 ? r : r + 6.2831853071795862;
+		var r = hue % 6.28318530717958623;
+		hue = r >= 0 ? r : r + 6.28318530717958623;
 		var f = 2 * brightness - 1;
 		var c = (1 - (f < 0 ? -f : f)) * saturation;
 		var f = hue * 3 / 3.14159265358979323 % 2. - 1;
 		var x = c * (1 - (f < 0 ? -f : f));
 		var m = brightness - c / 2;
-		if(hue < 1.0471975511965976) {
+		if(hue < 1.04719755119659763) {
 			this.x = c;
 			this.y = x;
 			this.z = 0;
-		} else if(hue < 2.0943951023931953) {
+		} else if(hue < 2.09439510239319526) {
 			this.x = x;
 			this.y = c;
 			this.z = 0;
@@ -17269,11 +17269,11 @@ h3d_VectorImpl.prototype = {
 			this.x = 0;
 			this.y = c;
 			this.z = x;
-		} else if(hue < 4.1887902047863905) {
+		} else if(hue < 4.18879020478639053) {
 			this.x = 0;
 			this.y = x;
 			this.z = c;
-		} else if(hue < 5.2359877559829888) {
+		} else if(hue < 5.23598775598298882) {
 			this.x = x;
 			this.y = 0;
 			this.z = c;
@@ -17319,7 +17319,7 @@ h3d_VectorImpl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -17362,7 +17362,7 @@ h3d_VectorImpl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -17856,18 +17856,18 @@ h3d_Vector4Impl.prototype = {
 		if(saturation == null) {
 			saturation = 1.;
 		}
-		var r = hue % 6.2831853071795862;
-		hue = r >= 0 ? r : r + 6.2831853071795862;
+		var r = hue % 6.28318530717958623;
+		hue = r >= 0 ? r : r + 6.28318530717958623;
 		var f = 2 * brightness - 1;
 		var c = (1 - (f < 0 ? -f : f)) * saturation;
 		var f = hue * 3 / 3.14159265358979323 % 2. - 1;
 		var x = c * (1 - (f < 0 ? -f : f));
 		var m = brightness - c / 2;
-		if(hue < 1.0471975511965976) {
+		if(hue < 1.04719755119659763) {
 			this.x = c;
 			this.y = x;
 			this.z = 0;
-		} else if(hue < 2.0943951023931953) {
+		} else if(hue < 2.09439510239319526) {
 			this.x = x;
 			this.y = c;
 			this.z = 0;
@@ -17875,11 +17875,11 @@ h3d_Vector4Impl.prototype = {
 			this.x = 0;
 			this.y = c;
 			this.z = x;
-		} else if(hue < 4.1887902047863905) {
+		} else if(hue < 4.18879020478639053) {
 			this.x = 0;
 			this.y = x;
 			this.z = c;
-		} else if(hue < 5.2359877559829888) {
+		} else if(hue < 5.23598775598298882) {
 			this.x = x;
 			this.y = 0;
 			this.z = c;
@@ -17927,7 +17927,7 @@ h3d_Vector4Impl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -17974,7 +17974,7 @@ h3d_Vector4Impl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -31413,15 +31413,15 @@ h3d_col_OrientedBounds.prototype = $extend(h3d_col_Collider.prototype,{
 		var rpz = dx * this.zx + dy * this.zy + dz * this.zz;
 		var tmp;
 		var f = this.hx;
-		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-010) {
+		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-10) {
 			var f = this.hy;
-			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-010;
+			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-10;
 		} else {
 			tmp = false;
 		}
 		if(tmp) {
 			var f = this.hz;
-			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-010;
+			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-10;
 		} else {
 			return false;
 		}
@@ -31441,15 +31441,15 @@ h3d_col_OrientedBounds.prototype = $extend(h3d_col_Collider.prototype,{
 		var rpz = dx * this.zx + dy * this.zy + dz * this.zz;
 		var tmp;
 		var f = this.hx;
-		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-010 - s.r) {
+		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-10 - s.r) {
 			var f = this.hy;
-			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-010 - s.r;
+			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-10 - s.r;
 		} else {
 			tmp = false;
 		}
 		if(tmp) {
 			var f = this.hz;
-			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-010 - s.r;
+			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-10 - s.r;
 		} else {
 			return false;
 		}
@@ -70553,7 +70553,7 @@ h3d_scene_FPSCameraController.prototype = $extend(h3d_scene_CameraController.pro
 		var ty = this.targetOffset.y + this.curPos.x / this.curOffset.w * Math.sin(this.curPos.y) * Math.sin(this.curPos.z);
 		var tz = this.targetOffset.z + this.curPos.x / this.curOffset.w * Math.cos(this.curPos.z);
 		this.targetPos.y = this.curPos.y - dtheta;
-		var min = 0.031415926535897934;
+		var min = 0.0314159265358979339;
 		var f = this.curPos.z - dphi;
 		var min1 = min;
 		var max = 3.14159265358979323 - min;
@@ -91935,7 +91935,7 @@ h3d_shader_Shadow.prototype = $extend(hxsl_Shader.prototype,{
 	,__class__: h3d_shader_Shadow
 });
 var h3d_shader_SignedDistanceField = function() {
-	this.smoothing__ = 0.041666666666666664;
+	this.smoothing__ = 0.0416666666666666644;
 	this.alphaCutoff__ = 0.5;
 	this.autoSmoothing__ = false;
 	this.channel__ = 0;
@@ -110574,8 +110574,8 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 							return function(e) {
 								if(_gthis.selectedMeshRef != mesh[0]) {
 									var _this = mesh[0].material.mshader.color__;
-									_this.x = 0.41568627450980394;
-									_this.y = 0.69019607843137254;
+									_this.x = 0.415686274509803944;
+									_this.y = 0.690196078431372539;
 									_this.z = 1.;
 									_this.w = 0.;
 								}
@@ -110605,9 +110605,9 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 										_this.w = 1.;
 									} else {
 										var _this = mesh[0].material.mshader.color__;
-										_this.x = 0.29019607843137257;
-										_this.y = 0.56470588235294117;
-										_this.z = 0.88627450980392153;
+										_this.x = 0.290196078431372573;
+										_this.y = 0.564705882352941169;
+										_this.z = 0.886274509803921529;
 										_this.w = 0.;
 									}
 								}
@@ -110732,9 +110732,9 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 		cube.addUVs();
 		var mesh = new h3d_scene_Mesh(cube);
 		var _this = mesh.material.mshader.color__;
-		_this.x = 0.29019607843137257;
-		_this.y = 0.56470588235294117;
-		_this.z = 0.88627450980392153;
+		_this.x = 0.290196078431372573;
+		_this.y = 0.564705882352941169;
+		_this.z = 0.886274509803921529;
 		_this.w = 0.;
 		mesh.material.passes.set_enableLights(true);
 		return mesh;
@@ -110783,8 +110783,8 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 			this.meshOriginalColor.set(targetMesh,orig);
 		}
 		var _this = targetMesh.material.mshader.color__;
-		_this.x = 0.41568627450980394;
-		_this.y = 0.69019607843137254;
+		_this.x = 0.415686274509803944;
+		_this.y = 0.690196078431372539;
 		_this.z = 1.;
 		_this.w = 0.;
 		var worldBounds = targetMesh.getBounds();
@@ -111157,6 +111157,30 @@ hide_engine_infrastructure_ShaderGraphCompiler.connectNodes = function(origin,ta
 	}
 	var inputName = target.inputs != null && target.inputs.length > inputSlot ? target.inputs[inputSlot].name : "";
 	var tmp = target.type == "material/output";
+};
+var hide_engine_infrastructure_ShaderGraphSerializer = function() { };
+$hxClasses["hide.engine.infrastructure.ShaderGraphSerializer"] = hide_engine_infrastructure_ShaderGraphSerializer;
+hide_engine_infrastructure_ShaderGraphSerializer.__name__ = "hide.engine.infrastructure.ShaderGraphSerializer";
+hide_engine_infrastructure_ShaderGraphSerializer.serialize = function(graph,graphCanvas) {
+	return { version : hide_engine_infrastructure_ShaderGraphSerializer.VERSION, createdAt : HxOverrides.dateStr(new Date()), modifiedAt : HxOverrides.dateStr(new Date()), graph : graph.serialize(), viewport : graphCanvas != null ? { x : graphCanvas.ds.offset[0], y : graphCanvas.ds.offset[1], scale : graphCanvas.ds.scale} : null};
+};
+hide_engine_infrastructure_ShaderGraphSerializer.deserialize = function(data,graph,graphCanvas) {
+	if(data.version != hide_engine_infrastructure_ShaderGraphSerializer.VERSION) {
+		haxe_Log.trace("⚠️ [Serializer] Version mismatch: expected " + hide_engine_infrastructure_ShaderGraphSerializer.VERSION + ", got " + data.version,{ fileName : "hide/engine/infrastructure/ShaderGraphSerializer.hx", lineNumber : 31, className : "hide.engine.infrastructure.ShaderGraphSerializer", methodName : "deserialize"});
+	}
+	graph.configure(data.graph);
+	if(data.viewport != null && graphCanvas != null) {
+		graphCanvas.ds.offset[0] = data.viewport.x;
+		graphCanvas.ds.offset[1] = data.viewport.y;
+		graphCanvas.ds.scale = data.viewport.scale;
+		graphCanvas.setDirty(true,true);
+	}
+};
+hide_engine_infrastructure_ShaderGraphSerializer.toJson = function(data) {
+	return JSON.stringify(data,null,"\t");
+};
+hide_engine_infrastructure_ShaderGraphSerializer.fromJson = function(json) {
+	return JSON.parse(json);
 };
 var hide_engine_infrastructure_ShaderPreviewRenderer = function() {
 	this.maxPhi = 1.5;
@@ -112079,7 +112103,7 @@ hide_infrastructure_external_StubConsoleFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubConsoleFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubConsoleFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>🖥️ Console</h2>\r\n                <p>Console output will appear here.</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>🖥️ Console</h2>\n                <p>Console output will appear here.</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112094,7 +112118,7 @@ hide_infrastructure_external_StubEditorFactory.__name__ = "hide.infrastructure.e
 hide_infrastructure_external_StubEditorFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubEditorFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>📝 Stub Editor</h2>\r\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\r\n                <p>Состояние: " + JSON.stringify(state) + "</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>📝 Stub Editor</h2>\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\n                <p>Состояние: " + JSON.stringify(state) + "</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112109,7 +112133,7 @@ hide_infrastructure_external_StubGameFactory.__name__ = "hide.infrastructure.ext
 hide_infrastructure_external_StubGameFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubGameFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\r\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\r\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\r\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\r\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\r\n                    Resolution: 1920×1080 | Stats: OFF\r\n                </div>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\n                    Resolution: 1920×1080 | Stats: OFF\n                </div>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112124,7 +112148,7 @@ hide_infrastructure_external_StubProjectFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubProjectFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubProjectFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\r\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\r\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\r\n                </div>\r\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\r\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\r\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                            ▼ 📁 Assets\r\n                        </div>\r\n                        <div style='padding-left:16px;'>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Materials\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Prefabs\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scenes\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scripts\r\n                            </div>\r\n                            <div style='padding-left:16px;'>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                📁 Textures\r\n                            </div>\r\n                        </div>\r\n                    </div>\r\n                </div>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\n                </div>\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                            ▼ 📁 Assets\n                        </div>\n                        <div style='padding-left:16px;'>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Materials\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Prefabs\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scenes\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scripts\n                            </div>\n                            <div style='padding-left:16px;'>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                📁 Textures\n                            </div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112139,7 +112163,7 @@ hide_infrastructure_external_StubPropertiesFactory.__name__ = "hide.infrastructu
 hide_infrastructure_external_StubPropertiesFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubPropertiesFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\r\n                <h2>⚙️ Properties</h2>\r\n                <p>Object properties will appear here.</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\n                <h2>⚙️ Properties</h2>\n                <p>Object properties will appear here.</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112449,7 +112473,7 @@ hide_infrastructure_platform_electron_ElectronWindowAdapter.prototype = {
 	}
 	,__class__: hide_infrastructure_platform_electron_ElectronWindowAdapter
 };
-var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,openViewUseCase,viewRegistry,pluginManager,eventBus,fileDialog,platform,layoutEngine,menuController,windowController,toolbarController,sceneService,sceneEditorService,sceneViewFactory,shaderPreviewRenderer,viewportService,viewModules) {
+var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,openViewUseCase,viewRegistry,pluginManager,eventBus,fileDialog,fileSystem,platform,layoutEngine,menuController,windowController,toolbarController,sceneService,sceneEditorService,sceneViewFactory,shaderPreviewRenderer,viewportService,viewModules) {
 	var _gthis = this;
 	this.windowService = windowService;
 	this.menuService = menuService;
@@ -112460,6 +112484,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this.pluginManager = pluginManager;
 	this.eventBus = eventBus;
 	this.fileDialog = fileDialog;
+	this.fileSystem = fileSystem;
 	this.platform = platform;
 	this.layoutEngine = layoutEngine;
 	this.menuController = menuController;
@@ -112485,7 +112510,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this._projectLoadedUnsub = eventBus.subscribe(hide_shared_events_ProjectLoaded,$bind(this,this.onProjectLoadedHandler));
 	this._errorUnsub = eventBus.subscribe(hide_shared_events_ErrorOccurred,$bind(this,this.onErrorOccurred));
 	this._layoutChangedUnsub = eventBus.subscribe(hide_shared_events_LayoutChanged,function(e) {
-		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 163, className : "hide.presentation.Ide", methodName : "new"});
+		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 169, className : "hide.presentation.Ide", methodName : "new"});
 	});
 	this._projectClosedUnsub = eventBus.subscribe(hide_shared_events_ProjectClosed,function(e) {
 		_gthis._currentProject = null;
@@ -112518,6 +112543,7 @@ hide_presentation_Ide.prototype = {
 	,pluginManager: null
 	,eventBus: null
 	,fileDialog: null
+	,fileSystem: null
 	,platform: null
 	,windowController: null
 	,toolbarController: null
@@ -112531,11 +112557,11 @@ hide_presentation_Ide.prototype = {
 		this.layoutEngine.open("welcome",{ },hide_domain_valueobjects_DisplayPosition.Center);
 	}
 	,onErrorOccurred: function(event) {
-		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 190, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
+		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 196, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
 	}
 	,onProjectLoadedHandler: function(event) {
 		this._currentProject = event.project.name;
-		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 195, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
+		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 201, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
 		this.updateWindowTitle();
 	}
 	,onToggleFullscreen: function() {
@@ -112546,7 +112572,7 @@ hide_presentation_Ide.prototype = {
 	,onCloseProject: function() {
 	}
 	,openView: function(viewName) {
-		haxe_Log.trace("[Open view] search view to open: " + viewName,{ fileName : "hide/presentation/Ide.hx", lineNumber : 216, className : "hide.presentation.Ide", methodName : "openView"});
+		haxe_Log.trace("[Open view] search view to open: " + viewName,{ fileName : "hide/presentation/Ide.hx", lineNumber : 222, className : "hide.presentation.Ide", methodName : "openView"});
 		var view = Lambda.find(this.viewRegistry.all(),function(v) {
 			return v.name == viewName;
 		});
@@ -112564,7 +112590,7 @@ hide_presentation_Ide.prototype = {
 		default:
 			position = hide_domain_valueobjects_DisplayPosition.Center;
 		}
-		haxe_Log.trace("[Open view] view opened",{ fileName : "hide/presentation/Ide.hx", lineNumber : 227, className : "hide.presentation.Ide", methodName : "openView"});
+		haxe_Log.trace("[Open view] view opened",{ fileName : "hide/presentation/Ide.hx", lineNumber : 233, className : "hide.presentation.Ide", methodName : "openView"});
 		this.openViewUseCase.execute(view.name,view.defaultState,position);
 	}
 	,onOpenRecent: function(path) {
@@ -112572,11 +112598,11 @@ hide_presentation_Ide.prototype = {
 	}
 	,updateWindowTitle: function() {
 		var title = this._currentProject != null ? "" + this._currentProject + " - HIDE IDE" : "HIDE IDE";
-		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 237, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
+		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 243, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
 		this.windowService.setTitle(title);
 	}
 	,showAboutDialog: function() {
-		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 242, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
+		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 248, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
 	}
 	,get_currentProjectName: function() {
 		if(this._currentProject != null) {
@@ -112587,7 +112613,7 @@ hide_presentation_Ide.prototype = {
 	}
 	,startup: function() {
 		var _gthis = this;
-		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 252, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 258, className : "hide.presentation.Ide", methodName : "startup"});
 		var $module = $getIterator(this.viewModules);
 		while($module.hasNext()) {
 			var module1 = $module.next();
@@ -112600,29 +112626,29 @@ hide_presentation_Ide.prototype = {
 					_gthis.openView(descriptor[0].dto.name);
 				};
 			})(descriptor));
-			haxe_Log.trace("📦 View registered: " + descriptor[0].dto.name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 266, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📦 View registered: " + descriptor[0].dto.name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 272, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		this.windowController.init();
-		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 270, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 276, className : "hide.presentation.Ide", methodName : "startup"});
 		var toolbarEl = window.document.getElementById("main-toolbar");
 		if(toolbarEl != null) {
 			this.toolbarController.setContainer(toolbarEl);
-			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 278, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 284, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var layoutEl = window.document.getElementById("golden-layout-root");
 		if(layoutEl != null) {
 			this.layoutEngine.setContainer(layoutEl);
 			this.layoutEngine.init({ content : [], fullScreen : null});
-			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 286, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 292, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 288, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 294, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var menuContainer = window.document.getElementById("main-menu");
 		if(menuContainer != null) {
 			this.menuController.setContainer(menuContainer);
-			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 294, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 300, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 296, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 302, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var args = this.platform.getAppArgs();
 		var projectFile = null;
@@ -112646,10 +112672,10 @@ hide_presentation_Ide.prototype = {
 			}
 		}
 		if(projectFile != null) {
-			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 323, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 329, className : "hide.presentation.Ide", methodName : "startup"});
 			this.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._new(projectFile));
 		} else {
-			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 326, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 332, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 	}
 	,dispose: function() {
@@ -112712,8 +112738,14 @@ hide_presentation_Ide.prototype = {
 	,get_viewportService: function() {
 		return this.viewportService;
 	}
+	,get_fileSystem: function() {
+		return this.fileSystem;
+	}
+	,get_fileDialog: function() {
+		return this.fileDialog;
+	}
 	,getConstructorArgs: function() {
-		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.commands.OpenViewUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController","hide.presentation.controllers.WindowController","hide.presentation.controllers.ToolbarController","hide.engine.domain.services.ISceneService","hide.application.integration.SceneEditorService","hide.infrastructure.external.SceneViewFactory","hide.engine.infrastructure.ShaderPreviewRenderer","hide.engine.infrastructure.ViewportService","Iterable(hide.application.services.IViewModule)"];
+		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.commands.OpenViewUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IFileSystem","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController","hide.presentation.controllers.WindowController","hide.presentation.controllers.ToolbarController","hide.engine.domain.services.ISceneService","hide.application.integration.SceneEditorService","hide.infrastructure.external.SceneViewFactory","hide.engine.infrastructure.ShaderPreviewRenderer","hide.engine.infrastructure.ViewportService","Iterable(hide.application.services.IViewModule)"];
 	}
 	,__class__: hide_presentation_Ide
 	,__properties__: {get_currentProjectName:"get_currentProjectName"}
@@ -113824,6 +113856,13 @@ hide_presentation_ui_react_components_NodePropertiesPanel.prototype = $extend(hi
 });
 var hide_presentation_ui_react_components_ShaderEditorPanel = function() {
 	this.recompileTimer = null;
+	this.isUndoRedoInProgress = false;
+	this.maxUndoSteps = 50;
+	this.redoStack = [];
+	this.undoStack = [];
+	this.originalTitle = "Shader Editor";
+	this.isDirty = false;
+	this.currentFilePath = null;
 	hide_presentation_ui_react_BaseReactComponent.call(this);
 	this.previewRenderer = hide_presentation_ui_react_hooks_UseService.shaderPreviewRenderer();
 	this.litegraphContainerRef = React.createRef();
@@ -113838,6 +113877,13 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 	,graphCanvas: null
 	,previewRenderer: null
 	,litegraphContainerRef: null
+	,currentFilePath: null
+	,isDirty: null
+	,originalTitle: null
+	,undoStack: null
+	,redoStack: null
+	,maxUndoSteps: null
+	,isUndoRedoInProgress: null
 	,componentDidMount: function() {
 		var _gthis = this;
 		this.initLiteGraph();
@@ -113864,12 +113910,131 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 						vp.canvas.style.display = "block";
 						vp.canvas.style.imageRendering = "pixelated";
 						_gthis.previewRenderer.setupOrbitControls(vp.canvas);
-						haxe_Log.trace("✅ [ShaderPanel] Canvas appended with orbit controls",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 70, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "componentDidMount"});
+						haxe_Log.trace("✅ [ShaderPanel] Canvas appended with orbit controls",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 85, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "componentDidMount"});
 					}
 				}
 			},16);
 		},16);
 		this.setupGraphListeners();
+		this.setupKeyboardShortcuts();
+	}
+	,setupKeyboardShortcuts: function() {
+		var _gthis = this;
+		window.addEventListener("keydown",function(e) {
+			var ctrl = e.ctrlKey || e.metaKey;
+			if(ctrl && !e.shiftKey) {
+				switch(e.key.toLowerCase()) {
+				case "n":
+					e.preventDefault();
+					_gthis.onNew();
+					break;
+				case "o":
+					e.preventDefault();
+					_gthis.onLoad();
+					break;
+				case "s":
+					e.preventDefault();
+					_gthis.onSave();
+					break;
+				case "y":
+					e.preventDefault();
+					_gthis.onRedo();
+					break;
+				case "z":
+					e.preventDefault();
+					_gthis.onUndo();
+					break;
+				}
+			}
+			if(ctrl && e.shiftKey && e.key.toLowerCase() == "s") {
+				e.preventDefault();
+				_gthis.onSaveAs();
+			}
+		});
+	}
+	,onSave: function() {
+		if(this.graph == null) {
+			return;
+		}
+		if(this.currentFilePath != null) {
+			this.saveToFile(this.currentFilePath);
+		} else {
+			this.onSaveAs();
+		}
+	}
+	,onSaveAs: function() {
+		var _gthis = this;
+		if(this.graph == null) {
+			return;
+		}
+		var fileDialog = hide_presentation_ui_react_hooks_UseService.fileDialog();
+		fileDialog.showSave({ filters : [{ name : "Shader Graph", extensions : ["shadergraph","json"]}], defaultPath : "new_shader.shadergraph"}).handle(function(path) {
+			if(path != null) {
+				_gthis.saveToFile(path);
+			}
+		});
+	}
+	,saveToFile: function(path) {
+		try {
+			var data = hide_engine_infrastructure_ShaderGraphSerializer.serialize(this.graph,this.graphCanvas);
+			var json = hide_engine_infrastructure_ShaderGraphSerializer.toJson(data);
+			var fileSystem = hide_presentation_ui_react_hooks_UseService.fileSystem();
+			fileSystem.writeText(hide_domain_valueobjects_FilePath._new(path),json);
+			this.currentFilePath = path;
+			this.isDirty = false;
+			this.updateTitle();
+			haxe_Log.trace(" [ShaderEditor] Saved to: " + path,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 164, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "saveToFile"});
+		} catch( _g ) {
+			haxe_NativeStackTrace.lastError = _g;
+			var e = haxe_Exception.caught(_g).unwrap();
+			haxe_Log.trace("❌ [ShaderEditor] Save error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 166, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "saveToFile"});
+		}
+	}
+	,onLoad: function() {
+		var _gthis = this;
+		var fileDialog = hide_presentation_ui_react_hooks_UseService.fileDialog();
+		fileDialog.showOpen({ filters : [{ name : "Shader Graph", extensions : ["shadergraph","json"]}]}).handle(function(path) {
+			if(path != null) {
+				_gthis.loadFromFile(path);
+			}
+		});
+	}
+	,loadFromFile: function(path) {
+		try {
+			var fileSystem = hide_presentation_ui_react_hooks_UseService.fileSystem();
+			var json = fileSystem.readText(hide_domain_valueobjects_FilePath._new(path));
+			var data = hide_engine_infrastructure_ShaderGraphSerializer.fromJson(json);
+			hide_engine_infrastructure_ShaderGraphSerializer.deserialize(data,this.graph,this.graphCanvas);
+			this.restoreNodeCallbacks();
+			this.currentFilePath = path;
+			this.isDirty = false;
+			this.updateTitle();
+			this.compileAndApply();
+			haxe_Log.trace("📂 [ShaderEditor] Loaded from: " + path,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 197, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "loadFromFile"});
+		} catch( _g ) {
+			haxe_NativeStackTrace.lastError = _g;
+			var e = haxe_Exception.caught(_g).unwrap();
+			haxe_Log.trace("❌ [ShaderEditor] Load error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 199, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "loadFromFile"});
+		}
+	}
+	,restoreNodeCallbacks: function() {
+		var _gthis = this;
+		var nodes = this.graph._nodes;
+		if(nodes == null) {
+			return;
+		}
+		var _g = 0;
+		while(_g < nodes.length) {
+			var node = [nodes[_g]];
+			++_g;
+			node[0].onConnectionsChange = (function(node) {
+				return function(type,slot,isConnected,link_info,input_info) {
+					haxe_Log.trace("🔗 [ShaderEditor] Connection changed on node: " + Std.string(node[0].title),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 212, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "restoreNodeCallbacks"});
+					_gthis.scheduleRecompile();
+				};
+			})(node);
+		}
+		haxe_Log.trace("✅ [ShaderEditor] Restored callbacks on " + nodes.length + " nodes",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 216, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "restoreNodeCallbacks"});
 	}
 	,recompileTimer: null
 	,setupGraphListeners: function() {
@@ -113877,24 +114042,35 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		if(this.graph == null) {
 			return;
 		}
+		var onGraphChanged = function() {
+			if(_gthis.isUndoRedoInProgress) {
+				return;
+			}
+			_gthis.saveUndoState();
+			if(!_gthis.isDirty) {
+				_gthis.isDirty = true;
+				_gthis.updateTitle();
+			}
+			_gthis.scheduleRecompile();
+		};
 		this.graph.onAfterStep = function() {
 			_gthis.scheduleRecompile();
 		};
 		this.graph.onNodeAdded = function(_) {
-			_gthis.scheduleRecompile();
+			onGraphChanged();
 		};
 		this.graph.onNodeRemoved = function(_) {
-			_gthis.scheduleRecompile();
+			onGraphChanged();
 		};
 		this.graph.onConnectionChange = function(node,action,link) {
-			haxe_Log.trace("🔗 [ShaderEditor] onConnectionChange called!",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 95, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
-			haxe_Log.trace("   node: " + (node != null ? node.title : "null"),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 96, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
-			haxe_Log.trace("   action: " + action,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 97, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
-			haxe_Log.trace("   link: " + (link != null ? "exists" : "null"),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 98, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
-			haxe_Timer.delay($bind(_gthis,_gthis.scheduleRecompile),100);
+			haxe_Log.trace("🔗 [ShaderEditor] onConnectionChange called!",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 243, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
+			haxe_Log.trace("   node: " + (node != null ? node.title : "null"),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 244, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
+			haxe_Log.trace("   action: " + action,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 245, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
+			haxe_Log.trace("   link: " + (link != null ? "exists" : "null"),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 246, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
+			haxe_Timer.delay(onGraphChanged,100);
 		};
 		this.graph.onNodeChanged = function(_) {
-			_gthis.scheduleRecompile();
+			onGraphChanged();
 		};
 	}
 	,scheduleRecompile: function() {
@@ -113904,7 +114080,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		this.recompileTimer = haxe_Timer.delay($bind(this,this.compileAndApply),100);
 	}
 	,compileAndApply: function() {
-		haxe_Log.trace("🔨 [ShaderEditor] Recompiling shader graph...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 212, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("🔨 [ShaderEditor] Recompiling shader graph...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 360, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
 		if(this.graph == null || this.previewRenderer == null) {
 			return;
 		}
@@ -113923,7 +114099,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			}
 		}
 		if(outputNode == null) {
-			haxe_Log.trace("⚠️ [ShaderEditor] No Material Output found",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 228, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+			haxe_Log.trace("⚠️ [ShaderEditor] No Material Output found",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 376, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
 			return;
 		}
 		var albedo = this.evaluateInput(outputNode,0,new haxe_ds_IntMap());
@@ -113931,13 +114107,13 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		var roughness = this.evaluateInput(outputNode,2,new haxe_ds_IntMap());
 		var normal = this.evaluateInput(outputNode,3,new haxe_ds_IntMap());
 		var emissive = this.evaluateInput(outputNode,4,new haxe_ds_IntMap());
-		haxe_Log.trace("📊 [ShaderEditor] PBR Evaluated:",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 239, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
-		haxe_Log.trace("   Albedo: " + albedo,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 240, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
-		haxe_Log.trace("   Metallic: " + metallic,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 241, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
-		haxe_Log.trace("   Roughness: " + roughness,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 242, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
-		haxe_Log.trace("   Emissive: " + emissive,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 243, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("📊 [ShaderEditor] PBR Evaluated:",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 387, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("   Albedo: " + albedo,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 388, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("   Metallic: " + metallic,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 389, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("   Roughness: " + roughness,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 390, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("   Emissive: " + emissive,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 391, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
 		this.previewRenderer.updateMaterial({ albedo : albedo, metallic : metallic, roughness : roughness, emissive : emissive});
-		haxe_Log.trace("✅ [ShaderEditor] PBR Shader updated",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 253, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("✅ [ShaderEditor] PBR Shader updated",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 401, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
 	}
 	,evaluateNode: function(node,outputSlot,visited) {
 		if(node == null) {
@@ -113947,7 +114123,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			visited = new haxe_ds_IntMap();
 		}
 		if(visited.h.hasOwnProperty(node.id)) {
-			haxe_Log.trace("⚠️ [ShaderEditor] Cycle detected at node " + Std.string(node.title),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 268, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "evaluateNode"});
+			haxe_Log.trace("⚠️ [ShaderEditor] Cycle detected at node " + Std.string(node.title),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 416, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "evaluateNode"});
 			return null;
 		}
 		visited.h[node.id] = true;
@@ -113961,7 +114137,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		case "value/vec3":
 			return { x : Reflect.field(node.properties,"x"), y : Reflect.field(node.properties,"y"), z : Reflect.field(node.properties,"z")};
 		default:
-			haxe_Log.trace("⚠️ [ShaderEditor] Unsupported node type: " + Std.string(node.type),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 297, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "evaluateNode"});
+			haxe_Log.trace("⚠️ [ShaderEditor] Unsupported node type: " + Std.string(node.type),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 445, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "evaluateNode"});
 			return null;
 		}
 	}
@@ -114077,7 +114253,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		var _gthis = this;
 		var container = this.litegraphContainerRef.current;
 		if(container == null) {
-			haxe_Log.trace("❌ [ShaderEditor] #litegraph-container not found!",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 377, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+			haxe_Log.trace("❌ [ShaderEditor] #litegraph-container not found!",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 525, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 			return;
 		}
 		haxe_Timer.delay(function() {
@@ -114085,33 +114261,33 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			var w = rect.width | 0;
 			var h = rect.height | 0;
 			if(w < 100 || h < 100) {
-				haxe_Log.trace("⚠️ [ShaderEditor] Container too small: " + w + "x" + h + ", retrying...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 388, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("⚠️ [ShaderEditor] Container too small: " + w + "x" + h + ", retrying...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 536, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 				haxe_Timer.delay(function() {
 					_gthis.initLiteGraph();
 				},100);
 				return;
 			}
-			haxe_Log.trace(" [ShaderEditor] Container size: " + w + "x" + h,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 393, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+			haxe_Log.trace(" [ShaderEditor] Container size: " + w + "x" + h,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 541, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 			_gthis.liteGraphCanvas = window.document.createElement("canvas");
 			_gthis.liteGraphCanvas.id = "shader-graph-canvas";
 			_gthis.liteGraphCanvas.width = w;
 			_gthis.liteGraphCanvas.height = h;
 			container.appendChild(_gthis.liteGraphCanvas);
 			_gthis.liteGraphCanvas.addEventListener("click",function(e) {
-				haxe_Log.trace("🖱️ [ShaderEditor] Canvas clicked",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 406, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("🖱️ [ShaderEditor] Canvas clicked",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 554, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 				if(_gthis.graphCanvas.selected_nodes != null) {
 					var keys = Reflect.fields(_gthis.graphCanvas.selected_nodes);
 					if(keys.length > 0) {
 						var firstKey = keys[0];
 						var selected = Reflect.field(_gthis.graphCanvas.selected_nodes,firstKey);
-						haxe_Log.trace("🎯 [ShaderEditor] Selected after click: " + selected.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 414, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+						haxe_Log.trace("🎯 [ShaderEditor] Selected after click: " + selected.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 562, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 						_gthis.setState({ graph : _gthis.graph, selectedNode : selected});
 					} else {
-						haxe_Log.trace("🔍 [ShaderEditor] No selection after click",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 420, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+						haxe_Log.trace("🔍 [ShaderEditor] No selection after click",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 568, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 						_gthis.setState({ graph : _gthis.graph, selectedNode : null});
 					}
 				} else {
-					haxe_Log.trace("🔍 [ShaderEditor] selected_nodes is null",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 427, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+					haxe_Log.trace("🔍 [ShaderEditor] selected_nodes is null",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 575, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 					_gthis.setState({ graph : _gthis.graph, selectedNode : null});
 				}
 			});
@@ -114123,33 +114299,40 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			_gthis.graphCanvas.resize(w,h);
 			_gthis.setupDragAndDrop(container);
 			_gthis.graphCanvas.onSelectionChange = function(nodes) {
-				haxe_Log.trace("🔍 [ShaderEditor] onSelectionChange called",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 451, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
-				haxe_Log.trace("   nodes type: " + typeof(nodes),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 452, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("🔍 [ShaderEditor] onSelectionChange called",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 599, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("   nodes type: " + typeof(nodes),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 600, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 				if(nodes != null) {
 					var keys = Reflect.fields(nodes);
-					haxe_Log.trace("   selected nodes count: " + keys.length,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 457, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+					haxe_Log.trace("   selected nodes count: " + keys.length,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 605, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 					if(keys.length > 0) {
 						var firstKey = keys[0];
 						var node = Reflect.field(nodes,firstKey);
-						haxe_Log.trace("🎯 [ShaderEditor] Node selected: " + node.title + " (id: " + node.id + ")",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 463, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+						haxe_Log.trace("🎯 [ShaderEditor] Node selected: " + node.title + " (id: " + node.id + ")",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 611, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 						_gthis.setState({ graph : _gthis.graph, selectedNode : node});
 					} else {
-						haxe_Log.trace("🔍 [ShaderEditor] No node selected",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 470, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+						haxe_Log.trace("🔍 [ShaderEditor] No node selected",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 618, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 						_gthis.setState({ graph : _gthis.graph, selectedNode : null});
 					}
 				} else {
-					haxe_Log.trace("🔍 [ShaderEditor] nodes is null",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 477, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+					haxe_Log.trace("🔍 [ShaderEditor] nodes is null",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 625, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 					_gthis.setState({ graph : _gthis.graph, selectedNode : null});
 				}
 			};
 			_gthis.graphCanvas.onNodeMoved = function(node) {
-				haxe_Log.trace("🖱️ [ShaderEditor] Node moved: " + node.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 487, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("🖱️ [ShaderEditor] Node moved: " + node.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 635, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				if(!_gthis.isUndoRedoInProgress) {
+					_gthis.saveUndoState();
+					if(!_gthis.isDirty) {
+						_gthis.isDirty = true;
+						_gthis.updateTitle();
+					}
+				}
 				if(_gthis.graphCanvas.selected_nodes != null) {
 					var keys = Reflect.fields(_gthis.graphCanvas.selected_nodes);
 					if(keys.length > 0) {
 						var firstKey = keys[0];
 						var selected = Reflect.field(_gthis.graphCanvas.selected_nodes,firstKey);
-						haxe_Log.trace("🎯 [ShaderEditor] After move, selected: " + selected.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 495, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+						haxe_Log.trace("🎯 [ShaderEditor] After move, selected: " + selected.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 650, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 						_gthis.setState({ graph : _gthis.graph, selectedNode : selected});
 					}
 				}
@@ -114159,15 +114342,19 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			if(outputNode != null) {
 				outputNode.pos = [w / 2 - 100,h / 2 - 50];
 				outputNode.onConnectionsChange = function(type,slot,isConnected,link_info,input_info) {
-					haxe_Log.trace("🔗 [ShaderEditor] Material Output connection changed: slot " + slot + ", connected: " + (isConnected == null ? "null" : "" + isConnected),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 512, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+					haxe_Log.trace("🔗 [ShaderEditor] Material Output connection changed: slot " + slot + ", connected: " + (isConnected == null ? "null" : "" + isConnected),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 667, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 					_gthis.scheduleRecompile();
 				};
 				_gthis.graph.add(outputNode);
-				haxe_Log.trace("✅ Material Output node created",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 517, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("✅ Material Output node created",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 672, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 			}
+			haxe_Timer.delay(function() {
+				_gthis.saveUndoState();
+				haxe_Log.trace("✅ [ShaderEditor] Initial undo state saved",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 678, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+			},200);
 			_gthis.graph.start();
 			_gthis.state = { graph : _gthis.graph, selectedNode : null};
-			haxe_Log.trace("✅ [ShaderEditor] LiteGraph initialized",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 527, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+			haxe_Log.trace("✅ [ShaderEditor] LiteGraph initialized",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 690, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 		},100);
 	}
 	,setupDragAndDrop: function(container) {
@@ -114185,11 +114372,11 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 				if(node != null) {
 					node.pos = [graphPos[0],graphPos[1]];
 					node.onConnectionsChange = function(type,slot,isConnected,link_info,input_info) {
-						haxe_Log.trace("🔗 [ShaderEditor] Connection changed on node: " + node.title + ", slot: " + slot + ", connected: " + (isConnected == null ? "null" : "" + isConnected),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 550, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupDragAndDrop"});
+						haxe_Log.trace("🔗 [ShaderEditor] Connection changed on node: " + node.title + ", slot: " + slot + ", connected: " + (isConnected == null ? "null" : "" + isConnected),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 713, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupDragAndDrop"});
 						_gthis.scheduleRecompile();
 					};
 					_gthis.graph.add(node);
-					haxe_Log.trace("✅ Node created: " + nodeType,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 555, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupDragAndDrop"});
+					haxe_Log.trace("✅ Node created: " + nodeType,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 718, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupDragAndDrop"});
 				}
 			}
 		});
@@ -114289,7 +114476,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
             this.color = '#4a9';  // выделяем визуально
         });
 		hide_infrastructure_external_litegraph_LiteGraph.registerNodeType("material/output",OutputNode);
-		haxe_Log.trace("✅ [ShaderEditor] Shader nodes registered",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 682, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "registerShaderNodes"});
+		haxe_Log.trace("✅ [ShaderEditor] Shader nodes registered",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 845, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "registerShaderNodes"});
 	}
 	,render: function() {
 		var tmp = this.renderToolbar();
@@ -114297,12 +114484,18 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		return React.createElement("div",{ style : { display : "flex", height : "100%", flexDirection : "column"}},tmp,tmp1);
 	}
 	,renderToolbar: function() {
-		var tmp = React.createElement("button",{ onClick : $bind(this,this.onCompile)},"Compile");
-		var tmp1 = React.createElement("button",{ onClick : $bind(this,this.onSave)},"Save");
-		var tmp2 = React.createElement("button",{ onClick : $bind(this,this.onExportHLSL)},"Export HLSL");
-		var tmp3 = React.createElement("div",{ style : { flex : 1}});
-		var tmp4 = React.createElement("button",{ onClick : $bind(this,this.onClearGraph)},"Clear Graph");
-		return React.createElement("div",{ style : { padding : "8px", background : "#2a2a2a", borderBottom : "1px solid #1a1a1a", display : "flex", gap : "8px"}},tmp,tmp1,tmp2,tmp3,tmp4);
+		var tmp = React.createElement("button",{ onClick : $bind(this,this.onNew)},"New");
+		var tmp1 = React.createElement("button",{ onClick : $bind(this,this.onLoad)},"Load");
+		var tmp2 = React.createElement("button",{ onClick : $bind(this,this.onSave)},"Save");
+		var tmp3 = React.createElement("button",{ onClick : $bind(this,this.onSaveAs)},"Save As");
+		var tmp4 = React.createElement("div",{ style : { width : "1px", background : "#444"}});
+		var tmp5 = React.createElement("button",{ onClick : $bind(this,this.onUndo)},"Undo");
+		var tmp6 = React.createElement("button",{ onClick : $bind(this,this.onRedo)},"Redo");
+		var tmp7 = React.createElement("div",{ style : { flex : 1}});
+		var tmp8 = React.createElement("button",{ onClick : $bind(this,this.onCompile)},"Compile");
+		var tmp9 = React.createElement("button",{ onClick : $bind(this,this.onExportHLSL)},"Export HLSL");
+		var tmp10 = React.createElement("button",{ onClick : $bind(this,this.onClearGraph)},"Clear");
+		return React.createElement("div",{ style : { padding : "8px", background : "#2a2a2a", borderBottom : "1px solid #1a1a1a", display : "flex", gap : "8px"}},tmp,tmp1,tmp2,tmp3,tmp4,tmp5,tmp6,tmp7,tmp8,tmp9,tmp10);
 	}
 	,renderMainArea: function() {
 		var tmp = this.renderNodePalette();
@@ -114315,7 +114508,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 	}
 	,renderNodePalette: function() {
 		return React.createElement(hide_presentation_ui_react_components_ShaderNodePalette,{ onNodeDragStart : function(nodeType) {
-			haxe_Log.trace("📦 Dragging node: " + nodeType,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 726, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "renderNodePalette"});
+			haxe_Log.trace("📦 Dragging node: " + nodeType,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 895, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "renderNodePalette"});
 		}});
 	}
 	,renderRightPanel: function() {
@@ -114334,25 +114527,129 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		return React.createElement("div",{ style : { flex : 1, padding : "10px", background : "#2a2a2a", overflowY : "auto"}},tmp,tmp1);
 	}
 	,onNodePropertyChanged: function() {
-		haxe_Log.trace("🔄 [ShaderEditor] Node property changed, recompiling...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 808, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onNodePropertyChanged"});
+		if(this.isUndoRedoInProgress) {
+			return;
+		}
+		this.saveUndoState();
+		haxe_Log.trace("🔄 [ShaderEditor] Node property changed, recompiling...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 980, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onNodePropertyChanged"});
+		if(!this.isDirty) {
+			this.isDirty = true;
+			this.updateTitle();
+		}
 		this.compileAndApply();
 	}
 	,renderPropertiesContent: function() {
 		return React.createElement(hide_presentation_ui_react_components_NodePropertiesPanel,{ selectedNode : this.state.selectedNode});
 	}
-	,onCompile: function() {
-		haxe_Log.trace("🔨 Compile shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 819, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onCompile"});
+	,updateTitle: function() {
+		var filename = this.currentFilePath != null ? this.currentFilePath.split("/").pop() : "Untitled";
+		var dirty = this.isDirty ? " ●" : "";
+		var title = "" + filename + dirty + " - Shader Editor";
+		hide_presentation_ui_react_hooks_UseService.windowService().setTitle(title);
+		haxe_Log.trace("🏷️ [ShaderEditor] Title: " + title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 999, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "updateTitle"});
 	}
-	,onSave: function() {
-		haxe_Log.trace("💾 Save shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 824, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onSave"});
+	,onNew: function() {
+		var _gthis = this;
+		if(this.isDirty) {
+			var confirmed = window.confirm("Unsaved changes will be lost. Continue?");
+			if(!confirmed) {
+				return;
+			}
+		}
+		this.graph.clear();
+		this.currentFilePath = null;
+		this.isDirty = false;
+		this.updateTitle();
+		var w = this.liteGraphCanvas.width;
+		var h = this.liteGraphCanvas.height;
+		var outputNode = hide_infrastructure_external_litegraph_LiteGraph.createNode("material/output");
+		if(outputNode != null) {
+			outputNode.pos = [w / 2 - 100,h / 2 - 50];
+			outputNode.onConnectionsChange = function(type,slot,isConnected,link_info,input_info) {
+				_gthis.scheduleRecompile();
+			};
+			this.graph.add(outputNode);
+		}
+		haxe_Log.trace("🆕 [ShaderEditor] New graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1023, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onNew"});
+	}
+	,onUndo: function() {
+		if(this.undoStack.length == 0) {
+			haxe_Log.trace("⚠️ [ShaderEditor] Nothing to undo",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1028, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onUndo"});
+			return;
+		}
+		try {
+			this.isUndoRedoInProgress = true;
+			this.redoStack.push(JSON.stringify(this.graph.serialize()));
+			var json = this.undoStack.pop();
+			this.graph.configure(JSON.parse(json));
+			this.restoreNodeCallbacks();
+			if(!this.isDirty) {
+				this.isDirty = true;
+				this.updateTitle();
+			}
+			this.compileAndApply();
+			haxe_Log.trace("↶ Undo (" + this.undoStack.length + " states remaining)",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1049, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onUndo"});
+		} catch( _g ) {
+			haxe_NativeStackTrace.lastError = _g;
+			var e = haxe_Exception.caught(_g).unwrap();
+			haxe_Log.trace("❌ [ShaderEditor] Undo error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1051, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onUndo"});
+		}
+		this.isUndoRedoInProgress = false;
+	}
+	,saveUndoState: function() {
+		if(this.graph == null || this.isUndoRedoInProgress) {
+			return;
+		}
+		try {
+			var json = JSON.stringify(this.graph.serialize());
+			if(this.undoStack.length > 0 && this.undoStack[this.undoStack.length - 1] == json) {
+				return;
+			}
+			this.undoStack.push(json);
+			if(this.undoStack.length > this.maxUndoSteps) {
+				this.undoStack.shift();
+			}
+			this.redoStack = [];
+		} catch( _g ) {
+			haxe_NativeStackTrace.lastError = _g;
+			var e = haxe_Exception.caught(_g).unwrap();
+			haxe_Log.trace("⚠️ [ShaderEditor] Failed to save undo state: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1081, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "saveUndoState"});
+		}
+	}
+	,onRedo: function() {
+		if(this.redoStack.length == 0) {
+			haxe_Log.trace("⚠️ [ShaderEditor] Nothing to redo",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1087, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onRedo"});
+			return;
+		}
+		try {
+			this.isUndoRedoInProgress = true;
+			this.undoStack.push(JSON.stringify(this.graph.serialize()));
+			var json = this.redoStack.pop();
+			this.graph.configure(JSON.parse(json));
+			this.restoreNodeCallbacks();
+			if(!this.isDirty) {
+				this.isDirty = true;
+				this.updateTitle();
+			}
+			this.compileAndApply();
+			haxe_Log.trace("↷ Redo (" + this.redoStack.length + " states remaining)",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1108, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onRedo"});
+		} catch( _g ) {
+			haxe_NativeStackTrace.lastError = _g;
+			var e = haxe_Exception.caught(_g).unwrap();
+			haxe_Log.trace("❌ [ShaderEditor] Redo error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1110, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onRedo"});
+		}
+		this.isUndoRedoInProgress = false;
+	}
+	,onCompile: function() {
+		haxe_Log.trace("🔨 Compile shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1119, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onCompile"});
 	}
 	,onExportHLSL: function() {
-		haxe_Log.trace("📤 Export HLSL",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 829, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onExportHLSL"});
+		haxe_Log.trace("📤 Export HLSL",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1125, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onExportHLSL"});
 	}
 	,onClearGraph: function() {
 		if(this.graph != null) {
 			this.graph.clear();
-			haxe_Log.trace("🧹 Graph cleared",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 836, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onClearGraph"});
+			haxe_Log.trace("🧹 Graph cleared",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1132, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onClearGraph"});
 		}
 	}
 	,componentWillUnmount: function() {
@@ -114571,6 +114868,12 @@ hide_presentation_ui_react_hooks_UseService.shaderPreviewRenderer = function() {
 };
 hide_presentation_ui_react_hooks_UseService.viewportService = function() {
 	return hide_presentation_Ide.inst.get_viewportService();
+};
+hide_presentation_ui_react_hooks_UseService.fileSystem = function() {
+	return hide_presentation_Ide.inst.get_fileSystem();
+};
+hide_presentation_ui_react_hooks_UseService.fileDialog = function() {
+	return hide_presentation_Ide.inst.get_fileDialog();
 };
 var hide_shared_events_ErrorOccurred = function(context,error) {
 	this.context = context;
@@ -116776,31 +117079,31 @@ hxd_Math.colorLerp = function(c1,c2,k) {
 	return a << 24 | r << 16 | g << 8 | b;
 };
 hxd_Math.angle = function(da) {
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	return da;
 };
 hxd_Math.angleLerp = function(a,b,k) {
 	var da = b - a;
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	return a + da * k;
 };
 hxd_Math.angleMove = function(a,b,max) {
 	var da = b - a;
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	var da1 = da;
 	if(da1 > -max && da1 < max) {
@@ -120002,7 +120305,7 @@ var hxd_clipper__$Clipper_ClipperBase = function() {
 $hxClasses["hxd.clipper._Clipper.ClipperBase"] = hxd_clipper__$Clipper_ClipperBase;
 hxd_clipper__$Clipper_ClipperBase.__name__ = "hxd.clipper._Clipper.ClipperBase";
 hxd_clipper__$Clipper_ClipperBase.nearZero = function(v) {
-	if(v > -1e-020) {
+	if(v > -1e-20) {
 		return v < 1E-20;
 	} else {
 		return false;
@@ -123417,7 +123720,7 @@ var hxd_clipper_ClipperOffset = function(miterLimit,arcTolerance) {
 	if(miterLimit == null) {
 		miterLimit = 2.0;
 	}
-	this.two_pi = 6.2831853071795862;
+	this.two_pi = 6.28318530717958623;
 	this.def_arc_tolerance = 0.25;
 	this.MiterLimit = miterLimit;
 	this.ArcTolerance = arcTolerance;
@@ -123550,7 +123853,7 @@ hxd_clipper_ClipperOffset.prototype = {
 		var polygons = null;
 		this.m_destPolys = polygons == null ? [] : polygons;
 		this.m_delta = delta;
-		if(delta > -1e-020 && delta < 1E-20) {
+		if(delta > -1e-20 && delta < 1E-20) {
 			var _g = 0;
 			var _g1 = this.m_polyNodes.childs;
 			while(_g < _g1.length) {
@@ -127178,7 +127481,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 			x = 0.;
 		}
 		var P1 = new h3d_VectorImpl(x,y,z);
-		var F = 0.017453292519943295;
+		var F = 0.0174532925199432955;
 		var allTimes = new haxe_ds_IntMap();
 		if(animNode != null) {
 			var _g = 0;
@@ -127226,7 +127529,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 					var values = hxd_fmt_fbx_FbxTools.getFloats(hxd_fmt_fbx_FbxTools.get(dataCurves[0],"KeyValueFloat"));
 					switch(cname) {
 					case "FieldOfView":
-						var ratio = 1.7777777777777777;
+						var ratio = 1.77777777777777768;
 						var fov = 45.;
 						var _g4 = 0;
 						var _g5 = hxd_fmt_fbx_FbxTools.getAll(this.getChild(model,"NodeAttribute"),"Properties70.P");
@@ -127951,7 +128254,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 			return d;
 		}
 		d = new hxd_fmt_fbx_DefaultMatrixes();
-		var F = 0.017453292519943295;
+		var F = 0.0174532925199432955;
 		var _g = 0;
 		var _g1 = hxd_fmt_fbx_FbxTools.getAll(model,"Properties70.P");
 		while(_g < _g1.length) {
@@ -131555,7 +131858,7 @@ hxd_fmt_fbx_HMDOut.prototype = $extend(hxd_fmt_fbx_BaseLibrary.prototype,{
 			if(o.model != null && hxd_fmt_fbx_FbxTools.getType(o.model) == "Camera") {
 				var props = this.getChild(o.model,"NodeAttribute");
 				var fov = 45.;
-				var ratio = 1.7777777777777777;
+				var ratio = 1.77777777777777768;
 				var _g1 = 0;
 				var _g2 = hxd_fmt_fbx_FbxTools.getAll(props,"Properties70.P");
 				while(_g1 < _g2.length) {
@@ -178172,7 +178475,7 @@ h3d_scene_DynamicJointData.tmpVec2 = (function($this) {
 }(this));
 h3d_scene_DynamicJointData.tmpQ = new h3d_Quat();
 h3d_scene_DynamicJointData.tmpQ2 = new h3d_Quat();
-h3d_scene_Skin.FIXED_DT = 0.016666666666666666;
+h3d_scene_Skin.FIXED_DT = 0.0166666666666666664;
 h3d_scene_Skin.MIN_SHADER_BONES = 32;
 h3d_scene_Skin.TMP_MAT = new h3d_MatrixImpl();
 h3d_scene_pbr_IrradBase.SRC = "HXSMF2gzZC5zY2VuZS5wYnIuSXJyYWRCYXNlCwEFaW5wdXQNAQICCHBvc2l0aW9uBQoBAQADAnV2BQoBAQABAAAEBWZsaXBZAwIAAAUGb3V0cHV0DQICBghwb3NpdGlvbgUMBAUABwVjb2xvcgUMBAUABAAACApwaXhlbENvbG9yBQwEAAAJDGNhbGN1bGF0ZWRVVgUKBAAACgtzYW1wbGVzQml0cwECAAEAAAAAAAsIX19pbml0X18OBgAADAZ2ZXJ0ZXgOBgAADQxfcmV2ZXJzZWJpdHMOBgAADgpoYW1tZXJzbGV5DgYAAA8TaW1wb3J0YW5jZVNhbXBsZUdHWA4GAAAFAgsAAAUCBgQCBwUMAggFDAUMBgQCCQUKAgMFCgUKAAAMAAAFAQYEAgYFDAkDKw4ECgICBQoAAAMGAQoCAgUKBAADAgQDAwEDAAAAAAAAAAADAQMAAAAAAADwPwMFDAUMAAMNARABaQEEAAABBQYIEQFyAQQAAAYMBAYQAhABAQIQAAAAAQEBBAYSAhABAQIQAAAAAQEBAQAGBAIRAQYMBAYQBAYLAhEBAQL/AP8AAQEBAQIIAAAAAQEBBAYSBAYLAhEBAQIA/wD/AQEBAQIIAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQIPDw8PAQEBAQIEAAAAAQEBBAYSBAYLAhEBAQLw8PDwAQEBAQIEAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQIzMzMzAQEBAQICAAAAAQEBBAYSBAYLAhEBAQLMzMzMAQEBAQICAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQJVVVVVAQEBAQIBAAAAAQEBBAYSBAYLAhEBAQKqqqqqAQEBAQIBAAAAAQEBAQENAhEBAAADDgISAWkBBAAAEwNtYXgBBAAABQoFAggUAnJpAwQAAAYBCQMnDgEJAg0OAQISAQEDAQMAAAAAAADwPQMDAA0JAykOAgYCCQMnDgECEgEDCQMnDgECEwEDAwIUAwUKAAADDwMVCXJvdWdobmVzcwMEAAAWAXAFCgQAABcBbgULBAAABQsFCQgYAWEDBAAABgECFQMCFQMDAAgZA3BoaQMEAAAGAQYBAQMAAAAAAAAAQAMBAxgtRFT7IQlAAwMKAhYFCgAAAwMACBoEY29zVAMEAAAJAxUOAgkDDQ4BBgIEBgMBAwAAAAAAAPA/AwoCFgUKBAADAwMEBgABAwAAAAAAAPA/AwYBBAYDBgECGAMCGAMDAQMAAAAAAADwPwMDAwoCFgUKBAADAwMDAwMBAwAAAAAAAPA/AwMACBsEc2luVAMEAAAJAw0OAQYDAQMAAAAAAADwPwMGAQIaAwIaAwMDAwAIHARsdGFuBQsEAAAJAyoOAwYBAhsDCQMDDgECGQMDAwYBAhsDCQMCDgECGQMDAwIaAwULAAgdAnVwBQsEAAALBgkJAw8OAQoCFwULCAADAwEDK4cW2c737z8DAgkDKg4DAQMAAAAAAAAAAAMBAwAAAAAAAAAAAwEDAAAAAAAA8D8DBQsJAyoOAwEDAAAAAAAA8D8DAQMAAAAAAAAAAAMBAwAAAAAAAAAAAwULBQsACB4EdGFuWAULBAAACQMgDgEJAx8OAgIdBQsCFwULBQsFCwAIHwR0YW5ZBQsEAAAJAyAOAQkDHw4CAhcFCwIeBQsFCwULAA0JAyAOAQQGAAYABgECHgULCgIcBQsAAAMFCwYBAh8FCwoCHAULBAADBQsFCwYBAhcFCwoCHAULCAADBQsFCwULBQsAAA";
@@ -178435,6 +178738,7 @@ haxe_zip_InflateImpl.DIST_BASE_VAL_TBL = [1,2,3,4,5,7,9,13,17,25,33,49,65,97,129
 haxe_zip_InflateImpl.CODE_LENGTHS_POS = [16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];
 haxe_zip_InflateImpl.FIXED_HUFFMAN = null;
 hide_engine_infrastructure_HeapsRenderer.isSystemInitialized = false;
+hide_engine_infrastructure_ShaderGraphSerializer.VERSION = "1.0";
 hide_presentation_ui_react_BaseReactComponent.displayName = "BaseReactComponent";
 hide_presentation_ui_react_components_ComponentIcon.displayName = "ComponentIcon";
 hide_presentation_ui_react_components_ContextMenu.displayName = "ContextMenu";
@@ -178712,8 +179016,8 @@ hxd_impl_BufferFlags.UniformReadWrite = 3;
 hxd_impl_BufferFlags.Uniform = 4;
 hxd_poly2tri_Constants.kAlpha = 0.3;
 hxd_poly2tri_Constants.EPSILON = 1e-24;
-hxd_poly2tri_Constants.PI_2 = 1.5707963267948966;
-hxd_poly2tri_Constants.PI_3div4 = 2.3561944901923448;
+hxd_poly2tri_Constants.PI_2 = 1.57079632679489656;
+hxd_poly2tri_Constants.PI_3div4 = 2.35619449019234484;
 hxd_poly2tri_Orientation.CW = 1;
 hxd_poly2tri_Orientation.CCW = -1;
 hxd_poly2tri_Orientation.COLLINEAR = 0;
