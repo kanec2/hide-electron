@@ -39,7 +39,7 @@
 # --macro include("hide.prefab")    # legacy Hide IDE
 # --macro include("hide.tools")     # legacy Hide IDE
 # --macro include("hrt")            # Hide runtime
-
+-p res
 -dce no
 --debug
 -D no-deprecation-warnings

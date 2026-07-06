@@ -57,9 +57,11 @@ class ViewportService implements Service {
             // ✅ КОПИРУЕМ ТОЛЬКО ЕСЛИ НУЖНО (например, раз в 10 кадров)
             // ИЛИ вообще не копируем — canvas обновляется сам через WebGL
             // Если нужно именно blit — делайте реже:
-            if (vp.frameCount % 10 == 0) {  // Каждые 10 кадров
+            if (vp.frameCount % 2 == 0) {  // Каждые 10 кадров
                 vp.blitToCanvas();
             }
+            // ✅ Копируем в canvas через GPU (без CPU!)
+            //vp.renderToCanvas(engine);
             vp.frameCount++;
         }
     }

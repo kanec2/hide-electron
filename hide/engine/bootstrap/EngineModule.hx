@@ -31,6 +31,8 @@ class EngineModule {
         collection.addSingleton(ViewportService);  // ← НОВОЕ
         collection.addSingleton(SceneViewportController); // ← НОВОЕ
         collection.addSingleton(ShaderPreviewRenderer); // ← НОВОЕ
+        // initialize embeded ressources
+		hxd.Res.initEmbed();
         // IRenderer и IEngineResourceLoader НЕ регистрируем здесь —
         // они платформенно-зависимые, их регистрирует AppModule IDE
     }

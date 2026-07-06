@@ -23,6 +23,20 @@ class ShaderPreviewRenderer implements Service {
     // ✅ НОВОЕ: храним текущие параметры
     private var currentShaderData:ShaderData;
 
+    // ✅ Orbit Camera параметры
+    private var theta:Float = 0.5;      // Горизонтальный угол (yaw)
+    private var phi:Float = 0.3;        // Вертикальный угол (pitch)
+    private var distance:Float = 3.5;   // Расстояние от центра
+    private var isDragging:Bool = false;
+    private var lastMouseX:Float = 0;
+    private var lastMouseY:Float = 0;
+    
+    // ✅ Ограничения
+    private var minDistance:Float = 1.5;
+    private var maxDistance:Float = 10.0;
+    private var minPhi:Float = -1.5;    // ~-86 градусов
+    private var maxPhi:Float = 1.5;     // ~86 градусов
+
     public function new() {
         // ✅ ВАЖНО: устанавливаем PBR MaterialSetup ДО создания сцены
         h3d.mat.MaterialSetup.current = new h3d.mat.PbrMaterialSetup();
@@ -75,6 +89,8 @@ class ShaderPreviewRenderer implements Service {
         s3d.camera.up.set(0, 1, 0);  // ✅ Явно установи up вектор
         s3d.camera.update();
 
+        // ✅ Начальная позиция камеры через orbit параметры
+        updateCameraPosition();
         // Свет
         // ✅ PBR Point Light вместо DirLight
         /*var light = new h3d.scene.pbr.PointLight(s3d);
@@ -151,7 +167,90 @@ class ShaderPreviewRenderer implements Service {
         
         return envMap;
     }
+/**
+     * ✅ НОВОЕ: Подключает управление камерой к canvas
+     * Вызывается из ShaderEditorPanel после регистрации viewport
+     */
+    public function setupOrbitControls(canvas:js.html.CanvasElement):Void {
+        trace("🎮 [ShaderPreview] Setting up orbit controls");
+        
+        // Mouse down - начало вращения
+        canvas.addEventListener("mousedown", function(e:js.html.MouseEvent) {
+            if (e.button == 0) { // Только левая кнопка
+                isDragging = true;
+                lastMouseX = e.clientX;
+                lastMouseY = e.clientY;
+                canvas.style.cursor = "grabbing";
+            }
+        });
+        
+        // Mouse move - вращение
+        canvas.addEventListener("mousemove", function(e:js.html.MouseEvent) {
+            if (!isDragging) return;
+            
+            var dx = e.clientX - lastMouseX;
+            var dy = e.clientY - lastMouseY;
+            
+            // Чувствительность вращения
+            var sensitivity = 0.01;
+            theta -= dx * sensitivity;
+            phi += dy * sensitivity;
+            
+            // Ограничиваем phi чтобы не было gimbal lock
+            phi = Math.max(minPhi, Math.min(maxPhi, phi));
+            
+            lastMouseX = e.clientX;
+            lastMouseY = e.clientY;
+            
+            updateCameraPosition();
+        });
+        
+        // Mouse up - конец вращения
+        canvas.addEventListener("mouseup", function(e:js.html.MouseEvent) {
+            isDragging = false;
+            canvas.style.cursor = "grab";
+        });
+        
+        // Mouse leave - сброс dragging
+        canvas.addEventListener("mouseleave", function(e:js.html.MouseEvent) {
+            isDragging = false;
+            canvas.style.cursor = "grab";
+        });
+        
+        // Wheel - зум
+        canvas.addEventListener("wheel", function(e:js.html.WheelEvent) {
+            e.preventDefault();
+            
+            var zoomSpeed = 0.005;
+            distance += e.deltaY * zoomSpeed;
+            distance = Math.max(minDistance, Math.min(maxDistance, distance));
+            
+            updateCameraPosition();
+        }, { passive: false });
+        
+        // Начальный курсор
+        canvas.style.cursor = "grab";
+        
+        trace("✅ [ShaderPreview] Orbit controls attached");
+    }
 
+    /**
+     * ✅ Обновляет позицию камеры на основе theta, phi, distance
+     */
+    private function updateCameraPosition():Void {
+        if (s3d == null) return;
+        
+        var cam = s3d.camera;
+        
+        // Сферические → Декартовы координаты
+        var x = distance * Math.cos(phi) * Math.sin(theta);
+        var y = distance * Math.sin(phi);
+        var z = distance * Math.cos(phi) * Math.cos(theta);
+        
+        cam.pos.set(x, y, z);
+        cam.target.set(0, 0, 0); // Смотрим в центр (где сфера)
+        cam.update();
+    }
     /**
      * Применяет скомпилированные данные графа к материалу.
      * Вызывается из React-компонента при изменении графа.

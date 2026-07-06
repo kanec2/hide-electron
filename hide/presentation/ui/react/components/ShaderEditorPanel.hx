@@ -63,6 +63,11 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                         vp.canvas.style.height = "100%";
                         vp.canvas.style.display = "block";
                         vp.canvas.style.imageRendering = "pixelated";
+
+                        // ✅ НОВОЕ: Подключаем orbit controls к canvas viewport'а
+                        previewRenderer.setupOrbitControls(vp.canvas);
+                        
+                        trace('✅ [ShaderPanel] Canvas appended with orbit controls');
                     }
                 }
             }, 16);

@@ -17,14 +17,15 @@ class Viewport {
     public var width:Int;
     public var height:Int;
     public var frameCount:Int = 0;  // ✅ НОВОЕ ПОЛЕ
+
     public function new(id:String, scene:Scene, width:Int, height:Int) {
         this.id = id;
         this.scene = scene;
         this.width = width;
         this.height = height;
         
-        var renderWidth = width ;
-        var renderHeight = height ;
+        var renderWidth = width;
+        var renderHeight = height;
         // Создаём RenderTexture (GPU-side)
         // ✅ ИСПОЛЬЗУЕМ RGBA32F для лучшего качества (float precision)
         // Или RGBA16U для хорошего качества + производительности
@@ -55,11 +56,12 @@ class Viewport {
      * Копирует RenderTexture → Canvas (пока через CPU)
      */
     public function blitToCanvas():Void {
-        // ✅ BLIT РАЗ В 30 КАДРОВ (вместо 5!)
-        if (frameCount % 30 != 0) {
+
+        // ✅ Blit раз в 2 кадра для плавности
+        /*if (frameCount % 2 != 0) {
             frameCount++;
             return;
-        }
+        }*/
         var pixels = renderTarget.capturePixels();
     
         // ✅ Диагностика: проверяем, есть ли реальные данные
@@ -81,14 +83,16 @@ class Viewport {
         var data = imageData.data;
         
         var len = width * height;
-        for (i in 0...len) {
-            var srcIdx = i * 4;
-            var dstIdx = i * 4;
-            // ✅ BGRA → RGBA конвертация
+        // ✅ Оптимизированная конвертация BGRA → RGBA
+        var i = 0;
+        while (i < len) {
+            var srcIdx = i << 2;  // i * 4 (bit shift быстрее)
+            var dstIdx = i << 2;
             data[dstIdx]     = bytes.get(srcIdx + 2); // R
             data[dstIdx + 1] = bytes.get(srcIdx + 1); // G
             data[dstIdx + 2] = bytes.get(srcIdx);     // B
             data[dstIdx + 3] = bytes.get(srcIdx + 3); // A
+            i++;
         }
         
         ctx.putImageData(imageData, 0, 0);
