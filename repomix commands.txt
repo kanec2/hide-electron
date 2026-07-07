@@ -191,3 +191,5 @@ Uint8ClampedArray напрямую
 ✅ UI остаётся отзывчивым — blit не блокирует render loop
 ✅ Сфера чёткая — Nearest filter + pixelated CSS уже стоят
 ⚠️ Важно: первые ~100мс после открытия сфера будет без environment (просто с ambient + dir light). Потом асинхронно подгрузится environment и появятся отражения. Это нормальное поведение — лучше чем зависание на 2-3 секунды.
+
+https://deepwiki.com/motion-twin/heaps/5.1-shader-architecture

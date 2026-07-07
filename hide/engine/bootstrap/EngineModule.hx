@@ -11,6 +11,7 @@ import hide.engine.domain.services.IResourceLoader;
 import hide.engine.domain.services.IEngineEventBus;
 import hide.engine.infrastructure.SceneServiceImpl;
 import hide.engine.infrastructure.HeapsRenderer;
+import hide.engine.infrastructure.HeapsResourceLoader;
 import hide.engine.infrastructure.EngineEventBusImpl;
 // Конкретные реализации выбираются в AppModule IDE
 
@@ -32,6 +33,8 @@ class EngineModule {
         collection.addSingleton(SceneViewportController); // ← НОВОЕ
         collection.addSingleton(ShaderPreviewRenderer); // ← НОВОЕ
         // initialize embeded ressources
+        // ✅ НОВОЕ: ResourceLoader
+        collection.addSingleton(IResourceLoader, HeapsResourceLoader);
 		hxd.Res.initEmbed();
         // IRenderer и IEngineResourceLoader НЕ регистрируем здесь —
         // они платформенно-зависимые, их регистрирует AppModule IDE

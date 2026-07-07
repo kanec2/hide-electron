@@ -9397,7 +9397,7 @@ h2d_col_Polygon.makeCircle = function(x,y,radius,npoints) {
 	if(npoints < 3) {
 		npoints = 3;
 	}
-	var angle = 6.28318530717958623 / npoints;
+	var angle = 6.2831853071795862 / npoints;
 	var points = [];
 	var _g = 0;
 	var _g1 = npoints;
@@ -17250,18 +17250,18 @@ h3d_VectorImpl.prototype = {
 		if(saturation == null) {
 			saturation = 1.;
 		}
-		var r = hue % 6.28318530717958623;
-		hue = r >= 0 ? r : r + 6.28318530717958623;
+		var r = hue % 6.2831853071795862;
+		hue = r >= 0 ? r : r + 6.2831853071795862;
 		var f = 2 * brightness - 1;
 		var c = (1 - (f < 0 ? -f : f)) * saturation;
 		var f = hue * 3 / 3.14159265358979323 % 2. - 1;
 		var x = c * (1 - (f < 0 ? -f : f));
 		var m = brightness - c / 2;
-		if(hue < 1.04719755119659763) {
+		if(hue < 1.0471975511965976) {
 			this.x = c;
 			this.y = x;
 			this.z = 0;
-		} else if(hue < 2.09439510239319526) {
+		} else if(hue < 2.0943951023931953) {
 			this.x = x;
 			this.y = c;
 			this.z = 0;
@@ -17269,11 +17269,11 @@ h3d_VectorImpl.prototype = {
 			this.x = 0;
 			this.y = c;
 			this.z = x;
-		} else if(hue < 4.18879020478639053) {
+		} else if(hue < 4.1887902047863905) {
 			this.x = 0;
 			this.y = x;
 			this.z = c;
-		} else if(hue < 5.23598775598298882) {
+		} else if(hue < 5.2359877559829888) {
 			this.x = x;
 			this.y = 0;
 			this.z = c;
@@ -17319,7 +17319,7 @@ h3d_VectorImpl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.04719755119659763;
+			h *= 1.0471975511965976;
 		}
 		var x = h;
 		var y = s;
@@ -17362,7 +17362,7 @@ h3d_VectorImpl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.04719755119659763;
+			h *= 1.0471975511965976;
 		}
 		var x = h;
 		var y = s;
@@ -17856,18 +17856,18 @@ h3d_Vector4Impl.prototype = {
 		if(saturation == null) {
 			saturation = 1.;
 		}
-		var r = hue % 6.28318530717958623;
-		hue = r >= 0 ? r : r + 6.28318530717958623;
+		var r = hue % 6.2831853071795862;
+		hue = r >= 0 ? r : r + 6.2831853071795862;
 		var f = 2 * brightness - 1;
 		var c = (1 - (f < 0 ? -f : f)) * saturation;
 		var f = hue * 3 / 3.14159265358979323 % 2. - 1;
 		var x = c * (1 - (f < 0 ? -f : f));
 		var m = brightness - c / 2;
-		if(hue < 1.04719755119659763) {
+		if(hue < 1.0471975511965976) {
 			this.x = c;
 			this.y = x;
 			this.z = 0;
-		} else if(hue < 2.09439510239319526) {
+		} else if(hue < 2.0943951023931953) {
 			this.x = x;
 			this.y = c;
 			this.z = 0;
@@ -17875,11 +17875,11 @@ h3d_Vector4Impl.prototype = {
 			this.x = 0;
 			this.y = c;
 			this.z = x;
-		} else if(hue < 4.18879020478639053) {
+		} else if(hue < 4.1887902047863905) {
 			this.x = 0;
 			this.y = x;
 			this.z = c;
-		} else if(hue < 5.23598775598298882) {
+		} else if(hue < 5.2359877559829888) {
 			this.x = x;
 			this.y = 0;
 			this.z = c;
@@ -17927,7 +17927,7 @@ h3d_Vector4Impl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.04719755119659763;
+			h *= 1.0471975511965976;
 		}
 		var x = h;
 		var y = s;
@@ -17974,7 +17974,7 @@ h3d_Vector4Impl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.04719755119659763;
+			h *= 1.0471975511965976;
 		}
 		var x = h;
 		var y = s;
@@ -31413,15 +31413,15 @@ h3d_col_OrientedBounds.prototype = $extend(h3d_col_Collider.prototype,{
 		var rpz = dx * this.zx + dy * this.zy + dz * this.zz;
 		var tmp;
 		var f = this.hx;
-		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-10) {
+		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-010) {
 			var f = this.hy;
-			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-10;
+			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-010;
 		} else {
 			tmp = false;
 		}
 		if(tmp) {
 			var f = this.hz;
-			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-10;
+			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-010;
 		} else {
 			return false;
 		}
@@ -31441,15 +31441,15 @@ h3d_col_OrientedBounds.prototype = $extend(h3d_col_Collider.prototype,{
 		var rpz = dx * this.zx + dy * this.zy + dz * this.zz;
 		var tmp;
 		var f = this.hx;
-		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-10 - s.r) {
+		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-010 - s.r) {
 			var f = this.hy;
-			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-10 - s.r;
+			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-010 - s.r;
 		} else {
 			tmp = false;
 		}
 		if(tmp) {
 			var f = this.hz;
-			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-10 - s.r;
+			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-010 - s.r;
 		} else {
 			return false;
 		}
@@ -70553,7 +70553,7 @@ h3d_scene_FPSCameraController.prototype = $extend(h3d_scene_CameraController.pro
 		var ty = this.targetOffset.y + this.curPos.x / this.curOffset.w * Math.sin(this.curPos.y) * Math.sin(this.curPos.z);
 		var tz = this.targetOffset.z + this.curPos.x / this.curOffset.w * Math.cos(this.curPos.z);
 		this.targetPos.y = this.curPos.y - dtheta;
-		var min = 0.0314159265358979339;
+		var min = 0.031415926535897934;
 		var f = this.curPos.z - dphi;
 		var min1 = min;
 		var max = 3.14159265358979323 - min;
@@ -91935,7 +91935,7 @@ h3d_shader_Shadow.prototype = $extend(hxsl_Shader.prototype,{
 	,__class__: h3d_shader_Shadow
 });
 var h3d_shader_SignedDistanceField = function() {
-	this.smoothing__ = 0.0416666666666666644;
+	this.smoothing__ = 0.041666666666666664;
 	this.alphaCutoff__ = 0.5;
 	this.autoSmoothing__ = false;
 	this.channel__ = 0;
@@ -109709,6 +109709,7 @@ hide_domain_services_IFileSystem.prototype = {
 	,writeText: null
 	,listFiles: null
 	,getAppDataPath: null
+	,readBinary: null
 	,__class__: hide_domain_services_IFileSystem
 };
 var hide_domain_services_ILayoutEngine = function() { };
@@ -109816,6 +109817,7 @@ hide_engine_bootstrap_EngineModule.configure = function(collection) {
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
 	var implementation = hide_engine_infrastructure_ShaderPreviewRenderer;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_engine_domain_services_IResourceLoader.__name__,hide_engine_infrastructure_HeapsResourceLoader);
 	hxd_Res.set_loader(new hxd_res_Loader(new hxd_fs_EmbedFileSystem(haxe_Unserializer.run("oy9:front.jpgty7:top.jpgty8:left.jpgty9:right.jpgty8:back.jpgty10:bottom.jpgtg"))));
 };
 hide_engine_bootstrap_EngineModule.configureWith = function(collection,rendererClass,resourceLoaderClass) {
@@ -110022,6 +110024,7 @@ var hide_engine_domain_services_IResourceLoader = function() { };
 $hxClasses["hide.engine.domain.services.IResourceLoader"] = hide_engine_domain_services_IResourceLoader;
 hide_engine_domain_services_IResourceLoader.__name__ = "hide.engine.domain.services.IResourceLoader";
 hide_engine_domain_services_IResourceLoader.__isInterface__ = true;
+hide_engine_domain_services_IResourceLoader.__interfaces__ = [hx_injection_Service];
 hide_engine_domain_services_IResourceLoader.prototype = {
 	loadMesh: null
 	,loadTexture: null
@@ -110188,6 +110191,76 @@ hide_engine_infrastructure_HeapsRenderer.prototype = {
 		return ["hide.engine.infrastructure.ViewportService"];
 	}
 	,__class__: hide_engine_infrastructure_HeapsRenderer
+};
+var hide_engine_infrastructure_HeapsResourceLoader = function(fileSystem) {
+	this.fileSystem = fileSystem;
+	this.textureCache = new haxe_ds_StringMap();
+};
+$hxClasses["hide.engine.infrastructure.HeapsResourceLoader"] = hide_engine_infrastructure_HeapsResourceLoader;
+hide_engine_infrastructure_HeapsResourceLoader.__name__ = "hide.engine.infrastructure.HeapsResourceLoader";
+hide_engine_infrastructure_HeapsResourceLoader.__interfaces__ = [hx_injection_Service,hide_engine_domain_services_IResourceLoader];
+hide_engine_infrastructure_HeapsResourceLoader.prototype = {
+	fileSystem: null
+	,textureCache: null
+	,loadMesh: function(path) {
+		haxe_Log.trace("⚠️ [HeapsResourceLoader] loadMesh not implemented: " + path,{ fileName : "hide/engine/infrastructure/HeapsResourceLoader.hx", lineNumber : 27, className : "hide.engine.infrastructure.HeapsResourceLoader", methodName : "loadMesh"});
+		return null;
+	}
+	,loadTexture: function(path) {
+		if(Object.prototype.hasOwnProperty.call(this.textureCache.h,path)) {
+			haxe_Log.trace("📦 [HeapsResourceLoader] Texture from cache: " + path,{ fileName : "hide/engine/infrastructure/HeapsResourceLoader.hx", lineNumber : 38, className : "hide.engine.infrastructure.HeapsResourceLoader", methodName : "loadTexture"});
+			return this.textureCache.h[path];
+		}
+		try {
+			var bytes = this.fileSystem.readBinary(hide_domain_valueobjects_FilePath._new(path));
+			var texture = this.createTextureFromBytes(path,bytes);
+			if(texture != null) {
+				this.textureCache.h[path] = texture;
+				haxe_Log.trace("🖼️ [HeapsResourceLoader] Texture loaded: " + path + " (" + texture.width + "x" + texture.height + ")",{ fileName : "hide/engine/infrastructure/HeapsResourceLoader.hx", lineNumber : 52, className : "hide.engine.infrastructure.HeapsResourceLoader", methodName : "loadTexture"});
+			}
+			return texture;
+		} catch( _g ) {
+			haxe_NativeStackTrace.lastError = _g;
+			var e = haxe_Exception.caught(_g).unwrap();
+			haxe_Log.trace("❌ [HeapsResourceLoader] Failed to load texture: " + path + " - " + Std.string(e),{ fileName : "hide/engine/infrastructure/HeapsResourceLoader.hx", lineNumber : 57, className : "hide.engine.infrastructure.HeapsResourceLoader", methodName : "loadTexture"});
+			return null;
+		}
+	}
+	,createTextureFromBytes: function(path,bytes) {
+		try {
+			var res = hxd_res_Any.fromBytes(path,bytes);
+			var image = res.toImage();
+			var texture = image.toTexture();
+			return texture;
+		} catch( _g ) {
+			haxe_NativeStackTrace.lastError = _g;
+			var e = haxe_Exception.caught(_g).unwrap();
+			haxe_Log.trace("❌ [HeapsResourceLoader] Failed to convert bytes to texture: " + Std.string(e),{ fileName : "hide/engine/infrastructure/HeapsResourceLoader.hx", lineNumber : 74, className : "hide.engine.infrastructure.HeapsResourceLoader", methodName : "createTextureFromBytes"});
+			return null;
+		}
+	}
+	,clearCache: function() {
+		var h = this.textureCache.h;
+		var tex_h = h;
+		var tex_keys = Object.keys(h);
+		var tex_length = tex_keys.length;
+		var tex_current = 0;
+		while(tex_current < tex_length) {
+			var tex = tex_h[tex_keys[tex_current++]];
+			if(tex != null) {
+				tex.dispose();
+			}
+		}
+		this.textureCache.h = Object.create(null);
+		haxe_Log.trace("🗑️ [HeapsResourceLoader] Texture cache cleared",{ fileName : "hide/engine/infrastructure/HeapsResourceLoader.hx", lineNumber : 87, className : "hide.engine.infrastructure.HeapsResourceLoader", methodName : "clearCache"});
+	}
+	,dispose: function() {
+		this.clearCache();
+	}
+	,getConstructorArgs: function() {
+		return ["hide.domain.services.IFileSystem"];
+	}
+	,__class__: hide_engine_infrastructure_HeapsResourceLoader
 };
 var hide_engine_infrastructure_SceneServiceImpl = function(eventBus) {
 	this.eventBus = eventBus;
@@ -110574,8 +110647,8 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 							return function(e) {
 								if(_gthis.selectedMeshRef != mesh[0]) {
 									var _this = mesh[0].material.mshader.color__;
-									_this.x = 0.415686274509803944;
-									_this.y = 0.690196078431372539;
+									_this.x = 0.41568627450980394;
+									_this.y = 0.69019607843137254;
 									_this.z = 1.;
 									_this.w = 0.;
 								}
@@ -110605,9 +110678,9 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 										_this.w = 1.;
 									} else {
 										var _this = mesh[0].material.mshader.color__;
-										_this.x = 0.290196078431372573;
-										_this.y = 0.564705882352941169;
-										_this.z = 0.886274509803921529;
+										_this.x = 0.29019607843137257;
+										_this.y = 0.56470588235294117;
+										_this.z = 0.88627450980392153;
 										_this.w = 0.;
 									}
 								}
@@ -110732,9 +110805,9 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 		cube.addUVs();
 		var mesh = new h3d_scene_Mesh(cube);
 		var _this = mesh.material.mshader.color__;
-		_this.x = 0.290196078431372573;
-		_this.y = 0.564705882352941169;
-		_this.z = 0.886274509803921529;
+		_this.x = 0.29019607843137257;
+		_this.y = 0.56470588235294117;
+		_this.z = 0.88627450980392153;
 		_this.w = 0.;
 		mesh.material.passes.set_enableLights(true);
 		return mesh;
@@ -110783,8 +110856,8 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 			this.meshOriginalColor.set(targetMesh,orig);
 		}
 		var _this = targetMesh.material.mshader.color__;
-		_this.x = 0.415686274509803944;
-		_this.y = 0.690196078431372539;
+		_this.x = 0.41568627450980394;
+		_this.y = 0.69019607843137254;
 		_this.z = 1.;
 		_this.w = 0.;
 		var worldBounds = targetMesh.getBounds();
@@ -111182,7 +111255,8 @@ hide_engine_infrastructure_ShaderGraphSerializer.toJson = function(data) {
 hide_engine_infrastructure_ShaderGraphSerializer.fromJson = function(json) {
 	return JSON.parse(json);
 };
-var hide_engine_infrastructure_ShaderPreviewRenderer = function() {
+var hide_engine_infrastructure_ShaderPreviewRenderer = function(resourceLoader) {
+	this.albedoTexture = null;
 	this.maxPhi = 1.5;
 	this.minPhi = -1.5;
 	this.maxDistance = 10.0;
@@ -111193,6 +111267,7 @@ var hide_engine_infrastructure_ShaderPreviewRenderer = function() {
 	this.distance = 3.5;
 	this.phi = 0.3;
 	this.theta = 0.5;
+	this.resourceLoader = resourceLoader;
 	h3d_mat_MaterialSetup.current = new h3d_mat_PbrMaterialSetup();
 };
 $hxClasses["hide.engine.infrastructure.ShaderPreviewRenderer"] = hide_engine_infrastructure_ShaderPreviewRenderer;
@@ -111217,6 +111292,8 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 	,maxDistance: null
 	,minPhi: null
 	,maxPhi: null
+	,resourceLoader: null
+	,albedoTexture: null
 	,init: function() {
 		var _gthis = this;
 		if(this.s3d != null) {
@@ -111356,7 +111433,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		this.previewMesh.material.passes.set_enableLights(true);
 		this.previewMesh.material.passes.setPassName("default");
 		this.previewMesh.material.passes.set_culling(h3d_mat_Face.None);
-		haxe_Log.trace("✅ [ShaderPreview] PBR Scene initialized (FAST)",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 120, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "init"});
+		haxe_Log.trace("✅ [ShaderPreview] PBR Scene initialized (FAST)",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 124, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "init"});
 		haxe_Timer.delay(function() {
 			_gthis.initEnvironmentAsync();
 		},100);
@@ -111365,7 +111442,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		if(this.env != null) {
 			return;
 		}
-		haxe_Log.trace("⏳ [ShaderPreview] Creating environment async...",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 134, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
+		haxe_Log.trace("⏳ [ShaderPreview] Creating environment async...",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 138, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
 		var size = 512;
 		var envMap = this.createEnvMap();
 		this.env = new h3d_scene_pbr_Environment(envMap);
@@ -111373,7 +111450,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		var renderer = js_Boot.__cast(this.s3d.renderer , h3d_scene_pbr_Renderer);
 		renderer.env = this.env;
 		this.env.power = 1.0;
-		haxe_Log.trace("✅ [ShaderPreview] Environment ready",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 146, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
+		haxe_Log.trace("✅ [ShaderPreview] Environment ready",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 150, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
 	}
 	,createEnvMap: function() {
 		var envMap = new h3d_mat_Texture(256,256,[h3d_mat_TextureFlags.Cube]);
@@ -111393,7 +111470,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 	}
 	,setupOrbitControls: function(canvas) {
 		var _gthis = this;
-		haxe_Log.trace("🎮 [ShaderPreview] Setting up orbit controls",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 175, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setupOrbitControls"});
+		haxe_Log.trace("🎮 [ShaderPreview] Setting up orbit controls",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 181, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setupOrbitControls"});
 		canvas.addEventListener("mousedown",function(e) {
 			if(e.button == 0) {
 				_gthis.isDragging = true;
@@ -111432,7 +111509,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 			_gthis.updateCameraPosition();
 		},{ passive : false});
 		canvas.style.cursor = "grab";
-		haxe_Log.trace("✅ [ShaderPreview] Orbit controls attached",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 234, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setupOrbitControls"});
+		haxe_Log.trace("✅ [ShaderPreview] Orbit controls attached",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 240, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setupOrbitControls"});
 	}
 	,updateCameraPosition: function() {
 		if(this.s3d == null) {
@@ -111476,6 +111553,27 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		_this.z = z;
 		cam.update();
 	}
+	,setAlbedoTexture: function(path) {
+		if(this.albedoTexture != null) {
+			this.albedoTexture.dispose();
+			this.albedoTexture = null;
+		}
+		if(path == null || path == "") {
+			if(this.previewMesh != null) {
+				this.previewMesh.material.set_texture(null);
+			}
+			haxe_Log.trace("🖼️ [ShaderPreview] Texture cleared",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 281, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setAlbedoTexture"});
+			return;
+		}
+		haxe_Log.trace("📥 [ShaderPreview] Loading texture: " + path,{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 285, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setAlbedoTexture"});
+		this.albedoTexture = this.resourceLoader.loadTexture(path);
+		if(this.albedoTexture != null && this.previewMesh != null) {
+			this.previewMesh.material.set_texture(this.albedoTexture);
+			haxe_Log.trace("🖼️ [ShaderPreview] Texture applied: " + this.albedoTexture.width + "x" + this.albedoTexture.height,{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 292, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setAlbedoTexture"});
+		} else {
+			haxe_Log.trace("❌ [ShaderPreview] Failed to load texture",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 294, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setAlbedoTexture"});
+		}
+	}
 	,applyShaderData: function(data) {
 		if(this.previewMesh == null || data == null) {
 			return;
@@ -111498,7 +111596,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		_this.y = y;
 		_this.z = z;
 		_this.w = 1.;
-		haxe_Log.trace("🎨 [ShaderPreview] Applied: albedo=(" + data.albedo.x + ", " + data.albedo.y + ", " + data.albedo.z + "), " + ("metallic=" + data.metallic + ", roughness=" + data.roughness),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 269, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "applyShaderData"});
+		haxe_Log.trace("🎨 [ShaderPreview] Applied: albedo=(" + data.albedo.x + ", " + data.albedo.y + ", " + data.albedo.z + "), " + ("metallic=" + data.metallic + ", roughness=" + data.roughness),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 312, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "applyShaderData"});
 	}
 	,updateMaterial: function(shaderData) {
 		if(this.previewMesh == null || this.pbrValues == null) {
@@ -111572,8 +111670,11 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		} else {
 			this.pbrValues.roughnessValue__ = 0.5;
 		}
+		if(shaderData.normal != null && this.isVec3(shaderData.normal)) {
+			haxe_Log.trace("🔵 [ShaderPreview] Normal: (" + Std.string(shaderData.normal.x) + ", " + Std.string(shaderData.normal.y) + ", " + Std.string(shaderData.normal.z) + ")",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 362, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
+		}
 		var tmp = shaderData.emissive != null && this.isVec3(shaderData.emissive);
-		haxe_Log.trace("🎨 [ShaderPreview] PBR Updated: albedo=(" + this.previewMesh.material.mshader.color__.x + ", " + this.previewMesh.material.mshader.color__.y + ", " + this.previewMesh.material.mshader.color__.z + "), " + ("metalness=" + this.pbrValues.metalnessValue__ + ", roughness=" + this.pbrValues.roughnessValue__),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 320, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
+		haxe_Log.trace("🎨 [ShaderPreview] PBR Updated: albedo=(" + this.previewMesh.material.mshader.color__.x + ", " + this.previewMesh.material.mshader.color__.y + ", " + this.previewMesh.material.mshader.color__.z + "), " + ("metalness=" + this.pbrValues.metalnessValue__ + ", roughness=" + this.pbrValues.roughnessValue__),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 374, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
 	}
 	,isVec3: function(v) {
 		if(v != null && Object.prototype.hasOwnProperty.call(v,"x") && Object.prototype.hasOwnProperty.call(v,"y")) {
@@ -111583,6 +111684,10 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		}
 	}
 	,dispose: function() {
+		if(this.albedoTexture != null) {
+			this.albedoTexture.dispose();
+			this.albedoTexture = null;
+		}
 		if(this.s3d != null) {
 			this.s3d.dispose();
 			this.s3d = null;
@@ -111592,7 +111697,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		this.env = null;
 	}
 	,getConstructorArgs: function() {
-		return [];
+		return ["hide.engine.domain.services.IResourceLoader"];
 	}
 	,__class__: hide_engine_infrastructure_ShaderPreviewRenderer
 	,__properties__: {get_scene:"get_scene"}
@@ -112103,7 +112208,7 @@ hide_infrastructure_external_StubConsoleFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubConsoleFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubConsoleFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>🖥️ Console</h2>\n                <p>Console output will appear here.</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>🖥️ Console</h2>\r\n                <p>Console output will appear here.</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112118,7 +112223,7 @@ hide_infrastructure_external_StubEditorFactory.__name__ = "hide.infrastructure.e
 hide_infrastructure_external_StubEditorFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubEditorFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>📝 Stub Editor</h2>\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\n                <p>Состояние: " + JSON.stringify(state) + "</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>📝 Stub Editor</h2>\r\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\r\n                <p>Состояние: " + JSON.stringify(state) + "</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112133,7 +112238,7 @@ hide_infrastructure_external_StubGameFactory.__name__ = "hide.infrastructure.ext
 hide_infrastructure_external_StubGameFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubGameFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\n                    Resolution: 1920×1080 | Stats: OFF\n                </div>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\r\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\r\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\r\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\r\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\r\n                    Resolution: 1920×1080 | Stats: OFF\r\n                </div>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112148,7 +112253,7 @@ hide_infrastructure_external_StubProjectFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubProjectFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubProjectFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\n                </div>\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                            ▼ 📁 Assets\n                        </div>\n                        <div style='padding-left:16px;'>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Materials\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Prefabs\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scenes\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scripts\n                            </div>\n                            <div style='padding-left:16px;'>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                📁 Textures\n                            </div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\r\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\r\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\r\n                </div>\r\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\r\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\r\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                            ▼ 📁 Assets\r\n                        </div>\r\n                        <div style='padding-left:16px;'>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Materials\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Prefabs\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scenes\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scripts\r\n                            </div>\r\n                            <div style='padding-left:16px;'>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                📁 Textures\r\n                            </div>\r\n                        </div>\r\n                    </div>\r\n                </div>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112163,7 +112268,7 @@ hide_infrastructure_external_StubPropertiesFactory.__name__ = "hide.infrastructu
 hide_infrastructure_external_StubPropertiesFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubPropertiesFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\n                <h2>⚙️ Properties</h2>\n                <p>Object properties will appear here.</p>\n            </div>\n        ");
+		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\r\n                <h2>⚙️ Properties</h2>\r\n                <p>Object properties will appear here.</p>\r\n            </div>\r\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112221,7 +112326,7 @@ var hide_infrastructure_platform_electron_ElectronFileSystemAdapter = function(i
 };
 $hxClasses["hide.infrastructure.platform.electron.ElectronFileSystemAdapter"] = hide_infrastructure_platform_electron_ElectronFileSystemAdapter;
 hide_infrastructure_platform_electron_ElectronFileSystemAdapter.__name__ = "hide.infrastructure.platform.electron.ElectronFileSystemAdapter";
-hide_infrastructure_platform_electron_ElectronFileSystemAdapter.__interfaces__ = [hide_domain_services_IFileSystem];
+hide_infrastructure_platform_electron_ElectronFileSystemAdapter.__interfaces__ = [hx_injection_Service,hide_domain_services_IFileSystem];
 hide_infrastructure_platform_electron_ElectronFileSystemAdapter.prototype = {
 	ipcBridge: null
 	,exists: function(filePath) {
@@ -112264,6 +112369,17 @@ hide_infrastructure_platform_electron_ElectronFileSystemAdapter.prototype = {
 	,getAppDataPath: function() {
 		var path = this.ipcBridge.invokeSync("app:getAppDataPath");
 		return hide_domain_valueobjects_FilePath._new(path);
+	}
+	,readBinary: function(filePath) {
+		if(!this.exists(filePath)) {
+			throw new hide_domain_exceptions_FileNotFoundError(filePath);
+		}
+		var result = this.ipcBridge.invokeSync("fs:readBinary",filePath.toString());
+		if(result.error != null) {
+			throw new hide_domain_exceptions_FileNotFoundError(filePath);
+		}
+		var base64 = result.data;
+		return haxe_crypto_Base64.decode(base64);
 	}
 	,getConstructorArgs: function() {
 		return ["hide.infrastructure.platform.electron.ElectronIpcBridge"];
@@ -113917,6 +114033,17 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		},16);
 		this.setupGraphListeners();
 		this.setupKeyboardShortcuts();
+		window.__browseShaderTexture = function(node) {
+			var fileDialog = hide_presentation_ui_react_hooks_UseService.fileDialog();
+			fileDialog.showOpen({ filters : [{ name : "Images", extensions : ["png","jpg","jpeg","dds","hdr","tga"]}]}).handle(function(path) {
+				if(path != null) {
+					node.properties.texture = path;
+					node.setDirtyCanvas(true,true);
+					_gthis.scheduleRecompile();
+					haxe_Log.trace("🖼️ [ShaderEditor] Texture selected: " + path,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 109, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "componentDidMount"});
+				}
+			});
+		};
 	}
 	,setupKeyboardShortcuts: function() {
 		var _gthis = this;
@@ -113983,11 +114110,11 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			this.currentFilePath = path;
 			this.isDirty = false;
 			this.updateTitle();
-			haxe_Log.trace(" [ShaderEditor] Saved to: " + path,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 164, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "saveToFile"});
+			haxe_Log.trace(" [ShaderEditor] Saved to: " + path,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 183, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "saveToFile"});
 		} catch( _g ) {
 			haxe_NativeStackTrace.lastError = _g;
 			var e = haxe_Exception.caught(_g).unwrap();
-			haxe_Log.trace("❌ [ShaderEditor] Save error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 166, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "saveToFile"});
+			haxe_Log.trace("❌ [ShaderEditor] Save error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 185, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "saveToFile"});
 		}
 	}
 	,onLoad: function() {
@@ -114010,11 +114137,11 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			this.isDirty = false;
 			this.updateTitle();
 			this.compileAndApply();
-			haxe_Log.trace("📂 [ShaderEditor] Loaded from: " + path,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 197, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "loadFromFile"});
+			haxe_Log.trace("📂 [ShaderEditor] Loaded from: " + path,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 216, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "loadFromFile"});
 		} catch( _g ) {
 			haxe_NativeStackTrace.lastError = _g;
 			var e = haxe_Exception.caught(_g).unwrap();
-			haxe_Log.trace("❌ [ShaderEditor] Load error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 199, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "loadFromFile"});
+			haxe_Log.trace("❌ [ShaderEditor] Load error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 218, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "loadFromFile"});
 		}
 	}
 	,restoreNodeCallbacks: function() {
@@ -114029,12 +114156,12 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			++_g;
 			node[0].onConnectionsChange = (function(node) {
 				return function(type,slot,isConnected,link_info,input_info) {
-					haxe_Log.trace("🔗 [ShaderEditor] Connection changed on node: " + Std.string(node[0].title),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 212, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "restoreNodeCallbacks"});
+					haxe_Log.trace("🔗 [ShaderEditor] Connection changed on node: " + Std.string(node[0].title),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 231, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "restoreNodeCallbacks"});
 					_gthis.scheduleRecompile();
 				};
 			})(node);
 		}
-		haxe_Log.trace("✅ [ShaderEditor] Restored callbacks on " + nodes.length + " nodes",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 216, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "restoreNodeCallbacks"});
+		haxe_Log.trace("✅ [ShaderEditor] Restored callbacks on " + nodes.length + " nodes",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 235, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "restoreNodeCallbacks"});
 	}
 	,recompileTimer: null
 	,setupGraphListeners: function() {
@@ -114063,10 +114190,10 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			onGraphChanged();
 		};
 		this.graph.onConnectionChange = function(node,action,link) {
-			haxe_Log.trace("🔗 [ShaderEditor] onConnectionChange called!",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 243, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
-			haxe_Log.trace("   node: " + (node != null ? node.title : "null"),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 244, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
-			haxe_Log.trace("   action: " + action,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 245, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
-			haxe_Log.trace("   link: " + (link != null ? "exists" : "null"),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 246, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
+			haxe_Log.trace("🔗 [ShaderEditor] onConnectionChange called!",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 262, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
+			haxe_Log.trace("   node: " + (node != null ? node.title : "null"),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 263, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
+			haxe_Log.trace("   action: " + action,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 264, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
+			haxe_Log.trace("   link: " + (link != null ? "exists" : "null"),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 265, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupGraphListeners"});
 			haxe_Timer.delay(onGraphChanged,100);
 		};
 		this.graph.onNodeChanged = function(_) {
@@ -114080,7 +114207,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		this.recompileTimer = haxe_Timer.delay($bind(this,this.compileAndApply),100);
 	}
 	,compileAndApply: function() {
-		haxe_Log.trace("🔨 [ShaderEditor] Recompiling shader graph...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 360, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("🔨 [ShaderEditor] Recompiling shader graph...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 379, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
 		if(this.graph == null || this.previewRenderer == null) {
 			return;
 		}
@@ -114099,7 +114226,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			}
 		}
 		if(outputNode == null) {
-			haxe_Log.trace("⚠️ [ShaderEditor] No Material Output found",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 376, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+			haxe_Log.trace("⚠️ [ShaderEditor] No Material Output found",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 395, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
 			return;
 		}
 		var albedo = this.evaluateInput(outputNode,0,new haxe_ds_IntMap());
@@ -114107,13 +114234,16 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		var roughness = this.evaluateInput(outputNode,2,new haxe_ds_IntMap());
 		var normal = this.evaluateInput(outputNode,3,new haxe_ds_IntMap());
 		var emissive = this.evaluateInput(outputNode,4,new haxe_ds_IntMap());
-		haxe_Log.trace("📊 [ShaderEditor] PBR Evaluated:",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 387, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
-		haxe_Log.trace("   Albedo: " + albedo,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 388, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
-		haxe_Log.trace("   Metallic: " + metallic,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 389, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
-		haxe_Log.trace("   Roughness: " + roughness,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 390, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
-		haxe_Log.trace("   Emissive: " + emissive,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 391, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
-		this.previewRenderer.updateMaterial({ albedo : albedo, metallic : metallic, roughness : roughness, emissive : emissive});
-		haxe_Log.trace("✅ [ShaderEditor] PBR Shader updated",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 401, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("📊 [ShaderEditor] PBR Evaluated:",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 406, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("   Albedo: " + albedo,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 407, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("   Metallic: " + metallic,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 408, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("   Roughness: " + roughness,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 409, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		haxe_Log.trace("   Emissive: " + emissive,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 410, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		if(normal != null && Object.prototype.hasOwnProperty.call(normal,"x")) {
+			haxe_Log.trace("   Normal: (" + normal.x + ", " + normal.y + ", " + normal.z + ")",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 412, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
+		}
+		this.previewRenderer.updateMaterial({ albedo : albedo, metallic : metallic, roughness : roughness, normal : normal, emissive : emissive});
+		haxe_Log.trace("✅ [ShaderEditor] PBR Shader updated",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 426, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "compileAndApply"});
 	}
 	,evaluateNode: function(node,outputSlot,visited) {
 		if(node == null) {
@@ -114123,13 +114253,34 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			visited = new haxe_ds_IntMap();
 		}
 		if(visited.h.hasOwnProperty(node.id)) {
-			haxe_Log.trace("⚠️ [ShaderEditor] Cycle detected at node " + Std.string(node.title),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 416, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "evaluateNode"});
+			haxe_Log.trace("⚠️ [ShaderEditor] Cycle detected at node " + Std.string(node.title),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 441, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "evaluateNode"});
 			return null;
 		}
 		visited.h[node.id] = true;
 		switch(node.type) {
 		case "math/add":case "math/divide":case "math/lerp":case "math/multiply":case "math/operation":case "math/subtract":
 			return this.evaluateMathNode(node,visited);
+		case "texture/normal":
+			var inputNormal = this.evaluateInput(node,0,visited);
+			var strength = Reflect.field(node.properties,"strength");
+			if(strength == null) {
+				strength = 1.0;
+			}
+			if(inputNormal == null) {
+				inputNormal = { x : 0.0, y : 0.0, z : 1.0};
+			}
+			var nx = this.isVec3(inputNormal) ? inputNormal.x : 0.0;
+			var ny = this.isVec3(inputNormal) ? inputNormal.y : 0.0;
+			var nz = this.isVec3(inputNormal) ? inputNormal.z : 1.0;
+			haxe_Log.trace("🔵 [ShaderEditor] Normal Map: strength=" + strength + ", normal=(" + nx + ", " + ny + ", " + nz + ")",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 480, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "evaluateNode"});
+			return { x : nx * strength, y : ny * strength, z : nz};
+		case "texture/sample":
+			var texPath = Reflect.field(node.properties,"texture");
+			if(texPath != null && texPath != "") {
+				this.previewRenderer.setAlbedoTexture(texPath);
+				haxe_Log.trace("🖼️ [ShaderEditor] Applying texture: " + texPath,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 493, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "evaluateNode"});
+			}
+			return { x : 1.0, y : 1.0, z : 1.0};
 		case "value/color":
 			return { x : Reflect.field(node.properties,"r"), y : Reflect.field(node.properties,"g"), z : Reflect.field(node.properties,"b")};
 		case "value/float":
@@ -114137,7 +114288,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		case "value/vec3":
 			return { x : Reflect.field(node.properties,"x"), y : Reflect.field(node.properties,"y"), z : Reflect.field(node.properties,"z")};
 		default:
-			haxe_Log.trace("⚠️ [ShaderEditor] Unsupported node type: " + Std.string(node.type),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 445, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "evaluateNode"});
+			haxe_Log.trace("⚠️ [ShaderEditor] Unsupported node type: " + Std.string(node.type),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 502, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "evaluateNode"});
 			return null;
 		}
 	}
@@ -114253,7 +114404,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		var _gthis = this;
 		var container = this.litegraphContainerRef.current;
 		if(container == null) {
-			haxe_Log.trace("❌ [ShaderEditor] #litegraph-container not found!",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 525, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+			haxe_Log.trace("❌ [ShaderEditor] #litegraph-container not found!",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 582, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 			return;
 		}
 		haxe_Timer.delay(function() {
@@ -114261,33 +114412,33 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			var w = rect.width | 0;
 			var h = rect.height | 0;
 			if(w < 100 || h < 100) {
-				haxe_Log.trace("⚠️ [ShaderEditor] Container too small: " + w + "x" + h + ", retrying...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 536, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("⚠️ [ShaderEditor] Container too small: " + w + "x" + h + ", retrying...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 593, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 				haxe_Timer.delay(function() {
 					_gthis.initLiteGraph();
 				},100);
 				return;
 			}
-			haxe_Log.trace(" [ShaderEditor] Container size: " + w + "x" + h,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 541, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+			haxe_Log.trace(" [ShaderEditor] Container size: " + w + "x" + h,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 598, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 			_gthis.liteGraphCanvas = window.document.createElement("canvas");
 			_gthis.liteGraphCanvas.id = "shader-graph-canvas";
 			_gthis.liteGraphCanvas.width = w;
 			_gthis.liteGraphCanvas.height = h;
 			container.appendChild(_gthis.liteGraphCanvas);
 			_gthis.liteGraphCanvas.addEventListener("click",function(e) {
-				haxe_Log.trace("🖱️ [ShaderEditor] Canvas clicked",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 554, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("🖱️ [ShaderEditor] Canvas clicked",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 611, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 				if(_gthis.graphCanvas.selected_nodes != null) {
 					var keys = Reflect.fields(_gthis.graphCanvas.selected_nodes);
 					if(keys.length > 0) {
 						var firstKey = keys[0];
 						var selected = Reflect.field(_gthis.graphCanvas.selected_nodes,firstKey);
-						haxe_Log.trace("🎯 [ShaderEditor] Selected after click: " + selected.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 562, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+						haxe_Log.trace("🎯 [ShaderEditor] Selected after click: " + selected.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 619, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 						_gthis.setState({ graph : _gthis.graph, selectedNode : selected});
 					} else {
-						haxe_Log.trace("🔍 [ShaderEditor] No selection after click",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 568, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+						haxe_Log.trace("🔍 [ShaderEditor] No selection after click",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 625, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 						_gthis.setState({ graph : _gthis.graph, selectedNode : null});
 					}
 				} else {
-					haxe_Log.trace("🔍 [ShaderEditor] selected_nodes is null",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 575, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+					haxe_Log.trace("🔍 [ShaderEditor] selected_nodes is null",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 632, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 					_gthis.setState({ graph : _gthis.graph, selectedNode : null});
 				}
 			});
@@ -114299,27 +114450,27 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			_gthis.graphCanvas.resize(w,h);
 			_gthis.setupDragAndDrop(container);
 			_gthis.graphCanvas.onSelectionChange = function(nodes) {
-				haxe_Log.trace("🔍 [ShaderEditor] onSelectionChange called",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 599, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
-				haxe_Log.trace("   nodes type: " + typeof(nodes),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 600, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("🔍 [ShaderEditor] onSelectionChange called",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 656, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("   nodes type: " + typeof(nodes),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 657, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 				if(nodes != null) {
 					var keys = Reflect.fields(nodes);
-					haxe_Log.trace("   selected nodes count: " + keys.length,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 605, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+					haxe_Log.trace("   selected nodes count: " + keys.length,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 662, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 					if(keys.length > 0) {
 						var firstKey = keys[0];
 						var node = Reflect.field(nodes,firstKey);
-						haxe_Log.trace("🎯 [ShaderEditor] Node selected: " + node.title + " (id: " + node.id + ")",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 611, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+						haxe_Log.trace("🎯 [ShaderEditor] Node selected: " + node.title + " (id: " + node.id + ")",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 668, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 						_gthis.setState({ graph : _gthis.graph, selectedNode : node});
 					} else {
-						haxe_Log.trace("🔍 [ShaderEditor] No node selected",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 618, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+						haxe_Log.trace("🔍 [ShaderEditor] No node selected",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 675, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 						_gthis.setState({ graph : _gthis.graph, selectedNode : null});
 					}
 				} else {
-					haxe_Log.trace("🔍 [ShaderEditor] nodes is null",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 625, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+					haxe_Log.trace("🔍 [ShaderEditor] nodes is null",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 682, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 					_gthis.setState({ graph : _gthis.graph, selectedNode : null});
 				}
 			};
 			_gthis.graphCanvas.onNodeMoved = function(node) {
-				haxe_Log.trace("🖱️ [ShaderEditor] Node moved: " + node.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 635, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("🖱️ [ShaderEditor] Node moved: " + node.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 692, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 				if(!_gthis.isUndoRedoInProgress) {
 					_gthis.saveUndoState();
 					if(!_gthis.isDirty) {
@@ -114332,7 +114483,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 					if(keys.length > 0) {
 						var firstKey = keys[0];
 						var selected = Reflect.field(_gthis.graphCanvas.selected_nodes,firstKey);
-						haxe_Log.trace("🎯 [ShaderEditor] After move, selected: " + selected.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 650, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+						haxe_Log.trace("🎯 [ShaderEditor] After move, selected: " + selected.title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 707, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 						_gthis.setState({ graph : _gthis.graph, selectedNode : selected});
 					}
 				}
@@ -114342,19 +114493,19 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			if(outputNode != null) {
 				outputNode.pos = [w / 2 - 100,h / 2 - 50];
 				outputNode.onConnectionsChange = function(type,slot,isConnected,link_info,input_info) {
-					haxe_Log.trace("🔗 [ShaderEditor] Material Output connection changed: slot " + slot + ", connected: " + (isConnected == null ? "null" : "" + isConnected),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 667, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+					haxe_Log.trace("🔗 [ShaderEditor] Material Output connection changed: slot " + slot + ", connected: " + (isConnected == null ? "null" : "" + isConnected),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 724, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 					_gthis.scheduleRecompile();
 				};
 				_gthis.graph.add(outputNode);
-				haxe_Log.trace("✅ Material Output node created",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 672, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("✅ Material Output node created",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 729, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 			}
 			haxe_Timer.delay(function() {
 				_gthis.saveUndoState();
-				haxe_Log.trace("✅ [ShaderEditor] Initial undo state saved",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 678, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+				haxe_Log.trace("✅ [ShaderEditor] Initial undo state saved",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 735, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 			},200);
 			_gthis.graph.start();
 			_gthis.state = { graph : _gthis.graph, selectedNode : null};
-			haxe_Log.trace("✅ [ShaderEditor] LiteGraph initialized",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 690, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
+			haxe_Log.trace("✅ [ShaderEditor] LiteGraph initialized",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 747, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "initLiteGraph"});
 		},100);
 	}
 	,setupDragAndDrop: function(container) {
@@ -114372,18 +114523,39 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 				if(node != null) {
 					node.pos = [graphPos[0],graphPos[1]];
 					node.onConnectionsChange = function(type,slot,isConnected,link_info,input_info) {
-						haxe_Log.trace("🔗 [ShaderEditor] Connection changed on node: " + node.title + ", slot: " + slot + ", connected: " + (isConnected == null ? "null" : "" + isConnected),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 713, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupDragAndDrop"});
+						haxe_Log.trace("🔗 [ShaderEditor] Connection changed on node: " + node.title + ", slot: " + slot + ", connected: " + (isConnected == null ? "null" : "" + isConnected),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 770, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupDragAndDrop"});
 						_gthis.scheduleRecompile();
 					};
 					_gthis.graph.add(node);
-					haxe_Log.trace("✅ Node created: " + nodeType,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 718, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupDragAndDrop"});
+					haxe_Log.trace("✅ Node created: " + nodeType,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 775, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "setupDragAndDrop"});
 				}
 			}
 		});
 	}
 	,registerShaderNodes: function() {
-		var TextureSampleNode = (function() { this.title = 'Texture Sample'; this.addInput('UV', 'vec2'); this.addOutput('RGBA', 'vec4'); this.properties = { texture: '' }; });
-		TextureSampleNode.prototype.onExecute = function() { var uv = this.getInputData(0); if (uv == null) uv = [0, 0]; this.setOutputData(0, [1, 0, 0, 1]); }
+		var TextureSampleNode = 
+            (function() { 
+                this.title = 'Texture Sample'; 
+                this.addInput('UV', 'vec2'); 
+                this.addOutput('RGBA', 'vec4'); 
+                this.properties = { texture: '' };
+                
+                var that = this;
+                
+                // Кнопка Browse — открывает диалог выбора файла
+                this.addWidget('button', 'Browse', null, function() {
+                    if (window.__browseShaderTexture) {
+                        window.__browseShaderTexture(that);
+                    }
+                });
+                
+                // Поле для отображения пути (readonly)
+                this.addWidget('string', 'texture', '', function(v) {
+                    that.properties.texture = v;
+                });
+            })
+        ;
+		TextureSampleNode.prototype.onExecute = function() { var uv = this.getInputData(0); if (uv == null) uv = [0, 0]; this.setOutputData(0, [1, 1, 1, 1]); }
 		hide_infrastructure_external_litegraph_LiteGraph.registerNodeType("texture/sample",TextureSampleNode);
 		var PBRMaterialNode = (function() { this.title = 'PBR Material'; this.addInput('Albedo', 'vec3'); this.addInput('Normal', 'vec3'); this.addInput('Metallic', 'float'); this.addInput('Roughness', 'float'); this.addOutput('Color', 'vec3'); this.properties = { metallic: 0.5, roughness: 0.5 }; });
 		PBRMaterialNode.prototype.onExecute = function() { var albedo = this.getInputData(0); if (albedo == null) albedo = [1, 1, 1]; this.setOutputData(0, albedo); }
@@ -114397,6 +114569,34 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		var Vec3Node = (function() { this.title = 'Vector3'; this.addOutput('Vector', 'vec3'); this.properties = { x: 0.0, y: 0.0, z: 0.0 }; });
 		Vec3Node.prototype.onExecute = function() { this.setOutputData(0, [this.properties.x, this.properties.y, this.properties.z]); }
 		hide_infrastructure_external_litegraph_LiteGraph.registerNodeType("value/vec3",Vec3Node);
+		var NormalMapNode = 
+            (function() { 
+                this.title = 'Normal Map'; 
+                this.addInput('Normal', 'vec3');
+                this.addInput('Strength', 'float');
+                this.addOutput('Normal', 'vec3');
+                this.properties = { strength: 1.0 };
+                var that = this;
+                
+                // Widget для strength
+                this.addWidget('number', 'strength', 1.0, function(v) {
+                    that.properties.strength = v;
+                }, { min: 0, max: 2, step: 0.1 });
+            })
+        ;
+		NormalMapNode.prototype.onExecute = function() { 
+            var normal = this.getInputData(0); 
+            if (normal == null) normal = [0, 0, 1];
+            var strength = this.properties.strength;
+            // Усиливаем нормаль
+            var result = [
+                normal[0] * strength,
+                normal[1] * strength,
+                normal[2]
+            ];
+            this.setOutputData(0, result);
+        }
+		hide_infrastructure_external_litegraph_LiteGraph.registerNodeType("texture/normal",NormalMapNode);
 		var ColorNode = (function() { 
             this.title = 'Color'; 
             this.addOutput('Color', 'vec3'); 
@@ -114468,7 +114668,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		hide_infrastructure_external_litegraph_LiteGraph.registerNodeType("math/lerp",LerpNode);
 		var OutputNode = (function() { 
             this.title = 'Material Output'; 
-            this.addInput('Albedo', 'vec3'); 
+            this.addInput('Albedo', 'vec3,vec4');
             this.addInput('Metallic', 'float'); 
             this.addInput('Roughness', 'float'); 
             this.addInput('Normal', 'vec3');
@@ -114476,7 +114676,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
             this.color = '#4a9';  // выделяем визуально
         });
 		hide_infrastructure_external_litegraph_LiteGraph.registerNodeType("material/output",OutputNode);
-		haxe_Log.trace("✅ [ShaderEditor] Shader nodes registered",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 845, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "registerShaderNodes"});
+		haxe_Log.trace("✅ [ShaderEditor] Shader nodes registered",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 955, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "registerShaderNodes"});
 	}
 	,render: function() {
 		var tmp = this.renderToolbar();
@@ -114508,7 +114708,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 	}
 	,renderNodePalette: function() {
 		return React.createElement(hide_presentation_ui_react_components_ShaderNodePalette,{ onNodeDragStart : function(nodeType) {
-			haxe_Log.trace("📦 Dragging node: " + nodeType,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 895, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "renderNodePalette"});
+			haxe_Log.trace("📦 Dragging node: " + nodeType,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1005, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "renderNodePalette"});
 		}});
 	}
 	,renderRightPanel: function() {
@@ -114531,7 +114731,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			return;
 		}
 		this.saveUndoState();
-		haxe_Log.trace("🔄 [ShaderEditor] Node property changed, recompiling...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 980, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onNodePropertyChanged"});
+		haxe_Log.trace("🔄 [ShaderEditor] Node property changed, recompiling...",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1090, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onNodePropertyChanged"});
 		if(!this.isDirty) {
 			this.isDirty = true;
 			this.updateTitle();
@@ -114546,7 +114746,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		var dirty = this.isDirty ? " ●" : "";
 		var title = "" + filename + dirty + " - Shader Editor";
 		hide_presentation_ui_react_hooks_UseService.windowService().setTitle(title);
-		haxe_Log.trace("🏷️ [ShaderEditor] Title: " + title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 999, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "updateTitle"});
+		haxe_Log.trace("🏷️ [ShaderEditor] Title: " + title,{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1109, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "updateTitle"});
 	}
 	,onNew: function() {
 		var _gthis = this;
@@ -114570,11 +114770,11 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			};
 			this.graph.add(outputNode);
 		}
-		haxe_Log.trace("🆕 [ShaderEditor] New graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1023, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onNew"});
+		haxe_Log.trace("🆕 [ShaderEditor] New graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1133, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onNew"});
 	}
 	,onUndo: function() {
 		if(this.undoStack.length == 0) {
-			haxe_Log.trace("⚠️ [ShaderEditor] Nothing to undo",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1028, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onUndo"});
+			haxe_Log.trace("⚠️ [ShaderEditor] Nothing to undo",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1138, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onUndo"});
 			return;
 		}
 		try {
@@ -114588,11 +114788,11 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 				this.updateTitle();
 			}
 			this.compileAndApply();
-			haxe_Log.trace("↶ Undo (" + this.undoStack.length + " states remaining)",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1049, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onUndo"});
+			haxe_Log.trace("↶ Undo (" + this.undoStack.length + " states remaining)",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1159, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onUndo"});
 		} catch( _g ) {
 			haxe_NativeStackTrace.lastError = _g;
 			var e = haxe_Exception.caught(_g).unwrap();
-			haxe_Log.trace("❌ [ShaderEditor] Undo error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1051, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onUndo"});
+			haxe_Log.trace("❌ [ShaderEditor] Undo error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1161, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onUndo"});
 		}
 		this.isUndoRedoInProgress = false;
 	}
@@ -114613,12 +114813,12 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 		} catch( _g ) {
 			haxe_NativeStackTrace.lastError = _g;
 			var e = haxe_Exception.caught(_g).unwrap();
-			haxe_Log.trace("⚠️ [ShaderEditor] Failed to save undo state: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1081, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "saveUndoState"});
+			haxe_Log.trace("⚠️ [ShaderEditor] Failed to save undo state: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1191, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "saveUndoState"});
 		}
 	}
 	,onRedo: function() {
 		if(this.redoStack.length == 0) {
-			haxe_Log.trace("⚠️ [ShaderEditor] Nothing to redo",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1087, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onRedo"});
+			haxe_Log.trace("⚠️ [ShaderEditor] Nothing to redo",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1197, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onRedo"});
 			return;
 		}
 		try {
@@ -114632,24 +114832,24 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 				this.updateTitle();
 			}
 			this.compileAndApply();
-			haxe_Log.trace("↷ Redo (" + this.redoStack.length + " states remaining)",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1108, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onRedo"});
+			haxe_Log.trace("↷ Redo (" + this.redoStack.length + " states remaining)",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1218, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onRedo"});
 		} catch( _g ) {
 			haxe_NativeStackTrace.lastError = _g;
 			var e = haxe_Exception.caught(_g).unwrap();
-			haxe_Log.trace("❌ [ShaderEditor] Redo error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1110, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onRedo"});
+			haxe_Log.trace("❌ [ShaderEditor] Redo error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1220, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onRedo"});
 		}
 		this.isUndoRedoInProgress = false;
 	}
 	,onCompile: function() {
-		haxe_Log.trace("🔨 Compile shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1119, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onCompile"});
+		haxe_Log.trace("🔨 Compile shader graph",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1229, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onCompile"});
 	}
 	,onExportHLSL: function() {
-		haxe_Log.trace("📤 Export HLSL",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1125, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onExportHLSL"});
+		haxe_Log.trace("📤 Export HLSL",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1235, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onExportHLSL"});
 	}
 	,onClearGraph: function() {
 		if(this.graph != null) {
 			this.graph.clear();
-			haxe_Log.trace("🧹 Graph cleared",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1132, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onClearGraph"});
+			haxe_Log.trace("🧹 Graph cleared",{ fileName : "hide/presentation/ui/react/components/ShaderEditorPanel.hx", lineNumber : 1242, className : "hide.presentation.ui.react.components.ShaderEditorPanel", methodName : "onClearGraph"});
 		}
 	}
 	,componentWillUnmount: function() {
@@ -114657,6 +114857,7 @@ hide_presentation_ui_react_components_ShaderEditorPanel.prototype = $extend(hide
 			this.graph.stop();
 		}
 		this.previewRenderer.dispose();
+		window.__browseShaderTexture = null;
 	}
 	,__class__: hide_presentation_ui_react_components_ShaderEditorPanel
 });
@@ -117079,31 +117280,31 @@ hxd_Math.colorLerp = function(c1,c2,k) {
 	return a << 24 | r << 16 | g << 8 | b;
 };
 hxd_Math.angle = function(da) {
-	da %= 6.28318530717958623;
+	da %= 6.2831853071795862;
 	if(da > 3.14159265358979323) {
-		da -= 6.28318530717958623;
-	} else if(da <= -3.14159265358979312) {
-		da += 6.28318530717958623;
+		da -= 6.2831853071795862;
+	} else if(da <= -3.1415926535897931) {
+		da += 6.2831853071795862;
 	}
 	return da;
 };
 hxd_Math.angleLerp = function(a,b,k) {
 	var da = b - a;
-	da %= 6.28318530717958623;
+	da %= 6.2831853071795862;
 	if(da > 3.14159265358979323) {
-		da -= 6.28318530717958623;
-	} else if(da <= -3.14159265358979312) {
-		da += 6.28318530717958623;
+		da -= 6.2831853071795862;
+	} else if(da <= -3.1415926535897931) {
+		da += 6.2831853071795862;
 	}
 	return a + da * k;
 };
 hxd_Math.angleMove = function(a,b,max) {
 	var da = b - a;
-	da %= 6.28318530717958623;
+	da %= 6.2831853071795862;
 	if(da > 3.14159265358979323) {
-		da -= 6.28318530717958623;
-	} else if(da <= -3.14159265358979312) {
-		da += 6.28318530717958623;
+		da -= 6.2831853071795862;
+	} else if(da <= -3.1415926535897931) {
+		da += 6.2831853071795862;
 	}
 	var da1 = da;
 	if(da1 > -max && da1 < max) {
@@ -120305,7 +120506,7 @@ var hxd_clipper__$Clipper_ClipperBase = function() {
 $hxClasses["hxd.clipper._Clipper.ClipperBase"] = hxd_clipper__$Clipper_ClipperBase;
 hxd_clipper__$Clipper_ClipperBase.__name__ = "hxd.clipper._Clipper.ClipperBase";
 hxd_clipper__$Clipper_ClipperBase.nearZero = function(v) {
-	if(v > -1e-20) {
+	if(v > -1e-020) {
 		return v < 1E-20;
 	} else {
 		return false;
@@ -123720,7 +123921,7 @@ var hxd_clipper_ClipperOffset = function(miterLimit,arcTolerance) {
 	if(miterLimit == null) {
 		miterLimit = 2.0;
 	}
-	this.two_pi = 6.28318530717958623;
+	this.two_pi = 6.2831853071795862;
 	this.def_arc_tolerance = 0.25;
 	this.MiterLimit = miterLimit;
 	this.ArcTolerance = arcTolerance;
@@ -123853,7 +124054,7 @@ hxd_clipper_ClipperOffset.prototype = {
 		var polygons = null;
 		this.m_destPolys = polygons == null ? [] : polygons;
 		this.m_delta = delta;
-		if(delta > -1e-20 && delta < 1E-20) {
+		if(delta > -1e-020 && delta < 1E-20) {
 			var _g = 0;
 			var _g1 = this.m_polyNodes.childs;
 			while(_g < _g1.length) {
@@ -127481,7 +127682,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 			x = 0.;
 		}
 		var P1 = new h3d_VectorImpl(x,y,z);
-		var F = 0.0174532925199432955;
+		var F = 0.017453292519943295;
 		var allTimes = new haxe_ds_IntMap();
 		if(animNode != null) {
 			var _g = 0;
@@ -127529,7 +127730,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 					var values = hxd_fmt_fbx_FbxTools.getFloats(hxd_fmt_fbx_FbxTools.get(dataCurves[0],"KeyValueFloat"));
 					switch(cname) {
 					case "FieldOfView":
-						var ratio = 1.77777777777777768;
+						var ratio = 1.7777777777777777;
 						var fov = 45.;
 						var _g4 = 0;
 						var _g5 = hxd_fmt_fbx_FbxTools.getAll(this.getChild(model,"NodeAttribute"),"Properties70.P");
@@ -128254,7 +128455,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 			return d;
 		}
 		d = new hxd_fmt_fbx_DefaultMatrixes();
-		var F = 0.0174532925199432955;
+		var F = 0.017453292519943295;
 		var _g = 0;
 		var _g1 = hxd_fmt_fbx_FbxTools.getAll(model,"Properties70.P");
 		while(_g < _g1.length) {
@@ -131858,7 +132059,7 @@ hxd_fmt_fbx_HMDOut.prototype = $extend(hxd_fmt_fbx_BaseLibrary.prototype,{
 			if(o.model != null && hxd_fmt_fbx_FbxTools.getType(o.model) == "Camera") {
 				var props = this.getChild(o.model,"NodeAttribute");
 				var fov = 45.;
-				var ratio = 1.77777777777777768;
+				var ratio = 1.7777777777777777;
 				var _g1 = 0;
 				var _g2 = hxd_fmt_fbx_FbxTools.getAll(props,"Properties70.P");
 				while(_g1 < _g2.length) {
@@ -178475,7 +178676,7 @@ h3d_scene_DynamicJointData.tmpVec2 = (function($this) {
 }(this));
 h3d_scene_DynamicJointData.tmpQ = new h3d_Quat();
 h3d_scene_DynamicJointData.tmpQ2 = new h3d_Quat();
-h3d_scene_Skin.FIXED_DT = 0.0166666666666666664;
+h3d_scene_Skin.FIXED_DT = 0.016666666666666666;
 h3d_scene_Skin.MIN_SHADER_BONES = 32;
 h3d_scene_Skin.TMP_MAT = new h3d_MatrixImpl();
 h3d_scene_pbr_IrradBase.SRC = "HXSMF2gzZC5zY2VuZS5wYnIuSXJyYWRCYXNlCwEFaW5wdXQNAQICCHBvc2l0aW9uBQoBAQADAnV2BQoBAQABAAAEBWZsaXBZAwIAAAUGb3V0cHV0DQICBghwb3NpdGlvbgUMBAUABwVjb2xvcgUMBAUABAAACApwaXhlbENvbG9yBQwEAAAJDGNhbGN1bGF0ZWRVVgUKBAAACgtzYW1wbGVzQml0cwECAAEAAAAAAAsIX19pbml0X18OBgAADAZ2ZXJ0ZXgOBgAADQxfcmV2ZXJzZWJpdHMOBgAADgpoYW1tZXJzbGV5DgYAAA8TaW1wb3J0YW5jZVNhbXBsZUdHWA4GAAAFAgsAAAUCBgQCBwUMAggFDAUMBgQCCQUKAgMFCgUKAAAMAAAFAQYEAgYFDAkDKw4ECgICBQoAAAMGAQoCAgUKBAADAgQDAwEDAAAAAAAAAAADAQMAAAAAAADwPwMFDAUMAAMNARABaQEEAAABBQYIEQFyAQQAAAYMBAYQAhABAQIQAAAAAQEBBAYSAhABAQIQAAAAAQEBAQAGBAIRAQYMBAYQBAYLAhEBAQL/AP8AAQEBAQIIAAAAAQEBBAYSBAYLAhEBAQIA/wD/AQEBAQIIAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQIPDw8PAQEBAQIEAAAAAQEBBAYSBAYLAhEBAQLw8PDwAQEBAQIEAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQIzMzMzAQEBAQICAAAAAQEBBAYSBAYLAhEBAQLMzMzMAQEBAQICAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQJVVVVVAQEBAQIBAAAAAQEBBAYSBAYLAhEBAQKqqqqqAQEBAQIBAAAAAQEBAQENAhEBAAADDgISAWkBBAAAEwNtYXgBBAAABQoFAggUAnJpAwQAAAYBCQMnDgEJAg0OAQISAQEDAQMAAAAAAADwPQMDAA0JAykOAgYCCQMnDgECEgEDCQMnDgECEwEDAwIUAwUKAAADDwMVCXJvdWdobmVzcwMEAAAWAXAFCgQAABcBbgULBAAABQsFCQgYAWEDBAAABgECFQMCFQMDAAgZA3BoaQMEAAAGAQYBAQMAAAAAAAAAQAMBAxgtRFT7IQlAAwMKAhYFCgAAAwMACBoEY29zVAMEAAAJAxUOAgkDDQ4BBgIEBgMBAwAAAAAAAPA/AwoCFgUKBAADAwMEBgABAwAAAAAAAPA/AwYBBAYDBgECGAMCGAMDAQMAAAAAAADwPwMDAwoCFgUKBAADAwMDAwMBAwAAAAAAAPA/AwMACBsEc2luVAMEAAAJAw0OAQYDAQMAAAAAAADwPwMGAQIaAwIaAwMDAwAIHARsdGFuBQsEAAAJAyoOAwYBAhsDCQMDDgECGQMDAwYBAhsDCQMCDgECGQMDAwIaAwULAAgdAnVwBQsEAAALBgkJAw8OAQoCFwULCAADAwEDK4cW2c737z8DAgkDKg4DAQMAAAAAAAAAAAMBAwAAAAAAAAAAAwEDAAAAAAAA8D8DBQsJAyoOAwEDAAAAAAAA8D8DAQMAAAAAAAAAAAMBAwAAAAAAAAAAAwULBQsACB4EdGFuWAULBAAACQMgDgEJAx8OAgIdBQsCFwULBQsFCwAIHwR0YW5ZBQsEAAAJAyAOAQkDHw4CAhcFCwIeBQsFCwULAA0JAyAOAQQGAAYABgECHgULCgIcBQsAAAMFCwYBAh8FCwoCHAULBAADBQsFCwYBAhcFCwoCHAULCAADBQsFCwULBQsAAA";
@@ -179016,8 +179217,8 @@ hxd_impl_BufferFlags.UniformReadWrite = 3;
 hxd_impl_BufferFlags.Uniform = 4;
 hxd_poly2tri_Constants.kAlpha = 0.3;
 hxd_poly2tri_Constants.EPSILON = 1e-24;
-hxd_poly2tri_Constants.PI_2 = 1.57079632679489656;
-hxd_poly2tri_Constants.PI_3div4 = 2.35619449019234484;
+hxd_poly2tri_Constants.PI_2 = 1.5707963267948966;
+hxd_poly2tri_Constants.PI_3div4 = 2.3561944901923448;
 hxd_poly2tri_Orientation.CW = 1;
 hxd_poly2tri_Orientation.CCW = -1;
 hxd_poly2tri_Orientation.COLLINEAR = 0;

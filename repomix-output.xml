@@ -40,295 +40,243 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
-application/
-  commands/
-    AddRecentProjectUseCase.hx
-    BuildProjectUseCase.hx
-    ClearRecentProjectsUseCase.hx
-    CloseProjectUseCase.hx
-    ExportDatabaseUseCase.hx
-    LoadProjectUseCase.hx
-    OpenResourceUseCase.hx
-    OpenViewUseCase.hx
-    SaveLayoutUseCase.hx
-    SetFullscreenUseCase.hx
-    SetRendererUseCase.hx
-  dto/
-    MenuItem.hx
-    ResourceMetadataDto.hx
-    ViewDto.hx
-    WindowBoundsDto.hx
-  integration/
-    SceneEditorService.hx
-  services/
-    ClipboardService.hx
-    IViewModule.hx
-    LayoutHistoryService.hx
-    MenuService.hx
-    PluginManager.hx
-    PluginRegistry.hx
-    ProjectService.hx
-    ResourceService.hx
-    ViewDescriptor.hx
-    ViewRegistry.hx
-    WindowService.hx
-bootstrap/
-  Application.hx
-  AppModule.hx
-domain/
-  entities/
-    Database.hx
-    LayoutConfig.hx
-    Project.hx
-    Resource.hx
-    UserSettings.hx
-  enums/
-    MenuItemType.hx
-    ResourceType.hx
-    ViewType.hx
-    WindowEvent.hx
-  exceptions/
-    FileNotFoundError.hx
-    InvalidConfigError.hx
-    ProjectLoadError.hx
-    ResourceNotFoundError.hx
-  services/
-    IAppInfo.hx
-    IClipboardService.hx
-    IDomAccess.hx
-    IElement.hx
-    IFileDialog.hx
-    IFileSystem.hx
-    ILayoutEngine.hx
-    IPlatform.hx
-    IPlugin.hx
-    IResourceLoader.hx
-    IViewFactory.hx
-    IWindowManager.hx
-    PluginConfig.hx
-    PluginsConfig.hx
-  valueobjects/
-    DisplayPosition.hx
-    FilePath.hx
-    LayoutConfig.hx
-    LayoutState.hx
-    ResourceId.hx
-    ScreenBounds.hx
-    WindowBounds.hx
-engine/
-  bootstrap/
-    EngineModule.hx
-  domain/
-    entities/
-      MeshRenderer.hx
-      Rigidbody.hx
-      SceneComponent.hx
-      SceneObject.hx
-      Transform.hx
-    services/
-      IEngineEventBus.hx
-      IRenderer.hx
-      IResourceLoader.hx
-      ISceneService.hx
-  infrastructure/
-    EngineEventBusImpl.hx
-    HeapsMaterialSetup.hx
-    HeapsRenderer_b.hx
-    HeapsRenderer.hx
-    HeapsRenderer3D.hx
-    RuntimeShader.hx
-    SceneServiceImpl.hx
-    SceneViewFactory.hx
-    SceneViewportController.hx
-    ShaderData.hx
-    ShaderGraphCompiler.hx
-    ShaderGraphData.hx
-    ShaderGraphSerializer.hx
-    ShaderPreviewRenderer.hx
-    Viewport.hx
-    ViewportService.hx
-infrastructure/
-  config/
-    PackageJsonLoader.hx
-    ProjectConfigParser.hx
-    UserSettingsLoader.hx
-  external/
-    golden/
-      Config.hx
-      Container.hx
-      ContentItem.hx
-      Event.hx
-      Header.hx
-      Layout.hx
-      Tab.hx
-    litegraph/
-      LGraph.hx
-      LGraphCanvas.hx
-      LGraphGroup.hx
-      LGraphLink.hx
-      LGraphNode.hx
-      LiteGraph.hx
-      ShaderEditorPanel.hx
-    monaco/
-      KeyCode.hx
-      KeyMod.hx
-      Languages.hx
-      MarkdownString.hx
-      Model.hx
-      ModelDeltaDecoration.hx
-      Position.hx
-      Range.hx
-      ScriptEditor.hx
-      Todo.hx
-    nw/
-      App.hx
-      Clipboard.hx
-      Menu.hx
-      MenuItem.hx
-      Screen.hx
-      Window.hx
-    GoldenLayoutAdapter.hx
-    HeapsEngineAdapter.hx
-    HtmlElement.hx
-    jQueryElementAdapter.hx
-    MonacoEditorAdapter.hx
-    SceneViewFactory.hx
-    StubConsoleFactory.hx
-    StubEditorFactory.hx
-    StubGameFactory.hx
-    StubHierarchyFactory.hx
-    StubInspectorFactory.hx
-    StubProjectFactory.hx
-    StubPropertiesFactory.hx
-    StubSceneFactory.hx
-  persistence/
-    FileSystemRepository.hx
-    LocalStorageRepository.hx
-    MemoryRepository.hx
-  platform/
-    electron/
-      ElectronClipboardAdapter.hx
-      ElectronFileDialogAdapter.hx
-      ElectronFileSystemAdapter.hx
-      ElectronIpcBridge.hx
-      ElectronPlatformAdapter.hx
-      ElectronScreenAdapter.hx
-      ElectronShortcutAdapter.hx
-      ElectronWindowAdapter.hx
-    nwjs/
-      NwClipboardAdapter.hx
-      NwFileSystemAdapter.hx
-      NwIpcBridge.hx
-      NwScreenAdapter.hx
-      NwShortcutAdapter.hx
-      NwWindowAdapter.hx
-    web/
-      BrowserWindowAdapter.hx
-      LocalStorageAdapter.hx
-  ui/
-    ReactElement.hx
-  BrowserDomAccess.hx
-legacy/
-  Extension.hx
-  Ide — копия.txt
-  Ide.hx
-plugins/
-  console/
-    ConsolePlugin.hx
-    ConsoleView.hx
-    ConsoleViewFactory.hx
-presentation/
-  config/
-    MenuConfig.hx
-  controllers/
-    DragDropController.hx
-    KeyboardController.hx
-    MenuController.hx
-    ToolbarController.hx
-    WindowController.hx
-  modules/
-    ConsoleModule.hx
-    EditorModule.hx
-    GameModule.hx
-    HierarchyModule.hx
-    InspectorModule.hx
-    ProjectModule.hx
-    PropertiesModule.hx
-    SceneModule.hx
-    ShaderEditorModule.hx
-    WelcomeModule.hx
-  styles/
-    CssVariables.hx
-    Theme.hx
-  ui/
-    react/
-      components/
-        ComponentIcon.hx
-        ContextMenu.hx
-        HierarchyIcon.hx
-        HierarchyPanel.hx
-        InspectorPanel.hx
-        NodePropertiesPanel.hx
-        ShaderEditorPanel.hx
-        ShaderNodePalette.hx
-        WelcomePanel.hx
-      factories/
-        ReactRoot.hx
-        ReactViewFactory.hx
-      hooks/
-        UseService.hx
-      BaseReactComponent.hx
-    Dialog.hx
-    Element.hx
-    MenuBuilder.hx
-    StatusBar.hx
-    View.hx
-  views/
-    CdbTableView.hx
-    ModelView.hx
-    PrefabView.hx
-    ScriptEditorView.hx
-  Ide.hx
-res/
-  back.jpg
-  bottom.jpg
-  front.jpg
-  left.jpg
-  right.jpg
-  top.jpg
-shared/
-  events/
-    ErrorOccurred.hx
-    FullscreenChanged.hx
-    LayoutChanged.hx
-    LayoutSaved.hx
-    ObjectChanged.hx
-    ObjectSelected.hx
-    ProjectClosed.hx
-    ProjectClosing.hx
-    ProjectLoaded.hx
-    RecentProjectsUpdated.hx
-    RendererChanged.hx
-    ResourceOpened.hx
-    SceneChanged.hx
-    ViewOpened.hx
-  extensions/
-    ArrayExt.hx
-    DateExt.hx
-    StringExt.hx
-  types/
-    EventBusImpl.hx
-    IEventBus.hx
-    NonEmptyArray.hx
-    Option.hx
-    Result.hx
-  utils/
-    AsyncUtils.hx
-    JsonUtils.hx
-    PathUtils.hx
-tools/
-  Macros.hx
+application/commands/AddRecentProjectUseCase.hx
+application/commands/BuildProjectUseCase.hx
+application/commands/ClearRecentProjectsUseCase.hx
+application/commands/CloseProjectUseCase.hx
+application/commands/ExportDatabaseUseCase.hx
+application/commands/LoadProjectUseCase.hx
+application/commands/OpenResourceUseCase.hx
+application/commands/OpenViewUseCase.hx
+application/commands/SaveLayoutUseCase.hx
+application/commands/SetFullscreenUseCase.hx
+application/commands/SetRendererUseCase.hx
+application/dto/MenuItem.hx
+application/dto/ResourceMetadataDto.hx
+application/dto/ViewDto.hx
+application/dto/WindowBoundsDto.hx
+application/integration/SceneEditorService.hx
+application/services/ClipboardService.hx
+application/services/IViewModule.hx
+application/services/LayoutHistoryService.hx
+application/services/MenuService.hx
+application/services/PluginManager.hx
+application/services/PluginRegistry.hx
+application/services/ProjectService.hx
+application/services/ResourceService.hx
+application/services/ViewDescriptor.hx
+application/services/ViewRegistry.hx
+application/services/WindowService.hx
+bootstrap/Application.hx
+bootstrap/AppModule.hx
+domain/entities/Database.hx
+domain/entities/LayoutConfig.hx
+domain/entities/Project.hx
+domain/entities/Resource.hx
+domain/entities/UserSettings.hx
+domain/enums/MenuItemType.hx
+domain/enums/ResourceType.hx
+domain/enums/ViewType.hx
+domain/enums/WindowEvent.hx
+domain/exceptions/FileNotFoundError.hx
+domain/exceptions/InvalidConfigError.hx
+domain/exceptions/ProjectLoadError.hx
+domain/exceptions/ResourceNotFoundError.hx
+domain/services/IAppInfo.hx
+domain/services/IClipboardService.hx
+domain/services/IDomAccess.hx
+domain/services/IElement.hx
+domain/services/IFileDialog.hx
+domain/services/IFileSystem.hx
+domain/services/ILayoutEngine.hx
+domain/services/IPlatform.hx
+domain/services/IPlugin.hx
+domain/services/IResourceLoader.hx
+domain/services/IViewFactory.hx
+domain/services/IWindowManager.hx
+domain/services/PluginConfig.hx
+domain/services/PluginsConfig.hx
+domain/valueobjects/DisplayPosition.hx
+domain/valueobjects/FilePath.hx
+domain/valueobjects/LayoutConfig.hx
+domain/valueobjects/LayoutState.hx
+domain/valueobjects/ResourceId.hx
+domain/valueobjects/ScreenBounds.hx
+domain/valueobjects/WindowBounds.hx
+engine/bootstrap/EngineModule.hx
+engine/domain/entities/MeshRenderer.hx
+engine/domain/entities/Rigidbody.hx
+engine/domain/entities/SceneComponent.hx
+engine/domain/entities/SceneObject.hx
+engine/domain/entities/Transform.hx
+engine/domain/services/IEngineEventBus.hx
+engine/domain/services/IRenderer.hx
+engine/domain/services/IResourceLoader.hx
+engine/domain/services/ISceneService.hx
+engine/infrastructure/EngineEventBusImpl.hx
+engine/infrastructure/HeapsMaterialSetup.hx
+engine/infrastructure/HeapsRenderer_b.hx
+engine/infrastructure/HeapsRenderer.hx
+engine/infrastructure/HeapsRenderer3D.hx
+engine/infrastructure/RuntimeShader.hx
+engine/infrastructure/SceneServiceImpl.hx
+engine/infrastructure/SceneViewFactory.hx
+engine/infrastructure/SceneViewportController.hx
+engine/infrastructure/ShaderData.hx
+engine/infrastructure/ShaderGraphCompiler.hx
+engine/infrastructure/ShaderGraphData.hx
+engine/infrastructure/ShaderGraphSerializer.hx
+engine/infrastructure/ShaderPreviewRenderer.hx
+engine/infrastructure/Viewport.hx
+engine/infrastructure/ViewportService.hx
+infrastructure/BrowserDomAccess.hx
+infrastructure/config/PackageJsonLoader.hx
+infrastructure/config/ProjectConfigParser.hx
+infrastructure/config/UserSettingsLoader.hx
+infrastructure/external/golden/Config.hx
+infrastructure/external/golden/Container.hx
+infrastructure/external/golden/ContentItem.hx
+infrastructure/external/golden/Event.hx
+infrastructure/external/golden/Header.hx
+infrastructure/external/golden/Layout.hx
+infrastructure/external/golden/Tab.hx
+infrastructure/external/GoldenLayoutAdapter.hx
+infrastructure/external/HeapsEngineAdapter.hx
+infrastructure/external/HtmlElement.hx
+infrastructure/external/jQueryElementAdapter.hx
+infrastructure/external/litegraph/LGraph.hx
+infrastructure/external/litegraph/LGraphCanvas.hx
+infrastructure/external/litegraph/LGraphGroup.hx
+infrastructure/external/litegraph/LGraphLink.hx
+infrastructure/external/litegraph/LGraphNode.hx
+infrastructure/external/litegraph/LiteGraph.hx
+infrastructure/external/litegraph/ShaderEditorPanel.hx
+infrastructure/external/monaco/KeyCode.hx
+infrastructure/external/monaco/KeyMod.hx
+infrastructure/external/monaco/Languages.hx
+infrastructure/external/monaco/MarkdownString.hx
+infrastructure/external/monaco/Model.hx
+infrastructure/external/monaco/ModelDeltaDecoration.hx
+infrastructure/external/monaco/Position.hx
+infrastructure/external/monaco/Range.hx
+infrastructure/external/monaco/ScriptEditor.hx
+infrastructure/external/monaco/Todo.hx
+infrastructure/external/MonacoEditorAdapter.hx
+infrastructure/external/nw/App.hx
+infrastructure/external/nw/Clipboard.hx
+infrastructure/external/nw/Menu.hx
+infrastructure/external/nw/MenuItem.hx
+infrastructure/external/nw/Screen.hx
+infrastructure/external/nw/Window.hx
+infrastructure/external/SceneViewFactory.hx
+infrastructure/external/StubConsoleFactory.hx
+infrastructure/external/StubEditorFactory.hx
+infrastructure/external/StubGameFactory.hx
+infrastructure/external/StubHierarchyFactory.hx
+infrastructure/external/StubInspectorFactory.hx
+infrastructure/external/StubProjectFactory.hx
+infrastructure/external/StubPropertiesFactory.hx
+infrastructure/external/StubSceneFactory.hx
+infrastructure/persistence/FileSystemRepository.hx
+infrastructure/persistence/LocalStorageRepository.hx
+infrastructure/persistence/MemoryRepository.hx
+infrastructure/platform/electron/ElectronClipboardAdapter.hx
+infrastructure/platform/electron/ElectronFileDialogAdapter.hx
+infrastructure/platform/electron/ElectronFileSystemAdapter.hx
+infrastructure/platform/electron/ElectronIpcBridge.hx
+infrastructure/platform/electron/ElectronPlatformAdapter.hx
+infrastructure/platform/electron/ElectronScreenAdapter.hx
+infrastructure/platform/electron/ElectronShortcutAdapter.hx
+infrastructure/platform/electron/ElectronWindowAdapter.hx
+infrastructure/platform/nwjs/NwClipboardAdapter.hx
+infrastructure/platform/nwjs/NwFileSystemAdapter.hx
+infrastructure/platform/nwjs/NwIpcBridge.hx
+infrastructure/platform/nwjs/NwScreenAdapter.hx
+infrastructure/platform/nwjs/NwShortcutAdapter.hx
+infrastructure/platform/nwjs/NwWindowAdapter.hx
+infrastructure/platform/web/BrowserWindowAdapter.hx
+infrastructure/platform/web/LocalStorageAdapter.hx
+infrastructure/ui/ReactElement.hx
+legacy/Extension.hx
+legacy/Ide — копия.txt
+legacy/Ide.hx
 plugins.json
+plugins/console/ConsolePlugin.hx
+plugins/console/ConsoleView.hx
+plugins/console/ConsoleViewFactory.hx
+presentation/config/MenuConfig.hx
+presentation/controllers/DragDropController.hx
+presentation/controllers/KeyboardController.hx
+presentation/controllers/MenuController.hx
+presentation/controllers/ToolbarController.hx
+presentation/controllers/WindowController.hx
+presentation/Ide.hx
+presentation/modules/ConsoleModule.hx
+presentation/modules/EditorModule.hx
+presentation/modules/GameModule.hx
+presentation/modules/HierarchyModule.hx
+presentation/modules/InspectorModule.hx
+presentation/modules/ProjectModule.hx
+presentation/modules/PropertiesModule.hx
+presentation/modules/SceneModule.hx
+presentation/modules/ShaderEditorModule.hx
+presentation/modules/WelcomeModule.hx
+presentation/styles/CssVariables.hx
+presentation/styles/Theme.hx
+presentation/ui/Dialog.hx
+presentation/ui/Element.hx
+presentation/ui/MenuBuilder.hx
+presentation/ui/react/BaseReactComponent.hx
+presentation/ui/react/components/ComponentIcon.hx
+presentation/ui/react/components/ContextMenu.hx
+presentation/ui/react/components/HierarchyIcon.hx
+presentation/ui/react/components/HierarchyPanel.hx
+presentation/ui/react/components/InspectorPanel.hx
+presentation/ui/react/components/NodePropertiesPanel.hx
+presentation/ui/react/components/ShaderEditorPanel.hx
+presentation/ui/react/components/ShaderNodePalette.hx
+presentation/ui/react/components/WelcomePanel.hx
+presentation/ui/react/factories/ReactRoot.hx
+presentation/ui/react/factories/ReactViewFactory.hx
+presentation/ui/react/hooks/UseService.hx
+presentation/ui/StatusBar.hx
+presentation/ui/View.hx
+presentation/views/CdbTableView.hx
+presentation/views/ModelView.hx
+presentation/views/PrefabView.hx
+presentation/views/ScriptEditorView.hx
+res/back.jpg
+res/bottom.jpg
+res/front.jpg
+res/left.jpg
+res/right.jpg
+res/top.jpg
+shared/events/ErrorOccurred.hx
+shared/events/FullscreenChanged.hx
+shared/events/LayoutChanged.hx
+shared/events/LayoutSaved.hx
+shared/events/ObjectChanged.hx
+shared/events/ObjectSelected.hx
+shared/events/ProjectClosed.hx
+shared/events/ProjectClosing.hx
+shared/events/ProjectLoaded.hx
+shared/events/RecentProjectsUpdated.hx
+shared/events/RendererChanged.hx
+shared/events/ResourceOpened.hx
+shared/events/SceneChanged.hx
+shared/events/ViewOpened.hx
+shared/extensions/ArrayExt.hx
+shared/extensions/DateExt.hx
+shared/extensions/StringExt.hx
+shared/types/EventBusImpl.hx
+shared/types/IEventBus.hx
+shared/types/NonEmptyArray.hx
+shared/types/Option.hx
+shared/types/Result.hx
+shared/utils/AsyncUtils.hx
+shared/utils/JsonUtils.hx
+shared/utils/PathUtils.hx
+tools/Macros.hx
 </directory_structure>
 
 <files>
@@ -3872,6 +3820,7 @@ class ShaderPreviewRenderer implements Service {
     private var maxDistance:Float = 10.0;
     private var minPhi:Float = -1.5;    // ~-86 градусов
     private var maxPhi:Float = 1.5;     // ~86 градусов
+    private var albedoTexture:Null<h3d.mat.Texture> = null;
 
     public function new() {
         // ✅ ВАЖНО: устанавливаем PBR MaterialSetup ДО создания сцены
@@ -3981,6 +3930,8 @@ class ShaderPreviewRenderer implements Service {
         //cast(s3d.lightSystem, h3d.scene.fwd.LightSystem).ambientLight.set(0.5, 0.5, 0.5);
         trace("✅ [ShaderPreview] Environment ready");
     }
+
+    
     /**
      * ✅ ПРОСТОЙ environment — серый градиент
      * Создаётся БЫСТРО (небольшая текстура)
@@ -4003,7 +3954,7 @@ class ShaderPreviewRenderer implements Service {
         
         return envMap;
     }
-/**
+    /**
      * ✅ НОВОЕ: Подключает управление камерой к canvas
      * Вызывается из ShaderEditorPanel после регистрации viewport
      */
@@ -4087,6 +4038,42 @@ class ShaderPreviewRenderer implements Service {
         cam.target.set(0, 0, 0); // Смотрим в центр (где сфера)
         cam.update();
     }
+
+    // Добавьте новый метод:
+    /**
+     * Загружает текстуру и применяет к материалу сферы.
+     * Вызывается из ShaderEditorPanel при наличии ноды texture/sample.
+     */
+    public function setAlbedoTexture(path:String):Void {
+        // Очищаем старую текстуру
+        if (albedoTexture != null) {
+            albedoTexture.dispose();
+            albedoTexture = null;
+        }
+        
+        if (path == null || path == "") {
+            // Убираем текстуру с материала
+            if (previewMesh != null) {
+                previewMesh.material.mainPass.texture = null;
+            }
+            trace('🖼️ [ShaderPreview] Texture cleared');
+            return;
+        }
+        
+        try {
+            var res = hxd.res.Loader.currentInstance.load(path);
+            albedoTexture = res.toTexture();
+            
+            // ✅ Применяем к PBR материалу (mainPass.texture = albedo)
+            if (previewMesh != null) {
+                previewMesh.material.mainPass.texture = albedoTexture;
+            }
+            
+            trace('🖼️ [ShaderPreview] Texture loaded: $path');
+        } catch (e:Dynamic) {
+            trace('❌ [ShaderPreview] Failed to load texture: $e');
+        }
+    }
     /**
      * Применяет скомпилированные данные графа к материалу.
      * Вызывается из React-компонента при изменении графа.
@@ -4160,6 +4147,10 @@ class ShaderPreviewRenderer implements Service {
         return v != null && Reflect.hasField(v, "x") && Reflect.hasField(v, "y") && Reflect.hasField(v, "z");
     }
     public function dispose():Void {
+        if (albedoTexture != null) {
+            albedoTexture.dispose();
+            albedoTexture = null;
+        }
         if (s3d != null) {
             s3d.dispose();
             s3d = null;
@@ -4413,6 +4404,29 @@ class ViewportService implements Service {
 }
 </file>
 
+<file path="infrastructure/BrowserDomAccess.hx">
+package hide.infrastructure;
+
+import hide.domain.services.IDomAccess;
+import hx.injection.Service;
+
+class BrowserDomAccess implements IDomAccess implements Service {
+    public function new() {}
+    
+    public function getElementById(id:String):Dynamic {
+        return js.Browser.document.getElementById(id);
+    }
+    
+    public function addWindowEventListener(event:String, handler:Dynamic->Void):Void {
+        js.Browser.window.addEventListener(event, handler);
+    }
+    
+    public function removeWindowEventListener(event:String, handler:Dynamic->Void):Void {
+        js.Browser.window.removeEventListener(event, handler);
+    }
+}
+</file>
+
 <file path="infrastructure/config/PackageJsonLoader.hx">
 package hide.infrastructure.config;
 </file>
@@ -4606,6 +4620,440 @@ extern class Tab {
 	dynamic function onClose() : Bool;
 
 }
+</file>
+
+<file path="infrastructure/external/GoldenLayoutAdapter.hx">
+package hide.infrastructure.external;
+
+import hide.application.services.ViewRegistry;
+import hide.infrastructure.external.golden.*;
+import hide.domain.services.ILayoutEngine;
+import hide.domain.services.IViewFactory;
+import hide.domain.valueobjects.LayoutConfig;
+import hide.domain.valueobjects.LayoutState;
+import hide.domain.valueobjects.DisplayPosition;
+import hide.shared.types.IEventBus;
+import hide.shared.events.LayoutChanged;
+import js.html.Element;
+import hx.injection.Service;
+import hide.infrastructure.external.golden.Config.ItemConfig;
+import hide.infrastructure.external.golden.Config.ItemType;
+class GoldenLayoutAdapter implements ILayoutEngine implements Service {
+   private var layout:Layout;
+    private var container:Dynamic; // Принимает js.html.Element или jQuery
+    private var eventBus:IEventBus;
+    private var viewFactories:Map<String, IViewFactory>; 
+    private var onLayoutChangedCallbacks:Array<Void->Void>;
+    private var viewRegistry:ViewRegistry;
+
+    public function new(eventBus:IEventBus, viewRegistry:ViewRegistry) {
+        this.eventBus = eventBus;
+        this.viewRegistry = viewRegistry;
+        this.viewFactories = new Map();
+        this.onLayoutChangedCallbacks = [];
+
+        viewRegistry.setFactoryRegistrationCallback(registerView);
+    }
+
+    public function setContainer(el:Dynamic):Void {
+        this.container = el;
+    }
+
+    public function init(state:LayoutState):Void {
+        if (container == null) {
+            trace("WARNING: GoldenLayout container not set. Call setContainer() first.");
+            return;
+        }
+
+        var contentData = state.content;
+        if (contentData == null || contentData.length == 0) {
+            var defaultState = createDefaultSkeleton();
+            contentData = defaultState.content;
+        }
+
+        var goldenConfig = toGoldenConfig({ content: contentData, fullScreen: null });
+
+        // ✅ ИСПРАВЛЕНИЕ: передаем container напрямую (или cast, если это jQuery), без .get(0)
+        layout = new Layout(goldenConfig, cast container);
+
+        for (type => factory in viewFactories) {
+            registerComponentInLayout(type, factory);
+        }
+
+        layout.init();
+        
+        layout.on('stateChanged', onStateChanged);
+    }
+    private function onStateChanged ():Void {
+        eventBus.publish(LayoutChanged,new LayoutChanged());
+        for (cb in onLayoutChangedCallbacks) cb();
+    }
+    public function open(componentName:String, state:Dynamic, ?position:DisplayPosition):Void {
+        if (layout == null) throw "Layout not initialized";
+
+        var config:ItemConfig = {
+            type: Component,
+            componentName: componentName,
+            componentState: state,
+            content: [], id: null, width: null, height: null, isClosable: true, title: componentName, activeItemIndex: null
+        };
+
+        var targetContainer = getOrInitTarget(position);
+        targetContainer.addChild(config);
+    }
+    public function updateSize(width:Int, height:Int):Void {
+        if (layout != null && layout.isInitialised) {
+            layout.updateSize(width, height);
+        }
+    }
+    public function save():LayoutState {
+        var config = layout.toConfig();
+        return {
+            // ✅ ИСПРАВЛЕНИЕ: fromGoldenConfig теперь возвращает правильный тип
+            content: fromGoldenConfig(config.content),
+            fullScreen: null
+        };
+    }
+
+    public function dispose():Void {
+        if (layout != null) {
+            layout.destroy();
+            layout = null;
+        }
+        onLayoutChangedCallbacks = [];
+    }
+
+    public function onLayoutChanged(callback:Void->Void):Void {
+        onLayoutChangedCallbacks.push(callback);
+    }
+
+    public function registerView(type:String, factory:IViewFactory):Void {
+        viewFactories.set(type, factory);
+        if (layout != null && layout.isInitialised) {
+            registerComponentInLayout(type, factory);
+        }
+    }
+
+    // === Вспомогательные методы ===
+
+    private function registerComponentInLayout(type:String, factory:IViewFactory):Void {
+        layout.registerComponent(type, function(glContainer, state) {
+            var element = new HtmlElement(glContainer.getElement());
+            factory.create(element, state);
+        });
+    }
+
+    /**
+     * Создает дефолтную структуру окон, если её нет.
+     * Возвращает доменный тип LayoutState, а не golden.Config.
+     */
+    private function createDefaultSkeleton():LayoutState {
+        return {
+            content: [{
+                type: "row",
+                componentName: null,
+                componentState: null,
+                id: "content_root",
+                width: null,
+                height: null,
+                content: [
+                    // === ЛЕВАЯ КОЛОНКА: Hierarchy (20%) ===
+                    {
+                        type: "stack",
+                        id: "left",
+                        width: 20,
+                        componentName: null,  // ← null для stack
+                        componentState: null,
+                        height: null,
+                        content: [            // ← ДОБАВЛЯЕМ дочерний компонент!
+                            {
+                                type: "component",
+                                componentName: "hierarchy",
+                                componentState: {},
+                                title: "Hierarchy",
+                                id: "hierarchy-tab",
+                                content: [],
+                                width: null,
+                                height: null
+                            }
+                        ],
+                        title: "Hierarchy"
+                    },
+                    
+                    // === ЦЕНТРАЛЬНАЯ КОЛОНКА (55%) ===
+                    {
+                        type: "column",
+                        id: "middle-column",
+                        width: 55,
+                        componentName: null,
+                        componentState: null,
+                        height: null,
+                        content: [
+                            // Верх: Scene + Game (табы)
+                            {
+                                type: "stack",
+                                id: "center",
+                                componentName: null,
+                                componentState: null,
+                                width: null,
+                                height: 70,
+                                content: [    // ← ДОБАВЛЯЕМ Scene и Game
+                                    {
+                                        type: "component",
+                                        componentName: "scene",
+                                        componentState: {},
+                                        title: "Scene",
+                                        id: "scene-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    },
+                                    {
+                                        type: "component",
+                                        componentName: "game",
+                                        componentState: {},
+                                        title: "Game",
+                                        id: "game-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    }
+                                ],
+                                title: "Scene"
+                            },
+                            // Низ: Project + Console (табы)
+                            {
+                                type: "stack",
+                                id: "bottom",
+                                componentName: null,
+                                componentState: null,
+                                width: null,
+                                height: 30,
+                                content: [    // ← ДОБАВЛЯЕМ Project и Console
+                                    {
+                                        type: "component",
+                                        componentName: "project",
+                                        componentState: {},
+                                        title: "Project",
+                                        id: "project-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    },
+                                    {
+                                        type: "component",
+                                        componentName: "console",
+                                        componentState: { logLevel: "info" },
+                                        title: "Console",
+                                        id: "console-tab",
+                                        content: [],
+                                        width: null,
+                                        height: null
+                                    }
+                                ],
+                                title: "Project"
+                            }
+                        ]
+                    },
+                    
+                    // === ПРАВАЯ КОЛОНКА: Inspector (25%) ===
+                    {
+                        type: "stack",
+                        id: "right",
+                        width: 25,
+                        componentName: null,
+                        componentState: null,
+                        height: null,
+                        content: [            // ← ДОБАВЛЯЕМ дочерний компонент!
+                            {
+                                type: "component",
+                                componentName: "inspector",
+                                componentState: {},
+                                title: "Inspector",
+                                id: "inspector-tab",
+                                content: [],
+                                width: null,
+                                height: null
+                            }
+                        ],
+                        title: "Inspector"
+                    }
+                ]
+            }],
+            fullScreen: null
+        };
+    }
+
+    private function getOrInitTarget(position:DisplayPosition):ContentItem {
+        if (layout.root == null) return layout.root;
+
+        var targetId = switch position {
+            case Left: "left";
+            case Center: "center";
+            case Bottom: "bottom";
+            case Right: "right";
+            case MiddleColumnInternal: "middle-column";
+            case null: null;
+        };
+
+        if (targetId == null) return layout.root;
+
+        var items = layout.root.getItemsById(targetId);
+        if (items.length > 0) {
+            var target = items[0];
+            // ✅ ЗАЩИТА: если у существующего контейнера content == null, инициализируем
+            if (target.config.content == null) {
+                target.config.content = [];
+            }
+            return target;
+        }
+
+        var rootRow = layout.root.contentItems[0];
+        if (rootRow == null || rootRow.type != Row) {
+            layout.root.addChild({ type: Stack, id: targetId, componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
+            return layout.root.getItemsById(targetId)[0];
+        }
+
+        switch position {
+            case Left: rootRow.addChild({ type: Stack, id: "left", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
+            case Right: rootRow.addChild({ type: Stack, id: "right", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null });
+            case Center | Bottom | MiddleColumnInternal:
+                var middleItems = layout.root.getItemsById("middle-column");
+                var middleCol:ContentItem = middleItems.length > 0 ? middleItems[0] : null;
+
+                if (middleCol == null) {
+                    rootRow.addChild({ type: Column, id: "middle-column", isClosable: false, componentName: null, componentState: null, content: [], width: null, height: null, title: null, activeItemIndex: null }, 1);
+                    middleCol = layout.root.getItemsById("middle-column")[0];
+                }
+
+                if (position == Center) {
+                    middleCol.addChild({ type: Stack, id: "center", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
+                } else if (position == Bottom) {
+                    middleCol.addChild({ type: Stack, id: "bottom", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
+                }
+            default:
+        }
+        return layout.root.getItemsById(targetId)[0];
+    }
+
+    // === Строгий Маппинг JSON ===
+    
+    private function toGoldenConfig(state:LayoutState):Config {
+        return {
+            content: [for (item in state.content) toGoldenItem(item)],
+            settings: { reorderEnabled: true, constrainDragToHeader: true, showPopoutIcon: false, showMaximiseIcon: true }
+        };
+    }
+
+    // ✅ ИСПРАВЛЕНИЕ: Явная типизация аргумента
+    // hide/infrastructure/external/GoldenLayoutAdapter.hx
+    private function toGoldenItem(item:LayoutConfig):hide.infrastructure.external.golden.Config.ItemConfig {
+        var glType = switch item.type {
+            case "row": ItemType.Row;
+            case "column": ItemType.Column;
+            case "stack": ItemType.Stack;
+            default: ItemType.Component;
+        };
+        return {
+            type: glType,
+            componentName: item.componentName,
+            componentState: item.componentState,
+            content: item.content != null ? [for (i in item.content) toGoldenItem(i)] : null,
+            id: item.id,
+            width: item.width,
+            height: item.height,
+            isClosable: true,
+            title: item.title,          // ← ИЗМЕНЕНО: было null
+            activeItemIndex: null
+        };
+    }
+
+    // ✅ ИСПРАВЛЕНИЕ: Возвращаем правильный доменный тип
+    private function fromGoldenConfig(items:Array<ItemConfig>):Array<LayoutConfig> {
+        return [for (item in items) fromGoldenItem(item)];
+    }
+
+    // hide/infrastructure/external/GoldenLayoutAdapter.hx
+    private function fromGoldenItem(item:ItemConfig):LayoutConfig {
+        var typeStr = switch item.type {
+            case Row: "row";
+            case Column: "column";
+            case Stack: "stack";
+            case Component: "component";
+        };
+        return {
+            type: typeStr,
+            componentName: item.componentName,
+            componentState: item.componentState,
+            content: item.content != null ? [for (i in item.content) fromGoldenItem(i)] : null,
+            id: item.id,
+            width: item.width,
+            height: item.height,
+            title: item.title           // ← ДОБАВИТЬ
+        };
+    }
+}
+</file>
+
+<file path="infrastructure/external/HeapsEngineAdapter.hx">
+package hide.infrastructure.external;
+</file>
+
+<file path="infrastructure/external/HtmlElement.hx">
+package hide.infrastructure.external;
+
+import hide.domain.services.IElement;
+import js.html.Element;
+
+class HtmlElement implements IElement {
+    private var element:Element;
+    
+    public function new(element:Dynamic) {
+        // GoldenLayout возвращает JQuery, нужно получить raw element
+        if (element == null) {
+            // Fallback на случай, если передан null
+            this.element = js.Browser.document.createElement("div");
+        } else if (element.nodeType != null) {
+            // Это уже "голый" DOM-элемент (наиболее вероятный сценарий в GL v2/v3)
+            this.element = cast element;
+        } else if (element.length != null && element[0] != null) {
+            // Это jQuery-подобный объект (массив с элементами)
+            this.element = cast element[0];
+        } else if (Reflect.hasField(element, "get") && Reflect.isFunction(element.get)) {
+            // У объекта есть метод .get() (классический jQuery)
+            this.element = cast element.get(0);
+        } else {
+            // Попытка прямого каста как последняя надеждa
+            this.element = cast element;
+        }
+    }
+
+    public function setInnerHtml(html:String):Void {
+        element.innerHTML = html;  // ← innerHTML (заглавные)
+    }
+
+    public function appendChild(child:IElement):Void {
+        var childHtml:HtmlElement = cast child;  // ← каст к HtmlElement
+        element.appendChild(childHtml.element);
+    }
+
+    public function addEventListener(event:String, handler:Dynamic->Void):Void {
+        element.addEventListener(event, handler);
+    }
+
+    public function getParent():Null<IElement> {
+        if (element.parentElement == null) return null;
+        return new HtmlElement(element.parentElement);
+    }
+
+    public function getElement():Element {
+        return element;
+    }
+}
+</file>
+
+<file path="infrastructure/external/jQueryElementAdapter.hx">
+package hide.infrastructure.external;
 </file>
 
 <file path="infrastructure/external/litegraph/LGraph.hx">
@@ -5982,6 +6430,10 @@ abstract Todo(Dynamic) {
 }
 </file>
 
+<file path="infrastructure/external/MonacoEditorAdapter.hx">
+package hide.infrastructure.external;
+</file>
+
 <file path="infrastructure/external/nw/App.hx">
 package nw;
 
@@ -6137,444 +6589,6 @@ extern class Window {
 	public static function open( url : String, ?params : {?new_instance:Bool,?inject_js_start:String,?inject_js_end:String,?id:String}, ?callb:Window->Void ) : Void;
 
 }
-</file>
-
-<file path="infrastructure/external/GoldenLayoutAdapter.hx">
-package hide.infrastructure.external;
-
-import hide.application.services.ViewRegistry;
-import hide.infrastructure.external.golden.*;
-import hide.domain.services.ILayoutEngine;
-import hide.domain.services.IViewFactory;
-import hide.domain.valueobjects.LayoutConfig;
-import hide.domain.valueobjects.LayoutState;
-import hide.domain.valueobjects.DisplayPosition;
-import hide.shared.types.IEventBus;
-import hide.shared.events.LayoutChanged;
-import js.html.Element;
-import hx.injection.Service;
-import hide.infrastructure.external.golden.Config.ItemConfig;
-import hide.infrastructure.external.golden.Config.ItemType;
-class GoldenLayoutAdapter implements ILayoutEngine implements Service {
-   private var layout:Layout;
-    private var container:Dynamic; // Принимает js.html.Element или jQuery
-    private var eventBus:IEventBus;
-    private var viewFactories:Map<String, IViewFactory>; 
-    private var onLayoutChangedCallbacks:Array<Void->Void>;
-    private var viewRegistry:ViewRegistry;
-
-    public function new(eventBus:IEventBus, viewRegistry:ViewRegistry) {
-        this.eventBus = eventBus;
-        this.viewRegistry = viewRegistry;
-        this.viewFactories = new Map();
-        this.onLayoutChangedCallbacks = [];
-
-        viewRegistry.setFactoryRegistrationCallback(registerView);
-    }
-
-    public function setContainer(el:Dynamic):Void {
-        this.container = el;
-    }
-
-    public function init(state:LayoutState):Void {
-        if (container == null) {
-            trace("WARNING: GoldenLayout container not set. Call setContainer() first.");
-            return;
-        }
-
-        var contentData = state.content;
-        if (contentData == null || contentData.length == 0) {
-            var defaultState = createDefaultSkeleton();
-            contentData = defaultState.content;
-        }
-
-        var goldenConfig = toGoldenConfig({ content: contentData, fullScreen: null });
-
-        // ✅ ИСПРАВЛЕНИЕ: передаем container напрямую (или cast, если это jQuery), без .get(0)
-        layout = new Layout(goldenConfig, cast container);
-
-        for (type => factory in viewFactories) {
-            registerComponentInLayout(type, factory);
-        }
-
-        layout.init();
-        
-        layout.on('stateChanged', onStateChanged);
-    }
-    private function onStateChanged ():Void {
-        eventBus.publish(LayoutChanged,new LayoutChanged());
-        for (cb in onLayoutChangedCallbacks) cb();
-    }
-    public function open(componentName:String, state:Dynamic, ?position:DisplayPosition):Void {
-        if (layout == null) throw "Layout not initialized";
-
-        var config:ItemConfig = {
-            type: Component,
-            componentName: componentName,
-            componentState: state,
-            content: [], id: null, width: null, height: null, isClosable: true, title: componentName, activeItemIndex: null
-        };
-
-        var targetContainer = getOrInitTarget(position);
-        targetContainer.addChild(config);
-    }
-    public function updateSize(width:Int, height:Int):Void {
-        if (layout != null && layout.isInitialised) {
-            layout.updateSize(width, height);
-        }
-    }
-    public function save():LayoutState {
-        var config = layout.toConfig();
-        return {
-            // ✅ ИСПРАВЛЕНИЕ: fromGoldenConfig теперь возвращает правильный тип
-            content: fromGoldenConfig(config.content),
-            fullScreen: null
-        };
-    }
-
-    public function dispose():Void {
-        if (layout != null) {
-            layout.destroy();
-            layout = null;
-        }
-        onLayoutChangedCallbacks = [];
-    }
-
-    public function onLayoutChanged(callback:Void->Void):Void {
-        onLayoutChangedCallbacks.push(callback);
-    }
-
-    public function registerView(type:String, factory:IViewFactory):Void {
-        viewFactories.set(type, factory);
-        if (layout != null && layout.isInitialised) {
-            registerComponentInLayout(type, factory);
-        }
-    }
-
-    // === Вспомогательные методы ===
-
-    private function registerComponentInLayout(type:String, factory:IViewFactory):Void {
-        layout.registerComponent(type, function(glContainer, state) {
-            var element = new HtmlElement(glContainer.getElement());
-            factory.create(element, state);
-        });
-    }
-
-    /**
-     * Создает дефолтную структуру окон, если её нет.
-     * Возвращает доменный тип LayoutState, а не golden.Config.
-     */
-    private function createDefaultSkeleton():LayoutState {
-        return {
-            content: [{
-                type: "row",
-                componentName: null,
-                componentState: null,
-                id: "content_root",
-                width: null,
-                height: null,
-                content: [
-                    // === ЛЕВАЯ КОЛОНКА: Hierarchy (20%) ===
-                    {
-                        type: "stack",
-                        id: "left",
-                        width: 20,
-                        componentName: null,  // ← null для stack
-                        componentState: null,
-                        height: null,
-                        content: [            // ← ДОБАВЛЯЕМ дочерний компонент!
-                            {
-                                type: "component",
-                                componentName: "hierarchy",
-                                componentState: {},
-                                title: "Hierarchy",
-                                id: "hierarchy-tab",
-                                content: [],
-                                width: null,
-                                height: null
-                            }
-                        ],
-                        title: "Hierarchy"
-                    },
-                    
-                    // === ЦЕНТРАЛЬНАЯ КОЛОНКА (55%) ===
-                    {
-                        type: "column",
-                        id: "middle-column",
-                        width: 55,
-                        componentName: null,
-                        componentState: null,
-                        height: null,
-                        content: [
-                            // Верх: Scene + Game (табы)
-                            {
-                                type: "stack",
-                                id: "center",
-                                componentName: null,
-                                componentState: null,
-                                width: null,
-                                height: 70,
-                                content: [    // ← ДОБАВЛЯЕМ Scene и Game
-                                    {
-                                        type: "component",
-                                        componentName: "scene",
-                                        componentState: {},
-                                        title: "Scene",
-                                        id: "scene-tab",
-                                        content: [],
-                                        width: null,
-                                        height: null
-                                    },
-                                    {
-                                        type: "component",
-                                        componentName: "game",
-                                        componentState: {},
-                                        title: "Game",
-                                        id: "game-tab",
-                                        content: [],
-                                        width: null,
-                                        height: null
-                                    }
-                                ],
-                                title: "Scene"
-                            },
-                            // Низ: Project + Console (табы)
-                            {
-                                type: "stack",
-                                id: "bottom",
-                                componentName: null,
-                                componentState: null,
-                                width: null,
-                                height: 30,
-                                content: [    // ← ДОБАВЛЯЕМ Project и Console
-                                    {
-                                        type: "component",
-                                        componentName: "project",
-                                        componentState: {},
-                                        title: "Project",
-                                        id: "project-tab",
-                                        content: [],
-                                        width: null,
-                                        height: null
-                                    },
-                                    {
-                                        type: "component",
-                                        componentName: "console",
-                                        componentState: { logLevel: "info" },
-                                        title: "Console",
-                                        id: "console-tab",
-                                        content: [],
-                                        width: null,
-                                        height: null
-                                    }
-                                ],
-                                title: "Project"
-                            }
-                        ]
-                    },
-                    
-                    // === ПРАВАЯ КОЛОНКА: Inspector (25%) ===
-                    {
-                        type: "stack",
-                        id: "right",
-                        width: 25,
-                        componentName: null,
-                        componentState: null,
-                        height: null,
-                        content: [            // ← ДОБАВЛЯЕМ дочерний компонент!
-                            {
-                                type: "component",
-                                componentName: "inspector",
-                                componentState: {},
-                                title: "Inspector",
-                                id: "inspector-tab",
-                                content: [],
-                                width: null,
-                                height: null
-                            }
-                        ],
-                        title: "Inspector"
-                    }
-                ]
-            }],
-            fullScreen: null
-        };
-    }
-
-    private function getOrInitTarget(position:DisplayPosition):ContentItem {
-        if (layout.root == null) return layout.root;
-
-        var targetId = switch position {
-            case Left: "left";
-            case Center: "center";
-            case Bottom: "bottom";
-            case Right: "right";
-            case MiddleColumnInternal: "middle-column";
-            case null: null;
-        };
-
-        if (targetId == null) return layout.root;
-
-        var items = layout.root.getItemsById(targetId);
-        if (items.length > 0) {
-            var target = items[0];
-            // ✅ ЗАЩИТА: если у существующего контейнера content == null, инициализируем
-            if (target.config.content == null) {
-                target.config.content = [];
-            }
-            return target;
-        }
-
-        var rootRow = layout.root.contentItems[0];
-        if (rootRow == null || rootRow.type != Row) {
-            layout.root.addChild({ type: Stack, id: targetId, componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
-            return layout.root.getItemsById(targetId)[0];
-        }
-
-        switch position {
-            case Left: rootRow.addChild({ type: Stack, id: "left", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
-            case Right: rootRow.addChild({ type: Stack, id: "right", width: 20, componentName: null, componentState: null, content: [], height: null, isClosable: true, title: null, activeItemIndex: null });
-            case Center | Bottom | MiddleColumnInternal:
-                var middleItems = layout.root.getItemsById("middle-column");
-                var middleCol:ContentItem = middleItems.length > 0 ? middleItems[0] : null;
-
-                if (middleCol == null) {
-                    rootRow.addChild({ type: Column, id: "middle-column", isClosable: false, componentName: null, componentState: null, content: [], width: null, height: null, title: null, activeItemIndex: null }, 1);
-                    middleCol = layout.root.getItemsById("middle-column")[0];
-                }
-
-                if (position == Center) {
-                    middleCol.addChild({ type: Stack, id: "center", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null }, 0);
-                } else if (position == Bottom) {
-                    middleCol.addChild({ type: Stack, id: "bottom", componentName: null, componentState: null, content: [], width: null, height: null, isClosable: true, title: null, activeItemIndex: null });
-                }
-            default:
-        }
-        return layout.root.getItemsById(targetId)[0];
-    }
-
-    // === Строгий Маппинг JSON ===
-    
-    private function toGoldenConfig(state:LayoutState):Config {
-        return {
-            content: [for (item in state.content) toGoldenItem(item)],
-            settings: { reorderEnabled: true, constrainDragToHeader: true, showPopoutIcon: false, showMaximiseIcon: true }
-        };
-    }
-
-    // ✅ ИСПРАВЛЕНИЕ: Явная типизация аргумента
-    // hide/infrastructure/external/GoldenLayoutAdapter.hx
-    private function toGoldenItem(item:LayoutConfig):hide.infrastructure.external.golden.Config.ItemConfig {
-        var glType = switch item.type {
-            case "row": ItemType.Row;
-            case "column": ItemType.Column;
-            case "stack": ItemType.Stack;
-            default: ItemType.Component;
-        };
-        return {
-            type: glType,
-            componentName: item.componentName,
-            componentState: item.componentState,
-            content: item.content != null ? [for (i in item.content) toGoldenItem(i)] : null,
-            id: item.id,
-            width: item.width,
-            height: item.height,
-            isClosable: true,
-            title: item.title,          // ← ИЗМЕНЕНО: было null
-            activeItemIndex: null
-        };
-    }
-
-    // ✅ ИСПРАВЛЕНИЕ: Возвращаем правильный доменный тип
-    private function fromGoldenConfig(items:Array<ItemConfig>):Array<LayoutConfig> {
-        return [for (item in items) fromGoldenItem(item)];
-    }
-
-    // hide/infrastructure/external/GoldenLayoutAdapter.hx
-    private function fromGoldenItem(item:ItemConfig):LayoutConfig {
-        var typeStr = switch item.type {
-            case Row: "row";
-            case Column: "column";
-            case Stack: "stack";
-            case Component: "component";
-        };
-        return {
-            type: typeStr,
-            componentName: item.componentName,
-            componentState: item.componentState,
-            content: item.content != null ? [for (i in item.content) fromGoldenItem(i)] : null,
-            id: item.id,
-            width: item.width,
-            height: item.height,
-            title: item.title           // ← ДОБАВИТЬ
-        };
-    }
-}
-</file>
-
-<file path="infrastructure/external/HeapsEngineAdapter.hx">
-package hide.infrastructure.external;
-</file>
-
-<file path="infrastructure/external/HtmlElement.hx">
-package hide.infrastructure.external;
-
-import hide.domain.services.IElement;
-import js.html.Element;
-
-class HtmlElement implements IElement {
-    private var element:Element;
-    
-    public function new(element:Dynamic) {
-        // GoldenLayout возвращает JQuery, нужно получить raw element
-        if (element == null) {
-            // Fallback на случай, если передан null
-            this.element = js.Browser.document.createElement("div");
-        } else if (element.nodeType != null) {
-            // Это уже "голый" DOM-элемент (наиболее вероятный сценарий в GL v2/v3)
-            this.element = cast element;
-        } else if (element.length != null && element[0] != null) {
-            // Это jQuery-подобный объект (массив с элементами)
-            this.element = cast element[0];
-        } else if (Reflect.hasField(element, "get") && Reflect.isFunction(element.get)) {
-            // У объекта есть метод .get() (классический jQuery)
-            this.element = cast element.get(0);
-        } else {
-            // Попытка прямого каста как последняя надеждa
-            this.element = cast element;
-        }
-    }
-
-    public function setInnerHtml(html:String):Void {
-        element.innerHTML = html;  // ← innerHTML (заглавные)
-    }
-
-    public function appendChild(child:IElement):Void {
-        var childHtml:HtmlElement = cast child;  // ← каст к HtmlElement
-        element.appendChild(childHtml.element);
-    }
-
-    public function addEventListener(event:String, handler:Dynamic->Void):Void {
-        element.addEventListener(event, handler);
-    }
-
-    public function getParent():Null<IElement> {
-        if (element.parentElement == null) return null;
-        return new HtmlElement(element.parentElement);
-    }
-
-    public function getElement():Element {
-        return element;
-    }
-}
-</file>
-
-<file path="infrastructure/external/jQueryElementAdapter.hx">
-package hide.infrastructure.external;
-</file>
-
-<file path="infrastructure/external/MonacoEditorAdapter.hx">
-package hide.infrastructure.external;
 </file>
 
 <file path="infrastructure/external/SceneViewFactory.hx">
@@ -7361,29 +7375,6 @@ class ReactElement implements IElement {
     
     public function unmount():Void {
         root.unmount();
-    }
-}
-</file>
-
-<file path="infrastructure/BrowserDomAccess.hx">
-package hide.infrastructure;
-
-import hide.domain.services.IDomAccess;
-import hx.injection.Service;
-
-class BrowserDomAccess implements IDomAccess implements Service {
-    public function new() {}
-    
-    public function getElementById(id:String):Dynamic {
-        return js.Browser.document.getElementById(id);
-    }
-    
-    public function addWindowEventListener(event:String, handler:Dynamic->Void):Void {
-        js.Browser.window.addEventListener(event, handler);
-    }
-    
-    public function removeWindowEventListener(event:String, handler:Dynamic->Void):Void {
-        js.Browser.window.removeEventListener(event, handler);
     }
 }
 </file>
@@ -12122,6 +12113,375 @@ class WindowController implements Service {
 }
 </file>
 
+<file path="presentation/Ide.hx">
+package hide.presentation;
+
+import hide.domain.services.IFileSystem;
+import hide.application.services.IViewModule;
+import hide.engine.infrastructure.ShaderPreviewRenderer;
+import hide.presentation.controllers.ToolbarController;
+import hide.presentation.controllers.WindowController;
+import hide.application.services.MenuService;
+import hide.application.services.WindowService;
+import hide.application.services.PluginManager;
+import hide.application.services.ViewRegistry;
+import hide.domain.services.IFileDialog;
+import hide.domain.services.IPlatform;
+import hide.domain.services.IAppInfo;
+import hide.presentation.ui.StatusBar;
+import hide.presentation.controllers.MenuController;
+
+import hide.application.integration.SceneEditorService;
+
+import hide.application.commands.LoadProjectUseCase;
+import hide.application.commands.SetFullscreenUseCase;
+import hide.application.commands.SaveLayoutUseCase;
+import hide.application.commands.CloseProjectUseCase;
+import hide.application.commands.OpenViewUseCase;
+import hide.application.dto.ViewDto;
+import hide.domain.valueobjects.DisplayPosition;
+import hide.domain.valueobjects.FilePath;
+
+import hide.shared.events.ProjectLoaded;
+import hide.shared.events.ErrorOccurred;
+import hide.shared.events.LayoutChanged;
+import hide.shared.events.ProjectClosed;
+import hide.shared.events.RecentProjectsUpdated;
+
+import hide.shared.types.IEventBus;
+import hide.shared.types.Result;
+
+import hide.domain.services.ILayoutEngine;
+
+import hide.engine.domain.services.ISceneService;
+import hide.engine.infrastructure.ViewportService;
+import hide.infrastructure.external.SceneViewFactory;
+
+import hx.injection.Service;
+import hx.injection.ServiceCollection;
+import hx.injection.ServiceProvider;
+import tink.core.*;
+
+using tink.CoreApi;
+using hx.injection.ServiceExtensions;
+using Lambda;
+
+@:expose
+class Ide implements Service {
+    public static var inst(default, null):Ide;
+    private var _resizeHandler:Null<js.html.Event->Void>;
+    private var views:Array<ViewDto>;
+    private var statusBar:StatusBar;
+    
+    public var currentProjectName(get, never):String;
+    private var _currentProject:Null<String>;
+    
+    private var _projectLoadedUnsub:CallbackLink;
+    private var _errorUnsub:CallbackLink;
+    private var _layoutChangedUnsub:CallbackLink;
+    private var _projectClosedUnsub:CallbackLink;
+    
+    private var windowService:WindowService;
+    private var menuService:MenuService;
+    private var layoutEngine:ILayoutEngine;
+    private var menuController:MenuController;
+    private var loadProjectUseCase:LoadProjectUseCase;
+    private var setFullscreenUseCase:SetFullscreenUseCase;
+    //private var saveLayoutUseCase:SaveLayoutUseCase;
+    //private var closeProjectUseCase:CloseProjectUseCase;
+    private var openViewUseCase:OpenViewUseCase;
+    private var viewRegistry:ViewRegistry;
+    private var pluginManager:PluginManager;
+    private var eventBus:IEventBus;
+    private var fileDialog:IFileDialog;
+    private var fileSystem:IFileSystem;
+    private var platform:IPlatform;
+    private var windowController:WindowController;
+    private var toolbarController:ToolbarController;
+    private var sceneService:ISceneService;
+    private var sceneEditorService:SceneEditorService;
+    private var sceneViewFactory:SceneViewFactory;
+    private var shaderPreviewRenderer:ShaderPreviewRenderer;
+    private var viewportService:ViewportService;
+    private var viewModules:Iterable<IViewModule>;
+
+
+    public function new(
+        windowService:WindowService,
+        menuService:MenuService,
+        loadProjectUseCase:LoadProjectUseCase,
+        setFullscreenUseCase:SetFullscreenUseCase,
+        //saveLayoutUseCase:SaveLayoutUseCase,
+        //closeProjectUseCase:CloseProjectUseCase,
+        openViewUseCase:OpenViewUseCase,
+        viewRegistry:ViewRegistry,
+        pluginManager:PluginManager,
+        eventBus:IEventBus,
+        fileDialog:IFileDialog,
+        fileSystem:IFileSystem,
+        platform:IPlatform,
+        layoutEngine:ILayoutEngine,
+        menuController:MenuController,
+        windowController:WindowController,
+        toolbarController:ToolbarController,
+        sceneService:ISceneService,
+        sceneEditorService:SceneEditorService,
+        sceneViewFactory:SceneViewFactory,
+        shaderPreviewRenderer:ShaderPreviewRenderer,
+        viewportService:ViewportService,
+        viewModules:Iterable<IViewModule>
+    ) {
+        this.windowService = windowService;
+        this.menuService = menuService;
+        this.loadProjectUseCase = loadProjectUseCase;
+        this.setFullscreenUseCase = setFullscreenUseCase;
+        //this.saveLayoutUseCase = saveLayoutUseCase;
+        //this.closeProjectUseCase = closeProjectUseCase;
+        this.openViewUseCase = openViewUseCase;
+        this.viewRegistry = viewRegistry;
+        this.pluginManager = pluginManager;
+        this.eventBus = eventBus;
+        this.fileDialog = fileDialog;
+        this.fileSystem = fileSystem;
+        this.platform = platform;
+        this.layoutEngine = layoutEngine;
+        this.menuController = menuController;
+        this.windowController = windowController;
+        this.toolbarController = toolbarController;
+        this.sceneService = sceneService;
+        this.sceneEditorService = sceneEditorService;
+        this.sceneViewFactory = sceneViewFactory;
+        this.shaderPreviewRenderer = shaderPreviewRenderer;
+        this.viewportService = viewportService;
+        this.viewModules = viewModules;
+        inst = this;
+        
+        //views = viewRegistry.all(); 
+        
+        menuService.onItemClick("project.open", onMenuOpenProject);
+        menuService.onItemClick("view.fullscreen", onToggleFullscreen);
+        menuService.onItemClick("layout.save", onLayoutSave);
+        menuService.onItemClick("project.close", onCloseProject);
+        menuService.onItemClick("help.about", showAboutDialog);
+        menuService.onItemClick("app.exit", function() {
+            js.Browser.window.close();
+        });
+        /*
+        for (view in viewRegistry.all()) {
+            trace(view.name);
+            menuService.addViewMenu(view);
+            menuService.onItemClick("view." + view.name, function() openView(view.name));
+        }*/
+        
+        // Используем js.Browser.document вместо Element.byId
+        var statusEl = js.Browser.document.getElementById("status-bar");
+        statusBar = new StatusBar(statusEl);
+
+
+        
+        _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded, onProjectLoadedHandler);
+        _errorUnsub = eventBus.subscribe(ErrorOccurred, onErrorOccurred);
+        _layoutChangedUnsub = eventBus.subscribe(LayoutChanged, function(e:LayoutChanged) {
+            trace("Layout changed");
+        });
+        _projectClosedUnsub = eventBus.subscribe(ProjectClosed, function(e:ProjectClosed) {
+            _currentProject = null;
+            statusBar.showMessage("Project closed");
+            updateWindowTitle();
+        });
+    }
+    
+    public function onMenuOpenProject():Void {
+        layoutEngine.open("welcome", {}, DisplayPosition.Center);
+        /*
+        fileDialog.showOpen({ filters: [{ name: "Project Files", extensions: ["json", "hide"] }] })
+        .handle(function(path:Null<String>) {
+            if (path != null) {
+                var result = loadProjectUseCase.execute(new FilePath(path));
+                switch (result) {
+                    case Success(_):
+                        trace("Project loading initiated successfully.");
+                    case Failure(err):
+                        statusBar.setError('Failed to load project: $err');
+                }
+            }
+        });*/
+    }
+    
+    private function onErrorOccurred(event:ErrorOccurred):Void {
+        trace("UI ERROR [" + event.context + "]: " + event.error);
+    }
+    
+    private function onProjectLoadedHandler(event:ProjectLoaded):Void {
+        _currentProject = event.project.name;
+        trace("UI: Project loaded successfully: " + _currentProject);
+        updateWindowTitle();
+        //openView("project");
+        //openView("editor");
+    }
+    
+    public function onToggleFullscreen():Void {
+        // isFullscreen — это var, а не функция! Убираем скобки
+        setFullscreenUseCase.execute(!windowService.isFullscreen);
+    }
+    
+    public function onLayoutSave():Void {
+        //saveLayoutUseCase.execute();
+    }
+    
+    public function onCloseProject():Void {
+        //closeProjectUseCase.execute();
+    }
+    
+    private function openView(viewName:String):Void {
+        // Используем Lambda.find вместо Array.find
+        trace("[Open view] search view to open: "+ viewName);
+        var view = Lambda.find(viewRegistry.all(), function(v) return v.name == viewName);
+        if (view == null) {
+            throw "View not found: " + viewName;
+        }
+        
+        var position = switch viewName {
+            case "editor": DisplayPosition.Center;
+            case "project": DisplayPosition.Left;
+            default: DisplayPosition.Center;
+        };
+        trace("[Open view] view opened");
+        openViewUseCase.execute(view.name, view.defaultState, position);
+    }
+    
+    private function onOpenRecent(path:String):Void {
+        loadProjectUseCase.execute(new FilePath(path));
+    }
+    
+    private function updateWindowTitle():Void {
+        var title = _currentProject != null ? '$_currentProject - HIDE IDE' : 'HIDE IDE';
+        trace("Window title updated to: " + title);
+        windowService.setTitle(title);
+    }
+    
+    private function showAboutDialog():Void {
+        trace('HIDE IDE\nVersion 0.1.0');
+    }
+    
+    private function get_currentProjectName():String {
+        return _currentProject != null ? _currentProject : "No project";
+    }
+    
+    
+    
+    public function startup():Void {
+        trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
+
+        // ✅ НОВОЕ: Регистрируем все View через модули (атомарно!)
+        for (module in viewModules) {
+            var descriptor = module.getDescriptor();
+            viewRegistry.add(descriptor.dto);
+            viewRegistry.registerViewFactory(descriptor.dto.name, descriptor.factory);
+            
+            // Добавляем пункт в меню
+            menuService.addViewMenu(descriptor.dto);
+            menuService.onItemClick("view." + descriptor.dto.name, function() {
+                openView(descriptor.dto.name);
+            });
+            
+            trace('📦 View registered: ${descriptor.dto.name}');
+        }
+
+        windowController.init();
+        trace("🪟 WindowController инициализирован");
+
+        // ✅ ИНИЦИАЛИЗАЦИЯ TOOLBAR
+        var toolbarEl = js.Browser.document.getElementById("main-toolbar");
+        if (toolbarEl != null) {
+            // ToolbarController уже в DI, получаем его
+            
+            toolbarController.setContainer(cast toolbarEl);
+            trace("🔧 Toolbar инициализирован");
+        }
+        // 1. Инициализируем GoldenLayout
+        var layoutEl = js.Browser.document.getElementById("golden-layout-root");
+        if (layoutEl != null) {
+            layoutEngine.setContainer(layoutEl);
+            // Инициализируем с пустым состоянием (адаптер сам создаст дефолтный скелет)
+            layoutEngine.init({ content: [], fullScreen: null }); 
+            trace("🎨 GoldenLayout инициализирован.");
+        } else {
+            trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.");
+        }
+       
+        var menuContainer = js.Browser.document.getElementById("main-menu");
+        if (menuContainer != null) {
+            menuController.setContainer(cast menuContainer);
+            trace("📋 MenuController инициализирован с DOM-контейнером.");
+        } else {
+            trace("⚠️ Контейнер #main-menu не найден в DOM!");
+        }
+
+        var args = platform.getAppArgs();
+        var projectFile:Null<String> = null;
+        // ✅ Подписка на resize окна через js.Browser
+        _resizeHandler = function(_) {
+            haxe.Timer.delay(function() {
+                var layoutEl = js.Browser.document.getElementById("golden-layout-root");
+                if (layoutEl != null) {
+                    var rect = layoutEl.getBoundingClientRect();
+                    layoutEngine.updateSize(Std.int(rect.width), Std.int(rect.height));
+                }
+            }, 100); // Небольшая задержка для стабильности
+        };
+
+        js.Browser.window.addEventListener("resize", _resizeHandler);
+        // Electron передает много внутренних флагов. Ищем первый аргумент, 
+        // который НЕ начинается с '-' и не является пустой строкой.
+        for (arg in args) {
+            if (arg != "" && !StringTools.startsWith(arg, "-") && !StringTools.startsWith(arg, "chrome://")) {
+                projectFile = arg;
+                break;
+            }
+        }
+        
+        if (projectFile != null) {
+            trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile);
+            loadProjectUseCase.execute(new FilePath(projectFile));
+        } else {
+            trace("👋 Приложение запущено без проекта.");
+
+        }
+    }
+    
+    public function dispose():Void {
+        if (_projectLoadedUnsub != null) _projectLoadedUnsub.cancel();
+        if (_errorUnsub != null) _errorUnsub.cancel();
+        if (_layoutChangedUnsub != null) _layoutChangedUnsub.cancel();
+        if (_projectClosedUnsub != null) _projectClosedUnsub.cancel();
+        // ✅ Очищаем ресурсы контроллера меню
+        if (menuController != null) {
+            menuController.dispose();
+        }
+        if (windowController != null) {
+            windowController.dispose();
+        }
+        // ✅ Отписка от resize
+        if (_resizeHandler != null) {
+            js.Browser.window.removeEventListener("resize", _resizeHandler);
+            _resizeHandler = null;
+        }
+    }
+    public function get_eventBus():IEventBus return eventBus;
+    public function get_windowService():WindowService return windowService;
+    public function get_menuService():MenuService return menuService;
+    public function get_viewRegistry():ViewRegistry return viewRegistry;
+    public function get_layoutEngine():ILayoutEngine return layoutEngine;
+    public function get_sceneService():ISceneService return sceneService;
+    public function get_shaderPreviewRenderer():ShaderPreviewRenderer return shaderPreviewRenderer;
+    public function get_viewportService():ViewportService return viewportService;
+    // Геттеры:
+    public function get_fileSystem():IFileSystem return fileSystem;
+    public function get_fileDialog():IFileDialog return fileDialog;
+}
+</file>
+
 <file path="presentation/modules/ConsoleModule.hx">
 // hide/presentation/modules/ConsoleModule.hx
 package hide.presentation.modules;
@@ -12391,6 +12751,122 @@ package hide.presentation.styles;
 
 <file path="presentation/styles/Theme.hx">
 package hide.presentation.styles;
+</file>
+
+<file path="presentation/ui/Dialog.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/Element.hx">
+package hide.presentation.ui;
+</file>
+
+<file path="presentation/ui/MenuBuilder.hx">
+package hide.presentation.ui;
+
+import hide.application.dto.MenuItem;
+import hide.domain.enums.MenuItemType;
+import js.html.Element;
+
+class MenuBuilder {
+    /**
+     * Строит корневой элемент меню (горизонтальная панель)
+     */
+    public static function build(items:Array<MenuItem>):Element {
+        var ul = js.Browser.document.createElement("ul");
+        ul.className = "main-menu-bar";
+        
+        for (item in items) {
+            ul.appendChild(createMenuItem(item));
+        }
+        
+        return ul;
+    }
+
+    /**
+     * Рекурсивно создает элемент списка <li> и его содержимое
+     */
+    private static function createMenuItem(item:MenuItem):Element {
+        var li = js.Browser.document.createElement("li");
+        li.className = "menu-item";
+        
+        if (item.enabled == false) {
+            li.className += " disabled";
+        }
+
+        // 1. Если это разделитель
+        if (item.type == Separator) {
+            li.className += " separator";
+            return li;
+        }
+
+        // 2. Создаем кликабельный элемент (кнопку)
+        var btn = js.Browser.document.createElement("button");
+        btn.className = "menu-button";
+        btn.setAttribute("data-menu-id", item.id); // Ключ для делегирования событий
+        
+        // Добавляем иконку, если она есть (предполагаем использование FontAwesome или аналога)
+        var iconHtml = item.icon != null ? '<i class="fa fa-${item.icon}"></i>' : '';
+        var shortcutHtml = item.shortcut != null ? '<span class="menu-shortcut">${item.shortcut}</span>' : '';
+
+        // Собираем всё вместе: Иконка + Текст + (Хоткей справа)
+        btn.innerHTML = iconHtml + ' <span style="flex:1">${item.label}</span> ' + shortcutHtml;
+        li.appendChild(btn);
+
+        // 3. Если это подменю, рекурсивно строим его дочерние элементы
+        if (item.type == Submenu && item.children != null && item.children.length > 0) {
+            li.className += " has-submenu";
+            var subUl = js.Browser.document.createElement("ul");
+            subUl.className = "submenu";
+            
+            for (child in item.children) {
+                subUl.appendChild(createMenuItem(child));
+            }
+            
+            li.appendChild(subUl);
+        }
+
+        return li;
+    }
+}
+</file>
+
+<file path="presentation/ui/react/BaseReactComponent.hx">
+package hide.presentation.ui.react;
+
+import react.ReactComponent;
+import hide.shared.types.IEventBus;
+import tink.core.*;
+import react.ReactMacro.jsx;
+using tink.CoreApi;
+/**
+ * Базовый React-компонент с интеграцией в Haxe-сервисы.
+ * Автоматически отписывается от событий при unmount.
+ */
+class BaseReactComponent<P, S> extends ReactComponentOfPropsAndState<P, S> {
+    private var subscriptions:Array<CallbackLink> = [];
+    
+    /**
+     * Подписывает компонент на событие EventBus.
+     * Автоматически отписывается при unmount.
+     */
+    private function subscribe<T>(eventBus:IEventBus, eventClass:Class<T>, handler:T->Void):Void {
+        var link = eventBus.subscribe(eventClass, handler);
+        subscriptions.push(link);
+    }
+    // ✅ ДОБАВЛЕНО: Базовый render, чтобы удовлетворить компилятор
+    override function render():ReactElement {
+        return jsx('<div></div>');
+    }
+    override function componentWillUnmount():Void {
+        // Отписываемся от всех событий
+        for (link in subscriptions) {
+            link.cancel();
+        }
+        subscriptions = [];
+        super.componentWillUnmount();
+    }
+}
 </file>
 
 <file path="presentation/ui/react/components/ComponentIcon.hx">
@@ -13431,6 +13907,7 @@ class NodePropertiesPanel extends BaseReactComponent<NodePropertiesProps, NodePr
 <file path="presentation/ui/react/components/ShaderEditorPanel.hx">
 // hide/presentation/ui/react/components/ShaderEditorPanel.hx
 package hide.presentation.ui.react.components;
+import hide.domain.valueobjects.FilePath;
 import hide.engine.infrastructure.ShaderGraphCompiler;
 import hide.engine.infrastructure.ShaderPreviewRenderer;
 import react.ReactComponent;
@@ -13465,6 +13942,12 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     private var currentFilePath:Null<String> = null;
     private var isDirty:Bool = false;
     private var originalTitle:String = "Shader Editor";
+
+    // В начале класса:
+    private var undoStack:Array<String> = [];
+    private var redoStack:Array<String> = [];
+    private var maxUndoSteps:Int = 50;
+    private var isUndoRedoInProgress:Bool = false;  // Защита от рекурсии
 
     public function new() {
         super();
@@ -13561,20 +14044,16 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     private function onSaveAs():Void {
         if (graph == null) return;
         
-        untyped __js__("require('electron').remote").dialog.showSaveDialog({
-            title: "Save Shader Graph",
-            defaultPath: "new_shader.shadergraph",
+        var fileDialog = UseService.fileDialog();
+        fileDialog.showSave({
             filters: [
-                { name: "Shader Graph", extensions: ["shadergraph"] },
-                { name: "JSON", extensions: ["json"] },
-                { name: "All Files", extensions: ["*"] }
-            ]
-        }).then(function(result) {
-            if (!result.canceled && result.filePath != null) {
-                saveToFile(result.filePath);
+                { name: "Shader Graph", extensions: ["shadergraph", "json"] }
+            ],
+            defaultPath: "new_shader.shadergraph"
+        }).handle(function(path:Null<String>) {
+            if (path != null) {
+                saveToFile(path);
             }
-        }).catchError(function(err) {
-            trace("❌ Save dialog error: " + err);
         });
     }
 
@@ -13583,50 +14062,43 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             var data = ShaderGraphSerializer.serialize(graph, graphCanvas);
             var json = ShaderGraphSerializer.toJson(data);
             
-            Fs.writeFileSync(path, json, "utf8");
+            var fileSystem = UseService.fileSystem();
+            fileSystem.writeText(new FilePath(path), json);
             
             currentFilePath = path;
             isDirty = false;
             updateTitle();
-            
-            trace('💾 [ShaderEditor] Saved to: $path');
+            trace(' [ShaderEditor] Saved to: $path');
         } catch (e:Dynamic) {
             trace("❌ [ShaderEditor] Save error: " + Std.string(e));
         }
     }
 
     private function onLoad():Void {
-        untyped __js__("require('electron').remote").dialog.showOpenDialog({
-            title: "Open Shader Graph",
+        var fileDialog = UseService.fileDialog();
+        fileDialog.showOpen({
             filters: [
-                { name: "Shader Graph", extensions: ["shadergraph", "json"] },
-                { name: "All Files", extensions: ["*"] }
-            ],
-            properties: ["openFile"]
-        }).then(function(result) {
-            if (!result.canceled && result.filePaths.length > 0) {
-                loadFromFile(result.filePaths[0]);
+                { name: "Shader Graph", extensions: ["shadergraph", "json"] }
+            ]
+        }).handle(function(path:Null<String>) {
+            if (path != null) {
+                loadFromFile(path);
             }
-        }).catchError(function(err) {
-            trace("❌ Load dialog error: " + err);
         });
     }
 
     private function loadFromFile(path:String):Void {
         try {
-            var json = Fs.readFileSync(path, "utf8");
+            var fileSystem = UseService.fileSystem();
+            var json = fileSystem.readText(new FilePath(path));
             var data = ShaderGraphSerializer.fromJson(json);
             
             ShaderGraphSerializer.deserialize(data, graph, graphCanvas);
-            
-            // Пере-регистрируем callbacks на всех нодах
             restoreNodeCallbacks();
             
             currentFilePath = path;
             isDirty = false;
             updateTitle();
-            
-            // Перекомпилируем превью
             compileAndApply();
             
             trace('📂 [ShaderEditor] Loaded from: $path');
@@ -13655,15 +14127,23 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
 
     private function setupGraphListeners():Void {
         if (graph == null) return;
+        // ✅ Единый обработчик: и markDirty, и scheduleRecompile
+        var onGraphChanged = function() {
+            if (isUndoRedoInProgress) return;  // Не сохраняем во время undo/redo
         
-        // Любое изменение графа → перекомпиляция с дебаунсом 100мс
-        graph.onAfterStep = function() {
+            saveUndoState();  // ← Сохраняем состояние ПЕРЕД изменением
+
+            if (!isDirty) {
+                isDirty = true;
+                updateTitle();
+            }
             scheduleRecompile();
         };
-        
+        // Любое изменение графа → перекомпиляция с дебаунсом 100мс
+        graph.onAfterStep = function() scheduleRecompile();
         // Также реагируем на конкретные события
-        graph.onNodeAdded = function(_) scheduleRecompile();
-        graph.onNodeRemoved = function(_) scheduleRecompile();
+        graph.onNodeAdded = function(_) onGraphChanged();
+        graph.onNodeRemoved = function(_) onGraphChanged();
 
         // ✅ НОВОЕ: Реагируем на подключение/отключение нод С ЗАДЕРЖКОЙ
         untyped graph.onConnectionChange = function(node:Dynamic, action:String, link:Dynamic) {
@@ -13673,26 +14153,11 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             trace('   link: ${link != null ? "exists" : "null"}');
             
             // ✅ ЗАДЕРЖКА: даём LiteGraph время обновить связи
-            haxe.Timer.delay(scheduleRecompile, 100);
+            haxe.Timer.delay(onGraphChanged, 100);
         };
         // И на изменение свойств нод (widget changes)
         // LiteGraph вызывает onNodeChanged при изменении properties
-        untyped graph.onNodeChanged = function(_) scheduleRecompile();
-
-        // Отмечаем граф как изменённый при любом действии
-        var markDirty = function(_) {
-            if (!isDirty) {
-                isDirty = true;
-                updateTitle();
-            }
-            scheduleRecompile();
-        };
-        
-        graph.onAfterStep = function() scheduleRecompile();
-        graph.onNodeAdded = markDirty;
-        graph.onNodeRemoved = markDirty;
-        untyped graph.onConnectionChange = markDirty;
-        untyped graph.onNodeChanged = markDirty;
+        untyped graph.onNodeChanged = function(_) onGraphChanged();
     }
 
     private function scheduleRecompile():Void {
@@ -13878,7 +14343,16 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                     y: Reflect.field(node.properties, "g"),
                     z: Reflect.field(node.properties, "b")
                 };
-            
+            // ✅ НОВОЕ: Texture Sample
+            case "texture/sample":
+                var texPath = Reflect.field(node.properties, "texture");
+                if (texPath != null && texPath != "") {
+                    // Загружаем текстуру в превью
+                    previewRenderer.setAlbedoTexture(texPath);
+                    trace('🖼️ [ShaderEditor] Applying texture: $texPath');
+                }
+                // Возвращаем белый цвет как fallback (текстура уже применена напрямую)
+                { x: 1.0, y: 1.0, z: 1.0 };
             // === MATH ОПЕРАЦИИ ===
             case "math/operation" | "math/add" | "math/subtract" | "math/multiply" | "math/divide" | "math/lerp":
                 evaluateMathNode(node, visited);
@@ -14075,7 +14549,14 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             // ✅ ДОПОЛНИТЕЛЬНО: подписка на клик по ноде
             graphCanvas.onNodeMoved = function(node:LGraphNode) {
                 trace('🖱️ [ShaderEditor] Node moved: ${node.title}');
-                
+                // ✅ Сохраняем undo state после перемещения
+                if (!isUndoRedoInProgress) {
+                    saveUndoState();
+                    if (!isDirty) {
+                        isDirty = true;
+                        updateTitle();
+                    }
+                }
                 // ✅ ПРАВИЛЬНАЯ ПРОВЕРКА: selected_nodes — объект
                 if (graphCanvas.selected_nodes != null) {
                     var keys = Reflect.fields(graphCanvas.selected_nodes);
@@ -14106,10 +14587,17 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                 graph.add(outputNode);
                 trace("✅ Material Output node created");
             }
+
+            // ✅ Сохраняем начальное состояние (пустой граф с Material Output)
+            haxe.Timer.delay(function() {
+                saveUndoState();
+                trace('✅ [ShaderEditor] Initial undo state saved');
+            }, 200);
             // В методе initLiteGraph(), после создания graphCanvas:
 
             // ✅ Включаем undo/redo (сохраняет до 50 состояний)
-            untyped graph.support_undo = true;
+            //untyped graph.actionHistory_enabled = true;
+            
             // ==========================
             // Запускаем граф
             graph.start();
@@ -14148,13 +14636,55 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             }
         });
     }
+
+    // ✅ Регистрируем глобальную функцию для диалога выбора текстуры
+    untyped js.Browser.window.__browseShaderTexture = function(node:Dynamic) {
+        var fileDialog = UseService.fileDialog();
+        fileDialog.showOpen({
+            filters: [
+                { name: "Images", extensions: ["png", "jpg", "jpeg", "dds", "hdr", "tga"] }
+            ]
+        }).handle(function(path:Null<String>) {
+            if (path != null) {
+                // Устанавливаем путь в свойства ноды
+                node.properties.texture = path;
+                // Перерисовываем ноду
+                node.setDirtyCanvas(true, true);
+                // Перекомпилируем граф
+                scheduleRecompile();
+                trace('🖼️ [ShaderEditor] Texture selected: $path');
+            }
+        });
+    };
+
     private function registerShaderNodes():Void {
         // ✅ ПРАВИЛЬНЫЙ СПОСОБ: используем js.Syntax.code для создания JS-функций,
         // где `this` ссылается на экземпляр ноды, а не на ShaderEditorPanel
         
-        // === Нода: Texture Sample ===
-        var TextureSampleNode = js.Syntax.code("(function() { this.title = 'Texture Sample'; this.addInput('UV', 'vec2'); this.addOutput('RGBA', 'vec4'); this.properties = { texture: '' }; })");
-        js.Syntax.code("TextureSampleNode.prototype.onExecute = function() { var uv = this.getInputData(0); if (uv == null) uv = [0, 0]; this.setOutputData(0, [1, 0, 0, 1]); }");
+        // === Нода: Texture Sample (с кнопкой Browse) ===
+        var TextureSampleNode = js.Syntax.code("
+            (function() { 
+                this.title = 'Texture Sample'; 
+                this.addInput('UV', 'vec2'); 
+                this.addOutput('RGBA', 'vec4'); 
+                this.properties = { texture: '' };
+                
+                var that = this;
+                
+                // Кнопка Browse — открывает диалог выбора файла
+                this.addWidget('button', 'Browse', null, function() {
+                    if (window.__browseShaderTexture) {
+                        window.__browseShaderTexture(that);
+                    }
+                });
+                
+                // Поле для отображения пути (readonly)
+                this.addWidget('string', 'texture', '', function(v) {
+                    that.properties.texture = v;
+                });
+            })
+        ");
+        js.Syntax.code("TextureSampleNode.prototype.onExecute = function() { var uv = this.getInputData(0); if (uv == null) uv = [0, 0]; this.setOutputData(0, [1, 1, 1, 1]); }");
         LiteGraph.registerNodeType("texture/sample", TextureSampleNode);
         
         // === Нода: PBR Material ===
@@ -14402,6 +14932,9 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
 
     // ✅ НОВЫЙ МЕТОД: вызывается при изменении свойства ноды
     private function onNodePropertyChanged(): Void {
+        if (isUndoRedoInProgress) return;
+    
+        saveUndoState();  // ← Сохраняем перед изменением
         trace("🔄 [ShaderEditor] Node property changed, recompiling...");
         if (!isDirty) {
             isDirty = true;
@@ -14416,18 +14949,14 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
     }
 
     private function updateTitle():Void {
-        var filename = currentFilePath != null ? Path.basename(currentFilePath) : "Untitled";
+        var filename = currentFilePath != null ? currentFilePath.split("/").pop() : "Untitled";
         var dirty = isDirty ? " ●" : "";
         var title = '${filename}${dirty} - Shader Editor';
         
-        // Обновляем заголовок Electron окна
-        try {
-            untyped __js__("require('electron').remote").getCurrentWindow().setTitle(title);
-        } catch (e:Dynamic) {
-            // Если не работает, просто логируем
-        }
+        UseService.windowService().setTitle(title);
         trace('🏷️ [ShaderEditor] Title: $title');
     }
+
     private function onNew():Void {
         if (isDirty) {
             var confirmed = js.Browser.window.confirm("Unsaved changes will be lost. Continue?");
@@ -14451,25 +14980,98 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         }
         trace("🆕 [ShaderEditor] New graph");
     }
+
     private function onUndo():Void {
-        if (graph != null) {
-            untyped graph.undo();
-            isDirty = true;
-            updateTitle();
+        if (undoStack.length == 0) {
+            trace('⚠️ [ShaderEditor] Nothing to undo');
+            return;
+        }
+        
+        try {
+            isUndoRedoInProgress = true;
+            
+            // Сохраняем текущее состояние в redo
+            redoStack.push(haxe.Json.stringify(graph.serialize()));
+            
+            // Восстанавливаем предыдущее состояние
+            var json = undoStack.pop();
+            graph.configure(haxe.Json.parse(json));
+            restoreNodeCallbacks();
+            
+            if (!isDirty) {
+                isDirty = true;
+                updateTitle();
+            }
             compileAndApply();
-            trace("↶ Undo");
+            
+            trace('↶ Undo (${undoStack.length} states remaining)');
+        } catch (e:Dynamic) {
+            trace('❌ [ShaderEditor] Undo error: $e');
+        } 
+        isUndoRedoInProgress = false;
+        
+    }
+
+    /**
+     * Сохраняет текущее состояние графа в undo stack.
+     * Вызывается перед каждым изменением.
+     */
+    private function saveUndoState():Void {
+        if (graph == null || isUndoRedoInProgress) return;
+        
+        try {
+            var json = haxe.Json.stringify(graph.serialize());
+            
+            // ✅ Дедупликация: не сохраняем, если состояние не изменилось
+            if (undoStack.length > 0 && undoStack[undoStack.length - 1] == json) {
+                return;
+            }
+            undoStack.push(json);
+            
+            // Ограничиваем размер стека
+            if (undoStack.length > maxUndoSteps) {
+                undoStack.shift();
+            }
+            
+            // Новое действие очищает redo stack
+            redoStack = [];
+        } catch (e:Dynamic) {
+            trace('⚠️ [ShaderEditor] Failed to save undo state: $e');
         }
     }
 
     private function onRedo():Void {
-        if (graph != null) {
-            untyped graph.redo();
-            isDirty = true;
-            updateTitle();
-            compileAndApply();
-            trace("↷ Redo");
+        if (redoStack.length == 0) {
+            trace('⚠️ [ShaderEditor] Nothing to redo');
+            return;
         }
+        
+        try {
+            isUndoRedoInProgress = true;
+            
+            // Сохраняем текущее состояние в undo
+            undoStack.push(haxe.Json.stringify(graph.serialize()));
+            
+            // Восстанавливаем следующее состояние
+            var json = redoStack.pop();
+            graph.configure(haxe.Json.parse(json));
+            restoreNodeCallbacks();
+            
+            if (!isDirty) {
+                isDirty = true;
+                updateTitle();
+            }
+            compileAndApply();
+            
+            trace('↷ Redo (${redoStack.length} states remaining)');
+        } catch (e:Dynamic) {
+            trace('❌ [ShaderEditor] Redo error: $e');
+        }
+            
+        isUndoRedoInProgress = false;
+        
     }
+
     // Обработчики событий для toolbar
     private function onCompile():Void {
         trace("🔨 Compile shader graph");
@@ -14493,6 +15095,8 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         if (graph != null) graph.stop();
         previewRenderer.dispose(); // ← освобождаем ресурсы engine layer
         //super.componentWillUnmount();
+        // Очищаем глобальную функцию
+        untyped js.Browser.window.__browseShaderTexture = null;
     }
 }
 </file>
@@ -14900,6 +15504,8 @@ import hide.application.services.PluginManager;
 import hide.shared.types.IEventBus;
 import hide.domain.services.ILayoutEngine;
 import hide.engine.domain.services.ISceneService;
+import hide.domain.services.IFileSystem;
+import hide.domain.services.IFileDialog;
 
 /**
  * Статический доступ к сервисам из React-компонентов.
@@ -14935,121 +15541,12 @@ class UseService {
     public static function viewportService():ViewportService {
         return Ide.inst.get_viewportService(); // Убедитесь, что геттер есть в Ide.hx
     }
-}
-</file>
-
-<file path="presentation/ui/react/BaseReactComponent.hx">
-package hide.presentation.ui.react;
-
-import react.ReactComponent;
-import hide.shared.types.IEventBus;
-import tink.core.*;
-import react.ReactMacro.jsx;
-using tink.CoreApi;
-/**
- * Базовый React-компонент с интеграцией в Haxe-сервисы.
- * Автоматически отписывается от событий при unmount.
- */
-class BaseReactComponent<P, S> extends ReactComponentOfPropsAndState<P, S> {
-    private var subscriptions:Array<CallbackLink> = [];
-    
-    /**
-     * Подписывает компонент на событие EventBus.
-     * Автоматически отписывается при unmount.
-     */
-    private function subscribe<T>(eventBus:IEventBus, eventClass:Class<T>, handler:T->Void):Void {
-        var link = eventBus.subscribe(eventClass, handler);
-        subscriptions.push(link);
-    }
-    // ✅ ДОБАВЛЕНО: Базовый render, чтобы удовлетворить компилятор
-    override function render():ReactElement {
-        return jsx('<div></div>');
-    }
-    override function componentWillUnmount():Void {
-        // Отписываемся от всех событий
-        for (link in subscriptions) {
-            link.cancel();
-        }
-        subscriptions = [];
-        super.componentWillUnmount();
-    }
-}
-</file>
-
-<file path="presentation/ui/Dialog.hx">
-package hide.presentation.ui;
-</file>
-
-<file path="presentation/ui/Element.hx">
-package hide.presentation.ui;
-</file>
-
-<file path="presentation/ui/MenuBuilder.hx">
-package hide.presentation.ui;
-
-import hide.application.dto.MenuItem;
-import hide.domain.enums.MenuItemType;
-import js.html.Element;
-
-class MenuBuilder {
-    /**
-     * Строит корневой элемент меню (горизонтальная панель)
-     */
-    public static function build(items:Array<MenuItem>):Element {
-        var ul = js.Browser.document.createElement("ul");
-        ul.className = "main-menu-bar";
-        
-        for (item in items) {
-            ul.appendChild(createMenuItem(item));
-        }
-        
-        return ul;
+    public static function fileSystem():IFileSystem {
+        return Ide.inst.get_fileSystem();
     }
 
-    /**
-     * Рекурсивно создает элемент списка <li> и его содержимое
-     */
-    private static function createMenuItem(item:MenuItem):Element {
-        var li = js.Browser.document.createElement("li");
-        li.className = "menu-item";
-        
-        if (item.enabled == false) {
-            li.className += " disabled";
-        }
-
-        // 1. Если это разделитель
-        if (item.type == Separator) {
-            li.className += " separator";
-            return li;
-        }
-
-        // 2. Создаем кликабельный элемент (кнопку)
-        var btn = js.Browser.document.createElement("button");
-        btn.className = "menu-button";
-        btn.setAttribute("data-menu-id", item.id); // Ключ для делегирования событий
-        
-        // Добавляем иконку, если она есть (предполагаем использование FontAwesome или аналога)
-        var iconHtml = item.icon != null ? '<i class="fa fa-${item.icon}"></i>' : '';
-        var shortcutHtml = item.shortcut != null ? '<span class="menu-shortcut">${item.shortcut}</span>' : '';
-
-        // Собираем всё вместе: Иконка + Текст + (Хоткей справа)
-        btn.innerHTML = iconHtml + ' <span style="flex:1">${item.label}</span> ' + shortcutHtml;
-        li.appendChild(btn);
-
-        // 3. Если это подменю, рекурсивно строим его дочерние элементы
-        if (item.type == Submenu && item.children != null && item.children.length > 0) {
-            li.className += " has-submenu";
-            var subUl = js.Browser.document.createElement("ul");
-            subUl.className = "submenu";
-            
-            for (child in item.children) {
-                subUl.appendChild(createMenuItem(child));
-            }
-            
-            li.appendChild(subUl);
-        }
-
-        return li;
+    public static function fileDialog():IFileDialog {
+        return Ide.inst.get_fileDialog();
     }
 }
 </file>
@@ -15092,366 +15589,6 @@ package hide.presentation.views;
 
 <file path="presentation/views/ScriptEditorView.hx">
 package hide.presentation.views;
-</file>
-
-<file path="presentation/Ide.hx">
-package hide.presentation;
-
-import hide.application.services.IViewModule;
-import hide.engine.infrastructure.ShaderPreviewRenderer;
-import hide.presentation.controllers.ToolbarController;
-import hide.presentation.controllers.WindowController;
-import hide.application.services.MenuService;
-import hide.application.services.WindowService;
-import hide.application.services.PluginManager;
-import hide.application.services.ViewRegistry;
-import hide.domain.services.IFileDialog;
-import hide.domain.services.IPlatform;
-import hide.domain.services.IAppInfo;
-import hide.presentation.ui.StatusBar;
-import hide.presentation.controllers.MenuController;
-
-import hide.application.integration.SceneEditorService;
-
-import hide.application.commands.LoadProjectUseCase;
-import hide.application.commands.SetFullscreenUseCase;
-import hide.application.commands.SaveLayoutUseCase;
-import hide.application.commands.CloseProjectUseCase;
-import hide.application.commands.OpenViewUseCase;
-import hide.application.dto.ViewDto;
-import hide.domain.valueobjects.DisplayPosition;
-import hide.domain.valueobjects.FilePath;
-
-import hide.shared.events.ProjectLoaded;
-import hide.shared.events.ErrorOccurred;
-import hide.shared.events.LayoutChanged;
-import hide.shared.events.ProjectClosed;
-import hide.shared.events.RecentProjectsUpdated;
-
-import hide.shared.types.IEventBus;
-import hide.shared.types.Result;
-
-import hide.domain.services.ILayoutEngine;
-
-import hide.engine.domain.services.ISceneService;
-import hide.engine.infrastructure.ViewportService;
-import hide.infrastructure.external.SceneViewFactory;
-
-import hx.injection.Service;
-import hx.injection.ServiceCollection;
-import hx.injection.ServiceProvider;
-import tink.core.*;
-
-using tink.CoreApi;
-using hx.injection.ServiceExtensions;
-using Lambda;
-
-@:expose
-class Ide implements Service {
-    public static var inst(default, null):Ide;
-    private var _resizeHandler:Null<js.html.Event->Void>;
-    private var views:Array<ViewDto>;
-    private var statusBar:StatusBar;
-    
-    public var currentProjectName(get, never):String;
-    private var _currentProject:Null<String>;
-    
-    private var _projectLoadedUnsub:CallbackLink;
-    private var _errorUnsub:CallbackLink;
-    private var _layoutChangedUnsub:CallbackLink;
-    private var _projectClosedUnsub:CallbackLink;
-    
-    private var windowService:WindowService;
-    private var menuService:MenuService;
-    private var layoutEngine:ILayoutEngine;
-    private var menuController:MenuController;
-    private var loadProjectUseCase:LoadProjectUseCase;
-    private var setFullscreenUseCase:SetFullscreenUseCase;
-    //private var saveLayoutUseCase:SaveLayoutUseCase;
-    //private var closeProjectUseCase:CloseProjectUseCase;
-    private var openViewUseCase:OpenViewUseCase;
-    private var viewRegistry:ViewRegistry;
-    private var pluginManager:PluginManager;
-    private var eventBus:IEventBus;
-    private var fileDialog:IFileDialog;
-    private var platform:IPlatform;
-    private var windowController:WindowController;
-    private var toolbarController:ToolbarController;
-    private var sceneService:ISceneService;
-    private var sceneEditorService:SceneEditorService;
-    private var sceneViewFactory:SceneViewFactory;
-    private var shaderPreviewRenderer:ShaderPreviewRenderer;
-    private var viewportService:ViewportService;
-    private var viewModules:Iterable<IViewModule>;
-    public function new(
-        windowService:WindowService,
-        menuService:MenuService,
-        loadProjectUseCase:LoadProjectUseCase,
-        setFullscreenUseCase:SetFullscreenUseCase,
-        //saveLayoutUseCase:SaveLayoutUseCase,
-        //closeProjectUseCase:CloseProjectUseCase,
-        openViewUseCase:OpenViewUseCase,
-        viewRegistry:ViewRegistry,
-        pluginManager:PluginManager,
-        eventBus:IEventBus,
-        fileDialog:IFileDialog,
-        platform:IPlatform,
-        layoutEngine:ILayoutEngine,
-        menuController:MenuController,
-        windowController:WindowController,
-        toolbarController:ToolbarController,
-        sceneService:ISceneService,
-        sceneEditorService:SceneEditorService,
-        sceneViewFactory:SceneViewFactory,
-        shaderPreviewRenderer:ShaderPreviewRenderer,
-        viewportService:ViewportService,
-        viewModules:Iterable<IViewModule>
-    ) {
-        this.windowService = windowService;
-        this.menuService = menuService;
-        this.loadProjectUseCase = loadProjectUseCase;
-        this.setFullscreenUseCase = setFullscreenUseCase;
-        //this.saveLayoutUseCase = saveLayoutUseCase;
-        //this.closeProjectUseCase = closeProjectUseCase;
-        this.openViewUseCase = openViewUseCase;
-        this.viewRegistry = viewRegistry;
-        this.pluginManager = pluginManager;
-        this.eventBus = eventBus;
-        this.fileDialog = fileDialog;
-        this.platform = platform;
-        this.layoutEngine = layoutEngine;
-        this.menuController = menuController;
-        this.windowController = windowController;
-        this.toolbarController = toolbarController;
-        this.sceneService = sceneService;
-        this.sceneEditorService = sceneEditorService;
-        this.sceneViewFactory = sceneViewFactory;
-        this.shaderPreviewRenderer = shaderPreviewRenderer;
-        this.viewportService = viewportService;
-        this.viewModules = viewModules;
-        inst = this;
-        
-        //views = viewRegistry.all(); 
-        
-        menuService.onItemClick("project.open", onMenuOpenProject);
-        menuService.onItemClick("view.fullscreen", onToggleFullscreen);
-        menuService.onItemClick("layout.save", onLayoutSave);
-        menuService.onItemClick("project.close", onCloseProject);
-        menuService.onItemClick("help.about", showAboutDialog);
-        menuService.onItemClick("app.exit", function() {
-            js.Browser.window.close();
-        });
-        /*
-        for (view in viewRegistry.all()) {
-            trace(view.name);
-            menuService.addViewMenu(view);
-            menuService.onItemClick("view." + view.name, function() openView(view.name));
-        }*/
-        
-        // Используем js.Browser.document вместо Element.byId
-        var statusEl = js.Browser.document.getElementById("status-bar");
-        statusBar = new StatusBar(statusEl);
-
-
-        
-        _projectLoadedUnsub = eventBus.subscribe(ProjectLoaded, onProjectLoadedHandler);
-        _errorUnsub = eventBus.subscribe(ErrorOccurred, onErrorOccurred);
-        _layoutChangedUnsub = eventBus.subscribe(LayoutChanged, function(e:LayoutChanged) {
-            trace("Layout changed");
-        });
-        _projectClosedUnsub = eventBus.subscribe(ProjectClosed, function(e:ProjectClosed) {
-            _currentProject = null;
-            statusBar.showMessage("Project closed");
-            updateWindowTitle();
-        });
-    }
-    
-    public function onMenuOpenProject():Void {
-        layoutEngine.open("welcome", {}, DisplayPosition.Center);
-        /*
-        fileDialog.showOpen({ filters: [{ name: "Project Files", extensions: ["json", "hide"] }] })
-        .handle(function(path:Null<String>) {
-            if (path != null) {
-                var result = loadProjectUseCase.execute(new FilePath(path));
-                switch (result) {
-                    case Success(_):
-                        trace("Project loading initiated successfully.");
-                    case Failure(err):
-                        statusBar.setError('Failed to load project: $err');
-                }
-            }
-        });*/
-    }
-    
-    private function onErrorOccurred(event:ErrorOccurred):Void {
-        trace("UI ERROR [" + event.context + "]: " + event.error);
-    }
-    
-    private function onProjectLoadedHandler(event:ProjectLoaded):Void {
-        _currentProject = event.project.name;
-        trace("UI: Project loaded successfully: " + _currentProject);
-        updateWindowTitle();
-        //openView("project");
-        //openView("editor");
-    }
-    
-    public function onToggleFullscreen():Void {
-        // isFullscreen — это var, а не функция! Убираем скобки
-        setFullscreenUseCase.execute(!windowService.isFullscreen);
-    }
-    
-    public function onLayoutSave():Void {
-        //saveLayoutUseCase.execute();
-    }
-    
-    public function onCloseProject():Void {
-        //closeProjectUseCase.execute();
-    }
-    
-    private function openView(viewName:String):Void {
-        // Используем Lambda.find вместо Array.find
-        trace("[Open view] search view to open: "+ viewName);
-        var view = Lambda.find(viewRegistry.all(), function(v) return v.name == viewName);
-        if (view == null) {
-            throw "View not found: " + viewName;
-        }
-        
-        var position = switch viewName {
-            case "editor": DisplayPosition.Center;
-            case "project": DisplayPosition.Left;
-            default: DisplayPosition.Center;
-        };
-        trace("[Open view] view opened");
-        openViewUseCase.execute(view.name, view.defaultState, position);
-    }
-    
-    private function onOpenRecent(path:String):Void {
-        loadProjectUseCase.execute(new FilePath(path));
-    }
-    
-    private function updateWindowTitle():Void {
-        var title = _currentProject != null ? '$_currentProject - HIDE IDE' : 'HIDE IDE';
-        trace("Window title updated to: " + title);
-        windowService.setTitle(title);
-    }
-    
-    private function showAboutDialog():Void {
-        trace('HIDE IDE\nVersion 0.1.0');
-    }
-    
-    private function get_currentProjectName():String {
-        return _currentProject != null ? _currentProject : "No project";
-    }
-    
-    
-    
-    public function startup():Void {
-        trace("✅ DI Контейнер успешно инициализирован! Ide создан.");
-
-        // ✅ НОВОЕ: Регистрируем все View через модули (атомарно!)
-        for (module in viewModules) {
-            var descriptor = module.getDescriptor();
-            viewRegistry.add(descriptor.dto);
-            viewRegistry.registerViewFactory(descriptor.dto.name, descriptor.factory);
-            
-            // Добавляем пункт в меню
-            menuService.addViewMenu(descriptor.dto);
-            menuService.onItemClick("view." + descriptor.dto.name, function() {
-                openView(descriptor.dto.name);
-            });
-            
-            trace('📦 View registered: ${descriptor.dto.name}');
-        }
-
-        windowController.init();
-        trace("🪟 WindowController инициализирован");
-
-        // ✅ ИНИЦИАЛИЗАЦИЯ TOOLBAR
-        var toolbarEl = js.Browser.document.getElementById("main-toolbar");
-        if (toolbarEl != null) {
-            // ToolbarController уже в DI, получаем его
-            
-            toolbarController.setContainer(cast toolbarEl);
-            trace("🔧 Toolbar инициализирован");
-        }
-        // 1. Инициализируем GoldenLayout
-        var layoutEl = js.Browser.document.getElementById("golden-layout-root");
-        if (layoutEl != null) {
-            layoutEngine.setContainer(layoutEl);
-            // Инициализируем с пустым состоянием (адаптер сам создаст дефолтный скелет)
-            layoutEngine.init({ content: [], fullScreen: null }); 
-            trace("🎨 GoldenLayout инициализирован.");
-        } else {
-            trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.");
-        }
-       
-        var menuContainer = js.Browser.document.getElementById("main-menu");
-        if (menuContainer != null) {
-            menuController.setContainer(cast menuContainer);
-            trace("📋 MenuController инициализирован с DOM-контейнером.");
-        } else {
-            trace("⚠️ Контейнер #main-menu не найден в DOM!");
-        }
-
-        var args = platform.getAppArgs();
-        var projectFile:Null<String> = null;
-        // ✅ Подписка на resize окна через js.Browser
-        _resizeHandler = function(_) {
-            haxe.Timer.delay(function() {
-                var layoutEl = js.Browser.document.getElementById("golden-layout-root");
-                if (layoutEl != null) {
-                    var rect = layoutEl.getBoundingClientRect();
-                    layoutEngine.updateSize(Std.int(rect.width), Std.int(rect.height));
-                }
-            }, 100); // Небольшая задержка для стабильности
-        };
-
-        js.Browser.window.addEventListener("resize", _resizeHandler);
-        // Electron передает много внутренних флагов. Ищем первый аргумент, 
-        // который НЕ начинается с '-' и не является пустой строкой.
-        for (arg in args) {
-            if (arg != "" && !StringTools.startsWith(arg, "-") && !StringTools.startsWith(arg, "chrome://")) {
-                projectFile = arg;
-                break;
-            }
-        }
-        
-        if (projectFile != null) {
-            trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile);
-            loadProjectUseCase.execute(new FilePath(projectFile));
-        } else {
-            trace("👋 Приложение запущено без проекта.");
-
-        }
-    }
-    
-    public function dispose():Void {
-        if (_projectLoadedUnsub != null) _projectLoadedUnsub.cancel();
-        if (_errorUnsub != null) _errorUnsub.cancel();
-        if (_layoutChangedUnsub != null) _layoutChangedUnsub.cancel();
-        if (_projectClosedUnsub != null) _projectClosedUnsub.cancel();
-        // ✅ Очищаем ресурсы контроллера меню
-        if (menuController != null) {
-            menuController.dispose();
-        }
-        if (windowController != null) {
-            windowController.dispose();
-        }
-        // ✅ Отписка от resize
-        if (_resizeHandler != null) {
-            js.Browser.window.removeEventListener("resize", _resizeHandler);
-            _resizeHandler = null;
-        }
-    }
-    public function get_eventBus():IEventBus return eventBus;
-    public function get_windowService():WindowService return windowService;
-    public function get_menuService():MenuService return menuService;
-    public function get_viewRegistry():ViewRegistry return viewRegistry;
-    public function get_layoutEngine():ILayoutEngine return layoutEngine;
-    public function get_sceneService():ISceneService return sceneService;
-    public function get_shaderPreviewRenderer():ShaderPreviewRenderer return shaderPreviewRenderer;
-    public function get_viewportService():ViewportService return viewportService;
-}
 </file>
 
 <file path="shared/events/ErrorOccurred.hx">
@@ -15904,6 +16041,27 @@ package shared.utils;
 package shared.utils;
 </file>
 
+<file path="plugins.json">
+{
+  "plugins": [
+    {
+      "name": "ConsolePlugin",
+      "className": "plugins.ConsolePlugin",
+      "enabled": true,
+      "config": {
+        "defaultLogLevel": "info"
+      }
+    },
+    {
+      "name": "TerminalPlugin",
+      "className": "plugins.TerminalPlugin",
+      "enabled": false,
+      "config": {}
+    }
+  ]
+}
+</file>
+
 <file path="plugins/console/ConsoleView.hx">
 // plugins/console/ConsoleView.hx
 
@@ -15948,27 +16106,6 @@ package hide.shared.types;
 enum Result<T, E> {
     Success(value: T);
     Failure(error: E);
-}
-</file>
-
-<file path="plugins.json">
-{
-  "plugins": [
-    {
-      "name": "ConsolePlugin",
-      "className": "plugins.ConsolePlugin",
-      "enabled": true,
-      "config": {
-        "defaultLogLevel": "info"
-      }
-    },
-    {
-      "name": "TerminalPlugin",
-      "className": "plugins.TerminalPlugin",
-      "enabled": false,
-      "config": {}
-    }
-  ]
 }
 </file>
 

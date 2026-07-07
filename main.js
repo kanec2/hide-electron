@@ -194,6 +194,20 @@ AutoWindow.setupIpc = function() {
 			event.returnValue = { error : Std.string(e)};
 		}
 	});
+	electron_main_IpcMain.on("fs:readBinary",function(event,filePath) {
+		try {
+			if(!js_node_Fs.existsSync(filePath)) {
+				event.returnValue = { error : "File not found"};
+			} else {
+				var buffer = js_node_Fs.readFileSync(filePath);
+				var base64 = buffer.toString("base64");
+				event.returnValue = { data : base64};
+			}
+		} catch( _g ) {
+			var e = haxe_Exception.caught(_g).unwrap();
+			event.returnValue = { error : Std.string(e)};
+		}
+	});
 	electron_main_IpcMain.on("fs:writeText",function(event,data) {
 		try {
 			var dir = js_node_Path.dirname(data.path);
@@ -285,16 +299,16 @@ AutoWindow.setupIpc = function() {
 		event.returnValue = null;
 	});
 	electron_main_IpcMain.on("menu:build",function(event,menuData) {
-		console.log("AutoWindow.hx:324:","[AutoWindow] 📥 Received menu data");
+		console.log("AutoWindow.hx:338:","[AutoWindow] 📥 Received menu data");
 		var template = AutoWindow.processMenuTemplate(menuData,event.sender);
 		var menu = electron_main_Menu.buildFromTemplate(template);
 		electron_main_Menu.setApplicationMenu(menu);
-		console.log("AutoWindow.hx:328:","[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
+		console.log("AutoWindow.hx:342:","[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
 	});
 	electron_main_IpcMain.on("window:open",function(event,data) {
 		var url = data.url;
 		if(url.indexOf("?subView=") != -1) {
-			console.log("AutoWindow.hx:336:","[AutoWindow] ⚠️ Sub-view request: " + url);
+			console.log("AutoWindow.hx:350:","[AutoWindow] ⚠️ Sub-view request: " + url);
 			event.sender.send("window:open:subview",{ url : url});
 			return;
 		}

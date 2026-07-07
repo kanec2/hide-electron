@@ -8,6 +8,7 @@ import h3d.scene.pbr.Environment;
 import h3d.scene.Mesh;
 import h3d.scene.fwd.DirLight;
 import h3d.prim.Sphere;
+import hide.engine.domain.services.IResourceLoader; // ← ДОБАВИТЬ
 import hx.injection.Service;
 
 class ShaderPreviewRenderer implements Service {
@@ -36,8 +37,11 @@ class ShaderPreviewRenderer implements Service {
     private var maxDistance:Float = 10.0;
     private var minPhi:Float = -1.5;    // ~-86 градусов
     private var maxPhi:Float = 1.5;     // ~86 градусов
+    private var resourceLoader:IResourceLoader; // ← ДОБАВИТЬ
+    private var albedoTexture:Null<h3d.mat.Texture> = null;
 
-    public function new() {
+    public function new(resourceLoader:IResourceLoader) {
+        this.resourceLoader = resourceLoader;
         // ✅ ВАЖНО: устанавливаем PBR MaterialSetup ДО создания сцены
         h3d.mat.MaterialSetup.current = new h3d.mat.PbrMaterialSetup();
     }
@@ -145,6 +149,8 @@ class ShaderPreviewRenderer implements Service {
         //cast(s3d.lightSystem, h3d.scene.fwd.LightSystem).ambientLight.set(0.5, 0.5, 0.5);
         trace("✅ [ShaderPreview] Environment ready");
     }
+
+    
     /**
      * ✅ ПРОСТОЙ environment — серый градиент
      * Создаётся БЫСТРО (небольшая текстура)
@@ -167,7 +173,7 @@ class ShaderPreviewRenderer implements Service {
         
         return envMap;
     }
-/**
+    /**
      * ✅ НОВОЕ: Подключает управление камерой к canvas
      * Вызывается из ShaderEditorPanel после регистрации viewport
      */
@@ -251,6 +257,43 @@ class ShaderPreviewRenderer implements Service {
         cam.target.set(0, 0, 0); // Смотрим в центр (где сфера)
         cam.update();
     }
+
+    // Добавьте новый метод:
+    /**
+     * Загружает текстуру и применяет к материалу сферы.
+     * Вызывается из ShaderEditorPanel при наличии ноды texture/sample.
+     */
+    /**
+     * ✅ ОБНОВЛЁННЫЙ метод загрузки текстуры через IResourceLoader
+     */
+    public function setAlbedoTexture(path:String):Void {
+        // Очищаем старую текстуру
+        if (albedoTexture != null) {
+            albedoTexture.dispose();
+            albedoTexture = null;
+        }
+        
+        if (path == null || path == "") {
+            // Убираем текстуру с материала
+            if (previewMesh != null) {
+                previewMesh.material.texture = null;  // ✅ ИСПРАВЛЕНО
+            }
+            trace('🖼️ [ShaderPreview] Texture cleared');
+            return;
+        }
+        
+        trace('📥 [ShaderPreview] Loading texture: $path');
+        
+        // Загружаем через IResourceLoader
+        albedoTexture = resourceLoader.loadTexture(path);
+        
+        if (albedoTexture != null && previewMesh != null) {
+            previewMesh.material.texture = albedoTexture;
+            trace('🖼️ [ShaderPreview] Texture applied: ${albedoTexture.width}x${albedoTexture.height}');
+        } else {
+            trace('❌ [ShaderPreview] Failed to load texture');
+        }
+    }
     /**
      * Применяет скомпилированные данные графа к материалу.
      * Вызывается из React-компонента при изменении графа.
@@ -310,6 +353,17 @@ class ShaderPreviewRenderer implements Service {
         } else {
             pbrValues.roughnessValue = 0.5;
         }
+
+        // ✅ НОВОЕ: Normal
+        if (shaderData.normal != null && isVec3(shaderData.normal)) {
+            // В Heaps PBR нормали применяются через mainPass.normalMap
+            // Но для procedural normals нужен кастомный подход
+            // Пока просто логируем
+            trace('🔵 [ShaderPreview] Normal: (${shaderData.normal.x}, ${shaderData.normal.y}, ${shaderData.normal.z})');
+            
+            // Можно применить через кастомный шейдер или изменить геометрию
+            // Для простоты пока не применяем напрямую
+        }
         
         // Emissive (если есть)
         if (shaderData.emissive != null && isVec3(shaderData.emissive)) {
@@ -324,6 +378,10 @@ class ShaderPreviewRenderer implements Service {
         return v != null && Reflect.hasField(v, "x") && Reflect.hasField(v, "y") && Reflect.hasField(v, "z");
     }
     public function dispose():Void {
+        if (albedoTexture != null) {
+            albedoTexture.dispose();
+            albedoTexture = null;
+        }
         if (s3d != null) {
             s3d.dispose();
             s3d = null;

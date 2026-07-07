@@ -9,4 +9,7 @@ interface IFileSystem extends Service {
     function writeText(path:FilePath, content:String):Void;
     function listFiles(path:FilePath, ?recursive:Bool):Array<FilePath>;
     function getAppDataPath():FilePath;
+    
+    // ✅ НОВОЕ: для бинарных файлов (текстуры, меши)
+    function readBinary(path:FilePath):haxe.io.Bytes;
 }

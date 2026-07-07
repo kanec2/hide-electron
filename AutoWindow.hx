@@ -231,7 +231,21 @@ class AutoWindow {
                 event.returnValue = { error: Std.string(e) };
             }
         });
-
+        IpcMain.on("fs:readBinary", function(event:IpcMainEvent, filePath:String) {
+            try {
+                if (!Fs.existsSync(filePath)) {
+                    event.returnValue = { error: "File not found" };
+                } else {
+                    // Читаем бинарный файл
+                    var buffer = Fs.readFileSync(filePath);
+                    // Конвертируем в Base64 для передачи через IPC
+                    var base64 = buffer.toString("base64");
+                    event.returnValue = { data: base64 };
+                }
+            } catch (e:Dynamic) {
+                event.returnValue = { error: Std.string(e) };
+            }
+        });
         IpcMain.on("fs:writeText", function(event:IpcMainEvent, data:Dynamic) {
             try {
                 var dir = Path.dirname(data.path);

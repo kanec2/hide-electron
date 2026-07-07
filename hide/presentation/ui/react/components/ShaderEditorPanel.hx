@@ -91,6 +91,25 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         setupGraphListeners();
         // ✅ Клавиатурные шорткаты
         setupKeyboardShortcuts();
+        // ✅ Регистрируем глобальную функцию для диалога выбора текстуры
+        untyped js.Browser.window.__browseShaderTexture = function(node:Dynamic) {
+            var fileDialog = UseService.fileDialog();
+            fileDialog.showOpen({
+                filters: [
+                    { name: "Images", extensions: ["png", "jpg", "jpeg", "dds", "hdr", "tga"] }
+                ]
+            }).handle(function(path:Null<String>) {
+                if (path != null) {
+                    // Устанавливаем путь в свойства ноды
+                    node.properties.texture = path;
+                    // Перерисовываем ноду
+                    node.setDirtyCanvas(true, true);
+                    // Перекомпилируем граф
+                    scheduleRecompile();
+                    trace('🖼️ [ShaderEditor] Texture selected: $path');
+                }
+            });
+        };
     }
 
     private function setupKeyboardShortcuts():Void {
@@ -381,7 +400,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         var albedo = evaluateInput(outputNode, 0, new Map());      // slot 0 = Albedo (vec3)
         var metallic = evaluateInput(outputNode, 1, new Map());    // slot 1 = Metallic (float)
         var roughness = evaluateInput(outputNode, 2, new Map());   // slot 2 = Roughness (float)
-        var normal = evaluateInput(outputNode, 3, new Map());      // slot 3 = Normal (vec3) - пока игнорируем
+        var normal = evaluateInput(outputNode, 3, new Map());      // slot 3 = Normal (vec3) ✅
         var emissive = evaluateInput(outputNode, 4, new Map());    // slot 4 = Emissive (vec3)
         
         trace('📊 [ShaderEditor] PBR Evaluated:');
@@ -389,12 +408,18 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         trace('   Metallic: $metallic');
         trace('   Roughness: $roughness');
         trace('   Emissive: $emissive');
-        
+        if (normal != null && Reflect.hasField(normal, "x")) {
+            trace('   Normal: (${normal.x}, ${normal.y}, ${normal.z})');
+        } else {
+            //trace('   Normal: $normal');
+        }
+                
         // 3. Применяем к превью
         previewRenderer.updateMaterial({
             albedo: albedo,
             metallic: metallic,
             roughness: roughness,
+            normal: normal,  // ← ДОБАВИТЬ
             emissive: emissive
         });
         
@@ -436,7 +461,39 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                     y: Reflect.field(node.properties, "g"),
                     z: Reflect.field(node.properties, "b")
                 };
-            
+            // ✅ НОВОЕ: Normal Map
+            case "texture/normal":
+                var inputNormal = evaluateInput(node, 0, visited);
+                var strength = Reflect.field(node.properties, "strength");
+                if (strength == null) strength = 1.0;
+                
+                // Если нормаль не подключена, используем дефолтную (0, 0, 1)
+                if (inputNormal == null) {
+                    inputNormal = { x: 0.0, y: 0.0, z: 1.0 };
+                }
+                
+                // Применяем strength
+                var nx = isVec3(inputNormal) ? inputNormal.x : 0.0;
+                var ny = isVec3(inputNormal) ? inputNormal.y : 0.0;
+                var nz = isVec3(inputNormal) ? inputNormal.z : 1.0;
+                
+                trace('🔵 [ShaderEditor] Normal Map: strength=$strength, normal=($nx, $ny, $nz)');
+                
+                {
+                    x: nx * strength,
+                    y: ny * strength,
+                    z: nz
+                };
+            // ✅ НОВОЕ: Texture Sample
+            case "texture/sample":
+                var texPath = Reflect.field(node.properties, "texture");
+                if (texPath != null && texPath != "") {
+                    // Загружаем текстуру в превью
+                    previewRenderer.setAlbedoTexture(texPath);
+                    trace('🖼️ [ShaderEditor] Applying texture: $texPath');
+                }
+                // Возвращаем белый цвет как fallback (текстура уже применена напрямую)
+                { x: 1.0, y: 1.0, z: 1.0 };
             // === MATH ОПЕРАЦИИ ===
             case "math/operation" | "math/add" | "math/subtract" | "math/multiply" | "math/divide" | "math/lerp":
                 evaluateMathNode(node, visited);
@@ -720,13 +777,36 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
             }
         });
     }
+
+
     private function registerShaderNodes():Void {
         // ✅ ПРАВИЛЬНЫЙ СПОСОБ: используем js.Syntax.code для создания JS-функций,
         // где `this` ссылается на экземпляр ноды, а не на ShaderEditorPanel
         
-        // === Нода: Texture Sample ===
-        var TextureSampleNode = js.Syntax.code("(function() { this.title = 'Texture Sample'; this.addInput('UV', 'vec2'); this.addOutput('RGBA', 'vec4'); this.properties = { texture: '' }; })");
-        js.Syntax.code("TextureSampleNode.prototype.onExecute = function() { var uv = this.getInputData(0); if (uv == null) uv = [0, 0]; this.setOutputData(0, [1, 0, 0, 1]); }");
+        // === Нода: Texture Sample (с кнопкой Browse) ===
+        var TextureSampleNode = js.Syntax.code("
+            (function() { 
+                this.title = 'Texture Sample'; 
+                this.addInput('UV', 'vec2'); 
+                this.addOutput('RGBA', 'vec4'); 
+                this.properties = { texture: '' };
+                
+                var that = this;
+                
+                // Кнопка Browse — открывает диалог выбора файла
+                this.addWidget('button', 'Browse', null, function() {
+                    if (window.__browseShaderTexture) {
+                        window.__browseShaderTexture(that);
+                    }
+                });
+                
+                // Поле для отображения пути (readonly)
+                this.addWidget('string', 'texture', '', function(v) {
+                    that.properties.texture = v;
+                });
+            })
+        ");
+        js.Syntax.code("TextureSampleNode.prototype.onExecute = function() { var uv = this.getInputData(0); if (uv == null) uv = [0, 0]; this.setOutputData(0, [1, 1, 1, 1]); }");
         LiteGraph.registerNodeType("texture/sample", TextureSampleNode);
         
         // === Нода: PBR Material ===
@@ -749,6 +829,36 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         js.Syntax.code("Vec3Node.prototype.onExecute = function() { this.setOutputData(0, [this.properties.x, this.properties.y, this.properties.z]); }");
         LiteGraph.registerNodeType("value/vec3", Vec3Node);
         
+        // === Нода: Normal Map ===
+        var NormalMapNode = js.Syntax.code("
+            (function() { 
+                this.title = 'Normal Map'; 
+                this.addInput('Normal', 'vec3');
+                this.addInput('Strength', 'float');
+                this.addOutput('Normal', 'vec3');
+                this.properties = { strength: 1.0 };
+                var that = this;
+                
+                // Widget для strength
+                this.addWidget('number', 'strength', 1.0, function(v) {
+                    that.properties.strength = v;
+                }, { min: 0, max: 2, step: 0.1 });
+            })
+        ");
+        js.Syntax.code("NormalMapNode.prototype.onExecute = function() { 
+            var normal = this.getInputData(0); 
+            if (normal == null) normal = [0, 0, 1];
+            var strength = this.properties.strength;
+            // Усиливаем нормаль
+            var result = [
+                normal[0] * strength,
+                normal[1] * strength,
+                normal[2]
+            ];
+            this.setOutputData(0, result);
+        }");
+        LiteGraph.registerNodeType("texture/normal", NormalMapNode);
+
         // === Нода: Color ===
         var ColorNode = js.Syntax.code("(function() { 
             this.title = 'Color'; 
@@ -834,7 +944,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         // === Нода: Material Output (ОБЯЗАТЕЛЬНАЯ) ===
         var OutputNode = js.Syntax.code("(function() { 
             this.title = 'Material Output'; 
-            this.addInput('Albedo', 'vec3'); 
+            this.addInput('Albedo', 'vec3,vec4');
             this.addInput('Metallic', 'float'); 
             this.addInput('Roughness', 'float'); 
             this.addInput('Normal', 'vec3');
@@ -1137,5 +1247,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         if (graph != null) graph.stop();
         previewRenderer.dispose(); // ← освобождаем ресурсы engine layer
         //super.componentWillUnmount();
+        // Очищаем глобальную функцию
+        untyped js.Browser.window.__browseShaderTexture = null;
     }
 }

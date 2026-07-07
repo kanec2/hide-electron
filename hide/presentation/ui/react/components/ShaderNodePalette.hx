@@ -46,7 +46,7 @@ class ShaderNodePalette extends ReactComponentOfProps<ShaderNodePaletteProps> {
                 name: "Texture",
                 nodes: [
                     { type: "texture/sample", label: "Sample Texture", description: "Sample texture at UV", color: "#a6a" },
-                    { type: "texture/normal", label: "Normal Map", description: "Normal map sample", color: "#a6a" },
+                    { type: "texture/normal", label: "Normal Map", description: "Normal map sample", color: "#a6a" }, // ← НОВОЕ
                 ]
             },
             {

@@ -1,10 +1,11 @@
 package hide.infrastructure.platform.electron;
 
+import hx.injection.Service;
 import hide.domain.services.IFileSystem;
 import hide.domain.valueobjects.FilePath;
 import hide.domain.exceptions.FileNotFoundError;
 
-class ElectronFileSystemAdapter implements IFileSystem {
+class ElectronFileSystemAdapter implements IFileSystem implements Service {
     private var ipcBridge:ElectronIpcBridge;
     
     public function new(ipcBridge:ElectronIpcBridge) {
@@ -51,5 +52,22 @@ class ElectronFileSystemAdapter implements IFileSystem {
     public function getAppDataPath():FilePath {
         var path = ipcBridge.invokeSync("app:getAppDataPath");
         return new FilePath(path);
+    }
+    
+    // ✅ НОВОЕ: чтение бинарных файлов
+    public function readBinary(filePath:FilePath):haxe.io.Bytes {
+        if (!exists(filePath)) {
+            throw new FileNotFoundError(filePath);
+        }
+        
+        var result = ipcBridge.invokeSync("fs:readBinary", filePath.toString());
+        
+        if (result.error != null) {
+            throw new FileNotFoundError(filePath);
+        }
+        
+        // Декодируем Base64 обратно в Bytes
+        var base64:String = result.data;
+        return haxe.crypto.Base64.decode(base64);
     }
 }
