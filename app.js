@@ -109541,9 +109541,9 @@ hide_bootstrap_Application.main = function() {
 	var provider = collection.createProvider();
 	var service = hide_presentation_Ide;
 	var ide = provider.handleGetService(service.__name__,service,null);
-	var service = hide_engine_domain_services_IRenderer;
-	var renderer = provider.handleGetService(service.__name__,service,null);
-	renderer.init();
+	var service = hide_engine_domain_services_IEngineManager;
+	var engineManager = provider.handleGetService(service.__name__,service,null);
+	engineManager.init();
 	ide.startup();
 };
 var hide_domain_entities_Project = function(id,name,rootPath) {
@@ -109810,7 +109810,7 @@ hide_engine_bootstrap_EngineModule.__name__ = "hide.engine.bootstrap.EngineModul
 hide_engine_bootstrap_EngineModule.configure = function(collection) {
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_engine_domain_services_IEngineEventBus.__name__,hide_engine_infrastructure_EngineEventBusImpl);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_engine_domain_services_ISceneService.__name__,hide_engine_infrastructure_SceneServiceImpl);
-	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_engine_domain_services_IRenderer.__name__,hide_engine_infrastructure_HeapsRenderer);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_engine_domain_services_IEngineManager.__name__,hide_engine_infrastructure_HeapsEngineManager);
 	var implementation = hide_engine_infrastructure_ViewportService;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
 	var implementation = hide_engine_infrastructure_SceneViewportController;
@@ -109988,7 +109988,7 @@ hide_engine_domain_entities_Transform.prototype = {
 		return new hide_engine_domain_entities_Transform(x,y,z,this.rotX,this.rotY,this.rotZ,this.scaleX,this.scaleY,this.scaleZ);
 	}
 	,withRotation: function(x,y,z) {
-		return new hide_engine_domain_entities_Transform(x,y,z,x,y,z,this.scaleX,this.scaleY,this.scaleZ);
+		return new hide_engine_domain_entities_Transform(this.x,this.y,this.z,x,y,z,this.scaleX,this.scaleY,this.scaleZ);
 	}
 	,withScale: function(x,y,z) {
 		return new hide_engine_domain_entities_Transform(x,y,z,this.rotX,this.rotY,this.rotZ,x,y,z);
@@ -110009,16 +110009,16 @@ hide_engine_domain_services_IEngineEventBus.prototype = {
 	,emitSceneChanged: null
 	,__class__: hide_engine_domain_services_IEngineEventBus
 };
-var hide_engine_domain_services_IRenderer = function() { };
-$hxClasses["hide.engine.domain.services.IRenderer"] = hide_engine_domain_services_IRenderer;
-hide_engine_domain_services_IRenderer.__name__ = "hide.engine.domain.services.IRenderer";
-hide_engine_domain_services_IRenderer.__isInterface__ = true;
-hide_engine_domain_services_IRenderer.__interfaces__ = [hx_injection_Service];
-hide_engine_domain_services_IRenderer.prototype = {
+var hide_engine_domain_services_IEngineManager = function() { };
+$hxClasses["hide.engine.domain.services.IEngineManager"] = hide_engine_domain_services_IEngineManager;
+hide_engine_domain_services_IEngineManager.__name__ = "hide.engine.domain.services.IEngineManager";
+hide_engine_domain_services_IEngineManager.__isInterface__ = true;
+hide_engine_domain_services_IEngineManager.__interfaces__ = [hx_injection_Service];
+hide_engine_domain_services_IEngineManager.prototype = {
 	init: null
 	,onResize: null
 	,dispose: null
-	,__class__: hide_engine_domain_services_IRenderer
+	,__class__: hide_engine_domain_services_IEngineManager
 };
 var hide_engine_domain_services_IResourceLoader = function() { };
 $hxClasses["hide.engine.domain.services.IResourceLoader"] = hide_engine_domain_services_IResourceLoader;
@@ -110107,14 +110107,104 @@ hide_engine_infrastructure_EngineEventBusImpl.prototype = {
 	}
 	,__class__: hide_engine_infrastructure_EngineEventBusImpl
 };
-var hide_engine_infrastructure_HeapsRenderer = function(viewportService) {
+var hide_engine_infrastructure_FullscreenQuad = function(gl) {
+	this.isInitialized = false;
+	this.gl = gl;
+};
+$hxClasses["hide.engine.infrastructure.FullscreenQuad"] = hide_engine_infrastructure_FullscreenQuad;
+hide_engine_infrastructure_FullscreenQuad.__name__ = "hide.engine.infrastructure.FullscreenQuad";
+hide_engine_infrastructure_FullscreenQuad.prototype = {
+	gl: null
+	,program: null
+	,vertexBuffer: null
+	,textureLocation: null
+	,positionLocation: null
+	,isInitialized: null
+	,init: function() {
+		if(this.isInitialized) {
+			return;
+		}
+		var vs = this.compileShader(35633,hide_engine_infrastructure_FullscreenQuad.VERTEX_SHADER);
+		var fs = this.compileShader(35632,hide_engine_infrastructure_FullscreenQuad.FRAGMENT_SHADER);
+		if(vs == null || fs == null) {
+			haxe_Log.trace("❌ [FullscreenQuad] Shader compilation failed",{ fileName : "hide/engine/infrastructure/FullscreenQuad.hx", lineNumber : 67, className : "hide.engine.infrastructure.FullscreenQuad", methodName : "init"});
+			return;
+		}
+		this.program = this.gl.createProgram();
+		this.gl.attachShader(this.program,vs);
+		this.gl.attachShader(this.program,fs);
+		this.gl.linkProgram(this.program);
+		if(this.gl.getProgramParameter(this.program,35714) == false) {
+			haxe_Log.trace("❌ [FullscreenQuad] Program link failed: " + this.gl.getProgramInfoLog(this.program),{ fileName : "hide/engine/infrastructure/FullscreenQuad.hx", lineNumber : 78, className : "hide.engine.infrastructure.FullscreenQuad", methodName : "init"});
+			return;
+		}
+		this.positionLocation = this.gl.getAttribLocation(this.program,"aPosition");
+		this.textureLocation = this.gl.getUniformLocation(this.program,"uTexture");
+		this.vertexBuffer = this.gl.createBuffer();
+		this.gl.bindBuffer(34962,this.vertexBuffer);
+		var vertices = new Float32Array([-1.0,-1.0,1.0,-1.0,-1.0,1.0,1.0,1.0]);
+		this.gl.bufferData(34962,vertices,35044);
+		this.gl.deleteShader(vs);
+		this.gl.deleteShader(fs);
+		this.isInitialized = true;
+		haxe_Log.trace("✅ [FullscreenQuad] Initialized",{ fileName : "hide/engine/infrastructure/FullscreenQuad.hx", lineNumber : 104, className : "hide.engine.infrastructure.FullscreenQuad", methodName : "init"});
+	}
+	,compileShader: function(type,source) {
+		var shader = this.gl.createShader(type);
+		this.gl.shaderSource(shader,source);
+		this.gl.compileShader(shader);
+		if(this.gl.getShaderParameter(shader,35713) == false) {
+			haxe_Log.trace("❌ [FullscreenQuad] Shader compile error: " + this.gl.getShaderInfoLog(shader),{ fileName : "hide/engine/infrastructure/FullscreenQuad.hx", lineNumber : 116, className : "hide.engine.infrastructure.FullscreenQuad", methodName : "compileShader"});
+			this.gl.deleteShader(shader);
+			return null;
+		}
+		return shader;
+	}
+	,render: function(texture) {
+		if(!this.isInitialized || texture == null) {
+			return;
+		}
+		var glTexture = texture.getHandle();
+		if(glTexture == null) {
+			haxe_Log.trace("⚠️ [FullscreenQuad] Texture handle is null",{ fileName : "hide/engine/infrastructure/FullscreenQuad.hx", lineNumber : 136, className : "hide.engine.infrastructure.FullscreenQuad", methodName : "render"});
+			return;
+		}
+		this.gl.viewport(0,0,this.gl.canvas.width,this.gl.canvas.height);
+		this.gl.clearColor(0.1,0.1,0.1,1.0);
+		this.gl.clear(16384);
+		this.gl.useProgram(this.program);
+		this.gl.activeTexture(33984);
+		this.gl.bindTexture(3553,glTexture);
+		this.gl.uniform1i(this.textureLocation,0);
+		this.gl.bindBuffer(34962,this.vertexBuffer);
+		this.gl.enableVertexAttribArray(this.positionLocation);
+		this.gl.vertexAttribPointer(this.positionLocation,2,5126,false,0,0);
+		this.gl.drawArrays(5,0,4);
+		this.gl.disableVertexAttribArray(this.positionLocation);
+		this.gl.bindTexture(3553,null);
+		this.gl.useProgram(null);
+	}
+	,dispose: function() {
+		if(this.program != null) {
+			this.gl.deleteProgram(this.program);
+			this.program = null;
+		}
+		if(this.vertexBuffer != null) {
+			this.gl.deleteBuffer(this.vertexBuffer);
+			this.vertexBuffer = null;
+		}
+		this.isInitialized = false;
+	}
+	,__class__: hide_engine_infrastructure_FullscreenQuad
+};
+var hide_engine_infrastructure_HeapsEngineManager = function(viewportService) {
 	this.isEngineReady = false;
 	this.viewportService = viewportService;
 };
-$hxClasses["hide.engine.infrastructure.HeapsRenderer"] = hide_engine_infrastructure_HeapsRenderer;
-hide_engine_infrastructure_HeapsRenderer.__name__ = "hide.engine.infrastructure.HeapsRenderer";
-hide_engine_infrastructure_HeapsRenderer.__interfaces__ = [hx_injection_Service,hide_engine_domain_services_IRenderer];
-hide_engine_infrastructure_HeapsRenderer.prototype = {
+$hxClasses["hide.engine.infrastructure.HeapsEngineManager"] = hide_engine_infrastructure_HeapsEngineManager;
+hide_engine_infrastructure_HeapsEngineManager.__name__ = "hide.engine.infrastructure.HeapsEngineManager";
+hide_engine_infrastructure_HeapsEngineManager.__interfaces__ = [hx_injection_Service,hide_engine_domain_services_IEngineManager];
+hide_engine_infrastructure_HeapsEngineManager.prototype = {
 	engine: null
 	,viewportService: null
 	,isEngineReady: null
@@ -110133,7 +110223,7 @@ hide_engine_infrastructure_HeapsRenderer.prototype = {
 			dummyCanvas.style.left = "-9999px";
 			dummyCanvas.style.visibility = "hidden";
 			window.document.body.appendChild(dummyCanvas);
-			haxe_Log.trace("🎨 [HeapsRenderer] Created hidden #webgl canvas for hxd.Window",{ fileName : "hide/engine/infrastructure/HeapsRenderer.hx", lineNumber : 43, className : "hide.engine.infrastructure.HeapsRenderer", methodName : "ensureDummyCanvas"});
+			haxe_Log.trace("🎨 [HeapsRenderer] Created hidden #webgl canvas for hxd.Window",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 51, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "ensureDummyCanvas"});
 		}
 	}
 	,initEngine: function() {
@@ -110141,19 +110231,19 @@ hide_engine_infrastructure_HeapsRenderer.prototype = {
 		h3d_Engine.ANTIALIASING = 4;
 		var existingEngine = h3d_Engine.CURRENT;
 		if(existingEngine != null) {
-			haxe_Log.trace("🎨 [HeapsRenderer] Using existing engine",{ fileName : "hide/engine/infrastructure/HeapsRenderer.hx", lineNumber : 51, className : "hide.engine.infrastructure.HeapsRenderer", methodName : "initEngine"});
+			haxe_Log.trace("🎨 [HeapsRenderer] Using existing engine",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 60, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "initEngine"});
 			this.engine = existingEngine;
 			if(this.engine.driver != null) {
 				this.onEngineReady();
 			} else {
 				haxe_Timer.delay($bind(this,this.onEngineReady),0);
 			}
-		} else if(!hide_engine_infrastructure_HeapsRenderer.isSystemInitialized) {
+		} else if(!hide_engine_infrastructure_HeapsEngineManager.isSystemInitialized) {
 			hxd_System.start(function() {
 				_gthis.engine = new h3d_Engine();
 				_gthis.engine.onReady = $bind(_gthis,_gthis.onEngineReady);
 				_gthis.engine.init();
-				hide_engine_infrastructure_HeapsRenderer.isSystemInitialized = true;
+				hide_engine_infrastructure_HeapsEngineManager.isSystemInitialized = true;
 			});
 		} else {
 			this.engine = new h3d_Engine();
@@ -110163,14 +110253,29 @@ hide_engine_infrastructure_HeapsRenderer.prototype = {
 	}
 	,onEngineReady: function() {
 		if(this.engine == null || this.engine.driver == null) {
-			haxe_Log.trace("⏳ [HeapsRenderer] Engine created but driver not ready, retrying...",{ fileName : "hide/engine/infrastructure/HeapsRenderer.hx", lineNumber : 78, className : "hide.engine.infrastructure.HeapsRenderer", methodName : "onEngineReady"});
+			haxe_Log.trace("⏳ [HeapsRenderer] Engine created but driver not ready, retrying...",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 87, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "onEngineReady"});
 			haxe_Timer.delay($bind(this,this.onEngineReady),50);
 			return;
 		}
 		hxd_System.setLoop($bind(this,this.mainLoop));
 		this.engine.backgroundColor = -14013910;
 		this.isEngineReady = true;
-		haxe_Log.trace("🎨 [HeapsRenderer] Engine ready. Render loop started.",{ fileName : "hide/engine/infrastructure/HeapsRenderer.hx", lineNumber : 86, className : "hide.engine.infrastructure.HeapsRenderer", methodName : "onEngineReady"});
+		this.logSupportedFeatures();
+		haxe_Log.trace("🎨 [HeapsRenderer] Engine ready. Render loop started.",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 98, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "onEngineReady"});
+	}
+	,logSupportedFeatures: function() {
+		var driver = this.engine.driver;
+		if(driver == null) {
+			return;
+		}
+		haxe_Log.trace("🔍 [HeapsEngineManager] GPU Features:",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 108, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" -Standard Derivatives: " + Std.string(driver.hasFeature(h3d_impl_Feature.StandardDerivatives)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 109, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" −FloatTextures:" + Std.string(driver.hasFeature(h3d_impl_Feature.StandardDerivatives)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 110, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" −FloatTextures:" + Std.string(driver.hasFeature(h3d_impl_Feature.FloatTextures)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 111, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" -Hardware Accelerated: " + Std.string(driver.hasFeature(h3d_impl_Feature.HardwareAccelerated)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 112, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" −MultipleRenderTargets:" + Std.string(driver.hasFeature(h3d_impl_Feature.HardwareAccelerated)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 113, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" −MultipleRenderTargets:" + Std.string(driver.hasFeature(h3d_impl_Feature.MultipleRenderTargets)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 114, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" - SRGB Textures: " + Std.string(driver.hasFeature(h3d_impl_Feature.SRGBTextures)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 115, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
 	}
 	,mainLoop: function() {
 		hxd_Timer.update();
@@ -110190,7 +110295,7 @@ hide_engine_infrastructure_HeapsRenderer.prototype = {
 	,getConstructorArgs: function() {
 		return ["hide.engine.infrastructure.ViewportService"];
 	}
-	,__class__: hide_engine_infrastructure_HeapsRenderer
+	,__class__: hide_engine_infrastructure_HeapsEngineManager
 };
 var hide_engine_infrastructure_HeapsResourceLoader = function(fileSystem) {
 	this.fileSystem = fileSystem;
@@ -110261,6 +110366,410 @@ hide_engine_infrastructure_HeapsResourceLoader.prototype = {
 		return ["hide.domain.services.IFileSystem"];
 	}
 	,__class__: hide_engine_infrastructure_HeapsResourceLoader
+};
+var hide_engine_infrastructure_InputHandler = function(scene,meshToDomainId,renderWidth,renderHeight,onMeshClick,onEmptyClick,onMeshHover,onMeshHoverOut) {
+	this.currentHoverMesh = null;
+	this.isInteractiveClicked = false;
+	this.scene = scene;
+	this.meshToDomainId = meshToDomainId;
+	this.renderWidth = renderWidth;
+	this.renderHeight = renderHeight;
+	this.onMeshClick = onMeshClick;
+	this.onEmptyClick = onEmptyClick;
+	this.onMeshHover = onMeshHover;
+	this.onMeshHoverOut = onMeshHoverOut;
+};
+$hxClasses["hide.engine.infrastructure.InputHandler"] = hide_engine_infrastructure_InputHandler;
+hide_engine_infrastructure_InputHandler.__name__ = "hide.engine.infrastructure.InputHandler";
+hide_engine_infrastructure_InputHandler.prototype = {
+	isInteractiveClicked: null
+	,onMeshClick: null
+	,onEmptyClick: null
+	,onMeshHover: null
+	,onMeshHoverOut: null
+	,scene: null
+	,meshToDomainId: null
+	,currentHoverMesh: null
+	,renderWidth: null
+	,renderHeight: null
+	,attachCanvas: function(canvas) {
+		var _gthis = this;
+		if(canvas == null) {
+			haxe_Log.trace("⚠️ [InputHandler] Cannot attach to null canvas",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 55, className : "hide.engine.infrastructure.InputHandler", methodName : "attachCanvas"});
+			return;
+		}
+		haxe_Log.trace("🎮 [InputHandler] Attaching to canvas 𝑐𝑎𝑛𝑣𝑎𝑠.𝑤𝑖𝑑𝑡ℎ𝑥canvas.widthx " + canvas.height,{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 59, className : "hide.engine.infrastructure.InputHandler", methodName : "attachCanvas"});
+		haxe_Log.trace(" Render target size: 𝑟𝑒𝑛𝑑𝑒𝑟𝑊𝑖𝑑𝑡ℎ𝑥renderWidthx " + this.renderHeight,{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 60, className : "hide.engine.infrastructure.InputHandler", methodName : "attachCanvas"});
+		canvas.addEventListener("mousedown",function(e) {
+			if(e.button != 0) {
+				return;
+			}
+			_gthis.isInteractiveClicked = false;
+			haxe_Log.trace("🖱️ [InputHandler] mousedown at ({e.clientX}, " + e.clientY + ")",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 69, className : "hide.engine.infrastructure.InputHandler", methodName : "attachCanvas"});
+			var hitMesh = _gthis.raycastAtMouse(canvas,e);
+			if(hitMesh != null) {
+				var domainId = _gthis.meshToDomainId.h[hitMesh.__id__];
+				if(domainId != null) {
+					_gthis.isInteractiveClicked = true;
+					haxe_Log.trace("✅ [InputHandler] Clicked mesh with domainId: " + domainId,{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 77, className : "hide.engine.infrastructure.InputHandler", methodName : "attachCanvas"});
+					_gthis.onMeshClick(domainId);
+				} else {
+					haxe_Log.trace("⚠️ [InputHandler] Mesh found but no domainId",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 80, className : "hide.engine.infrastructure.InputHandler", methodName : "attachCanvas"});
+				}
+			} else {
+				haxe_Log.trace("❌ [InputHandler] No mesh hit",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 83, className : "hide.engine.infrastructure.InputHandler", methodName : "attachCanvas"});
+			}
+			haxe_Timer.delay(function() {
+				if(!_gthis.isInteractiveClicked) {
+					haxe_Log.trace("❌ [InputHandler] Click on empty space",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 88, className : "hide.engine.infrastructure.InputHandler", methodName : "attachCanvas"});
+					_gthis.onEmptyClick();
+				}
+				_gthis.isInteractiveClicked = false;
+			},0);
+		});
+		canvas.addEventListener("mousemove",function(e) {
+			var hitMesh = _gthis.raycastAtMouse(canvas,e);
+			if(hitMesh != _gthis.currentHoverMesh) {
+				if(_gthis.currentHoverMesh != null) {
+					_gthis.onMeshHoverOut(_gthis.currentHoverMesh);
+				}
+				if(hitMesh != null) {
+					_gthis.onMeshHover(hitMesh);
+					canvas.style.cursor = "pointer";
+				} else {
+					canvas.style.cursor = "default";
+				}
+				_gthis.currentHoverMesh = hitMesh;
+			}
+		});
+		canvas.addEventListener("mouseleave",function(e) {
+			if(_gthis.currentHoverMesh != null) {
+				_gthis.onMeshHoverOut(_gthis.currentHoverMesh);
+				_gthis.currentHoverMesh = null;
+				canvas.style.cursor = "default";
+			}
+		});
+		haxe_Log.trace("✅ [InputHandler] Canvas event listeners attached",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 123, className : "hide.engine.infrastructure.InputHandler", methodName : "attachCanvas"});
+	}
+	,raycastAtMouse: function(canvas,e) {
+		var rect = canvas.getBoundingClientRect();
+		var cssMouseX = e.clientX - rect.left;
+		var cssMouseY = e.clientY - rect.top;
+		var renderMouseX = cssMouseX * (this.renderWidth / rect.width);
+		var renderMouseY = cssMouseY * (this.renderHeight / rect.height);
+		haxe_Log.trace("🔍 [InputHandler] Raycast:",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 140, className : "hide.engine.infrastructure.InputHandler", methodName : "raycastAtMouse"});
+		haxe_Log.trace(" CSS coords: (𝑐𝑠𝑠𝑀𝑜𝑢𝑠𝑒𝑋,cssMouseX, " + cssMouseY + ")",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 141, className : "hide.engine.infrastructure.InputHandler", methodName : "raycastAtMouse"});
+		haxe_Log.trace(" CSS rect: 𝑟𝑒𝑐𝑡.𝑤𝑖𝑑𝑡ℎ𝑥rect.widthx " + rect.height,{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 142, className : "hide.engine.infrastructure.InputHandler", methodName : "raycastAtMouse"});
+		haxe_Log.trace(" Render coords: (𝑟𝑒𝑛𝑑𝑒𝑟𝑀𝑜𝑢𝑠𝑒𝑋,renderMouseX, " + renderMouseY + ")",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 143, className : "hide.engine.infrastructure.InputHandler", methodName : "raycastAtMouse"});
+		haxe_Log.trace(" Render size: 𝑟𝑒𝑛𝑑𝑒𝑟𝑊𝑖𝑑𝑡ℎ𝑥renderWidthx " + this.renderHeight,{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 144, className : "hide.engine.infrastructure.InputHandler", methodName : "raycastAtMouse"});
+		var nx = renderMouseX / this.renderWidth * 2 - 1;
+		var ny = (1 - renderMouseY / this.renderHeight) * 2 - 1;
+		haxe_Log.trace(" Normalized coords: (𝑛𝑥,nx, " + ny + ")",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 149, className : "hide.engine.infrastructure.InputHandler", methodName : "raycastAtMouse"});
+		var nearPoint = this.scene.camera.unproject(nx,ny,0);
+		var farPoint = this.scene.camera.unproject(nx,ny,1);
+		var ray = new h3d_col_Ray();
+		ray.px = nearPoint.x;
+		ray.py = nearPoint.y;
+		ray.pz = nearPoint.z;
+		ray.lx = farPoint.x - nearPoint.x;
+		ray.ly = farPoint.y - nearPoint.y;
+		ray.lz = farPoint.z - nearPoint.z;
+		ray.normalize();
+		haxe_Log.trace(" Ray origin: (𝑟𝑎𝑦.𝑝𝑥,ray.px, " + ray.py + ", 𝑟𝑎𝑦.𝑝𝑧)′);𝑡𝑟𝑎𝑐𝑒(′𝑅𝑎𝑦𝑑𝑖𝑟:(ray.pz) ′ );trace( ′ Raydir:(" + ray.lx + ", 𝑟𝑎𝑦.𝑙𝑦,ray.ly, " + ray.lz + ")",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 163, className : "hide.engine.infrastructure.InputHandler", methodName : "raycastAtMouse"});
+		haxe_Log.trace(" Checking {meshToDomainId.length} meshes:",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 165, className : "hide.engine.infrastructure.InputHandler", methodName : "raycastAtMouse"});
+		var map = this.meshToDomainId;
+		var _g_map = map;
+		var _g_keys = map.keys();
+		while(_g_keys.hasNext()) {
+			var key = _g_keys.next();
+			var _g_value = _g_map.get(key);
+			var _g_key = key;
+			var mesh = _g_key;
+			var domainId = _g_value;
+			mesh.syncPos();
+			var bounds = mesh.getBounds();
+			var dx = 1 / ray.lx;
+			var dy = 1 / ray.ly;
+			var dz = 1 / ray.lz;
+			var t1 = (bounds.xMin - ray.px) * dx;
+			var t2 = (bounds.xMax - ray.px) * dx;
+			var t3 = (bounds.yMin - ray.py) * dy;
+			var t4 = (bounds.yMax - ray.py) * dy;
+			var t5 = (bounds.zMin - ray.pz) * dz;
+			var t6 = (bounds.zMax - ray.pz) * dz;
+			var a = t1 > t2 ? t2 : t1;
+			var b = t3 > t4 ? t4 : t3;
+			var a1 = a < b ? b : a;
+			var b1 = t5 > t6 ? t6 : t5;
+			var tmin = a1 < b1 ? b1 : a1;
+			var a2 = t1 < t2 ? t2 : t1;
+			var b2 = t3 < t4 ? t4 : t3;
+			var a3 = a2 > b2 ? b2 : a2;
+			var b3 = t5 < t6 ? t6 : t5;
+			var tmax = a3 > b3 ? b3 : a3;
+			var collides = tmax < 0 ? false : tmin > tmax ? false : true;
+			haxe_Log.trace(" Mesh " + domainId + ": bounds empty=" + Std.string(bounds.xMax < bounds.xMin || bounds.yMax < bounds.yMin || bounds.zMax < bounds.zMin) + ", " + ("min= " + bounds.xMin + ", 𝑏𝑜𝑢𝑛𝑑𝑠.𝑦𝑀𝑖𝑛,bounds.yMin, " + bounds.zMin + "), ") + ("max=(𝑏𝑜𝑢𝑛𝑑𝑠.𝑥𝑀𝑎𝑥,bounds.xMax, " + bounds.yMax + ", " + bounds.zMax + "), ") + ("collide=" + (collides == null ? "null" : "" + collides)),{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 170, className : "hide.engine.infrastructure.InputHandler", methodName : "raycastAtMouse"});
+		}
+		return this.findClosestIntersection(ray);
+	}
+	,findClosestIntersection: function(ray) {
+		var closestMesh = null;
+		var closestDist = Infinity;
+		var map = this.meshToDomainId;
+		var _g_map = map;
+		var _g_keys = map.keys();
+		while(_g_keys.hasNext()) {
+			var key = _g_keys.next();
+			var _g_value = _g_map.get(key);
+			var _g_key = key;
+			var mesh = _g_key;
+			var domainId = _g_value;
+			mesh.syncPos();
+			var bounds = mesh.getBounds();
+			if(bounds.xMax < bounds.xMin || bounds.yMax < bounds.yMin || bounds.zMax < bounds.zMin) {
+				haxe_Log.trace("⚠️ [InputHandler] Mesh domainId has empty bounds",{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 189, className : "hide.engine.infrastructure.InputHandler", methodName : "findClosestIntersection"});
+				continue;
+			}
+			var dx = 1 / ray.lx;
+			var dy = 1 / ray.ly;
+			var dz = 1 / ray.lz;
+			var t1 = (bounds.xMin - ray.px) * dx;
+			var t2 = (bounds.xMax - ray.px) * dx;
+			var t3 = (bounds.yMin - ray.py) * dy;
+			var t4 = (bounds.yMax - ray.py) * dy;
+			var t5 = (bounds.zMin - ray.pz) * dz;
+			var t6 = (bounds.zMax - ray.pz) * dz;
+			var a = t1 > t2 ? t2 : t1;
+			var b = t3 > t4 ? t4 : t3;
+			var a1 = a < b ? b : a;
+			var b1 = t5 > t6 ? t6 : t5;
+			var tmin = a1 < b1 ? b1 : a1;
+			var a2 = t1 < t2 ? t2 : t1;
+			var b2 = t3 < t4 ? t4 : t3;
+			var a3 = a2 > b2 ? b2 : a2;
+			var b3 = t5 < t6 ? t6 : t5;
+			var tmax = a3 > b3 ? b3 : a3;
+			if(tmax < 0 ? false : tmin > tmax ? false : true) {
+				var x = (bounds.xMin + bounds.xMax) * 0.5;
+				var y = (bounds.yMin + bounds.yMax) * 0.5;
+				var z = (bounds.zMin + bounds.zMax) * 0.5;
+				if(z == null) {
+					z = 0.;
+				}
+				if(y == null) {
+					y = 0.;
+				}
+				if(x == null) {
+					x = 0.;
+				}
+				var x1 = x;
+				var y1 = y;
+				var z1 = z;
+				if(z1 == null) {
+					z1 = 0.;
+				}
+				if(y1 == null) {
+					y1 = 0.;
+				}
+				if(x1 == null) {
+					x1 = 0.;
+				}
+				var center_x = x1;
+				var center_y = y1;
+				var center_z = z1;
+				var dx1 = center_x - ray.px;
+				var dy1 = center_y - ray.py;
+				var dz1 = center_z - ray.pz;
+				var dist = dx1 * dx1 + dy1 * dy1 + dz1 * dz1;
+				haxe_Log.trace(" ✅ Mesh 𝑑𝑜𝑚𝑎𝑖𝑛𝐼𝑑ℎ𝑖𝑡𝑎𝑡𝑑𝑖𝑠𝑡𝑎𝑛𝑐𝑒domainIdhitatdistance " + Math.sqrt(dist),{ fileName : "hide/engine/infrastructure/InputHandler.hx", lineNumber : 200, className : "hide.engine.infrastructure.InputHandler", methodName : "findClosestIntersection"});
+				if(dist < closestDist) {
+					closestDist = dist;
+					closestMesh = mesh;
+				}
+			}
+		}
+		return closestMesh;
+	}
+	,resetInteractiveClicked: function() {
+		this.isInteractiveClicked = false;
+	}
+	,__class__: hide_engine_infrastructure_InputHandler
+};
+var hide_engine_infrastructure_SceneGraphMapper = function() {
+	this.meshToDomainId = new haxe_ds_ObjectMap();
+};
+$hxClasses["hide.engine.infrastructure.SceneGraphMapper"] = hide_engine_infrastructure_SceneGraphMapper;
+hide_engine_infrastructure_SceneGraphMapper.__name__ = "hide.engine.infrastructure.SceneGraphMapper";
+hide_engine_infrastructure_SceneGraphMapper.prototype = {
+	meshToDomainId: null
+	,buildObjectTree: function(obj,h3dParent) {
+		if(!obj.isActive) {
+			return;
+		}
+		var h3dObj = new h3d_scene_Object(h3dParent);
+		h3dObj.name = obj.name;
+		this.applyTransform(h3dObj,obj.transform);
+		var _g = 0;
+		var _g1 = obj.components;
+		while(_g < _g1.length) {
+			var comp = _g1[_g];
+			++_g;
+			if(((comp) instanceof hide_engine_domain_entities_MeshRenderer)) {
+				var mesh = this.createMeshPrimitive();
+				if(mesh != null) {
+					this.meshToDomainId.set(mesh,obj.id);
+					h3dObj.addChild(mesh);
+				}
+			}
+		}
+		var _g = 0;
+		var _g1 = obj.children;
+		while(_g < _g1.length) {
+			var child = _g1[_g];
+			++_g;
+			this.buildObjectTree(child,h3dObj);
+		}
+	}
+	,applyTransform: function(h3dObj,t) {
+		var v = t.x;
+		if(h3dObj.x != v) {
+			var f = 1;
+			var b = true;
+			if(b) {
+				h3dObj.flags |= f;
+			} else {
+				h3dObj.flags &= ~f;
+			}
+			var c = b;
+			if(c && (h3dObj.flags & 131072) != 0) {
+				var f = 262144;
+				h3dObj.flags |= f;
+			}
+		}
+		h3dObj.x = v;
+		var v = t.y;
+		if(h3dObj.y != v) {
+			var f = 1;
+			var b = true;
+			if(b) {
+				h3dObj.flags |= f;
+			} else {
+				h3dObj.flags &= ~f;
+			}
+			var c = b;
+			if(c && (h3dObj.flags & 131072) != 0) {
+				var f = 262144;
+				h3dObj.flags |= f;
+			}
+		}
+		h3dObj.y = v;
+		var v = t.z;
+		if(h3dObj.z != v) {
+			var f = 1;
+			var b = true;
+			if(b) {
+				h3dObj.flags |= f;
+			} else {
+				h3dObj.flags &= ~f;
+			}
+			var c = b;
+			if(c && (h3dObj.flags & 131072) != 0) {
+				var f = 262144;
+				h3dObj.flags |= f;
+			}
+		}
+		h3dObj.z = v;
+		var q = new h3d_Quat();
+		q.initRotation(t.rotX * Math.PI / 180,t.rotY * Math.PI / 180,t.rotZ * Math.PI / 180);
+		h3dObj.setRotationQuat(q);
+		var v = t.scaleX;
+		if(h3dObj.scaleX != v) {
+			var f = 1;
+			var b = true;
+			if(b) {
+				h3dObj.flags |= f;
+			} else {
+				h3dObj.flags &= ~f;
+			}
+			var c = b;
+			if(c && (h3dObj.flags & 131072) != 0) {
+				var f = 262144;
+				h3dObj.flags |= f;
+			}
+		}
+		h3dObj.scaleX = v;
+		var v = t.scaleY;
+		if(h3dObj.scaleY != v) {
+			var f = 1;
+			var b = true;
+			if(b) {
+				h3dObj.flags |= f;
+			} else {
+				h3dObj.flags &= ~f;
+			}
+			var c = b;
+			if(c && (h3dObj.flags & 131072) != 0) {
+				var f = 262144;
+				h3dObj.flags |= f;
+			}
+		}
+		h3dObj.scaleY = v;
+		var v = t.scaleZ;
+		if(h3dObj.scaleZ != v) {
+			var f = 1;
+			var b = true;
+			if(b) {
+				h3dObj.flags |= f;
+			} else {
+				h3dObj.flags &= ~f;
+			}
+			var c = b;
+			if(c && (h3dObj.flags & 131072) != 0) {
+				var f = 262144;
+				h3dObj.flags |= f;
+			}
+		}
+		h3dObj.scaleZ = v;
+	}
+	,createMeshPrimitive: function() {
+		var cube = new h3d_prim_Cube(1,1,1,false);
+		cube.addNormals();
+		cube.addUVs();
+		var mesh = new h3d_scene_Mesh(cube);
+		var _this = mesh.material.mshader.color__;
+		_this.x = 0.29019607843137257;
+		_this.y = 0.56470588235294117;
+		_this.z = 0.88627450980392153;
+		_this.w = 0.;
+		mesh.material.passes.set_enableLights(true);
+		return mesh;
+	}
+	,getMeshToDomainId: function() {
+		return this.meshToDomainId;
+	}
+	,clear: function() {
+		this.meshToDomainId.h = { __keys__ : { }};
+	}
+	,getDomainIdByMesh: function(mesh) {
+		return this.meshToDomainId.h[mesh.__id__];
+	}
+	,getMeshByDomainId: function(id) {
+		var map = this.meshToDomainId;
+		var _g_map = map;
+		var _g_keys = map.keys();
+		while(_g_keys.hasNext()) {
+			var key = _g_keys.next();
+			var _g_value = _g_map.get(key);
+			var _g_key = key;
+			var mesh = _g_key;
+			var domainId = _g_value;
+			if(domainId == id) {
+				return mesh;
+			}
+		}
+		return null;
+	}
+	,__class__: hide_engine_infrastructure_SceneGraphMapper
 };
 var hide_engine_infrastructure_SceneServiceImpl = function(eventBus) {
 	this.eventBus = eventBus;
@@ -110435,18 +110944,9 @@ hide_engine_infrastructure_SceneServiceImpl.prototype = {
 };
 var hide_engine_infrastructure_SceneViewportController = function(sceneService,viewportService,engineEventBus) {
 	this.isAttached = false;
-	this.isInteractiveClicked = false;
-	this.currentSelectedId = null;
-	this.selectedMeshRef = null;
-	this.selectionOutline = null;
 	this.sceneService = sceneService;
 	this.viewportService = viewportService;
 	this.engineEventBus = engineEventBus;
-	this.meshToDomainId = new haxe_ds_ObjectMap();
-	this.meshOriginalColor = new haxe_ds_ObjectMap();
-	this.bboxPrim = new h3d_prim_Cube(1,1,1,false);
-	this.bboxPrim.addNormals();
-	this.bboxPrim.addUVs();
 	engineEventBus.onObjectSelected($bind(this,this.onObjectSelected));
 	engineEventBus.onSceneChanged($bind(this,this.onSceneChanged));
 };
@@ -110457,31 +110957,27 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 	sceneService: null
 	,viewportService: null
 	,engineEventBus: null
-	,viewport: null
 	,scene: null
 	,sceneRoot: null
-	,meshToDomainId: null
-	,bboxPrim: null
-	,selectionOutline: null
-	,selectedMeshRef: null
-	,meshOriginalColor: null
-	,currentSelectedId: null
-	,isInteractiveClicked: null
+	,viewport: null
 	,container: null
 	,isAttached: null
+	,graphMapper: null
+	,selectionSystem: null
+	,inputHandler: null
 	,attachTo: function(container) {
 		var _gthis = this;
 		this.container = container;
 		var engine = h3d_Engine.CURRENT;
 		if(engine == null || engine.driver == null) {
-			haxe_Log.trace("⏳ [SceneViewport] Engine not ready, retrying in 50ms...",{ fileName : "hide/engine/infrastructure/SceneViewportController.hx", lineNumber : 74, className : "hide.engine.infrastructure.SceneViewportController", methodName : "attachTo"});
+			haxe_Log.trace("⏳ [SceneViewport] Engine not ready, retrying in 50ms...",{ fileName : "hide/engine/infrastructure/SceneViewportController.hx", lineNumber : 54, className : "hide.engine.infrastructure.SceneViewportController", methodName : "attachTo"});
 			haxe_Timer.delay(function() {
 				_gthis.attachTo(container);
 			},50);
 			return;
 		}
 		if(this.isAttached) {
-			haxe_Log.trace("⚠️ [SceneViewport] Already attached",{ fileName : "hide/engine/infrastructure/SceneViewportController.hx", lineNumber : 80, className : "hide.engine.infrastructure.SceneViewportController", methodName : "attachTo"});
+			haxe_Log.trace("⚠️ [SceneViewport] Already attached",{ fileName : "hide/engine/infrastructure/SceneViewportController.hx", lineNumber : 60, className : "hide.engine.infrastructure.SceneViewportController", methodName : "attachTo"});
 			return;
 		}
 		this.isAttached = true;
@@ -110542,51 +111038,43 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 			x = 0.;
 		}
 		var light = new h3d_scene_fwd_DirLight(new h3d_VectorImpl(x,y,z),this.scene);
-		this.viewport = this.viewportService.register("scene-editor",this.scene,800,600);
+		this.graphMapper = new hide_engine_infrastructure_SceneGraphMapper();
+		this.selectionSystem = new hide_engine_infrastructure_SelectionSystem(this.sceneRoot);
+		var viewportWidth = 800;
+		var viewportHeight = 600;
+		this.viewport = this.viewportService.register("scene-editor",this.scene,viewportWidth,viewportHeight);
 		container.appendChild(this.viewport.canvas);
-		this.setupMouseClickHandler();
+		this.inputHandler = new hide_engine_infrastructure_InputHandler(this.scene,this.graphMapper.getMeshToDomainId(),viewportWidth,viewportHeight,$bind(this,this.onMeshClicked),$bind(this,this.onEmptySpaceClicked),$bind(this,this.onMeshHovered),$bind(this,this.onMeshHoverOut));
+		this.inputHandler.attachCanvas(this.viewport.canvas);
 		this.renderSceneInternal(this.sceneService.getRoot());
-		haxe_Log.trace("🔍 [Debug] Scene root children count: " + this.sceneRoot.children.length,{ fileName : "hide/engine/infrastructure/SceneViewportController.hx", lineNumber : 112, className : "hide.engine.infrastructure.SceneViewportController", methodName : "attachTo"});
-		var _g_i = 0;
-		var _g_a = this.sceneRoot.children;
-		var _g_l = _g_a.length;
-		while(_g_i < _g_l) {
-			var child = _g_a[_g_i++];
-			var c = js_Boot.getClass(child);
-			haxe_Log.trace("   └─ " + child.name + " (" + c.__name__ + ")",{ fileName : "hide/engine/infrastructure/SceneViewportController.hx", lineNumber : 114, className : "hide.engine.infrastructure.SceneViewportController", methodName : "attachTo"});
-			var _g_i1 = 0;
-			var _g_a1 = child.children;
-			var _g_l1 = _g_a1.length;
-			while(_g_i1 < _g_l1) {
-				var c1 = _g_a1[_g_i1++];
-				if(((c1) instanceof h3d_scene_Mesh)) {
-					var mesh = c1;
-					var _this = mesh.material.mshader.color__;
-					_this.x = 1.;
-					_this.y = 0.;
-					_this.z = 1.;
-					_this.w = 0.;
-					haxe_Log.trace("      🎨 Mesh colored PINK",{ fileName : "hide/engine/infrastructure/SceneViewportController.hx", lineNumber : 120, className : "hide.engine.infrastructure.SceneViewportController", methodName : "attachTo"});
-				}
-			}
-		}
-		haxe_Log.trace(" [SceneViewportController] Attached to container",{ fileName : "hide/engine/infrastructure/SceneViewportController.hx", lineNumber : 124, className : "hide.engine.infrastructure.SceneViewportController", methodName : "attachTo"});
+		haxe_Log.trace("✅ [SceneViewportController] Attached to container",{ fileName : "hide/engine/infrastructure/SceneViewportController.hx", lineNumber : 108, className : "hide.engine.infrastructure.SceneViewportController", methodName : "attachTo"});
 	}
 	,onSceneChanged: function() {
 		this.renderSceneInternal(this.sceneService.getRoot());
 	}
 	,onObjectSelected: function(id) {
-		this.currentSelectedId = id;
 		if(id == null) {
-			this.clearSelectionVisuals();
-		} else if(this.meshToDomainId.iterator().hasNext()) {
-			this.updateSelectionVisuals(id);
+			this.selectionSystem.clearSelectionVisuals();
+		} else if(this.graphMapper.getMeshToDomainId().iterator().hasNext()) {
+			this.selectionSystem.updateSelectionVisuals(id,($_=this.graphMapper,$bind($_,$_.getMeshByDomainId)));
 		}
+	}
+	,onMeshClicked: function(domainId) {
+		this.sceneService.select(domainId);
+	}
+	,onEmptySpaceClicked: function() {
+		this.sceneService.deselect();
+	}
+	,onMeshHovered: function(mesh) {
+		this.selectionSystem.highlightMeshOnHover(mesh);
+	}
+	,onMeshHoverOut: function(mesh) {
+		this.selectionSystem.restoreMeshColorOnHoverOut(mesh);
 	}
 	,renderSceneInternal: function(root) {
 		var _gthis = this;
-		var savedSelectionId = this.currentSelectedId;
-		this.clearSelectionVisuals();
+		var savedSelectionId = this.selectionSystem.getCurrentSelectedId();
+		this.selectionSystem.clearSelectionVisuals();
 		var toRemove = [];
 		var _g_i = 0;
 		var _g_a = this.sceneRoot.children;
@@ -110605,236 +111093,56 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 				child.parent.removeChild(child);
 			}
 		}
-		this.meshToDomainId.h = { __keys__ : { }};
-		this.meshOriginalColor.h = { __keys__ : { }};
-		this.buildObjectTree(root,this.sceneRoot);
+		this.graphMapper.clear();
+		this.graphMapper.buildObjectTree(root,this.sceneRoot);
 		if(savedSelectionId != null) {
 			haxe_Timer.delay(function() {
-				_gthis.updateSelectionVisuals(savedSelectionId);
+				_gthis.selectionSystem.updateSelectionVisuals(savedSelectionId,($_=_gthis.graphMapper,$bind($_,$_.getMeshByDomainId)));
 			},0);
 		}
 	}
-	,buildObjectTree: function(obj,h3dParent) {
-		var _gthis = this;
-		if(!obj.isActive) {
-			return;
-		}
-		var h3dObj = new h3d_scene_Object(h3dParent);
-		h3dObj.name = obj.name;
-		this.applyTransform(h3dObj,obj.transform);
-		var _g = 0;
-		var _g1 = obj.components;
-		while(_g < _g1.length) {
-			var comp = _g1[_g];
-			++_g;
-			if(((comp) instanceof hide_engine_domain_entities_MeshRenderer)) {
-				var mesh = [this.createMeshPrimitive()];
-				if(mesh[0] != null) {
-					this.meshToDomainId.set(mesh[0],obj.id);
-					h3dObj.addChild(mesh[0]);
-					mesh[0].syncPos();
-					var localBounds = mesh[0].getBounds(null,mesh[0]);
-					if(!(localBounds.xMax < localBounds.xMin || localBounds.yMax < localBounds.yMin || localBounds.zMax < localBounds.zMin)) {
-						var interaction = new h3d_scene_Interactive(localBounds,mesh[0]);
-						interaction.onClick = (function() {
-							return function(e) {
-								_gthis.isInteractiveClicked = true;
-								_gthis.sceneService.select(obj.id);
-								e.cancel = true;
-							};
-						})();
-						interaction.onOver = (function(mesh) {
-							return function(e) {
-								if(_gthis.selectedMeshRef != mesh[0]) {
-									var _this = mesh[0].material.mshader.color__;
-									_this.x = 0.41568627450980394;
-									_this.y = 0.69019607843137254;
-									_this.z = 1.;
-									_this.w = 0.;
-								}
-							};
-						})(mesh);
-						interaction.onOut = (function(mesh) {
-							return function(e) {
-								if(_gthis.selectedMeshRef != mesh[0]) {
-									if(_gthis.meshOriginalColor.h.__keys__[mesh[0].__id__] != null) {
-										var orig = _gthis.meshOriginalColor.h[mesh[0].__id__];
-										var _this = mesh[0].material.mshader.color__;
-										var x = orig.x;
-										var y = orig.y;
-										var z = orig.z;
-										if(z == null) {
-											z = 0.;
-										}
-										if(y == null) {
-											y = 0.;
-										}
-										if(x == null) {
-											x = 0.;
-										}
-										_this.x = x;
-										_this.y = y;
-										_this.z = z;
-										_this.w = 1.;
-									} else {
-										var _this = mesh[0].material.mshader.color__;
-										_this.x = 0.29019607843137257;
-										_this.y = 0.56470588235294117;
-										_this.z = 0.88627450980392153;
-										_this.w = 0.;
-									}
-								}
-							};
-						})(mesh);
-					}
-				}
-			}
-		}
-		var _g = 0;
-		var _g1 = obj.children;
-		while(_g < _g1.length) {
-			var child = _g1[_g];
-			++_g;
-			this.buildObjectTree(child,h3dObj);
+	,dispose: function() {
+		if(this.viewport != null) {
+			this.viewportService.removeViewport(this.viewport.id);
+			this.viewport = null;
 		}
 	}
-	,applyTransform: function(h3dObj,t) {
-		var v = t.x;
-		if(h3dObj.x != v) {
-			var f = 1;
-			var b = true;
-			if(b) {
-				h3dObj.flags |= f;
-			} else {
-				h3dObj.flags &= ~f;
-			}
-			var c = b;
-			if(c && (h3dObj.flags & 131072) != 0) {
-				var f = 262144;
-				h3dObj.flags |= f;
-			}
-		}
-		h3dObj.x = v;
-		var v = t.y;
-		if(h3dObj.y != v) {
-			var f = 1;
-			var b = true;
-			if(b) {
-				h3dObj.flags |= f;
-			} else {
-				h3dObj.flags &= ~f;
-			}
-			var c = b;
-			if(c && (h3dObj.flags & 131072) != 0) {
-				var f = 262144;
-				h3dObj.flags |= f;
-			}
-		}
-		h3dObj.y = v;
-		var v = t.z;
-		if(h3dObj.z != v) {
-			var f = 1;
-			var b = true;
-			if(b) {
-				h3dObj.flags |= f;
-			} else {
-				h3dObj.flags &= ~f;
-			}
-			var c = b;
-			if(c && (h3dObj.flags & 131072) != 0) {
-				var f = 262144;
-				h3dObj.flags |= f;
-			}
-		}
-		h3dObj.z = v;
-		var q = new h3d_Quat();
-		q.initRotation(t.rotX * Math.PI / 180,t.rotY * Math.PI / 180,t.rotZ * Math.PI / 180);
-		h3dObj.setRotationQuat(q);
-		var v = t.scaleX;
-		if(h3dObj.scaleX != v) {
-			var f = 1;
-			var b = true;
-			if(b) {
-				h3dObj.flags |= f;
-			} else {
-				h3dObj.flags &= ~f;
-			}
-			var c = b;
-			if(c && (h3dObj.flags & 131072) != 0) {
-				var f = 262144;
-				h3dObj.flags |= f;
-			}
-		}
-		h3dObj.scaleX = v;
-		var v = t.scaleY;
-		if(h3dObj.scaleY != v) {
-			var f = 1;
-			var b = true;
-			if(b) {
-				h3dObj.flags |= f;
-			} else {
-				h3dObj.flags &= ~f;
-			}
-			var c = b;
-			if(c && (h3dObj.flags & 131072) != 0) {
-				var f = 262144;
-				h3dObj.flags |= f;
-			}
-		}
-		h3dObj.scaleY = v;
-		var v = t.scaleZ;
-		if(h3dObj.scaleZ != v) {
-			var f = 1;
-			var b = true;
-			if(b) {
-				h3dObj.flags |= f;
-			} else {
-				h3dObj.flags &= ~f;
-			}
-			var c = b;
-			if(c && (h3dObj.flags & 131072) != 0) {
-				var f = 262144;
-				h3dObj.flags |= f;
-			}
-		}
-		h3dObj.scaleZ = v;
+	,getConstructorArgs: function() {
+		return ["hide.engine.domain.services.ISceneService","hide.engine.infrastructure.ViewportService","hide.engine.domain.services.IEngineEventBus"];
 	}
-	,createMeshPrimitive: function() {
-		var cube = new h3d_prim_Cube(1,1,1,false);
-		cube.addNormals();
-		cube.addUVs();
-		var mesh = new h3d_scene_Mesh(cube);
-		var _this = mesh.material.mshader.color__;
-		_this.x = 0.29019607843137257;
-		_this.y = 0.56470588235294117;
-		_this.z = 0.88627450980392153;
-		_this.w = 0.;
-		mesh.material.passes.set_enableLights(true);
-		return mesh;
-	}
-	,updateSelectionVisuals: function(id) {
+	,__class__: hide_engine_infrastructure_SceneViewportController
+};
+var hide_engine_infrastructure_SelectionSystem = function(sceneRoot) {
+	this.currentSelectedId = null;
+	this.selectedMeshRef = null;
+	this.selectionOutline = null;
+	this.sceneRoot = sceneRoot;
+	this.meshOriginalColor = new haxe_ds_ObjectMap();
+	this.bboxPrim = new h3d_prim_Cube(1,1,1,false);
+	this.bboxPrim.addNormals();
+	this.bboxPrim.addUVs();
+};
+$hxClasses["hide.engine.infrastructure.SelectionSystem"] = hide_engine_infrastructure_SelectionSystem;
+hide_engine_infrastructure_SelectionSystem.__name__ = "hide.engine.infrastructure.SelectionSystem";
+hide_engine_infrastructure_SelectionSystem.prototype = {
+	bboxPrim: null
+	,selectionOutline: null
+	,selectedMeshRef: null
+	,meshOriginalColor: null
+	,currentSelectedId: null
+	,sceneRoot: null
+	,updateSelectionVisuals: function(id,getMeshById) {
+		haxe_Log.trace("🎯 [Selection] updateSelectionVisuals called with id=" + id,{ fileName : "hide/engine/infrastructure/SelectionSystem.hx", lineNumber : 40, className : "hide.engine.infrastructure.SelectionSystem", methodName : "updateSelectionVisuals"});
 		this.clearSelectionVisuals();
 		if(id == null) {
 			return;
 		}
-		var targetMesh = null;
-		var map = this.meshToDomainId;
-		var _g_map = map;
-		var _g_keys = map.keys();
-		while(_g_keys.hasNext()) {
-			var key = _g_keys.next();
-			var _g_value = _g_map.get(key);
-			var _g_key = key;
-			var mesh = _g_key;
-			var domainId = _g_value;
-			if(domainId == id) {
-				targetMesh = mesh;
-				break;
-			}
-		}
+		var targetMesh = getMeshById(id);
 		if(targetMesh == null) {
+			haxe_Log.trace("⚠️ [Selection] Mesh not found for id: " + id,{ fileName : "hide/engine/infrastructure/SelectionSystem.hx", lineNumber : 47, className : "hide.engine.infrastructure.SelectionSystem", methodName : "updateSelectionVisuals"});
 			return;
 		}
+		haxe_Log.trace("🎯 [Selection] targetMesh found: " + Std.string(targetMesh != null),{ fileName : "hide/engine/infrastructure/SelectionSystem.hx", lineNumber : 51, className : "hide.engine.infrastructure.SelectionSystem", methodName : "updateSelectionVisuals"});
 		if(this.meshOriginalColor.h.__keys__[targetMesh.__id__] == null) {
 			var orig = new h3d_VectorImpl(0.,0.,0.);
 			var _this = orig;
@@ -110862,8 +111170,10 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 		_this.w = 0.;
 		var worldBounds = targetMesh.getBounds();
 		if(worldBounds.xMax < worldBounds.xMin || worldBounds.yMax < worldBounds.yMin || worldBounds.zMax < worldBounds.zMin) {
+			haxe_Log.trace("⚠️ [Selection] Bounds EMPTY — рамка не будет создана",{ fileName : "hide/engine/infrastructure/SelectionSystem.hx", lineNumber : 70, className : "hide.engine.infrastructure.SelectionSystem", methodName : "updateSelectionVisuals"});
 			return;
 		}
+		haxe_Log.trace("🎯 [Selection] worldBounds: empty=" + Std.string(worldBounds.xMax < worldBounds.xMin || worldBounds.yMax < worldBounds.yMin || worldBounds.zMax < worldBounds.zMin) + ", " + ("min=(" + worldBounds.xMin + "," + worldBounds.yMin + "," + worldBounds.zMin + "), ") + ("max=(" + worldBounds.xMax + "," + worldBounds.yMax + "," + worldBounds.zMax + ")"),{ fileName : "hide/engine/infrastructure/SelectionSystem.hx", lineNumber : 74, className : "hide.engine.infrastructure.SelectionSystem", methodName : "updateSelectionVisuals"});
 		var sizeX = worldBounds.xMax - worldBounds.xMin;
 		var sizeY = worldBounds.yMax - worldBounds.yMin;
 		var sizeZ = worldBounds.zMax - worldBounds.zMin;
@@ -110980,6 +111290,8 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 		}
 		_this.scaleZ = v;
 		this.selectedMeshRef = targetMesh;
+		this.currentSelectedId = id;
+		haxe_Log.trace("✨ [Selection] Outline created at (" + this.selectionOutline.x + "," + this.selectionOutline.y + "," + this.selectionOutline.z + ") " + ("scale=(" + this.selectionOutline.scaleX + "," + this.selectionOutline.scaleY + "," + this.selectionOutline.scaleZ + ")"),{ fileName : "hide/engine/infrastructure/SelectionSystem.hx", lineNumber : 101, className : "hide.engine.infrastructure.SelectionSystem", methodName : "updateSelectionVisuals"});
 	}
 	,clearSelectionVisuals: function() {
 		if(this.selectionOutline != null) {
@@ -111021,30 +111333,55 @@ hide_engine_infrastructure_SceneViewportController.prototype = {
 		this.meshOriginalColor.h = { __keys__ : { }};
 		this.currentSelectedId = null;
 	}
-	,setupMouseClickHandler: function() {
-		var _gthis = this;
-		var $window = hxd_Window.getInstance();
-		$window.addEventTarget(function(e) {
-			if(e.kind == hxd_EventKind.EPush && e.button == 0) {
-				_gthis.isInteractiveClicked = false;
-				haxe_Timer.delay(function() {
-					if(!_gthis.isInteractiveClicked) {
-						_gthis.sceneService.deselect();
-					}
-				},0);
-			}
-		});
+	,getCurrentSelectedId: function() {
+		return this.currentSelectedId;
 	}
-	,dispose: function() {
-		if(this.viewport != null) {
-			this.viewportService.removeViewport(this.viewport.id);
-			this.viewport = null;
+	,setCurrentSelectedId: function(id) {
+		this.currentSelectedId = id;
+	}
+	,isMeshSelected: function(mesh) {
+		return this.selectedMeshRef == mesh;
+	}
+	,highlightMeshOnHover: function(mesh) {
+		if(!this.isMeshSelected(mesh)) {
+			var _this = mesh.material.mshader.color__;
+			_this.x = 0.41568627450980394;
+			_this.y = 0.69019607843137254;
+			_this.z = 1.;
+			_this.w = 0.;
 		}
 	}
-	,getConstructorArgs: function() {
-		return ["hide.engine.domain.services.ISceneService","hide.engine.infrastructure.ViewportService","hide.engine.domain.services.IEngineEventBus"];
+	,restoreMeshColorOnHoverOut: function(mesh) {
+		if(!this.isMeshSelected(mesh)) {
+			if(this.meshOriginalColor.h.__keys__[mesh.__id__] != null) {
+				var orig = this.meshOriginalColor.h[mesh.__id__];
+				var _this = mesh.material.mshader.color__;
+				var x = orig.x;
+				var y = orig.y;
+				var z = orig.z;
+				if(z == null) {
+					z = 0.;
+				}
+				if(y == null) {
+					y = 0.;
+				}
+				if(x == null) {
+					x = 0.;
+				}
+				_this.x = x;
+				_this.y = y;
+				_this.z = z;
+				_this.w = 1.;
+			} else {
+				var _this = mesh.material.mshader.color__;
+				_this.x = 0.29019607843137257;
+				_this.y = 0.56470588235294117;
+				_this.z = 0.88627450980392153;
+				_this.w = 0.;
+			}
+		}
 	}
-	,__class__: hide_engine_infrastructure_SceneViewportController
+	,__class__: hide_engine_infrastructure_SelectionSystem
 };
 var hide_engine_infrastructure_ShaderGraphCompiler = function() { };
 $hxClasses["hide.engine.infrastructure.ShaderGraphCompiler"] = hide_engine_infrastructure_ShaderGraphCompiler;
@@ -111256,6 +111593,10 @@ hide_engine_infrastructure_ShaderGraphSerializer.fromJson = function(json) {
 	return JSON.parse(json);
 };
 var hide_engine_infrastructure_ShaderPreviewRenderer = function(resourceLoader) {
+	this.emissiveModifier = null;
+	this.normalModifier = null;
+	this.albedoModifier = null;
+	this.normalTexture = null;
 	this.albedoTexture = null;
 	this.maxPhi = 1.5;
 	this.minPhi = -1.5;
@@ -111294,6 +111635,10 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 	,maxPhi: null
 	,resourceLoader: null
 	,albedoTexture: null
+	,normalTexture: null
+	,albedoModifier: null
+	,normalModifier: null
+	,emissiveModifier: null
 	,init: function() {
 		var _gthis = this;
 		if(this.s3d != null) {
@@ -111433,7 +111778,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		this.previewMesh.material.passes.set_enableLights(true);
 		this.previewMesh.material.passes.setPassName("default");
 		this.previewMesh.material.passes.set_culling(h3d_mat_Face.None);
-		haxe_Log.trace("✅ [ShaderPreview] PBR Scene initialized (FAST)",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 124, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "init"});
+		haxe_Log.trace("✅ [ShaderPreview] PBR Scene initialized (FAST)",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 130, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "init"});
 		haxe_Timer.delay(function() {
 			_gthis.initEnvironmentAsync();
 		},100);
@@ -111442,7 +111787,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		if(this.env != null) {
 			return;
 		}
-		haxe_Log.trace("⏳ [ShaderPreview] Creating environment async...",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 138, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
+		haxe_Log.trace("⏳ [ShaderPreview] Creating environment async...",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 144, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
 		var size = 512;
 		var envMap = this.createEnvMap();
 		this.env = new h3d_scene_pbr_Environment(envMap);
@@ -111450,7 +111795,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		var renderer = js_Boot.__cast(this.s3d.renderer , h3d_scene_pbr_Renderer);
 		renderer.env = this.env;
 		this.env.power = 1.0;
-		haxe_Log.trace("✅ [ShaderPreview] Environment ready",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 150, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
+		haxe_Log.trace("✅ [ShaderPreview] Environment ready",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 156, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "initEnvironmentAsync"});
 	}
 	,createEnvMap: function() {
 		var envMap = new h3d_mat_Texture(256,256,[h3d_mat_TextureFlags.Cube]);
@@ -111470,7 +111815,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 	}
 	,setupOrbitControls: function(canvas) {
 		var _gthis = this;
-		haxe_Log.trace("🎮 [ShaderPreview] Setting up orbit controls",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 181, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setupOrbitControls"});
+		haxe_Log.trace("🎮 [ShaderPreview] Setting up orbit controls",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 187, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setupOrbitControls"});
 		canvas.addEventListener("mousedown",function(e) {
 			if(e.button == 0) {
 				_gthis.isDragging = true;
@@ -111509,7 +111854,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 			_gthis.updateCameraPosition();
 		},{ passive : false});
 		canvas.style.cursor = "grab";
-		haxe_Log.trace("✅ [ShaderPreview] Orbit controls attached",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 240, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setupOrbitControls"});
+		haxe_Log.trace("✅ [ShaderPreview] Orbit controls attached",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 246, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setupOrbitControls"});
 	}
 	,updateCameraPosition: function() {
 		if(this.s3d == null) {
@@ -111554,25 +111899,77 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		cam.update();
 	}
 	,setAlbedoTexture: function(path) {
-		if(this.albedoTexture != null) {
-			this.albedoTexture.dispose();
-			this.albedoTexture = null;
+		var res = hxd_res_Loader.currentInstance.load(path);
+		var tex = res.toTexture();
+		if(this.albedoModifier == null) {
+			this.albedoModifier = new hide_engine_infrastructure_shaders_AlbedoTextureModifier();
+			this.previewMesh.material.passes.addShader(this.albedoModifier);
+		}
+		this.previewMesh.material.set_texture(tex);
+		haxe_Log.trace("🖼️ [ShaderPreview] Albedo texture applied via modifier",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 289, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setAlbedoTexture"});
+	}
+	,setNormalTexture: function(path,strength) {
+		if(strength == null) {
+			strength = 1.0;
+		}
+		if(this.normalTexture != null) {
+			this.normalTexture.dispose();
+			this.normalTexture = null;
 		}
 		if(path == null || path == "") {
-			if(this.previewMesh != null) {
-				this.previewMesh.material.set_texture(null);
+			if(this.normalModifier != null) {
+				this.previewMesh.material.passes.removeShader(this.normalModifier);
+				this.normalModifier = null;
 			}
-			haxe_Log.trace("🖼️ [ShaderPreview] Texture cleared",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 281, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setAlbedoTexture"});
+			haxe_Log.trace("🔵 [ShaderPreview] Normal map cleared",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 306, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setNormalTexture"});
 			return;
 		}
-		haxe_Log.trace("📥 [ShaderPreview] Loading texture: " + path,{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 285, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setAlbedoTexture"});
-		this.albedoTexture = this.resourceLoader.loadTexture(path);
-		if(this.albedoTexture != null && this.previewMesh != null) {
-			this.previewMesh.material.set_texture(this.albedoTexture);
-			haxe_Log.trace("🖼️ [ShaderPreview] Texture applied: " + this.albedoTexture.width + "x" + this.albedoTexture.height,{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 292, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setAlbedoTexture"});
-		} else {
-			haxe_Log.trace("❌ [ShaderPreview] Failed to load texture",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 294, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setAlbedoTexture"});
+		try {
+			var res = hxd_res_Loader.currentInstance.load(path);
+			this.normalTexture = res.toTexture();
+			if(this.normalModifier == null) {
+				this.normalModifier = new hide_engine_infrastructure_shaders_NormalMapModifier();
+				this.previewMesh.material.passes.addShader(this.normalModifier);
+			}
+			this.previewMesh.material.set_normalMap(this.normalTexture);
+			this.normalModifier.normalStrength__ = strength;
+			haxe_Log.trace("🔵 [ShaderPreview] Normal map applied: " + path + " (strength=" + strength + ")",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 324, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setNormalTexture"});
+		} catch( _g ) {
+			haxe_NativeStackTrace.lastError = _g;
+			var e = haxe_Exception.caught(_g).unwrap();
+			haxe_Log.trace("❌ [ShaderPreview] Failed to load normal texture: " + Std.string(e),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 326, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setNormalTexture"});
 		}
+	}
+	,setEmissive: function(color,intensity) {
+		if(intensity <= 0) {
+			if(this.emissiveModifier != null) {
+				this.previewMesh.material.passes.removeShader(this.emissiveModifier);
+				this.emissiveModifier = null;
+			}
+			return;
+		}
+		if(this.emissiveModifier == null) {
+			this.emissiveModifier = new hide_engine_infrastructure_shaders_EmissiveModifier();
+			this.previewMesh.material.passes.addShader(this.emissiveModifier);
+		}
+		var _this = this.emissiveModifier.emissiveColor__;
+		var x = color.x;
+		var y = color.y;
+		var z = color.z;
+		if(z == null) {
+			z = 0.;
+		}
+		if(y == null) {
+			y = 0.;
+		}
+		if(x == null) {
+			x = 0.;
+		}
+		_this.x = x;
+		_this.y = y;
+		_this.z = z;
+		this.emissiveModifier.emissiveIntensity__ = intensity;
+		haxe_Log.trace("💡 [ShaderPreview] Emissive applied: (" + color.x + ", " + color.y + ", " + color.z + ") intensity=" + intensity,{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 350, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "setEmissive"});
 	}
 	,applyShaderData: function(data) {
 		if(this.previewMesh == null || data == null) {
@@ -111596,7 +111993,7 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 		_this.y = y;
 		_this.z = z;
 		_this.w = 1.;
-		haxe_Log.trace("🎨 [ShaderPreview] Applied: albedo=(" + data.albedo.x + ", " + data.albedo.y + ", " + data.albedo.z + "), " + ("metallic=" + data.metallic + ", roughness=" + data.roughness),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 312, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "applyShaderData"});
+		haxe_Log.trace("🎨 [ShaderPreview] Applied: albedo=(" + data.albedo.x + ", " + data.albedo.y + ", " + data.albedo.z + "), " + ("metallic=" + data.metallic + ", roughness=" + data.roughness),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 367, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "applyShaderData"});
 	}
 	,updateMaterial: function(shaderData) {
 		if(this.previewMesh == null || this.pbrValues == null) {
@@ -111621,60 +112018,18 @@ hide_engine_infrastructure_ShaderPreviewRenderer.prototype = {
 				_this.y = y;
 				_this.z = z;
 				_this.w = 1.;
-			} else if(typeof(shaderData.albedo) == "number") {
-				var v = shaderData.albedo;
-				var _this = this.previewMesh.material.mshader.color__;
-				var x = v;
-				var y = v;
-				var z = v;
-				if(z == null) {
-					z = 0.;
-				}
-				if(y == null) {
-					y = 0.;
-				}
-				if(x == null) {
-					x = 0.;
-				}
-				_this.x = x;
-				_this.y = y;
-				_this.z = z;
-				_this.w = 1.;
 			}
-		} else {
-			var _this = this.previewMesh.material.mshader.color__;
-			var x = 0.5;
-			var y = 0.5;
-			var z = 0.5;
-			if(z == null) {
-				z = 0.;
-			}
-			if(y == null) {
-				y = 0.;
-			}
-			if(x == null) {
-				x = 0.;
-			}
-			_this.x = x;
-			_this.y = y;
-			_this.z = z;
-			_this.w = 1.;
 		}
 		if(shaderData.metallic != null && typeof(shaderData.metallic) == "number") {
 			this.pbrValues.metalnessValue__ = shaderData.metallic;
-		} else {
-			this.pbrValues.metalnessValue__ = 0.0;
 		}
 		if(shaderData.roughness != null && typeof(shaderData.roughness) == "number") {
 			this.pbrValues.roughnessValue__ = shaderData.roughness;
-		} else {
-			this.pbrValues.roughnessValue__ = 0.5;
 		}
-		if(shaderData.normal != null && this.isVec3(shaderData.normal)) {
-			haxe_Log.trace("🔵 [ShaderPreview] Normal: (" + Std.string(shaderData.normal.x) + ", " + Std.string(shaderData.normal.y) + ", " + Std.string(shaderData.normal.z) + ")",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 362, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
+		if(shaderData.emissive != null && this.isVec3(shaderData.emissive)) {
+			this.setEmissive(shaderData.emissive,1.0);
 		}
-		var tmp = shaderData.emissive != null && this.isVec3(shaderData.emissive);
-		haxe_Log.trace("🎨 [ShaderPreview] PBR Updated: albedo=(" + this.previewMesh.material.mshader.color__.x + ", " + this.previewMesh.material.mshader.color__.y + ", " + this.previewMesh.material.mshader.color__.z + "), " + ("metalness=" + this.pbrValues.metalnessValue__ + ", roughness=" + this.pbrValues.roughnessValue__),{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 374, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
+		haxe_Log.trace("🎨 [ShaderPreview] PBR Updated",{ fileName : "hide/engine/infrastructure/ShaderPreviewRenderer.hx", lineNumber : 406, className : "hide.engine.infrastructure.ShaderPreviewRenderer", methodName : "updateMaterial"});
 	}
 	,isVec3: function(v) {
 		if(v != null && Object.prototype.hasOwnProperty.call(v,"x") && Object.prototype.hasOwnProperty.call(v,"y")) {
@@ -111717,6 +112072,17 @@ var hide_engine_infrastructure_Viewport = function(id,scene,width,height) {
 	this.canvas = window.document.createElement("canvas");
 	this.canvas.width = width;
 	this.canvas.height = height;
+	this.gl = this.canvas.getContext("webgl2");
+	if(this.gl == null) {
+		this.gl = this.canvas.getContext("webgl");
+	}
+	if(this.gl != null) {
+		this.fullscreenQuad = new hide_engine_infrastructure_FullscreenQuad(this.gl);
+		this.fullscreenQuad.init();
+		haxe_Log.trace("✅ [Viewport $id] WebGL context created, GPU blit enabled",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 59, className : "hide.engine.infrastructure.Viewport", methodName : "new"});
+	} else {
+		haxe_Log.trace("⚠️ [Viewport $id] WebGL not available, GPU blit disabled",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 61, className : "hide.engine.infrastructure.Viewport", methodName : "new"});
+	}
 	this.canvas.style.width = "100%";
 	this.canvas.style.height = "100%";
 	this.canvas.style.display = "block";
@@ -111735,17 +112101,32 @@ hide_engine_infrastructure_Viewport.prototype = {
 	,width: null
 	,height: null
 	,frameCount: null
+	,gl: null
+	,fullscreenQuad: null
+	,renderToScreen: function(engine) {
+		if(this.fullscreenQuad != null && this.renderTarget != null) {
+			this.fullscreenQuad.render(this.renderTarget);
+		} else {
+			this.blitToCanvas();
+		}
+		this.frameCount++;
+	}
+	,renderTextureToCanvas: function(gl,tex,w,h) {
+		gl.viewport(0,0,w,h);
+		gl.clearColor(0.1,0.1,0.1,1.0);
+		gl.clear(16384);
+	}
 	,blitToCanvas: function() {
 		var pixels = this.renderTarget.capturePixels();
 		if(pixels == null || pixels.bytes.length == 0) {
-			haxe_Log.trace("⚠️ [Viewport " + this.id + "] capturePixels returned EMPTY data!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 69, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
+			haxe_Log.trace("⚠️ [Viewport " + this.id + "] capturePixels returned EMPTY data!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 127, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
 			return;
 		}
 		var ctx = this.canvas.getContext("2d");
 		ctx.imageSmoothingEnabled = true;
 		ctx.imageSmoothingQuality = "high";
 		if(ctx == null) {
-			haxe_Log.trace("⚠️ [Viewport " + this.id + "] Canvas 2D context is NULL!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 77, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
+			haxe_Log.trace("⚠️ [Viewport " + this.id + "] Canvas 2D context is NULL!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 135, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
 			return;
 		}
 		var imageData = ctx.createImageData(this.width,this.height);
@@ -111790,6 +112171,10 @@ hide_engine_infrastructure_Viewport.prototype = {
 		}
 	}
 	,dispose: function() {
+		if(this.fullscreenQuad != null) {
+			this.fullscreenQuad.dispose();
+			this.fullscreenQuad = null;
+		}
 		this.renderTarget.dispose();
 		if(this.canvas != null && this.canvas.parentElement != null) {
 			this.canvas.parentElement.removeChild(this.canvas);
@@ -111827,12 +112212,10 @@ hide_engine_infrastructure_ViewportService.prototype = {
 				continue;
 			}
 			engine.pushTarget(vp.renderTarget);
-			engine.clear(-14013910,1.0);
+			engine.clear(-14013910,1.0,0);
 			vp.scene.render(engine);
 			engine.popTarget();
-			if(vp.frameCount % 2 == 0) {
-				vp.blitToCanvas();
-			}
+			vp.renderToScreen(engine);
 			vp.frameCount++;
 		}
 	}
@@ -111858,7 +112241,7 @@ hide_engine_infrastructure_ViewportService.prototype = {
 			if(Object.prototype.hasOwnProperty.call(_this.h,id)) {
 				delete(_this.h[id]);
 			}
-			haxe_Log.trace("🗑️ Viewport removed: " + id,{ fileName : "hide/engine/infrastructure/ViewportService.hx", lineNumber : 83, className : "hide.engine.infrastructure.ViewportService", methodName : "removeViewport"});
+			haxe_Log.trace("🗑️ Viewport removed: " + id,{ fileName : "hide/engine/infrastructure/ViewportService.hx", lineNumber : 93, className : "hide.engine.infrastructure.ViewportService", methodName : "removeViewport"});
 		}
 	}
 	,dispose: function() {
@@ -111884,6 +112267,241 @@ hide_engine_infrastructure_ViewportService.prototype = {
 	}
 	,__class__: hide_engine_infrastructure_ViewportService
 };
+var hide_engine_infrastructure_shaders_AlbedoTextureModifier = function() {
+	hxsl_Shader.call(this);
+};
+$hxClasses["hide.engine.infrastructure.shaders.AlbedoTextureModifier"] = hide_engine_infrastructure_shaders_AlbedoTextureModifier;
+hide_engine_infrastructure_shaders_AlbedoTextureModifier.__name__ = "hide.engine.infrastructure.shaders.AlbedoTextureModifier";
+hide_engine_infrastructure_shaders_AlbedoTextureModifier._SHADER = null;
+hide_engine_infrastructure_shaders_AlbedoTextureModifier.__super__ = hxsl_Shader;
+hide_engine_infrastructure_shaders_AlbedoTextureModifier.prototype = $extend(hxsl_Shader.prototype,{
+	albedoTexture__: null
+	,get_albedoTexture: function() {
+		return this.albedoTexture__;
+	}
+	,set_albedoTexture: function(_v) {
+		return this.albedoTexture__ = _v;
+	}
+	,updateConstants: function(globals) {
+		this.constBits = 0;
+		this.updateConstantsFinal(globals);
+	}
+	,getParamValue: function(index) {
+		if(index == 0) {
+			return this.albedoTexture__;
+		}
+		return null;
+	}
+	,getParamFloatValue: function(index) {
+		return 0.;
+	}
+	,setParamIndexValue: function(index,val) {
+		if(index == 0) {
+			this.albedoTexture__ = val;
+		}
+	}
+	,setParamIndexFloatValue: function(index,val) {
+	}
+	,writeParam: function(index,type,out,pos) {
+		if(index == 0) {
+			hxsl_Shader.prototype.writeParam.call(this,index,type,out,pos);
+		} else {
+			hxsl_Shader.prototype.writeParam.call(this,index,type,out,pos);
+		}
+	}
+	,clone: function() {
+		var s = Object.create(hide_engine_infrastructure_shaders_AlbedoTextureModifier.prototype);
+		s.shader = this.shader;
+		s.albedoTexture__ = this.albedoTexture__;
+		return s;
+	}
+	,__class__: hide_engine_infrastructure_shaders_AlbedoTextureModifier
+	,__properties__: {set_albedoTexture:"set_albedoTexture",get_albedoTexture:"get_albedoTexture"}
+});
+var hide_engine_infrastructure_shaders_EmissiveModifier = function() {
+	this.emissiveIntensity__ = 0;
+	this.emissiveColor__ = new h3d_VectorImpl(0.,0.,0.);
+	hxsl_Shader.call(this);
+	this.emissiveIntensity__ = 0.0;
+	var _this = this.emissiveColor__;
+	var x = 0;
+	var y = 0;
+	var z = 0;
+	if(z == null) {
+		z = 0.;
+	}
+	if(y == null) {
+		y = 0.;
+	}
+	if(x == null) {
+		x = 0.;
+	}
+	_this.x = x;
+	_this.y = y;
+	_this.z = z;
+};
+$hxClasses["hide.engine.infrastructure.shaders.EmissiveModifier"] = hide_engine_infrastructure_shaders_EmissiveModifier;
+hide_engine_infrastructure_shaders_EmissiveModifier.__name__ = "hide.engine.infrastructure.shaders.EmissiveModifier";
+hide_engine_infrastructure_shaders_EmissiveModifier._SHADER = null;
+hide_engine_infrastructure_shaders_EmissiveModifier.__super__ = hxsl_Shader;
+hide_engine_infrastructure_shaders_EmissiveModifier.prototype = $extend(hxsl_Shader.prototype,{
+	emissiveColor__: null
+	,get_emissiveColor: function() {
+		return this.emissiveColor__;
+	}
+	,set_emissiveColor: function(_v) {
+		return this.emissiveColor__ = _v;
+	}
+	,emissiveIntensity__: null
+	,get_emissiveIntensity: function() {
+		return this.emissiveIntensity__;
+	}
+	,set_emissiveIntensity: function(_v) {
+		return this.emissiveIntensity__ = _v;
+	}
+	,updateConstants: function(globals) {
+		this.constBits = 0;
+		this.updateConstantsFinal(globals);
+	}
+	,getParamValue: function(index) {
+		switch(index) {
+		case 0:
+			return this.emissiveColor__;
+		case 1:
+			return this.emissiveIntensity__;
+		default:
+		}
+		return null;
+	}
+	,getParamFloatValue: function(index) {
+		if(index == 1) {
+			return this.emissiveIntensity__;
+		}
+		return 0.;
+	}
+	,setParamIndexValue: function(index,val) {
+		switch(index) {
+		case 0:
+			this.emissiveColor__ = val;
+			break;
+		case 1:
+			this.emissiveIntensity__ = val;
+			break;
+		default:
+		}
+	}
+	,setParamIndexFloatValue: function(index,val) {
+		if(index == 1) {
+			this.emissiveIntensity__ = val;
+		}
+	}
+	,writeParam: function(index,type,out,pos) {
+		switch(index) {
+		case 0:
+			var v = this.emissiveColor__;
+			out[pos++] = v.x;
+			out[pos++] = v.y;
+			out[pos++] = v.z;
+			break;
+		case 1:
+			out[pos] = this.emissiveIntensity__;
+			break;
+		default:
+			hxsl_Shader.prototype.writeParam.call(this,index,type,out,pos);
+		}
+	}
+	,clone: function() {
+		var s = Object.create(hide_engine_infrastructure_shaders_EmissiveModifier.prototype);
+		s.shader = this.shader;
+		s.emissiveColor__ = this.emissiveColor__;
+		s.emissiveIntensity__ = this.emissiveIntensity__;
+		return s;
+	}
+	,__class__: hide_engine_infrastructure_shaders_EmissiveModifier
+	,__properties__: {set_emissiveIntensity:"set_emissiveIntensity",get_emissiveIntensity:"get_emissiveIntensity",set_emissiveColor:"set_emissiveColor",get_emissiveColor:"get_emissiveColor"}
+});
+var hide_engine_infrastructure_shaders_NormalMapModifier = function() {
+	this.normalStrength__ = 0;
+	hxsl_Shader.call(this);
+	this.normalStrength__ = 1.0;
+};
+$hxClasses["hide.engine.infrastructure.shaders.NormalMapModifier"] = hide_engine_infrastructure_shaders_NormalMapModifier;
+hide_engine_infrastructure_shaders_NormalMapModifier.__name__ = "hide.engine.infrastructure.shaders.NormalMapModifier";
+hide_engine_infrastructure_shaders_NormalMapModifier._SHADER = null;
+hide_engine_infrastructure_shaders_NormalMapModifier.__super__ = hxsl_Shader;
+hide_engine_infrastructure_shaders_NormalMapModifier.prototype = $extend(hxsl_Shader.prototype,{
+	normalTexture__: null
+	,get_normalTexture: function() {
+		return this.normalTexture__;
+	}
+	,set_normalTexture: function(_v) {
+		return this.normalTexture__ = _v;
+	}
+	,normalStrength__: null
+	,get_normalStrength: function() {
+		return this.normalStrength__;
+	}
+	,set_normalStrength: function(_v) {
+		return this.normalStrength__ = _v;
+	}
+	,updateConstants: function(globals) {
+		this.constBits = 0;
+		this.updateConstantsFinal(globals);
+	}
+	,getParamValue: function(index) {
+		switch(index) {
+		case 0:
+			return this.normalTexture__;
+		case 1:
+			return this.normalStrength__;
+		default:
+		}
+		return null;
+	}
+	,getParamFloatValue: function(index) {
+		if(index == 1) {
+			return this.normalStrength__;
+		}
+		return 0.;
+	}
+	,setParamIndexValue: function(index,val) {
+		switch(index) {
+		case 0:
+			this.normalTexture__ = val;
+			break;
+		case 1:
+			this.normalStrength__ = val;
+			break;
+		default:
+		}
+	}
+	,setParamIndexFloatValue: function(index,val) {
+		if(index == 1) {
+			this.normalStrength__ = val;
+		}
+	}
+	,writeParam: function(index,type,out,pos) {
+		switch(index) {
+		case 0:
+			hxsl_Shader.prototype.writeParam.call(this,index,type,out,pos);
+			break;
+		case 1:
+			out[pos] = this.normalStrength__;
+			break;
+		default:
+			hxsl_Shader.prototype.writeParam.call(this,index,type,out,pos);
+		}
+	}
+	,clone: function() {
+		var s = Object.create(hide_engine_infrastructure_shaders_NormalMapModifier.prototype);
+		s.shader = this.shader;
+		s.normalTexture__ = this.normalTexture__;
+		s.normalStrength__ = this.normalStrength__;
+		return s;
+	}
+	,__class__: hide_engine_infrastructure_shaders_NormalMapModifier
+	,__properties__: {set_normalStrength:"set_normalStrength",get_normalStrength:"get_normalStrength",set_normalTexture:"set_normalTexture",get_normalTexture:"get_normalTexture"}
+});
 var hide_infrastructure_external_GoldenLayoutAdapter = function(eventBus,viewRegistry) {
 	this.eventBus = eventBus;
 	this.viewRegistry = viewRegistry;
@@ -112626,7 +113244,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this._projectLoadedUnsub = eventBus.subscribe(hide_shared_events_ProjectLoaded,$bind(this,this.onProjectLoadedHandler));
 	this._errorUnsub = eventBus.subscribe(hide_shared_events_ErrorOccurred,$bind(this,this.onErrorOccurred));
 	this._layoutChangedUnsub = eventBus.subscribe(hide_shared_events_LayoutChanged,function(e) {
-		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 169, className : "hide.presentation.Ide", methodName : "new"});
+		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 175, className : "hide.presentation.Ide", methodName : "new"});
 	});
 	this._projectClosedUnsub = eventBus.subscribe(hide_shared_events_ProjectClosed,function(e) {
 		_gthis._currentProject = null;
@@ -112673,11 +113291,11 @@ hide_presentation_Ide.prototype = {
 		this.layoutEngine.open("welcome",{ },hide_domain_valueobjects_DisplayPosition.Center);
 	}
 	,onErrorOccurred: function(event) {
-		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 196, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
+		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 202, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
 	}
 	,onProjectLoadedHandler: function(event) {
 		this._currentProject = event.project.name;
-		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 201, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
+		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 207, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
 		this.updateWindowTitle();
 	}
 	,onToggleFullscreen: function() {
@@ -112688,7 +113306,7 @@ hide_presentation_Ide.prototype = {
 	,onCloseProject: function() {
 	}
 	,openView: function(viewName) {
-		haxe_Log.trace("[Open view] search view to open: " + viewName,{ fileName : "hide/presentation/Ide.hx", lineNumber : 222, className : "hide.presentation.Ide", methodName : "openView"});
+		haxe_Log.trace("[Open view] search view to open: " + viewName,{ fileName : "hide/presentation/Ide.hx", lineNumber : 228, className : "hide.presentation.Ide", methodName : "openView"});
 		var view = Lambda.find(this.viewRegistry.all(),function(v) {
 			return v.name == viewName;
 		});
@@ -112706,7 +113324,7 @@ hide_presentation_Ide.prototype = {
 		default:
 			position = hide_domain_valueobjects_DisplayPosition.Center;
 		}
-		haxe_Log.trace("[Open view] view opened",{ fileName : "hide/presentation/Ide.hx", lineNumber : 233, className : "hide.presentation.Ide", methodName : "openView"});
+		haxe_Log.trace("[Open view] view opened",{ fileName : "hide/presentation/Ide.hx", lineNumber : 239, className : "hide.presentation.Ide", methodName : "openView"});
 		this.openViewUseCase.execute(view.name,view.defaultState,position);
 	}
 	,onOpenRecent: function(path) {
@@ -112714,11 +113332,11 @@ hide_presentation_Ide.prototype = {
 	}
 	,updateWindowTitle: function() {
 		var title = this._currentProject != null ? "" + this._currentProject + " - HIDE IDE" : "HIDE IDE";
-		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 243, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
+		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 249, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
 		this.windowService.setTitle(title);
 	}
 	,showAboutDialog: function() {
-		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 248, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
+		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 254, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
 	}
 	,get_currentProjectName: function() {
 		if(this._currentProject != null) {
@@ -112729,7 +113347,7 @@ hide_presentation_Ide.prototype = {
 	}
 	,startup: function() {
 		var _gthis = this;
-		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 258, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 264, className : "hide.presentation.Ide", methodName : "startup"});
 		var $module = $getIterator(this.viewModules);
 		while($module.hasNext()) {
 			var module1 = $module.next();
@@ -112742,29 +113360,29 @@ hide_presentation_Ide.prototype = {
 					_gthis.openView(descriptor[0].dto.name);
 				};
 			})(descriptor));
-			haxe_Log.trace("📦 View registered: " + descriptor[0].dto.name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 272, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📦 View registered: " + descriptor[0].dto.name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 278, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		this.windowController.init();
-		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 276, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 282, className : "hide.presentation.Ide", methodName : "startup"});
 		var toolbarEl = window.document.getElementById("main-toolbar");
 		if(toolbarEl != null) {
 			this.toolbarController.setContainer(toolbarEl);
-			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 284, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 290, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var layoutEl = window.document.getElementById("golden-layout-root");
 		if(layoutEl != null) {
 			this.layoutEngine.setContainer(layoutEl);
 			this.layoutEngine.init({ content : [], fullScreen : null});
-			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 292, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 298, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 294, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 300, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var menuContainer = window.document.getElementById("main-menu");
 		if(menuContainer != null) {
 			this.menuController.setContainer(menuContainer);
-			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 300, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 306, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 302, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 308, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var args = this.platform.getAppArgs();
 		var projectFile = null;
@@ -112788,10 +113406,10 @@ hide_presentation_Ide.prototype = {
 			}
 		}
 		if(projectFile != null) {
-			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 329, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 335, className : "hide.presentation.Ide", methodName : "startup"});
 			this.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._new(projectFile));
 		} else {
-			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 332, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 338, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 	}
 	,dispose: function() {
@@ -178938,8 +179556,17 @@ haxe_zip_InflateImpl.DIST_EXTRA_BITS_TBL = [0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,
 haxe_zip_InflateImpl.DIST_BASE_VAL_TBL = [1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577];
 haxe_zip_InflateImpl.CODE_LENGTHS_POS = [16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];
 haxe_zip_InflateImpl.FIXED_HUFFMAN = null;
-hide_engine_infrastructure_HeapsRenderer.isSystemInitialized = false;
+hide_engine_infrastructure_FullscreenQuad.VERTEX_SHADER = "\r\n    attribute vec2 aPosition;\r\n    varying vec2 vUV;\r\n    void main() {\r\n        // Конвертируем [-1,1] → [0,1] для UV\r\n        vUV = aPosition * 0.5 + 0.5;\r\n        // Инвертируем Y, т.к. WebGL и Heaps имеют разную ориентацию\r\n        vUV.y = 1.0 - vUV.y;\r\n        gl_Position = vec4(aPosition, 0.0, 1.0);\r\n    }\r\n";
+hide_engine_infrastructure_FullscreenQuad.FRAGMENT_SHADER = "\r\n    precision mediump float;\r\n    varying vec2 vUV;\r\n    uniform sampler2D uTexture;\r\n    void main() {\r\n        gl_FragColor = texture2D(uTexture, vUV);\r\n    }\r\n";
+hide_engine_infrastructure_HeapsEngineManager.isSystemInitialized = false;
+hide_engine_infrastructure_HeapsEngineManager.instance = null;
 hide_engine_infrastructure_ShaderGraphSerializer.VERSION = "1.0";
+hide_engine_infrastructure_shaders_AlbedoTextureModifier.SRC = "HXSMOGhpZGUuZW5naW5lLmluZnJhc3RydWN0dXJlLnNoYWRlcnMuQWxiZWRvVGV4dHVyZU1vZGlmaWVyBAENYWxiZWRvVGV4dHVyZQoCAgAAAgthbGJlZG9HYW1tYQULBAAAAwxjYWxjdWxhdGVkVVYFCgQAAAQIZnJhZ21lbnQOBgAAAQEEAAAFAQaBAgIFCwoJAyIOAgIBCgICAwUKBQySAAULBQsA";
+hide_engine_infrastructure_shaders_AlbedoTextureModifier._MODULE = "hide.engine.infrastructure.shaders.AlbedoTextureModifier";
+hide_engine_infrastructure_shaders_EmissiveModifier.SRC = "HXSMM2hpZGUuZW5naW5lLmluZnJhc3RydWN0dXJlLnNoYWRlcnMuRW1pc3NpdmVNb2RpZmllchsBBmNhbWVyYQ0BDAIEdmlldwcAAQADBHByb2oHAAEABAhwb3NpdGlvbgULAAEABQhwcm9qRmxpcAMAAQAGCHByb2pEaWFnBQsAAQAHCHZpZXdQcm9qBwABAAgQcHJldmlvdXNWaWV3UHJvagcAAQAJD2ludmVyc2VWaWV3UHJvagcAAQAKBXpOZWFyAwABAAsEekZhcgMAAQAMA2RpcgULAwEADQ1qaXR0ZXJPZmZzZXRzBQwAAQAAAAAOBmdsb2JhbA0CBQ8EdGltZQMADgAQCXBpeGVsU2l6ZQUKAA4AEQltb2RlbFZpZXcHAA4BAxIQbW9kZWxWaWV3SW52ZXJzZQcADgEDExFwcmV2aW91c01vZGVsVmlldwcADgEDAAAAFAVpbnB1dA0DAhUIcG9zaXRpb24FCwEUABYGbm9ybWFsBQsBFAABAAAXBm91dHB1dA0EBhgIcG9zaXRpb24FDAQXABkFY29sb3IFDAQXABoFZGVwdGgDBBcAGwZub3JtYWwFCwQXABwJd29ybGREaXN0AwQXAB0IdmVsb2NpdHkFCgQXAAQAAB4QcmVsYXRpdmVQb3NpdGlvbgULBAAAHxN0cmFuc2Zvcm1lZFBvc2l0aW9uBQsEAAAgG3ByZXZpb3VzVHJhbnNmb3JtZWRQb3NpdGlvbgULBAAAIRhwaXhlbFRyYW5zZm9ybWVkUG9zaXRpb24FCwQAACIRdHJhbnNmb3JtZWROb3JtYWwFCwQAACMRcHJvamVjdGVkUG9zaXRpb24FDAQAACQZcHJldmlvdXNQcm9qZWN0ZWRQb3NpdGlvbgUMBAAAJQpwaXhlbENvbG9yBQwEAAAmBWRlcHRoAwQAACcLbmRjUG9zaXRpb24FCgQAACgTcHJldmlvdXNOZGNQb3NpdGlvbgUKBAAAKQhzY3JlZW5VVgUKBAAAKglzcGVjUG93ZXIDBAAAKwlzcGVjQ29sb3IFCwQAACwJd29ybGREaXN0AwQAAC0NcGl4ZWxWZWxvY2l0eQUKBAAALgltb2RlbFZpZXcHBAAALxBtb2RlbFZpZXdJbnZlcnNlBwQAADANcHJldk1vZGVsVmlldwcEAAAxDWVtaXNzaXZlQ29sb3IFCwIAADIRZW1pc3NpdmVJbnRlbnNpdHkDAgAAMwhlbWlzc2l2ZQMEAAA0CGZyYWdtZW50DgYAAAEBNAAABQEGBAIzAwYAAjMDBgECMgMJAx4OAgIxBQsJAyoOAQEDHVpkO99P1T8DBQsDAwMDAA";
+hide_engine_infrastructure_shaders_EmissiveModifier._MODULE = "hide.engine.infrastructure.shaders.EmissiveModifier";
+hide_engine_infrastructure_shaders_NormalMapModifier.SRC = "HXSMNGhpZGUuZW5naW5lLmluZnJhc3RydWN0dXJlLnNoYWRlcnMuTm9ybWFsTWFwTW9kaWZpZXIbAQZjYW1lcmENAQwCBHZpZXcHAAEAAwRwcm9qBwABAAQIcG9zaXRpb24FCwABAAUIcHJvakZsaXADAAEABghwcm9qRGlhZwULAAEABwh2aWV3UHJvagcAAQAIEHByZXZpb3VzVmlld1Byb2oHAAEACQ9pbnZlcnNlVmlld1Byb2oHAAEACgV6TmVhcgMAAQALBHpGYXIDAAEADANkaXIFCwMBAA0Naml0dGVyT2Zmc2V0cwUMAAEAAAAADgZnbG9iYWwNAgUPBHRpbWUDAA4AEAlwaXhlbFNpemUFCgAOABEJbW9kZWxWaWV3BwAOAQMSEG1vZGVsVmlld0ludmVyc2UHAA4BAxMRcHJldmlvdXNNb2RlbFZpZXcHAA4BAwAAABQFaW5wdXQNAwIVCHBvc2l0aW9uBQsBFAAWBm5vcm1hbAULARQAAQAAFwZvdXRwdXQNBAYYCHBvc2l0aW9uBQwEFwAZBWNvbG9yBQwEFwAaBWRlcHRoAwQXABsGbm9ybWFsBQsEFwAcCXdvcmxkRGlzdAMEFwAdCHZlbG9jaXR5BQoEFwAEAAAeEHJlbGF0aXZlUG9zaXRpb24FCwQAAB8TdHJhbnNmb3JtZWRQb3NpdGlvbgULBAAAIBtwcmV2aW91c1RyYW5zZm9ybWVkUG9zaXRpb24FCwQAACEYcGl4ZWxUcmFuc2Zvcm1lZFBvc2l0aW9uBQsEAAAiEXRyYW5zZm9ybWVkTm9ybWFsBQsEAAAjEXByb2plY3RlZFBvc2l0aW9uBQwEAAAkGXByZXZpb3VzUHJvamVjdGVkUG9zaXRpb24FDAQAACUKcGl4ZWxDb2xvcgUMBAAAJgVkZXB0aAMEAAAnC25kY1Bvc2l0aW9uBQoEAAAoE3ByZXZpb3VzTmRjUG9zaXRpb24FCgQAACkIc2NyZWVuVVYFCgQAACoJc3BlY1Bvd2VyAwQAACsJc3BlY0NvbG9yBQsEAAAsCXdvcmxkRGlzdAMEAAAtDXBpeGVsVmVsb2NpdHkFCgQAAC4JbW9kZWxWaWV3BwQAAC8QbW9kZWxWaWV3SW52ZXJzZQcEAAAwDXByZXZNb2RlbFZpZXcHBAAAMQ1ub3JtYWxUZXh0dXJlCgICAAAyDm5vcm1hbFN0cmVuZ3RoAwIAADMMY2FsY3VsYXRlZFVWBQoEAAA0CGZyYWdtZW50DgYAAAEBNAAABQYINQFuBQsEAAAKCQMiDgICMQoCAjMFCgUMkgAFCwAGBAI1BQsGAwYBAjUFCwEDAAAAAAAAAEADBQsBAwAAAAAAAPA/AwULBQsGgQoCNQULEQAFCgIyAwUKBgQKAjUFCwgAAwkDDQ4BCQMWDgIBAwAAAAAAAAAAAwYDAQMAAAAAAADwPwMJAx4OAgoCNQULEQAFCgoCNQULEQAFCgMDAwMDBgQCNQULCQMgDgECNQULBQsFCwYEAiIFCwkDIA4BBgACIgULBgECNQULAjIDBQsFCwULBQsA";
+hide_engine_infrastructure_shaders_NormalMapModifier._MODULE = "hide.engine.infrastructure.shaders.NormalMapModifier";
 hide_presentation_ui_react_BaseReactComponent.displayName = "BaseReactComponent";
 hide_presentation_ui_react_components_ComponentIcon.displayName = "ComponentIcon";
 hide_presentation_ui_react_components_ContextMenu.displayName = "ContextMenu";

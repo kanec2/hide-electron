@@ -49,7 +49,13 @@ import tink.core.*;
 using tink.CoreApi;
 using hx.injection.ServiceExtensions;
 using Lambda;
-
+/**
+Главный класс IDE.
+⚠️ Является Service Locator для React-компонентов,
+потому что haxe-react не поддерживает хуки и функциональные компоненты.
+Все остальные слои (Application, Domain, Infrastructure)
+получают зависимости через DI-контейнер (hx.injection).
+*/
 @:expose
 class Ide implements Service {
     public static var inst(default, null):Ide;

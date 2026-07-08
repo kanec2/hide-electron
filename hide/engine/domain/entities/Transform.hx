@@ -31,7 +31,7 @@ class Transform {
     }
 
     public function withRotation(x:Float, y:Float, z:Float):Transform {
-        return new Transform(x, y, z, x, y, z, scaleX, scaleY, scaleZ);
+        return new Transform(this.x, this.y, this.z, x, y, z, scaleX, scaleY, scaleZ);
     }
 
     public function withScale(x:Float, y:Float, z:Float):Transform {

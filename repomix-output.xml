@@ -91,7 +91,6 @@ domain/services/IFileSystem.hx
 domain/services/ILayoutEngine.hx
 domain/services/IPlatform.hx
 domain/services/IPlugin.hx
-domain/services/IResourceLoader.hx
 domain/services/IViewFactory.hx
 domain/services/IWindowManager.hx
 domain/services/PluginConfig.hx
@@ -118,6 +117,7 @@ engine/infrastructure/HeapsMaterialSetup.hx
 engine/infrastructure/HeapsRenderer_b.hx
 engine/infrastructure/HeapsRenderer.hx
 engine/infrastructure/HeapsRenderer3D.hx
+engine/infrastructure/HeapsResourceLoader.hx
 engine/infrastructure/RuntimeShader.hx
 engine/infrastructure/SceneServiceImpl.hx
 engine/infrastructure/SceneViewFactory.hx
@@ -127,6 +127,9 @@ engine/infrastructure/ShaderGraphCompiler.hx
 engine/infrastructure/ShaderGraphData.hx
 engine/infrastructure/ShaderGraphSerializer.hx
 engine/infrastructure/ShaderPreviewRenderer.hx
+engine/infrastructure/shaders/AlbedoTextureModifier.hx
+engine/infrastructure/shaders/EmissiveModifier.hx
+engine/infrastructure/shaders/NormalMapModifier.hx
 engine/infrastructure/Viewport.hx
 engine/infrastructure/ViewportService.hx
 infrastructure/BrowserDomAccess.hx
@@ -1558,6 +1561,9 @@ interface IFileSystem extends Service {
     function writeText(path:FilePath, content:String):Void;
     function listFiles(path:FilePath, ?recursive:Bool):Array<FilePath>;
     function getAppDataPath():FilePath;
+    
+    // ✅ НОВОЕ: для бинарных файлов (текстуры, меши)
+    function readBinary(path:FilePath):haxe.io.Bytes;
 }
 </file>
 
@@ -1644,10 +1650,6 @@ interface IPlugin {
      */
     var name(get, never):String;
 }
-</file>
-
-<file path="domain/services/IResourceLoader.hx">
-package hide.domain.services;
 </file>
 
 <file path="domain/services/IViewFactory.hx">
@@ -1807,6 +1809,7 @@ import hide.engine.domain.services.IResourceLoader;
 import hide.engine.domain.services.IEngineEventBus;
 import hide.engine.infrastructure.SceneServiceImpl;
 import hide.engine.infrastructure.HeapsRenderer;
+import hide.engine.infrastructure.HeapsResourceLoader;
 import hide.engine.infrastructure.EngineEventBusImpl;
 // Конкретные реализации выбираются в AppModule IDE
 
@@ -1828,6 +1831,8 @@ class EngineModule {
         collection.addSingleton(SceneViewportController); // ← НОВОЕ
         collection.addSingleton(ShaderPreviewRenderer); // ← НОВОЕ
         // initialize embeded ressources
+        // ✅ НОВОЕ: ResourceLoader
+        collection.addSingleton(IResourceLoader, HeapsResourceLoader);
 		hxd.Res.initEmbed();
         // IRenderer и IEngineResourceLoader НЕ регистрируем здесь —
         // они платформенно-зависимые, их регистрирует AppModule IDE
@@ -2041,14 +2046,16 @@ interface IRenderer extends Service {
 
 <file path="engine/domain/services/IResourceLoader.hx">
 package hide.engine.domain.services;
+import h3d.mat.Texture;
+import hx.injection.Service;
 
 /**
  * Порт для загрузки ресурсов (меши, текстуры).
  * Реализуется в infrastructure (через IFileSystem IDE или напрямую).
  */
-interface IResourceLoader {
+interface IResourceLoader extends Service {
     function loadMesh(path:String):Dynamic;
-    function loadTexture(path:String):Dynamic;
+    function loadTexture(path:String):Null<Texture>;
 }
 </file>
 
@@ -2933,6 +2940,102 @@ class HeapsRenderer3D extends h3d.scene.fwd.Renderer {
 }
 </file>
 
+<file path="engine/infrastructure/HeapsResourceLoader.hx">
+// hide/engine/infrastructure/HeapsResourceLoader.hx
+package hide.engine.infrastructure;
+import hide.engine.domain.services.IResourceLoader;
+import hide.domain.services.IFileSystem;
+import hide.domain.valueobjects.FilePath;
+import h3d.mat.Texture;
+import haxe.io.Bytes;
+import hx.injection.Service;
+
+/**
+Реализация IResourceLoader через IFileSystem.
+Загружает текстуры из файловой системы и конвертирует в h3d.mat.Texture.
+*/
+class HeapsResourceLoader implements IResourceLoader implements Service {
+    private var fileSystem:IFileSystem;
+    
+    // Кэш текстур для повторного использования
+    private var textureCache:Map<String, Texture>;
+    
+    public function new(fileSystem:IFileSystem) {
+        this.fileSystem = fileSystem;
+        this.textureCache = new Map();
+    }
+    
+    public function loadMesh(path:String):Dynamic {
+        // TODO: загрузка мешей
+        trace('⚠️ [HeapsResourceLoader] loadMesh not implemented: $path');
+        return null;
+    }
+    
+    /**
+     * Загружает текстуру из файловой системы.
+     * Использует кэш для повторного использования.
+     */
+    public function loadTexture(path:String):Null<Texture> {
+        // Проверяем кэш
+        if (textureCache.exists(path)) {
+            trace('📦 [HeapsResourceLoader] Texture from cache: $path');
+            return textureCache.get(path);
+        }
+        
+        try {
+            // Читаем бинарный файл через IFileSystem
+            var bytes:Bytes = fileSystem.readBinary(new FilePath(path));
+            
+            // Конвертируем Bytes в h3d.mat.Texture
+            var texture = createTextureFromBytes(path, bytes);
+            
+            if (texture != null) {
+                // Сохраняем в кэш
+                textureCache.set(path, texture);
+                trace('🖼️ [HeapsResourceLoader] Texture loaded: $path (${texture.width}x${texture.height})');
+            }
+            
+            return texture;
+        } catch (e:Dynamic) {
+            trace('❌ [HeapsResourceLoader] Failed to load texture: $path - $e');
+            return null;
+        }
+    }
+    
+    /**
+     * Конвертирует Bytes в h3d.mat.Texture.
+     * Использует hxd.res.Any для автоматического определения формата.
+     */
+    private function createTextureFromBytes(path:String, bytes:Bytes):Null<Texture> {
+        try {
+            // hxd.res.Any автоматически определяет формат по расширению
+            var res = hxd.res.Any.fromBytes(path, bytes);
+            var image = res.toImage();
+            var texture = image.toTexture();
+            return texture;
+        } catch (e:Dynamic) {
+            trace('❌ [HeapsResourceLoader] Failed to convert bytes to texture: $e');
+            return null;
+        }
+    }
+    
+    /**
+     * Очищает кэш текстур.
+     */
+    public function clearCache():Void {
+        for (tex in textureCache) {
+            if (tex != null) tex.dispose();
+        }
+        textureCache.clear();
+        trace('🗑️ [HeapsResourceLoader] Texture cache cleared');
+    }
+    
+    public function dispose():Void {
+        clearCache();
+    }
+}
+</file>
+
 <file path="engine/infrastructure/RuntimeShader.hx">
 // engine/infrastructure/RuntimeShader.hx
 package hide.engine.infrastructure;
@@ -3792,7 +3895,9 @@ import h3d.scene.pbr.Environment;
 import h3d.scene.Mesh;
 import h3d.scene.fwd.DirLight;
 import h3d.prim.Sphere;
+import hide.engine.domain.services.IResourceLoader; // ← ДОБАВИТЬ
 import hx.injection.Service;
+import hide.engine.infrastructure.shaders.*;
 
 class ShaderPreviewRenderer implements Service {
     // ✅ УБРАНО: private var engine:h3d.Engine;
@@ -3820,9 +3925,16 @@ class ShaderPreviewRenderer implements Service {
     private var maxDistance:Float = 10.0;
     private var minPhi:Float = -1.5;    // ~-86 градусов
     private var maxPhi:Float = 1.5;     // ~86 градусов
+    private var resourceLoader:IResourceLoader; // ← ДОБАВИТЬ
     private var albedoTexture:Null<h3d.mat.Texture> = null;
+    private var normalTexture:Null<h3d.mat.Texture> = null;
+    // ✅ МОДИФИКАТОРЫ (вместо UniversalPbrShader!)
+    private var albedoModifier:Null<AlbedoTextureModifier> = null;
+    private var normalModifier:Null<NormalMapModifier> = null;
+    private var emissiveModifier:Null<EmissiveModifier> = null;
 
-    public function new() {
+    public function new(resourceLoader:IResourceLoader) {
+        this.resourceLoader = resourceLoader;
         // ✅ ВАЖНО: устанавливаем PBR MaterialSetup ДО создания сцены
         h3d.mat.MaterialSetup.current = new h3d.mat.PbrMaterialSetup();
     }
@@ -4044,35 +4156,85 @@ class ShaderPreviewRenderer implements Service {
      * Загружает текстуру и применяет к материалу сферы.
      * Вызывается из ShaderEditorPanel при наличии ноды texture/sample.
      */
+    /**
+     * ✅ ОБНОВЛЁННЫЙ метод загрузки текстуры через IResourceLoader
+     */
     public function setAlbedoTexture(path:String):Void {
-        // Очищаем старую текстуру
-        if (albedoTexture != null) {
-            albedoTexture.dispose();
-            albedoTexture = null;
+        // Загружаем текстуру
+        var res = hxd.res.Loader.currentInstance.load(path);
+        var tex = res.toTexture();
+        
+        // Создаём или обновляем модификатор
+        if (albedoModifier == null) {
+            albedoModifier = new AlbedoTextureModifier();
+            previewMesh.material.mainPass.addShader(albedoModifier);
+        }
+        
+        // Устанавливаем текстуру в шейдер
+        previewMesh.material.texture = tex;
+        
+        trace('🖼️ [ShaderPreview] Albedo texture applied via modifier');
+    }
+    /**
+     * ✅ НОВОЕ: устанавливает normal map через модификатор
+     */
+    public function setNormalTexture(path:String, strength:Float = 1.0):Void {
+        if (normalTexture != null) {
+            normalTexture.dispose();
+            normalTexture = null;
         }
         
         if (path == null || path == "") {
-            // Убираем текстуру с материала
-            if (previewMesh != null) {
-                previewMesh.material.mainPass.texture = null;
+            // Удаляем модификатор
+            if (normalModifier != null) {
+                previewMesh.material.mainPass.removeShader(normalModifier);
+                normalModifier = null;
             }
-            trace('🖼️ [ShaderPreview] Texture cleared');
+            trace('🔵 [ShaderPreview] Normal map cleared');
             return;
         }
         
         try {
             var res = hxd.res.Loader.currentInstance.load(path);
-            albedoTexture = res.toTexture();
+            normalTexture = res.toTexture();
             
-            // ✅ Применяем к PBR материалу (mainPass.texture = albedo)
-            if (previewMesh != null) {
-                previewMesh.material.mainPass.texture = albedoTexture;
+            // Создаём модификатор, если его нет
+            if (normalModifier == null) {
+                normalModifier = new NormalMapModifier();
+                previewMesh.material.mainPass.addShader(normalModifier);
             }
             
-            trace('🖼️ [ShaderPreview] Texture loaded: $path');
+            // Устанавливаем текстуру и силу
+            previewMesh.material.normalMap = normalTexture;
+            normalModifier.normalStrength = strength;
+            
+            trace('🔵 [ShaderPreview] Normal map applied: $path (strength=$strength)');
         } catch (e:Dynamic) {
-            trace('❌ [ShaderPreview] Failed to load texture: $e');
+            trace('❌ [ShaderPreview] Failed to load normal texture: $e');
         }
+    }
+    
+    /**
+     * ✅ НОВОЕ: устанавливает emissive через модификатор
+     */
+    public function setEmissive(color:h3d.Vector, intensity:Float):Void {
+        if (intensity <= 0) {
+            if (emissiveModifier != null) {
+                previewMesh.material.mainPass.removeShader(emissiveModifier);
+                emissiveModifier = null;
+            }
+            return;
+        }
+        
+        if (emissiveModifier == null) {
+            emissiveModifier = new EmissiveModifier();
+            previewMesh.material.mainPass.addShader(emissiveModifier);
+        }
+        
+        emissiveModifier.emissiveColor.set(color.x, color.y, color.z);
+        emissiveModifier.emissiveIntensity = intensity;
+        
+        trace('💡 [ShaderPreview] Emissive applied: (${color.x}, ${color.y}, ${color.z}) intensity=$intensity');
     }
     /**
      * Применяет скомпилированные данные графа к материалу.
@@ -4102,7 +4264,7 @@ class ShaderPreviewRenderer implements Service {
     public function updateMaterial(shaderData:Dynamic):Void {
         if (previewMesh == null || pbrValues == null) return;
         
-        // Albedo (базовый цвет)
+        // Albedo
         if (shaderData.albedo != null) {
             if (isVec3(shaderData.albedo)) {
                 previewMesh.material.color.set(
@@ -4110,38 +4272,25 @@ class ShaderPreviewRenderer implements Service {
                     shaderData.albedo.y,
                     shaderData.albedo.z
                 );
-            } else if (Std.is(shaderData.albedo, Float)) {
-                // Если пришло число — используем как grayscale
-                var v:Float = shaderData.albedo;
-                previewMesh.material.color.set(v, v, v);
             }
-        } else {
-            // Дефолт: серый
-            previewMesh.material.color.set(0.5, 0.5, 0.5);
         }
         
-        // Metalness
+        // Metallic
         if (shaderData.metallic != null && Std.is(shaderData.metallic, Float)) {
             pbrValues.metalnessValue = shaderData.metallic;
-        } else {
-            pbrValues.metalnessValue = 0.0;
         }
         
         // Roughness
         if (shaderData.roughness != null && Std.is(shaderData.roughness, Float)) {
             pbrValues.roughnessValue = shaderData.roughness;
-        } else {
-            pbrValues.roughnessValue = 0.5;
         }
         
-        // Emissive (если есть)
+        // Emissive
         if (shaderData.emissive != null && isVec3(shaderData.emissive)) {
-            // В PBR emissive обычно через отдельный шейдер, но для простоты:
-            // можно добавить h3d.shader.pbr.Emissive если нужно
+            setEmissive(shaderData.emissive, 1.0);
         }
         
-        trace('🎨 [ShaderPreview] PBR Updated: albedo=(${previewMesh.material.color.x}, ${previewMesh.material.color.y}, ${previewMesh.material.color.z}), ' +
-              'metalness=${pbrValues.metalnessValue}, roughness=${pbrValues.roughnessValue}');
+        trace('🎨 [ShaderPreview] PBR Updated');
     }
     private function isVec3(v:Dynamic):Bool {
         return v != null && Reflect.hasField(v, "x") && Reflect.hasField(v, "y") && Reflect.hasField(v, "z");
@@ -4158,6 +4307,108 @@ class ShaderPreviewRenderer implements Service {
         previewMesh = null;
         pbrValues = null;
         env = null;
+    }
+}
+</file>
+
+<file path="engine/infrastructure/shaders/AlbedoTextureModifier.hx">
+// hide/engine/infrastructure/shaders/AlbedoTextureModifier.hx
+package hide.engine.infrastructure.shaders;
+
+import hxsl.Shader;
+
+/**
+Модифицирует albedoGamma, умножая на текстуру.
+НЕ переопределяет PBR pipeline, а дополняет его.
+*/
+class AlbedoTextureModifier extends Shader {
+    static var SRC = {
+        @param var albedoTexture : Sampler2D;
+        var albedoGamma : Vec3;  // ← Уже есть в BaseMesh, мы его модифицируем
+        var calculatedUV : Vec2; // ← Уже есть в BaseMesh
+        
+        function fragment() {
+            albedoGamma *= albedoTexture.get(calculatedUV).rgb;
+        }
+    };
+    
+    public function new() {
+        super();
+    }
+}
+</file>
+
+<file path="engine/infrastructure/shaders/EmissiveModifier.hx">
+// hide/engine/infrastructure/shaders/EmissiveModifier.hx
+package hide.engine.infrastructure.shaders;
+
+import hxsl.Shader;
+
+/**
+Модификатор emissive.
+Аналогично legacy hrt.shader.EmissiveMult.
+*/
+class EmissiveModifier extends Shader {
+    static var SRC = {
+        @:import h3d.shader.BaseMesh;
+        
+        @param var emissiveColor : Vec3;
+        @param var emissiveIntensity : Float;
+        
+        var emissive : Float;
+        
+        function fragment() {
+            // Модифицируем emissive
+            emissive = emissive + emissiveIntensity * dot(emissiveColor, vec3(0.333));
+        }
+    };
+    
+    public function new() {
+        super();
+        emissiveIntensity = 0.0;
+        emissiveColor.set(0, 0, 0);
+    }
+}
+</file>
+
+<file path="engine/infrastructure/shaders/NormalMapModifier.hx">
+// hide/engine/infrastructure/shaders/NormalMapModifier.hx
+package hide.engine.infrastructure.shaders;
+
+import hxsl.Shader;
+
+/**
+Модификатор normal map.
+НЕ переопределяет PBR pipeline — только добавляет normal mapping.
+Аналогично legacy hrt.shader.TextureMult.
+*/
+class NormalMapModifier extends Shader {
+    static var SRC = {
+        @:import h3d.shader.BaseMesh;  // ← импортируем переменные из BaseMesh
+        
+        @param var normalTexture : Sampler2D;
+        @param var normalStrength : Float;
+        
+        // Эти переменные УЖЕ есть в BaseMesh — мы их МОДИФИЦИРУЕМ
+        //var transformedNormal : Vec3;
+        var calculatedUV : Vec2;
+        
+        function fragment() {
+            // Unpack normal map: [0,1] → [-1,1]
+            var n = normalTexture.get(calculatedUV).rgb;
+            n = n * 2.0 - 1.0;
+            n.xy *= normalStrength;
+            n.z = sqrt(max(0.0, 1.0 - dot(n.xy, n.xy)));
+            n = normalize(n);
+            
+            // Модифицируем transformedNormal (не заменяем полностью!)
+            transformedNormal = normalize(transformedNormal + n * normalStrength);
+        }
+    };
+    
+    public function new() {
+        super();
+        normalStrength = 1.0;
     }
 }
 </file>
@@ -7001,11 +7252,12 @@ class ElectronFileDialogAdapter implements IFileDialog {
 <file path="infrastructure/platform/electron/ElectronFileSystemAdapter.hx">
 package hide.infrastructure.platform.electron;
 
+import hx.injection.Service;
 import hide.domain.services.IFileSystem;
 import hide.domain.valueobjects.FilePath;
 import hide.domain.exceptions.FileNotFoundError;
 
-class ElectronFileSystemAdapter implements IFileSystem {
+class ElectronFileSystemAdapter implements IFileSystem implements Service {
     private var ipcBridge:ElectronIpcBridge;
     
     public function new(ipcBridge:ElectronIpcBridge) {
@@ -7052,6 +7304,23 @@ class ElectronFileSystemAdapter implements IFileSystem {
     public function getAppDataPath():FilePath {
         var path = ipcBridge.invokeSync("app:getAppDataPath");
         return new FilePath(path);
+    }
+    
+    // ✅ НОВОЕ: чтение бинарных файлов
+    public function readBinary(filePath:FilePath):haxe.io.Bytes {
+        if (!exists(filePath)) {
+            throw new FileNotFoundError(filePath);
+        }
+        
+        var result = ipcBridge.invokeSync("fs:readBinary", filePath.toString());
+        
+        if (result.error != null) {
+            throw new FileNotFoundError(filePath);
+        }
+        
+        // Декодируем Base64 обратно в Bytes
+        var base64:String = result.data;
+        return haxe.crypto.Base64.decode(base64);
     }
 }
 </file>
@@ -13998,6 +14267,25 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         setupGraphListeners();
         // ✅ Клавиатурные шорткаты
         setupKeyboardShortcuts();
+        // ✅ Регистрируем глобальную функцию для диалога выбора текстуры
+        untyped js.Browser.window.__browseShaderTexture = function(node:Dynamic) {
+            var fileDialog = UseService.fileDialog();
+            fileDialog.showOpen({
+                filters: [
+                    { name: "Images", extensions: ["png", "jpg", "jpeg", "dds", "hdr", "tga"] }
+                ]
+            }).handle(function(path:Null<String>) {
+                if (path != null) {
+                    // Устанавливаем путь в свойства ноды
+                    node.properties.texture = path;
+                    // Перерисовываем ноду
+                    node.setDirtyCanvas(true, true);
+                    // Перекомпилируем граф
+                    scheduleRecompile();
+                    trace('🖼️ [ShaderEditor] Texture selected: $path');
+                }
+            });
+        };
     }
 
     private function setupKeyboardShortcuts():Void {
@@ -14288,7 +14576,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         var albedo = evaluateInput(outputNode, 0, new Map());      // slot 0 = Albedo (vec3)
         var metallic = evaluateInput(outputNode, 1, new Map());    // slot 1 = Metallic (float)
         var roughness = evaluateInput(outputNode, 2, new Map());   // slot 2 = Roughness (float)
-        var normal = evaluateInput(outputNode, 3, new Map());      // slot 3 = Normal (vec3) - пока игнорируем
+        var normal = evaluateInput(outputNode, 3, new Map());      // slot 3 = Normal (vec3) ✅
         var emissive = evaluateInput(outputNode, 4, new Map());    // slot 4 = Emissive (vec3)
         
         trace('📊 [ShaderEditor] PBR Evaluated:');
@@ -14296,12 +14584,18 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         trace('   Metallic: $metallic');
         trace('   Roughness: $roughness');
         trace('   Emissive: $emissive');
-        
+        if (normal != null && Reflect.hasField(normal, "x")) {
+            trace('   Normal: (${normal.x}, ${normal.y}, ${normal.z})');
+        } else {
+            //trace('   Normal: $normal');
+        }
+                
         // 3. Применяем к превью
         previewRenderer.updateMaterial({
             albedo: albedo,
             metallic: metallic,
             roughness: roughness,
+            normal: normal,  // ← ДОБАВИТЬ
             emissive: emissive
         });
         
@@ -14342,6 +14636,29 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
                     x: Reflect.field(node.properties, "r"),
                     y: Reflect.field(node.properties, "g"),
                     z: Reflect.field(node.properties, "b")
+                };
+            // ✅ НОВОЕ: Normal Map
+            case "texture/normal":
+                var inputNormal = evaluateInput(node, 0, visited);
+                var strength = Reflect.field(node.properties, "strength");
+                if (strength == null) strength = 1.0;
+                
+                // Если нормаль не подключена, используем дефолтную (0, 0, 1)
+                if (inputNormal == null) {
+                    inputNormal = { x: 0.0, y: 0.0, z: 1.0 };
+                }
+                
+                // Применяем strength
+                var nx = isVec3(inputNormal) ? inputNormal.x : 0.0;
+                var ny = isVec3(inputNormal) ? inputNormal.y : 0.0;
+                var nz = isVec3(inputNormal) ? inputNormal.z : 1.0;
+                
+                trace('🔵 [ShaderEditor] Normal Map: strength=$strength, normal=($nx, $ny, $nz)');
+                
+                {
+                    x: nx * strength,
+                    y: ny * strength,
+                    z: nz
                 };
             // ✅ НОВОЕ: Texture Sample
             case "texture/sample":
@@ -14637,25 +14954,6 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         });
     }
 
-    // ✅ Регистрируем глобальную функцию для диалога выбора текстуры
-    untyped js.Browser.window.__browseShaderTexture = function(node:Dynamic) {
-        var fileDialog = UseService.fileDialog();
-        fileDialog.showOpen({
-            filters: [
-                { name: "Images", extensions: ["png", "jpg", "jpeg", "dds", "hdr", "tga"] }
-            ]
-        }).handle(function(path:Null<String>) {
-            if (path != null) {
-                // Устанавливаем путь в свойства ноды
-                node.properties.texture = path;
-                // Перерисовываем ноду
-                node.setDirtyCanvas(true, true);
-                // Перекомпилируем граф
-                scheduleRecompile();
-                trace('🖼️ [ShaderEditor] Texture selected: $path');
-            }
-        });
-    };
 
     private function registerShaderNodes():Void {
         // ✅ ПРАВИЛЬНЫЙ СПОСОБ: используем js.Syntax.code для создания JS-функций,
@@ -14707,6 +15005,36 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         js.Syntax.code("Vec3Node.prototype.onExecute = function() { this.setOutputData(0, [this.properties.x, this.properties.y, this.properties.z]); }");
         LiteGraph.registerNodeType("value/vec3", Vec3Node);
         
+        // === Нода: Normal Map ===
+        var NormalMapNode = js.Syntax.code("
+            (function() { 
+                this.title = 'Normal Map'; 
+                this.addInput('Normal', 'vec3');
+                this.addInput('Strength', 'float');
+                this.addOutput('Normal', 'vec3');
+                this.properties = { strength: 1.0 };
+                var that = this;
+                
+                // Widget для strength
+                this.addWidget('number', 'strength', 1.0, function(v) {
+                    that.properties.strength = v;
+                }, { min: 0, max: 2, step: 0.1 });
+            })
+        ");
+        js.Syntax.code("NormalMapNode.prototype.onExecute = function() { 
+            var normal = this.getInputData(0); 
+            if (normal == null) normal = [0, 0, 1];
+            var strength = this.properties.strength;
+            // Усиливаем нормаль
+            var result = [
+                normal[0] * strength,
+                normal[1] * strength,
+                normal[2]
+            ];
+            this.setOutputData(0, result);
+        }");
+        LiteGraph.registerNodeType("texture/normal", NormalMapNode);
+
         // === Нода: Color ===
         var ColorNode = js.Syntax.code("(function() { 
             this.title = 'Color'; 
@@ -14792,7 +15120,7 @@ class ShaderEditorPanel extends BaseReactComponent<ShaderEditorProps, ShaderEdit
         // === Нода: Material Output (ОБЯЗАТЕЛЬНАЯ) ===
         var OutputNode = js.Syntax.code("(function() { 
             this.title = 'Material Output'; 
-            this.addInput('Albedo', 'vec3'); 
+            this.addInput('Albedo', 'vec3,vec4');
             this.addInput('Metallic', 'float'); 
             this.addInput('Roughness', 'float'); 
             this.addInput('Normal', 'vec3');
@@ -15150,7 +15478,7 @@ class ShaderNodePalette extends ReactComponentOfProps<ShaderNodePaletteProps> {
                 name: "Texture",
                 nodes: [
                     { type: "texture/sample", label: "Sample Texture", description: "Sample texture at UV", color: "#a6a" },
-                    { type: "texture/normal", label: "Normal Map", description: "Normal map sample", color: "#a6a" },
+                    { type: "texture/normal", label: "Normal Map", description: "Normal map sample", color: "#a6a" }, // ← НОВОЕ
                 ]
             },
             {

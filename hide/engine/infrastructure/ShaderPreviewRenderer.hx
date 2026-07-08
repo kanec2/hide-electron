@@ -10,6 +10,7 @@ import h3d.scene.fwd.DirLight;
 import h3d.prim.Sphere;
 import hide.engine.domain.services.IResourceLoader; // ← ДОБАВИТЬ
 import hx.injection.Service;
+import hide.engine.infrastructure.shaders.*;
 
 class ShaderPreviewRenderer implements Service {
     // ✅ УБРАНО: private var engine:h3d.Engine;
@@ -39,6 +40,11 @@ class ShaderPreviewRenderer implements Service {
     private var maxPhi:Float = 1.5;     // ~86 градусов
     private var resourceLoader:IResourceLoader; // ← ДОБАВИТЬ
     private var albedoTexture:Null<h3d.mat.Texture> = null;
+    private var normalTexture:Null<h3d.mat.Texture> = null;
+    // ✅ МОДИФИКАТОРЫ (вместо UniversalPbrShader!)
+    private var albedoModifier:Null<AlbedoTextureModifier> = null;
+    private var normalModifier:Null<NormalMapModifier> = null;
+    private var emissiveModifier:Null<EmissiveModifier> = null;
 
     public function new(resourceLoader:IResourceLoader) {
         this.resourceLoader = resourceLoader;
@@ -267,32 +273,81 @@ class ShaderPreviewRenderer implements Service {
      * ✅ ОБНОВЛЁННЫЙ метод загрузки текстуры через IResourceLoader
      */
     public function setAlbedoTexture(path:String):Void {
-        // Очищаем старую текстуру
-        if (albedoTexture != null) {
-            albedoTexture.dispose();
-            albedoTexture = null;
+        // Загружаем текстуру
+        var res = hxd.res.Loader.currentInstance.load(path);
+        var tex = res.toTexture();
+        
+        // Создаём или обновляем модификатор
+        if (albedoModifier == null) {
+            albedoModifier = new AlbedoTextureModifier();
+            previewMesh.material.mainPass.addShader(albedoModifier);
+        }
+        
+        // Устанавливаем текстуру в шейдер
+        previewMesh.material.texture = tex;
+        
+        trace('🖼️ [ShaderPreview] Albedo texture applied via modifier');
+    }
+    /**
+     * ✅ НОВОЕ: устанавливает normal map через модификатор
+     */
+    public function setNormalTexture(path:String, strength:Float = 1.0):Void {
+        if (normalTexture != null) {
+            normalTexture.dispose();
+            normalTexture = null;
         }
         
         if (path == null || path == "") {
-            // Убираем текстуру с материала
-            if (previewMesh != null) {
-                previewMesh.material.texture = null;  // ✅ ИСПРАВЛЕНО
+            // Удаляем модификатор
+            if (normalModifier != null) {
+                previewMesh.material.mainPass.removeShader(normalModifier);
+                normalModifier = null;
             }
-            trace('🖼️ [ShaderPreview] Texture cleared');
+            trace('🔵 [ShaderPreview] Normal map cleared');
             return;
         }
         
-        trace('📥 [ShaderPreview] Loading texture: $path');
-        
-        // Загружаем через IResourceLoader
-        albedoTexture = resourceLoader.loadTexture(path);
-        
-        if (albedoTexture != null && previewMesh != null) {
-            previewMesh.material.texture = albedoTexture;
-            trace('🖼️ [ShaderPreview] Texture applied: ${albedoTexture.width}x${albedoTexture.height}');
-        } else {
-            trace('❌ [ShaderPreview] Failed to load texture');
+        try {
+            var res = hxd.res.Loader.currentInstance.load(path);
+            normalTexture = res.toTexture();
+            
+            // Создаём модификатор, если его нет
+            if (normalModifier == null) {
+                normalModifier = new NormalMapModifier();
+                previewMesh.material.mainPass.addShader(normalModifier);
+            }
+            
+            // Устанавливаем текстуру и силу
+            previewMesh.material.normalMap = normalTexture;
+            normalModifier.normalStrength = strength;
+            
+            trace('🔵 [ShaderPreview] Normal map applied: $path (strength=$strength)');
+        } catch (e:Dynamic) {
+            trace('❌ [ShaderPreview] Failed to load normal texture: $e');
         }
+    }
+    
+    /**
+     * ✅ НОВОЕ: устанавливает emissive через модификатор
+     */
+    public function setEmissive(color:h3d.Vector, intensity:Float):Void {
+        if (intensity <= 0) {
+            if (emissiveModifier != null) {
+                previewMesh.material.mainPass.removeShader(emissiveModifier);
+                emissiveModifier = null;
+            }
+            return;
+        }
+        
+        if (emissiveModifier == null) {
+            emissiveModifier = new EmissiveModifier();
+            previewMesh.material.mainPass.addShader(emissiveModifier);
+        }
+        
+        emissiveModifier.emissiveColor.set(color.x, color.y, color.z);
+        emissiveModifier.emissiveIntensity = intensity;
+        
+        trace('💡 [ShaderPreview] Emissive applied: (${color.x}, ${color.y}, ${color.z}) intensity=$intensity');
     }
     /**
      * Применяет скомпилированные данные графа к материалу.
@@ -322,7 +377,7 @@ class ShaderPreviewRenderer implements Service {
     public function updateMaterial(shaderData:Dynamic):Void {
         if (previewMesh == null || pbrValues == null) return;
         
-        // Albedo (базовый цвет)
+        // Albedo
         if (shaderData.albedo != null) {
             if (isVec3(shaderData.albedo)) {
                 previewMesh.material.color.set(
@@ -330,49 +385,25 @@ class ShaderPreviewRenderer implements Service {
                     shaderData.albedo.y,
                     shaderData.albedo.z
                 );
-            } else if (Std.is(shaderData.albedo, Float)) {
-                // Если пришло число — используем как grayscale
-                var v:Float = shaderData.albedo;
-                previewMesh.material.color.set(v, v, v);
             }
-        } else {
-            // Дефолт: серый
-            previewMesh.material.color.set(0.5, 0.5, 0.5);
         }
         
-        // Metalness
+        // Metallic
         if (shaderData.metallic != null && Std.is(shaderData.metallic, Float)) {
             pbrValues.metalnessValue = shaderData.metallic;
-        } else {
-            pbrValues.metalnessValue = 0.0;
         }
         
         // Roughness
         if (shaderData.roughness != null && Std.is(shaderData.roughness, Float)) {
             pbrValues.roughnessValue = shaderData.roughness;
-        } else {
-            pbrValues.roughnessValue = 0.5;
-        }
-
-        // ✅ НОВОЕ: Normal
-        if (shaderData.normal != null && isVec3(shaderData.normal)) {
-            // В Heaps PBR нормали применяются через mainPass.normalMap
-            // Но для procedural normals нужен кастомный подход
-            // Пока просто логируем
-            trace('🔵 [ShaderPreview] Normal: (${shaderData.normal.x}, ${shaderData.normal.y}, ${shaderData.normal.z})');
-            
-            // Можно применить через кастомный шейдер или изменить геометрию
-            // Для простоты пока не применяем напрямую
         }
         
-        // Emissive (если есть)
+        // Emissive
         if (shaderData.emissive != null && isVec3(shaderData.emissive)) {
-            // В PBR emissive обычно через отдельный шейдер, но для простоты:
-            // можно добавить h3d.shader.pbr.Emissive если нужно
+            setEmissive(shaderData.emissive, 1.0);
         }
         
-        trace('🎨 [ShaderPreview] PBR Updated: albedo=(${previewMesh.material.color.x}, ${previewMesh.material.color.y}, ${previewMesh.material.color.z}), ' +
-              'metalness=${pbrValues.metalnessValue}, roughness=${pbrValues.roughnessValue}');
+        trace('🎨 [ShaderPreview] PBR Updated');
     }
     private function isVec3(v:Dynamic):Bool {
         return v != null && Reflect.hasField(v, "x") && Reflect.hasField(v, "y") && Reflect.hasField(v, "z");
