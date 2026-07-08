@@ -41,8 +41,8 @@ class HeapsEngineManager implements IEngineManager implements Service {
         if (js.Browser.document.getElementById("webgl") == null) {
             var dummyCanvas = js.Browser.document.createCanvasElement();
             dummyCanvas.id = "webgl";
-            dummyCanvas.width = 16;
-            dummyCanvas.height = 16;
+            dummyCanvas.width = js.Browser.window.innerWidth;
+            dummyCanvas.height = js.Browser.window.innerHeight;
             dummyCanvas.style.position = "absolute";
             dummyCanvas.style.top = "-9999px";
             dummyCanvas.style.left = "-9999px";
@@ -51,7 +51,15 @@ class HeapsEngineManager implements IEngineManager implements Service {
             trace("🎨 [HeapsRenderer] Created hidden #webgl canvas for hxd.Window");
         }
     }
-
+    // ✅ НОВОЕ: метод для обновления размера dummy canvas
+    public function updateDummyCanvasSize(width:Int, height:Int):Void {
+        var dummyCanvas:js.html.CanvasElement = cast js.Browser.document.getElementById("webgl");
+        if (dummyCanvas != null) {
+            dummyCanvas.width = width;
+            dummyCanvas.height = height;
+            trace("📐 [HeapsRenderer] Dummy canvas resized to ${width}x${height}");
+        }
+    }
     private function initEngine():Void {
         Engine.ANTIALIASING = 4;
 
@@ -124,6 +132,8 @@ private function logSupportedFeatures():Void {
     
     public function onResize(width:Int, height:Int):Void {
         viewportService.resizeAll(width, height);
+            // ✅ Обновляем размер dummy canvas
+        updateDummyCanvasSize(width, height);
     }
     
     public function dispose():Void {

@@ -16,11 +16,9 @@ class Viewport {
     public var enabled:Bool = true;
     public var width:Int;
     public var height:Int;
+    public var renderWidth:Int;
+    public var renderHeight:Int;
     public var frameCount:Int = 0;  // ✅ НОВОЕ ПОЛЕ
-
-    // GPU blit компоненты
-    private var gl:RenderingContext;
-    private var fullscreenQuad:FullscreenQuad;
 
     public function new(id:String, scene:Scene, width:Int, height:Int) {
         this.id = id;
@@ -28,8 +26,8 @@ class Viewport {
         this.width = width;
         this.height = height;
         
-        var renderWidth = width;
-        var renderHeight = height;
+        renderWidth = width;
+        renderHeight = height;
         // Создаём RenderTexture (GPU-side)
         // ✅ ИСПОЛЬЗУЕМ RGBA32F для лучшего качества (float precision)
         // Или RGBA16U для хорошего качества + производительности
@@ -47,26 +45,13 @@ class Viewport {
         canvas.width = width;
         canvas.height = height;
         
-        // Получаем WebGL контекст (WebGL 2优先, затем WebGL 1)
-        gl = cast canvas.getContext("webgl2");
-        if (gl == null) {
-            gl = cast canvas.getContext("webgl");
-        }
-        
-        if (gl != null) {
-            fullscreenQuad = new FullscreenQuad(gl);
-            fullscreenQuad.init();
-            trace("✅ [Viewport $id] WebGL context created, GPU blit enabled");
-        } else {
-            trace("⚠️ [Viewport $id] WebGL not available, GPU blit disabled");
-        }
 
         // ✅ ВАЖНО: CSS стили для масштабирования без размытия
         canvas.style.width = "100%";
         canvas.style.height = "100%";
         canvas.style.display = "block";
         canvas.style.objectFit = "contain"; // ← НОВОЕ: сохраняет пропорции
-        canvas.style.imageRendering = "pixelated";  // ← БЫЛО "auto"
+        canvas.style.imageRendering = "auto";  // ← БЫЛО "auto"
         canvas.style.background = "#1a1a1a"; // ← НОВОЕ: фон на случай прозрачности
     }
     
@@ -74,38 +59,10 @@ class Viewport {
     GPU-only рендеринг текстуры на canvas через fullscreen quad shader.
     Вызывается из ViewportService после рендеринга сцены в RenderTexture.
 
-    Производительность: ~0.1ms vs ~5ms для CPU blit (50x быстрее!)
     */
     public function renderToScreen(engine:h3d.Engine):Void {
-        if (fullscreenQuad != null && renderTarget != null) {
-            fullscreenQuad.render(renderTarget);
-        } else {
-            // Fallback на CPU blit если GPU недоступен
             blitToCanvas();
-        }
-        //if (fullscreenQuad == null || renderTarget == null) return;
-    
-        //fullscreenQuad.render(renderTarget);
         frameCount++;
-    }
-    /**
-    Рендерит текстуру на canvas через WebGL fullscreen quad.
-    */
-    private function renderTextureToCanvas(gl:js.html.webgl.RenderingContext, tex:Dynamic, w:Int, h:Int):Void {
-        // Устанавливаем viewport
-        gl.viewport(0, 0, w, h);
-        // Очищаем canvas
-        gl.clearColor(0.1, 0.1, 0.1, 1.0);
-        gl.clear(js.html.webgl.RenderingContext.COLOR_BUFFER_BIT);
-        // Если есть шейдерная программа для fullscreen quad, используем её
-        // В противном случае используем простой blit через drawArrays
-        // (для простоты пока оставляем fallback на CPU blit)
-        // TODO: Реализовать fullscreen quad shader для GPU blit
-        // Для этого нужно:
-        // 1. Создать vertex buffer с 4 вершинами (fullscreen quad)
-        // 2. Создать shader program (vertex + fragment)
-        // 3. Привязать текстуру
-        // 4. Вызвать gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
     }
 
     /**
@@ -154,7 +111,17 @@ class Viewport {
         }
         
         ctx.putImageData(imageData, 0, 0);
+        // ✅ Рисуем высококачественную текстуру, браузер сам масштабирует с сглаживанием
+        // Создаём временный canvas для масштабирования
+        var tempCanvas = js.Browser.document.createCanvasElement();
+        tempCanvas.width = renderWidth;
+        tempCanvas.height = renderHeight;
+        var tempCtx = tempCanvas.getContext("2d");
+        tempCtx.putImageData(imageData, 0, 0);
         
+        // ✅ Рисуем с масштабированием (браузер использует imageSmoothingQuality)
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(tempCanvas, 0, 0, width, height);
         // ✅ Временная рамка для диагностики
         ctx.strokeStyle = "#00ff00";
         ctx.lineWidth = 3;
@@ -186,10 +153,6 @@ class Viewport {
     }
     
     public function dispose():Void {
-        if (fullscreenQuad != null) {
-            fullscreenQuad.dispose();
-            fullscreenQuad = null;
-        }
         renderTarget.dispose();
         if (canvas != null && canvas.parentElement != null) {
             canvas.parentElement.removeChild(canvas);

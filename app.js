@@ -9397,7 +9397,7 @@ h2d_col_Polygon.makeCircle = function(x,y,radius,npoints) {
 	if(npoints < 3) {
 		npoints = 3;
 	}
-	var angle = 6.2831853071795862 / npoints;
+	var angle = 6.28318530717958623 / npoints;
 	var points = [];
 	var _g = 0;
 	var _g1 = npoints;
@@ -17250,18 +17250,18 @@ h3d_VectorImpl.prototype = {
 		if(saturation == null) {
 			saturation = 1.;
 		}
-		var r = hue % 6.2831853071795862;
-		hue = r >= 0 ? r : r + 6.2831853071795862;
+		var r = hue % 6.28318530717958623;
+		hue = r >= 0 ? r : r + 6.28318530717958623;
 		var f = 2 * brightness - 1;
 		var c = (1 - (f < 0 ? -f : f)) * saturation;
 		var f = hue * 3 / 3.14159265358979323 % 2. - 1;
 		var x = c * (1 - (f < 0 ? -f : f));
 		var m = brightness - c / 2;
-		if(hue < 1.0471975511965976) {
+		if(hue < 1.04719755119659763) {
 			this.x = c;
 			this.y = x;
 			this.z = 0;
-		} else if(hue < 2.0943951023931953) {
+		} else if(hue < 2.09439510239319526) {
 			this.x = x;
 			this.y = c;
 			this.z = 0;
@@ -17269,11 +17269,11 @@ h3d_VectorImpl.prototype = {
 			this.x = 0;
 			this.y = c;
 			this.z = x;
-		} else if(hue < 4.1887902047863905) {
+		} else if(hue < 4.18879020478639053) {
 			this.x = 0;
 			this.y = x;
 			this.z = c;
-		} else if(hue < 5.2359877559829888) {
+		} else if(hue < 5.23598775598298882) {
 			this.x = x;
 			this.y = 0;
 			this.z = c;
@@ -17319,7 +17319,7 @@ h3d_VectorImpl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -17362,7 +17362,7 @@ h3d_VectorImpl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -17856,18 +17856,18 @@ h3d_Vector4Impl.prototype = {
 		if(saturation == null) {
 			saturation = 1.;
 		}
-		var r = hue % 6.2831853071795862;
-		hue = r >= 0 ? r : r + 6.2831853071795862;
+		var r = hue % 6.28318530717958623;
+		hue = r >= 0 ? r : r + 6.28318530717958623;
 		var f = 2 * brightness - 1;
 		var c = (1 - (f < 0 ? -f : f)) * saturation;
 		var f = hue * 3 / 3.14159265358979323 % 2. - 1;
 		var x = c * (1 - (f < 0 ? -f : f));
 		var m = brightness - c / 2;
-		if(hue < 1.0471975511965976) {
+		if(hue < 1.04719755119659763) {
 			this.x = c;
 			this.y = x;
 			this.z = 0;
-		} else if(hue < 2.0943951023931953) {
+		} else if(hue < 2.09439510239319526) {
 			this.x = x;
 			this.y = c;
 			this.z = 0;
@@ -17875,11 +17875,11 @@ h3d_Vector4Impl.prototype = {
 			this.x = 0;
 			this.y = c;
 			this.z = x;
-		} else if(hue < 4.1887902047863905) {
+		} else if(hue < 4.18879020478639053) {
 			this.x = 0;
 			this.y = x;
 			this.z = c;
-		} else if(hue < 5.2359877559829888) {
+		} else if(hue < 5.23598775598298882) {
 			this.x = x;
 			this.y = 0;
 			this.z = c;
@@ -17927,7 +17927,7 @@ h3d_Vector4Impl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -17974,7 +17974,7 @@ h3d_Vector4Impl.prototype = {
 			} else {
 				h = (this.x - this.y) / d + 4.0;
 			}
-			h *= 1.0471975511965976;
+			h *= 1.04719755119659763;
 		}
 		var x = h;
 		var y = s;
@@ -31413,15 +31413,15 @@ h3d_col_OrientedBounds.prototype = $extend(h3d_col_Collider.prototype,{
 		var rpz = dx * this.zx + dy * this.zy + dz * this.zz;
 		var tmp;
 		var f = this.hx;
-		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-010) {
+		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-10) {
 			var f = this.hy;
-			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-010;
+			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-10;
 		} else {
 			tmp = false;
 		}
 		if(tmp) {
 			var f = this.hz;
-			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-010;
+			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-10;
 		} else {
 			return false;
 		}
@@ -31441,15 +31441,15 @@ h3d_col_OrientedBounds.prototype = $extend(h3d_col_Collider.prototype,{
 		var rpz = dx * this.zx + dy * this.zy + dz * this.zz;
 		var tmp;
 		var f = this.hx;
-		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-010 - s.r) {
+		if((f < 0 ? -f : f) - (rpx < 0 ? -rpx : rpx) > -1e-10 - s.r) {
 			var f = this.hy;
-			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-010 - s.r;
+			tmp = (f < 0 ? -f : f) - (rpy < 0 ? -rpy : rpy) > -1e-10 - s.r;
 		} else {
 			tmp = false;
 		}
 		if(tmp) {
 			var f = this.hz;
-			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-010 - s.r;
+			return (f < 0 ? -f : f) - (rpz < 0 ? -rpz : rpz) > -1e-10 - s.r;
 		} else {
 			return false;
 		}
@@ -70553,7 +70553,7 @@ h3d_scene_FPSCameraController.prototype = $extend(h3d_scene_CameraController.pro
 		var ty = this.targetOffset.y + this.curPos.x / this.curOffset.w * Math.sin(this.curPos.y) * Math.sin(this.curPos.z);
 		var tz = this.targetOffset.z + this.curPos.x / this.curOffset.w * Math.cos(this.curPos.z);
 		this.targetPos.y = this.curPos.y - dtheta;
-		var min = 0.031415926535897934;
+		var min = 0.0314159265358979339;
 		var f = this.curPos.z - dphi;
 		var min1 = min;
 		var max = 3.14159265358979323 - min;
@@ -91935,7 +91935,7 @@ h3d_shader_Shadow.prototype = $extend(hxsl_Shader.prototype,{
 	,__class__: h3d_shader_Shadow
 });
 var h3d_shader_SignedDistanceField = function() {
-	this.smoothing__ = 0.041666666666666664;
+	this.smoothing__ = 0.0416666666666666644;
 	this.alphaCutoff__ = 0.5;
 	this.autoSmoothing__ = false;
 	this.channel__ = 0;
@@ -110107,96 +110107,6 @@ hide_engine_infrastructure_EngineEventBusImpl.prototype = {
 	}
 	,__class__: hide_engine_infrastructure_EngineEventBusImpl
 };
-var hide_engine_infrastructure_FullscreenQuad = function(gl) {
-	this.isInitialized = false;
-	this.gl = gl;
-};
-$hxClasses["hide.engine.infrastructure.FullscreenQuad"] = hide_engine_infrastructure_FullscreenQuad;
-hide_engine_infrastructure_FullscreenQuad.__name__ = "hide.engine.infrastructure.FullscreenQuad";
-hide_engine_infrastructure_FullscreenQuad.prototype = {
-	gl: null
-	,program: null
-	,vertexBuffer: null
-	,textureLocation: null
-	,positionLocation: null
-	,isInitialized: null
-	,init: function() {
-		if(this.isInitialized) {
-			return;
-		}
-		var vs = this.compileShader(35633,hide_engine_infrastructure_FullscreenQuad.VERTEX_SHADER);
-		var fs = this.compileShader(35632,hide_engine_infrastructure_FullscreenQuad.FRAGMENT_SHADER);
-		if(vs == null || fs == null) {
-			haxe_Log.trace("❌ [FullscreenQuad] Shader compilation failed",{ fileName : "hide/engine/infrastructure/FullscreenQuad.hx", lineNumber : 67, className : "hide.engine.infrastructure.FullscreenQuad", methodName : "init"});
-			return;
-		}
-		this.program = this.gl.createProgram();
-		this.gl.attachShader(this.program,vs);
-		this.gl.attachShader(this.program,fs);
-		this.gl.linkProgram(this.program);
-		if(this.gl.getProgramParameter(this.program,35714) == false) {
-			haxe_Log.trace("❌ [FullscreenQuad] Program link failed: " + this.gl.getProgramInfoLog(this.program),{ fileName : "hide/engine/infrastructure/FullscreenQuad.hx", lineNumber : 78, className : "hide.engine.infrastructure.FullscreenQuad", methodName : "init"});
-			return;
-		}
-		this.positionLocation = this.gl.getAttribLocation(this.program,"aPosition");
-		this.textureLocation = this.gl.getUniformLocation(this.program,"uTexture");
-		this.vertexBuffer = this.gl.createBuffer();
-		this.gl.bindBuffer(34962,this.vertexBuffer);
-		var vertices = new Float32Array([-1.0,-1.0,1.0,-1.0,-1.0,1.0,1.0,1.0]);
-		this.gl.bufferData(34962,vertices,35044);
-		this.gl.deleteShader(vs);
-		this.gl.deleteShader(fs);
-		this.isInitialized = true;
-		haxe_Log.trace("✅ [FullscreenQuad] Initialized",{ fileName : "hide/engine/infrastructure/FullscreenQuad.hx", lineNumber : 104, className : "hide.engine.infrastructure.FullscreenQuad", methodName : "init"});
-	}
-	,compileShader: function(type,source) {
-		var shader = this.gl.createShader(type);
-		this.gl.shaderSource(shader,source);
-		this.gl.compileShader(shader);
-		if(this.gl.getShaderParameter(shader,35713) == false) {
-			haxe_Log.trace("❌ [FullscreenQuad] Shader compile error: " + this.gl.getShaderInfoLog(shader),{ fileName : "hide/engine/infrastructure/FullscreenQuad.hx", lineNumber : 116, className : "hide.engine.infrastructure.FullscreenQuad", methodName : "compileShader"});
-			this.gl.deleteShader(shader);
-			return null;
-		}
-		return shader;
-	}
-	,render: function(texture) {
-		if(!this.isInitialized || texture == null) {
-			return;
-		}
-		var glTexture = texture.getHandle();
-		if(glTexture == null) {
-			haxe_Log.trace("⚠️ [FullscreenQuad] Texture handle is null",{ fileName : "hide/engine/infrastructure/FullscreenQuad.hx", lineNumber : 136, className : "hide.engine.infrastructure.FullscreenQuad", methodName : "render"});
-			return;
-		}
-		this.gl.viewport(0,0,this.gl.canvas.width,this.gl.canvas.height);
-		this.gl.clearColor(0.1,0.1,0.1,1.0);
-		this.gl.clear(16384);
-		this.gl.useProgram(this.program);
-		this.gl.activeTexture(33984);
-		this.gl.bindTexture(3553,glTexture);
-		this.gl.uniform1i(this.textureLocation,0);
-		this.gl.bindBuffer(34962,this.vertexBuffer);
-		this.gl.enableVertexAttribArray(this.positionLocation);
-		this.gl.vertexAttribPointer(this.positionLocation,2,5126,false,0,0);
-		this.gl.drawArrays(5,0,4);
-		this.gl.disableVertexAttribArray(this.positionLocation);
-		this.gl.bindTexture(3553,null);
-		this.gl.useProgram(null);
-	}
-	,dispose: function() {
-		if(this.program != null) {
-			this.gl.deleteProgram(this.program);
-			this.program = null;
-		}
-		if(this.vertexBuffer != null) {
-			this.gl.deleteBuffer(this.vertexBuffer);
-			this.vertexBuffer = null;
-		}
-		this.isInitialized = false;
-	}
-	,__class__: hide_engine_infrastructure_FullscreenQuad
-};
 var hide_engine_infrastructure_HeapsEngineManager = function(viewportService) {
 	this.isEngineReady = false;
 	this.viewportService = viewportService;
@@ -110216,8 +110126,8 @@ hide_engine_infrastructure_HeapsEngineManager.prototype = {
 		if(window.document.getElementById("webgl") == null) {
 			var dummyCanvas = window.document.createElement("canvas");
 			dummyCanvas.id = "webgl";
-			dummyCanvas.width = 16;
-			dummyCanvas.height = 16;
+			dummyCanvas.width = window.innerWidth;
+			dummyCanvas.height = window.innerHeight;
 			dummyCanvas.style.position = "absolute";
 			dummyCanvas.style.top = "-9999px";
 			dummyCanvas.style.left = "-9999px";
@@ -110226,12 +110136,20 @@ hide_engine_infrastructure_HeapsEngineManager.prototype = {
 			haxe_Log.trace("🎨 [HeapsRenderer] Created hidden #webgl canvas for hxd.Window",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 51, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "ensureDummyCanvas"});
 		}
 	}
+	,updateDummyCanvasSize: function(width,height) {
+		var dummyCanvas = window.document.getElementById("webgl");
+		if(dummyCanvas != null) {
+			dummyCanvas.width = width;
+			dummyCanvas.height = height;
+			haxe_Log.trace("📐 [HeapsRenderer] Dummy canvas resized to ${width}x${height}",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 60, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "updateDummyCanvasSize"});
+		}
+	}
 	,initEngine: function() {
 		var _gthis = this;
 		h3d_Engine.ANTIALIASING = 4;
 		var existingEngine = h3d_Engine.CURRENT;
 		if(existingEngine != null) {
-			haxe_Log.trace("🎨 [HeapsRenderer] Using existing engine",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 60, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "initEngine"});
+			haxe_Log.trace("🎨 [HeapsRenderer] Using existing engine",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 68, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "initEngine"});
 			this.engine = existingEngine;
 			if(this.engine.driver != null) {
 				this.onEngineReady();
@@ -110253,7 +110171,7 @@ hide_engine_infrastructure_HeapsEngineManager.prototype = {
 	}
 	,onEngineReady: function() {
 		if(this.engine == null || this.engine.driver == null) {
-			haxe_Log.trace("⏳ [HeapsRenderer] Engine created but driver not ready, retrying...",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 87, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "onEngineReady"});
+			haxe_Log.trace("⏳ [HeapsRenderer] Engine created but driver not ready, retrying...",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 95, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "onEngineReady"});
 			haxe_Timer.delay($bind(this,this.onEngineReady),50);
 			return;
 		}
@@ -110261,21 +110179,21 @@ hide_engine_infrastructure_HeapsEngineManager.prototype = {
 		this.engine.backgroundColor = -14013910;
 		this.isEngineReady = true;
 		this.logSupportedFeatures();
-		haxe_Log.trace("🎨 [HeapsRenderer] Engine ready. Render loop started.",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 98, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "onEngineReady"});
+		haxe_Log.trace("🎨 [HeapsRenderer] Engine ready. Render loop started.",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 106, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "onEngineReady"});
 	}
 	,logSupportedFeatures: function() {
 		var driver = this.engine.driver;
 		if(driver == null) {
 			return;
 		}
-		haxe_Log.trace("🔍 [HeapsEngineManager] GPU Features:",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 108, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
-		haxe_Log.trace(" -Standard Derivatives: " + Std.string(driver.hasFeature(h3d_impl_Feature.StandardDerivatives)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 109, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
-		haxe_Log.trace(" −FloatTextures:" + Std.string(driver.hasFeature(h3d_impl_Feature.StandardDerivatives)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 110, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
-		haxe_Log.trace(" −FloatTextures:" + Std.string(driver.hasFeature(h3d_impl_Feature.FloatTextures)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 111, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
-		haxe_Log.trace(" -Hardware Accelerated: " + Std.string(driver.hasFeature(h3d_impl_Feature.HardwareAccelerated)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 112, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
-		haxe_Log.trace(" −MultipleRenderTargets:" + Std.string(driver.hasFeature(h3d_impl_Feature.HardwareAccelerated)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 113, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
-		haxe_Log.trace(" −MultipleRenderTargets:" + Std.string(driver.hasFeature(h3d_impl_Feature.MultipleRenderTargets)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 114, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
-		haxe_Log.trace(" - SRGB Textures: " + Std.string(driver.hasFeature(h3d_impl_Feature.SRGBTextures)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 115, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace("🔍 [HeapsEngineManager] GPU Features:",{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 116, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" -Standard Derivatives: " + Std.string(driver.hasFeature(h3d_impl_Feature.StandardDerivatives)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 117, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" −FloatTextures:" + Std.string(driver.hasFeature(h3d_impl_Feature.StandardDerivatives)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 118, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" −FloatTextures:" + Std.string(driver.hasFeature(h3d_impl_Feature.FloatTextures)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 119, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" -Hardware Accelerated: " + Std.string(driver.hasFeature(h3d_impl_Feature.HardwareAccelerated)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 120, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" −MultipleRenderTargets:" + Std.string(driver.hasFeature(h3d_impl_Feature.HardwareAccelerated)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 121, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" −MultipleRenderTargets:" + Std.string(driver.hasFeature(h3d_impl_Feature.MultipleRenderTargets)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 122, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
+		haxe_Log.trace(" - SRGB Textures: " + Std.string(driver.hasFeature(h3d_impl_Feature.SRGBTextures)),{ fileName : "hide/engine/infrastructure/HeapsEngineManager.hx", lineNumber : 123, className : "hide.engine.infrastructure.HeapsEngineManager", methodName : "logSupportedFeatures"});
 	}
 	,mainLoop: function() {
 		hxd_Timer.update();
@@ -110285,6 +110203,7 @@ hide_engine_infrastructure_HeapsEngineManager.prototype = {
 	}
 	,onResize: function(width,height) {
 		this.viewportService.resizeAll(width,height);
+		this.updateDummyCanvasSize(width,height);
 	}
 	,dispose: function() {
 		if(this.engine != null) {
@@ -110737,9 +110656,9 @@ hide_engine_infrastructure_SceneGraphMapper.prototype = {
 		cube.addUVs();
 		var mesh = new h3d_scene_Mesh(cube);
 		var _this = mesh.material.mshader.color__;
-		_this.x = 0.29019607843137257;
-		_this.y = 0.56470588235294117;
-		_this.z = 0.88627450980392153;
+		_this.x = 0.290196078431372573;
+		_this.y = 0.564705882352941169;
+		_this.z = 0.886274509803921529;
 		_this.w = 0.;
 		mesh.material.passes.set_enableLights(true);
 		return mesh;
@@ -111164,8 +111083,8 @@ hide_engine_infrastructure_SelectionSystem.prototype = {
 			this.meshOriginalColor.set(targetMesh,orig);
 		}
 		var _this = targetMesh.material.mshader.color__;
-		_this.x = 0.41568627450980394;
-		_this.y = 0.69019607843137254;
+		_this.x = 0.415686274509803944;
+		_this.y = 0.690196078431372539;
 		_this.z = 1.;
 		_this.w = 0.;
 		var worldBounds = targetMesh.getBounds();
@@ -111345,8 +111264,8 @@ hide_engine_infrastructure_SelectionSystem.prototype = {
 	,highlightMeshOnHover: function(mesh) {
 		if(!this.isMeshSelected(mesh)) {
 			var _this = mesh.material.mshader.color__;
-			_this.x = 0.41568627450980394;
-			_this.y = 0.69019607843137254;
+			_this.x = 0.415686274509803944;
+			_this.y = 0.690196078431372539;
 			_this.z = 1.;
 			_this.w = 0.;
 		}
@@ -111374,9 +111293,9 @@ hide_engine_infrastructure_SelectionSystem.prototype = {
 				_this.w = 1.;
 			} else {
 				var _this = mesh.material.mshader.color__;
-				_this.x = 0.29019607843137257;
-				_this.y = 0.56470588235294117;
-				_this.z = 0.88627450980392153;
+				_this.x = 0.290196078431372573;
+				_this.y = 0.564705882352941169;
+				_this.z = 0.886274509803921529;
 				_this.w = 0.;
 			}
 		}
@@ -112064,30 +111983,19 @@ var hide_engine_infrastructure_Viewport = function(id,scene,width,height) {
 	this.scene = scene;
 	this.width = width;
 	this.height = height;
-	var renderWidth = width;
-	var renderHeight = height;
-	this.renderTarget = new h3d_mat_Texture(renderWidth,renderHeight,[h3d_mat_TextureFlags.Target,h3d_mat_TextureFlags.Dynamic]);
+	this.renderWidth = width;
+	this.renderHeight = height;
+	this.renderTarget = new h3d_mat_Texture(this.renderWidth,this.renderHeight,[h3d_mat_TextureFlags.Target,h3d_mat_TextureFlags.Dynamic]);
 	this.renderTarget.set_filter(h3d_mat_Filter.AnisotropicLinear);
-	this.renderTarget.depthBuffer = new h3d_mat_Texture(renderWidth,renderHeight,[],hxd_PixelFormat.Depth24Stencil8);
+	this.renderTarget.depthBuffer = new h3d_mat_Texture(this.renderWidth,this.renderHeight,[],hxd_PixelFormat.Depth24Stencil8);
 	this.canvas = window.document.createElement("canvas");
 	this.canvas.width = width;
 	this.canvas.height = height;
-	this.gl = this.canvas.getContext("webgl2");
-	if(this.gl == null) {
-		this.gl = this.canvas.getContext("webgl");
-	}
-	if(this.gl != null) {
-		this.fullscreenQuad = new hide_engine_infrastructure_FullscreenQuad(this.gl);
-		this.fullscreenQuad.init();
-		haxe_Log.trace("✅ [Viewport $id] WebGL context created, GPU blit enabled",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 59, className : "hide.engine.infrastructure.Viewport", methodName : "new"});
-	} else {
-		haxe_Log.trace("⚠️ [Viewport $id] WebGL not available, GPU blit disabled",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 61, className : "hide.engine.infrastructure.Viewport", methodName : "new"});
-	}
 	this.canvas.style.width = "100%";
 	this.canvas.style.height = "100%";
 	this.canvas.style.display = "block";
 	this.canvas.style.objectFit = "contain";
-	this.canvas.style.imageRendering = "pixelated";
+	this.canvas.style.imageRendering = "auto";
 	this.canvas.style.background = "#1a1a1a";
 };
 $hxClasses["hide.engine.infrastructure.Viewport"] = hide_engine_infrastructure_Viewport;
@@ -112100,33 +112008,24 @@ hide_engine_infrastructure_Viewport.prototype = {
 	,enabled: null
 	,width: null
 	,height: null
+	,renderWidth: null
+	,renderHeight: null
 	,frameCount: null
-	,gl: null
-	,fullscreenQuad: null
 	,renderToScreen: function(engine) {
-		if(this.fullscreenQuad != null && this.renderTarget != null) {
-			this.fullscreenQuad.render(this.renderTarget);
-		} else {
-			this.blitToCanvas();
-		}
+		this.blitToCanvas();
 		this.frameCount++;
-	}
-	,renderTextureToCanvas: function(gl,tex,w,h) {
-		gl.viewport(0,0,w,h);
-		gl.clearColor(0.1,0.1,0.1,1.0);
-		gl.clear(16384);
 	}
 	,blitToCanvas: function() {
 		var pixels = this.renderTarget.capturePixels();
 		if(pixels == null || pixels.bytes.length == 0) {
-			haxe_Log.trace("⚠️ [Viewport " + this.id + "] capturePixels returned EMPTY data!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 127, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
+			haxe_Log.trace("⚠️ [Viewport " + this.id + "] capturePixels returned EMPTY data!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 84, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
 			return;
 		}
 		var ctx = this.canvas.getContext("2d");
 		ctx.imageSmoothingEnabled = true;
 		ctx.imageSmoothingQuality = "high";
 		if(ctx == null) {
-			haxe_Log.trace("⚠️ [Viewport " + this.id + "] Canvas 2D context is NULL!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 135, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
+			haxe_Log.trace("⚠️ [Viewport " + this.id + "] Canvas 2D context is NULL!",{ fileName : "hide/engine/infrastructure/Viewport.hx", lineNumber : 92, className : "hide.engine.infrastructure.Viewport", methodName : "blitToCanvas"});
 			return;
 		}
 		var imageData = ctx.createImageData(this.width,this.height);
@@ -112144,6 +112043,13 @@ hide_engine_infrastructure_Viewport.prototype = {
 			++i;
 		}
 		ctx.putImageData(imageData,0,0);
+		var tempCanvas = window.document.createElement("canvas");
+		tempCanvas.width = this.renderWidth;
+		tempCanvas.height = this.renderHeight;
+		var tempCtx = tempCanvas.getContext("2d");
+		tempCtx.putImageData(imageData,0,0);
+		ctx.clearRect(0,0,this.width,this.height);
+		ctx.drawImage(tempCanvas,0,0,this.width,this.height);
 		ctx.strokeStyle = "#00ff00";
 		ctx.lineWidth = 3;
 		ctx.strokeRect(0,0,this.width,this.height);
@@ -112171,10 +112077,6 @@ hide_engine_infrastructure_Viewport.prototype = {
 		}
 	}
 	,dispose: function() {
-		if(this.fullscreenQuad != null) {
-			this.fullscreenQuad.dispose();
-			this.fullscreenQuad = null;
-		}
 		this.renderTarget.dispose();
 		if(this.canvas != null && this.canvas.parentElement != null) {
 			this.canvas.parentElement.removeChild(this.canvas);
@@ -112184,20 +112086,22 @@ hide_engine_infrastructure_Viewport.prototype = {
 };
 var hide_engine_infrastructure_ViewportService = function() {
 	this.viewports = new haxe_ds_StringMap();
+	this.screenFx = new h3d_pass_ScreenFx(new hide_engine_infrastructure_shaders_TextureOutputShader());
 };
 $hxClasses["hide.engine.infrastructure.ViewportService"] = hide_engine_infrastructure_ViewportService;
 hide_engine_infrastructure_ViewportService.__name__ = "hide.engine.infrastructure.ViewportService";
 hide_engine_infrastructure_ViewportService.__interfaces__ = [hx_injection_Service];
 hide_engine_infrastructure_ViewportService.prototype = {
 	viewports: null
+	,screenFx: null
 	,register: function(id,scene,width,height) {
 		if(Object.prototype.hasOwnProperty.call(this.viewports.h,id)) {
-			haxe_Log.trace("⚠️ Viewport " + id + " already exists, reusing",{ fileName : "hide/engine/infrastructure/ViewportService.hx", lineNumber : 25, className : "hide.engine.infrastructure.ViewportService", methodName : "register"});
+			haxe_Log.trace("⚠️ Viewport " + id + " already exists, reusing",{ fileName : "hide/engine/infrastructure/ViewportService.hx", lineNumber : 31, className : "hide.engine.infrastructure.ViewportService", methodName : "register"});
 			return this.viewports.h[id];
 		}
 		var vp = new hide_engine_infrastructure_Viewport(id,scene,width,height);
 		this.viewports.h[id] = vp;
-		haxe_Log.trace("✅ Viewport registered: " + id + " (" + width + "x" + height + ")",{ fileName : "hide/engine/infrastructure/ViewportService.hx", lineNumber : 31, className : "hide.engine.infrastructure.ViewportService", methodName : "register"});
+		haxe_Log.trace("✅ Viewport registered: " + id + " (" + width + "x" + height + ")",{ fileName : "hide/engine/infrastructure/ViewportService.hx", lineNumber : 37, className : "hide.engine.infrastructure.ViewportService", methodName : "register"});
 		return vp;
 	}
 	,renderAll: function(engine) {
@@ -112215,7 +112119,11 @@ hide_engine_infrastructure_ViewportService.prototype = {
 			engine.clear(-14013910,1.0,0);
 			vp.scene.render(engine);
 			engine.popTarget();
-			vp.renderToScreen(engine);
+			this.screenFx.shader.texture__ = vp.renderTarget;
+			this.screenFx.render();
+			if(vp.frameCount % 2 == 0) {
+				vp.blitToCanvas();
+			}
 			vp.frameCount++;
 		}
 	}
@@ -112241,7 +112149,7 @@ hide_engine_infrastructure_ViewportService.prototype = {
 			if(Object.prototype.hasOwnProperty.call(_this.h,id)) {
 				delete(_this.h[id]);
 			}
-			haxe_Log.trace("🗑️ Viewport removed: " + id,{ fileName : "hide/engine/infrastructure/ViewportService.hx", lineNumber : 93, className : "hide.engine.infrastructure.ViewportService", methodName : "removeViewport"});
+			haxe_Log.trace("🗑️ Viewport removed: " + id,{ fileName : "hide/engine/infrastructure/ViewportService.hx", lineNumber : 106, className : "hide.engine.infrastructure.ViewportService", methodName : "removeViewport"});
 		}
 	}
 	,dispose: function() {
@@ -112501,6 +112409,63 @@ hide_engine_infrastructure_shaders_NormalMapModifier.prototype = $extend(hxsl_Sh
 	}
 	,__class__: hide_engine_infrastructure_shaders_NormalMapModifier
 	,__properties__: {set_normalStrength:"set_normalStrength",get_normalStrength:"get_normalStrength",set_normalTexture:"set_normalTexture",get_normalTexture:"get_normalTexture"}
+});
+var hide_engine_infrastructure_shaders_TextureOutputShader = function() {
+	h3d_shader_ScreenShader.call(this);
+};
+$hxClasses["hide.engine.infrastructure.shaders.TextureOutputShader"] = hide_engine_infrastructure_shaders_TextureOutputShader;
+hide_engine_infrastructure_shaders_TextureOutputShader.__name__ = "hide.engine.infrastructure.shaders.TextureOutputShader";
+hide_engine_infrastructure_shaders_TextureOutputShader._SHADER = null;
+hide_engine_infrastructure_shaders_TextureOutputShader.__super__ = h3d_shader_ScreenShader;
+hide_engine_infrastructure_shaders_TextureOutputShader.prototype = $extend(h3d_shader_ScreenShader.prototype,{
+	texture__: null
+	,get_texture: function() {
+		return this.texture__;
+	}
+	,set_texture: function(_v) {
+		return this.texture__ = _v;
+	}
+	,updateConstants: function(globals) {
+		this.constBits = 0;
+		this.updateConstantsFinal(globals);
+	}
+	,getParamValue: function(index) {
+		switch(index) {
+		case 0:
+			return this.flipY__;
+		case 1:
+			return this.texture__;
+		default:
+		}
+		return null;
+	}
+	,getParamFloatValue: function(index) {
+		if(index == 0) {
+			return this.flipY__;
+		}
+		return 0.;
+	}
+	,writeParam: function(index,type,out,pos) {
+		switch(index) {
+		case 0:
+			out[pos] = this.flipY__;
+			break;
+		case 1:
+			h3d_shader_ScreenShader.prototype.writeParam.call(this,index,type,out,pos);
+			break;
+		default:
+			h3d_shader_ScreenShader.prototype.writeParam.call(this,index,type,out,pos);
+		}
+	}
+	,clone: function() {
+		var s = Object.create(hide_engine_infrastructure_shaders_TextureOutputShader.prototype);
+		s.shader = this.shader;
+		s.flipY__ = this.flipY__;
+		s.texture__ = this.texture__;
+		return s;
+	}
+	,__class__: hide_engine_infrastructure_shaders_TextureOutputShader
+	,__properties__: $extend(h3d_shader_ScreenShader.prototype.__properties__,{set_texture:"set_texture",get_texture:"get_texture"})
 });
 var hide_infrastructure_external_GoldenLayoutAdapter = function(eventBus,viewRegistry) {
 	this.eventBus = eventBus;
@@ -112826,7 +112791,7 @@ hide_infrastructure_external_StubConsoleFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubConsoleFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubConsoleFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>🖥️ Console</h2>\r\n                <p>Console output will appear here.</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>🖥️ Console</h2>\n                <p>Console output will appear here.</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112841,7 +112806,7 @@ hide_infrastructure_external_StubEditorFactory.__name__ = "hide.infrastructure.e
 hide_infrastructure_external_StubEditorFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubEditorFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>📝 Stub Editor</h2>\r\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\r\n                <p>Состояние: " + JSON.stringify(state) + "</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\n                <h2>📝 Stub Editor</h2>\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\n                <p>Состояние: " + JSON.stringify(state) + "</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112856,7 +112821,7 @@ hide_infrastructure_external_StubGameFactory.__name__ = "hide.infrastructure.ext
 hide_infrastructure_external_StubGameFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubGameFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\r\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\r\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\r\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\r\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\r\n                    Resolution: 1920×1080 | Stats: OFF\r\n                </div>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#d4d4d4; background:#1a1a1a; height:100%; font-family: sans-serif; display:flex; flex-direction:column; align-items:center; justify-content:center;'>\n                <div style='font-size:48px; margin-bottom:20px;'>🎮</div>\n                <h2 style='margin:0; color:#fff;'>Game View</h2>\n                <p style='color:#aaa; margin-top:10px;'>Press ▶ Play to run the game</p>\n                <div style='margin-top:20px; padding:10px; background:#2a2a2a; border-radius:4px; font-family:monospace; font-size:12px; color:#888;'>\n                    Resolution: 1920×1080 | Stats: OFF\n                </div>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112871,7 +112836,7 @@ hide_infrastructure_external_StubProjectFactory.__name__ = "hide.infrastructure.
 hide_infrastructure_external_StubProjectFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubProjectFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\r\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\r\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\r\n                </div>\r\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\r\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\r\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                            ▼ 📁 Assets\r\n                        </div>\r\n                        <div style='padding-left:16px;'>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Materials\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Prefabs\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scenes\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                ▼ 📁 Scripts\r\n                            </div>\r\n                            <div style='padding-left:16px;'>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\r\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\r\n                            </div>\r\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\r\n                                📁 Textures\r\n                            </div>\r\n                        </div>\r\n                    </div>\r\n                </div>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:10px; color:#d4d4d4; background:#383838; height:100%; font-family: sans-serif; font-size:13px;'>\n                <div style='padding:4px 8px; background:#2a2a2a; border-radius:3px; margin-bottom:8px;'>\n                    🔍 <input type='text' placeholder='Search Assets...' style='background:transparent; border:none; color:#fff; outline:none; width:80%;'/>\n                </div>\n                <div style='display:flex; height:calc(100% - 40px); gap:8px;'>\n                    <div style='flex:1; background:#2a2a2a; border-radius:3px; padding:8px; overflow-y:auto;'>\n                        <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                            ▼ 📁 Assets\n                        </div>\n                        <div style='padding-left:16px;'>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Materials\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Prefabs\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scenes\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                ▼ 📁 Scripts\n                            </div>\n                            <div style='padding-left:16px;'>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 PlayerController.cs</div>\n                                <div style='padding:3px 6px; cursor:pointer; border-radius:3px; color:#7ec6ff;'>📄 GameManager.cs</div>\n                            </div>\n                            <div style='padding:3px 6px; cursor:pointer; border-radius:3px;' onmouseover='this.style.background=\"#444\"' onmouseout='this.style.background=\"transparent\"'>\n                                📁 Textures\n                            </div>\n                        </div>\n                    </div>\n                </div>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -112886,7 +112851,7 @@ hide_infrastructure_external_StubPropertiesFactory.__name__ = "hide.infrastructu
 hide_infrastructure_external_StubPropertiesFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
 hide_infrastructure_external_StubPropertiesFactory.prototype = {
 	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\r\n                <h2>⚙️ Properties</h2>\r\n                <p>Object properties will appear here.</p>\r\n            </div>\r\n        ");
+		container.setInnerHtml("\n            <div style='padding:20px; color:#cccccc; background:#252526; height:100%; font-family: sans-serif;'>\n                <h2>⚙️ Properties</h2>\n                <p>Object properties will appear here.</p>\n            </div>\n        ");
 		return null;
 	}
 	,getConstructorArgs: function() {
@@ -117898,31 +117863,31 @@ hxd_Math.colorLerp = function(c1,c2,k) {
 	return a << 24 | r << 16 | g << 8 | b;
 };
 hxd_Math.angle = function(da) {
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	return da;
 };
 hxd_Math.angleLerp = function(a,b,k) {
 	var da = b - a;
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	return a + da * k;
 };
 hxd_Math.angleMove = function(a,b,max) {
 	var da = b - a;
-	da %= 6.2831853071795862;
+	da %= 6.28318530717958623;
 	if(da > 3.14159265358979323) {
-		da -= 6.2831853071795862;
-	} else if(da <= -3.1415926535897931) {
-		da += 6.2831853071795862;
+		da -= 6.28318530717958623;
+	} else if(da <= -3.14159265358979312) {
+		da += 6.28318530717958623;
 	}
 	var da1 = da;
 	if(da1 > -max && da1 < max) {
@@ -121124,7 +121089,7 @@ var hxd_clipper__$Clipper_ClipperBase = function() {
 $hxClasses["hxd.clipper._Clipper.ClipperBase"] = hxd_clipper__$Clipper_ClipperBase;
 hxd_clipper__$Clipper_ClipperBase.__name__ = "hxd.clipper._Clipper.ClipperBase";
 hxd_clipper__$Clipper_ClipperBase.nearZero = function(v) {
-	if(v > -1e-020) {
+	if(v > -1e-20) {
 		return v < 1E-20;
 	} else {
 		return false;
@@ -124539,7 +124504,7 @@ var hxd_clipper_ClipperOffset = function(miterLimit,arcTolerance) {
 	if(miterLimit == null) {
 		miterLimit = 2.0;
 	}
-	this.two_pi = 6.2831853071795862;
+	this.two_pi = 6.28318530717958623;
 	this.def_arc_tolerance = 0.25;
 	this.MiterLimit = miterLimit;
 	this.ArcTolerance = arcTolerance;
@@ -124672,7 +124637,7 @@ hxd_clipper_ClipperOffset.prototype = {
 		var polygons = null;
 		this.m_destPolys = polygons == null ? [] : polygons;
 		this.m_delta = delta;
-		if(delta > -1e-020 && delta < 1E-20) {
+		if(delta > -1e-20 && delta < 1E-20) {
 			var _g = 0;
 			var _g1 = this.m_polyNodes.childs;
 			while(_g < _g1.length) {
@@ -128300,7 +128265,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 			x = 0.;
 		}
 		var P1 = new h3d_VectorImpl(x,y,z);
-		var F = 0.017453292519943295;
+		var F = 0.0174532925199432955;
 		var allTimes = new haxe_ds_IntMap();
 		if(animNode != null) {
 			var _g = 0;
@@ -128348,7 +128313,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 					var values = hxd_fmt_fbx_FbxTools.getFloats(hxd_fmt_fbx_FbxTools.get(dataCurves[0],"KeyValueFloat"));
 					switch(cname) {
 					case "FieldOfView":
-						var ratio = 1.7777777777777777;
+						var ratio = 1.77777777777777768;
 						var fov = 45.;
 						var _g4 = 0;
 						var _g5 = hxd_fmt_fbx_FbxTools.getAll(this.getChild(model,"NodeAttribute"),"Properties70.P");
@@ -129073,7 +129038,7 @@ hxd_fmt_fbx_BaseLibrary.prototype = {
 			return d;
 		}
 		d = new hxd_fmt_fbx_DefaultMatrixes();
-		var F = 0.017453292519943295;
+		var F = 0.0174532925199432955;
 		var _g = 0;
 		var _g1 = hxd_fmt_fbx_FbxTools.getAll(model,"Properties70.P");
 		while(_g < _g1.length) {
@@ -132677,7 +132642,7 @@ hxd_fmt_fbx_HMDOut.prototype = $extend(hxd_fmt_fbx_BaseLibrary.prototype,{
 			if(o.model != null && hxd_fmt_fbx_FbxTools.getType(o.model) == "Camera") {
 				var props = this.getChild(o.model,"NodeAttribute");
 				var fov = 45.;
-				var ratio = 1.7777777777777777;
+				var ratio = 1.77777777777777768;
 				var _g1 = 0;
 				var _g2 = hxd_fmt_fbx_FbxTools.getAll(props,"Properties70.P");
 				while(_g1 < _g2.length) {
@@ -179294,7 +179259,7 @@ h3d_scene_DynamicJointData.tmpVec2 = (function($this) {
 }(this));
 h3d_scene_DynamicJointData.tmpQ = new h3d_Quat();
 h3d_scene_DynamicJointData.tmpQ2 = new h3d_Quat();
-h3d_scene_Skin.FIXED_DT = 0.016666666666666666;
+h3d_scene_Skin.FIXED_DT = 0.0166666666666666664;
 h3d_scene_Skin.MIN_SHADER_BONES = 32;
 h3d_scene_Skin.TMP_MAT = new h3d_MatrixImpl();
 h3d_scene_pbr_IrradBase.SRC = "HXSMF2gzZC5zY2VuZS5wYnIuSXJyYWRCYXNlCwEFaW5wdXQNAQICCHBvc2l0aW9uBQoBAQADAnV2BQoBAQABAAAEBWZsaXBZAwIAAAUGb3V0cHV0DQICBghwb3NpdGlvbgUMBAUABwVjb2xvcgUMBAUABAAACApwaXhlbENvbG9yBQwEAAAJDGNhbGN1bGF0ZWRVVgUKBAAACgtzYW1wbGVzQml0cwECAAEAAAAAAAsIX19pbml0X18OBgAADAZ2ZXJ0ZXgOBgAADQxfcmV2ZXJzZWJpdHMOBgAADgpoYW1tZXJzbGV5DgYAAA8TaW1wb3J0YW5jZVNhbXBsZUdHWA4GAAAFAgsAAAUCBgQCBwUMAggFDAUMBgQCCQUKAgMFCgUKAAAMAAAFAQYEAgYFDAkDKw4ECgICBQoAAAMGAQoCAgUKBAADAgQDAwEDAAAAAAAAAAADAQMAAAAAAADwPwMFDAUMAAMNARABaQEEAAABBQYIEQFyAQQAAAYMBAYQAhABAQIQAAAAAQEBBAYSAhABAQIQAAAAAQEBAQAGBAIRAQYMBAYQBAYLAhEBAQL/AP8AAQEBAQIIAAAAAQEBBAYSBAYLAhEBAQIA/wD/AQEBAQIIAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQIPDw8PAQEBAQIEAAAAAQEBBAYSBAYLAhEBAQLw8PDwAQEBAQIEAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQIzMzMzAQEBAQICAAAAAQEBBAYSBAYLAhEBAQLMzMzMAQEBAQICAAAAAQEBAQEGBAIRAQYMBAYQBAYLAhEBAQJVVVVVAQEBAQIBAAAAAQEBBAYSBAYLAhEBAQKqqqqqAQEBAQIBAAAAAQEBAQENAhEBAAADDgISAWkBBAAAEwNtYXgBBAAABQoFAggUAnJpAwQAAAYBCQMnDgEJAg0OAQISAQEDAQMAAAAAAADwPQMDAA0JAykOAgYCCQMnDgECEgEDCQMnDgECEwEDAwIUAwUKAAADDwMVCXJvdWdobmVzcwMEAAAWAXAFCgQAABcBbgULBAAABQsFCQgYAWEDBAAABgECFQMCFQMDAAgZA3BoaQMEAAAGAQYBAQMAAAAAAAAAQAMBAxgtRFT7IQlAAwMKAhYFCgAAAwMACBoEY29zVAMEAAAJAxUOAgkDDQ4BBgIEBgMBAwAAAAAAAPA/AwoCFgUKBAADAwMEBgABAwAAAAAAAPA/AwYBBAYDBgECGAMCGAMDAQMAAAAAAADwPwMDAwoCFgUKBAADAwMDAwMBAwAAAAAAAPA/AwMACBsEc2luVAMEAAAJAw0OAQYDAQMAAAAAAADwPwMGAQIaAwIaAwMDAwAIHARsdGFuBQsEAAAJAyoOAwYBAhsDCQMDDgECGQMDAwYBAhsDCQMCDgECGQMDAwIaAwULAAgdAnVwBQsEAAALBgkJAw8OAQoCFwULCAADAwEDK4cW2c737z8DAgkDKg4DAQMAAAAAAAAAAAMBAwAAAAAAAAAAAwEDAAAAAAAA8D8DBQsJAyoOAwEDAAAAAAAA8D8DAQMAAAAAAAAAAAMBAwAAAAAAAAAAAwULBQsACB4EdGFuWAULBAAACQMgDgEJAx8OAgIdBQsCFwULBQsFCwAIHwR0YW5ZBQsEAAAJAyAOAQkDHw4CAhcFCwIeBQsFCwULAA0JAyAOAQQGAAYABgECHgULCgIcBQsAAAMFCwYBAh8FCwoCHAULBAADBQsFCwYBAhcFCwoCHAULCAADBQsFCwULBQsAAA";
@@ -179556,8 +179521,6 @@ haxe_zip_InflateImpl.DIST_EXTRA_BITS_TBL = [0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,
 haxe_zip_InflateImpl.DIST_BASE_VAL_TBL = [1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577];
 haxe_zip_InflateImpl.CODE_LENGTHS_POS = [16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];
 haxe_zip_InflateImpl.FIXED_HUFFMAN = null;
-hide_engine_infrastructure_FullscreenQuad.VERTEX_SHADER = "\r\n    attribute vec2 aPosition;\r\n    varying vec2 vUV;\r\n    void main() {\r\n        // Конвертируем [-1,1] → [0,1] для UV\r\n        vUV = aPosition * 0.5 + 0.5;\r\n        // Инвертируем Y, т.к. WebGL и Heaps имеют разную ориентацию\r\n        vUV.y = 1.0 - vUV.y;\r\n        gl_Position = vec4(aPosition, 0.0, 1.0);\r\n    }\r\n";
-hide_engine_infrastructure_FullscreenQuad.FRAGMENT_SHADER = "\r\n    precision mediump float;\r\n    varying vec2 vUV;\r\n    uniform sampler2D uTexture;\r\n    void main() {\r\n        gl_FragColor = texture2D(uTexture, vUV);\r\n    }\r\n";
 hide_engine_infrastructure_HeapsEngineManager.isSystemInitialized = false;
 hide_engine_infrastructure_HeapsEngineManager.instance = null;
 hide_engine_infrastructure_ShaderGraphSerializer.VERSION = "1.0";
@@ -179567,6 +179530,8 @@ hide_engine_infrastructure_shaders_EmissiveModifier.SRC = "HXSMM2hpZGUuZW5naW5lL
 hide_engine_infrastructure_shaders_EmissiveModifier._MODULE = "hide.engine.infrastructure.shaders.EmissiveModifier";
 hide_engine_infrastructure_shaders_NormalMapModifier.SRC = "HXSMNGhpZGUuZW5naW5lLmluZnJhc3RydWN0dXJlLnNoYWRlcnMuTm9ybWFsTWFwTW9kaWZpZXIbAQZjYW1lcmENAQwCBHZpZXcHAAEAAwRwcm9qBwABAAQIcG9zaXRpb24FCwABAAUIcHJvakZsaXADAAEABghwcm9qRGlhZwULAAEABwh2aWV3UHJvagcAAQAIEHByZXZpb3VzVmlld1Byb2oHAAEACQ9pbnZlcnNlVmlld1Byb2oHAAEACgV6TmVhcgMAAQALBHpGYXIDAAEADANkaXIFCwMBAA0Naml0dGVyT2Zmc2V0cwUMAAEAAAAADgZnbG9iYWwNAgUPBHRpbWUDAA4AEAlwaXhlbFNpemUFCgAOABEJbW9kZWxWaWV3BwAOAQMSEG1vZGVsVmlld0ludmVyc2UHAA4BAxMRcHJldmlvdXNNb2RlbFZpZXcHAA4BAwAAABQFaW5wdXQNAwIVCHBvc2l0aW9uBQsBFAAWBm5vcm1hbAULARQAAQAAFwZvdXRwdXQNBAYYCHBvc2l0aW9uBQwEFwAZBWNvbG9yBQwEFwAaBWRlcHRoAwQXABsGbm9ybWFsBQsEFwAcCXdvcmxkRGlzdAMEFwAdCHZlbG9jaXR5BQoEFwAEAAAeEHJlbGF0aXZlUG9zaXRpb24FCwQAAB8TdHJhbnNmb3JtZWRQb3NpdGlvbgULBAAAIBtwcmV2aW91c1RyYW5zZm9ybWVkUG9zaXRpb24FCwQAACEYcGl4ZWxUcmFuc2Zvcm1lZFBvc2l0aW9uBQsEAAAiEXRyYW5zZm9ybWVkTm9ybWFsBQsEAAAjEXByb2plY3RlZFBvc2l0aW9uBQwEAAAkGXByZXZpb3VzUHJvamVjdGVkUG9zaXRpb24FDAQAACUKcGl4ZWxDb2xvcgUMBAAAJgVkZXB0aAMEAAAnC25kY1Bvc2l0aW9uBQoEAAAoE3ByZXZpb3VzTmRjUG9zaXRpb24FCgQAACkIc2NyZWVuVVYFCgQAACoJc3BlY1Bvd2VyAwQAACsJc3BlY0NvbG9yBQsEAAAsCXdvcmxkRGlzdAMEAAAtDXBpeGVsVmVsb2NpdHkFCgQAAC4JbW9kZWxWaWV3BwQAAC8QbW9kZWxWaWV3SW52ZXJzZQcEAAAwDXByZXZNb2RlbFZpZXcHBAAAMQ1ub3JtYWxUZXh0dXJlCgICAAAyDm5vcm1hbFN0cmVuZ3RoAwIAADMMY2FsY3VsYXRlZFVWBQoEAAA0CGZyYWdtZW50DgYAAAEBNAAABQYINQFuBQsEAAAKCQMiDgICMQoCAjMFCgUMkgAFCwAGBAI1BQsGAwYBAjUFCwEDAAAAAAAAAEADBQsBAwAAAAAAAPA/AwULBQsGgQoCNQULEQAFCgIyAwUKBgQKAjUFCwgAAwkDDQ4BCQMWDgIBAwAAAAAAAAAAAwYDAQMAAAAAAADwPwMJAx4OAgoCNQULEQAFCgoCNQULEQAFCgMDAwMDBgQCNQULCQMgDgECNQULBQsFCwYEAiIFCwkDIA4BBgACIgULBgECNQULAjIDBQsFCwULBQsA";
 hide_engine_infrastructure_shaders_NormalMapModifier._MODULE = "hide.engine.infrastructure.shaders.NormalMapModifier";
+hide_engine_infrastructure_shaders_TextureOutputShader.SRC = "HXSMNmhpZGUuZW5naW5lLmluZnJhc3RydWN0dXJlLnNoYWRlcnMuVGV4dHVyZU91dHB1dFNoYWRlcgkBBWlucHV0DQECAghwb3NpdGlvbgUKAQEAAwJ1dgUKAQEAAQAABAVmbGlwWQMCAAAFBm91dHB1dA0CAgYIcG9zaXRpb24FDAQFAAcFY29sb3IFDAQFAAQAAAgKcGl4ZWxDb2xvcgUMBAAACQxjYWxjdWxhdGVkVVYFCgQAAAoHdGV4dHVyZQoCAgAACwhfX2luaXRfXw4GAAAMBnZlcnRleA4GAAANCGZyYWdtZW50DgYAAAMCCwAABQIGBAIHBQwCCAUMBQwGBAIJBQoCAwUKBQoAAAwAAAUBBgQCBgUMCQMrDgQKAgIFCgAAAwYBCgICBQoEAAMCBAMDAQMAAAAAAAAAAAMBAwAAAAAAAPA/AwUMBQwAAQ0AAAUBBgQCBwUMCQMiDgICCgoCAgkFCgUMBQwA";
+hide_engine_infrastructure_shaders_TextureOutputShader._MODULE = "hide.engine.infrastructure.shaders.TextureOutputShader";
 hide_presentation_ui_react_BaseReactComponent.displayName = "BaseReactComponent";
 hide_presentation_ui_react_components_ComponentIcon.displayName = "ComponentIcon";
 hide_presentation_ui_react_components_ContextMenu.displayName = "ContextMenu";
@@ -179844,8 +179809,8 @@ hxd_impl_BufferFlags.UniformReadWrite = 3;
 hxd_impl_BufferFlags.Uniform = 4;
 hxd_poly2tri_Constants.kAlpha = 0.3;
 hxd_poly2tri_Constants.EPSILON = 1e-24;
-hxd_poly2tri_Constants.PI_2 = 1.5707963267948966;
-hxd_poly2tri_Constants.PI_3div4 = 2.3561944901923448;
+hxd_poly2tri_Constants.PI_2 = 1.57079632679489656;
+hxd_poly2tri_Constants.PI_3div4 = 2.35619449019234484;
 hxd_poly2tri_Orientation.CW = 1;
 hxd_poly2tri_Orientation.CCW = -1;
 hxd_poly2tri_Orientation.COLLINEAR = 0;

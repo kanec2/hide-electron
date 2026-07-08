@@ -6,6 +6,7 @@ import h3d.Camera;
 import h3d.mat.Texture;
 import hx.injection.Service;
 import h3d.pass.ScreenFx;
+import h3d.shader.ScreenShader;
 import hide.engine.infrastructure.shaders.TextureOutputShader;
 /**
     Управляет всеми viewport'ами IDE.
@@ -15,10 +16,11 @@ import hide.engine.infrastructure.shaders.TextureOutputShader;
 */
 class ViewportService implements Service {
     private var viewports:Map<String, Viewport>;
-    private var screenFx:ScreenFx<TextureOutputShader>;
+    private var screenFx:ScreenFx<TextureOutputShader>;  // ← ПРАВИЛЬНАЯ типизация
+
     public function new() {
         viewports = new Map();
-        screenFx = new ScreenFx(new TextureOutputShader());
+        screenFx = new ScreenFx(new TextureOutputShader());  // ← используем встроенный шейдер
     }
     
     /**
