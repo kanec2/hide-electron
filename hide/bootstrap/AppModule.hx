@@ -1,5 +1,6 @@
 package hide.bootstrap;
 
+import hide.domain.services.ILanguageServer;
 import hide.presentation.modules.ConsoleModule;
 import hide.presentation.modules.PropertiesModule;
 import hide.presentation.modules.EditorModule;

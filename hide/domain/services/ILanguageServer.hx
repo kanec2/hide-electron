@@ -52,6 +52,8 @@ interface ILanguageServer extends Service {
      * Подписка на диагностику (ошибки, предупреждения).
      */
     function onDiagnostics(callback:String->Array<Diagnostic>->Void):Void;
+
+    function didSave(uri:String, ?text:String):Void;
 }
 
 typedef CompletionItem = {

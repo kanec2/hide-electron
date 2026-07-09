@@ -1,5 +1,6 @@
 package hide.presentation.ui.react.hooks;
 
+import hide.domain.services.ILanguageServer;
 import hide.engine.infrastructure.ShaderPreviewRenderer;
 import hide.engine.infrastructure.ViewportService;
 import hide.engine.infrastructure.ShaderNodeRegistry;

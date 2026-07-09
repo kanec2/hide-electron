@@ -15,13 +15,13 @@ class HaxeLanguageServerManager {
     private static var serverProcess:js.node.child_process.ChildProcess = null;
     private static var buffer:String = "";
     private static var isStarted:Bool = false;
+    private static var isInitialized:Bool = false;  // ← НОВОЕ: отслеживаем инициализацию
     private static var projectRoot:String = "";
     private static var requestId:Int = 0;
     private static var pendingRequests:Map<Int, Dynamic->Void> = [];
 
     /**
      * Запускает Haxe Language Server.
-     * @param rootPath Путь к корню проекта (для hxml файлов)
      */
     public static function start(rootPath:String):Void {
         if (isStarted) {
@@ -31,8 +31,8 @@ class HaxeLanguageServerManager {
 
         projectRoot = rootPath;
         
-        // Путь к haxe-language-server (устанавливается через npm)
-        var serverPath = Path.join(__dirname, "node_modules", "haxe-language-server", "bin", "server.js");
+        // Путь к haxe-language-server
+        var serverPath = Path.join(__dirname, "server.js");
         
         trace("🚀 [LSP] Starting Haxe Language Server...");
         trace("📁 [LSP] Project root: " + rootPath);
@@ -63,6 +63,7 @@ class HaxeLanguageServerManager {
         serverProcess.on("exit", function(code:Int) {
             trace("⚠️ [LSP] Server exited with code: " + code);
             isStarted = false;
+            isInitialized = false;
         });
 
         isStarted = true;
@@ -70,44 +71,130 @@ class HaxeLanguageServerManager {
     }
 
     /**
+     * Инициализирует LSP протокол.
+     * ВАЖНО: Вызывать ПОСЛЕ start()!
+     */
+    public static function initialize():Void {
+        if (!isStarted || serverProcess == null) {
+            trace("❌ [LSP] Cannot initialize: server not started");
+            return;
+        }
+
+        // ✅ ИСПРАВЛЕНО: правильный rootUri для Windows и Unix
+        var rootPathNormalized = projectRoot.split("\\").join("/");
+        var rootUri = if (rootPathNormalized.charAt(0) == "/") {
+            "file://" + rootPathNormalized;  // Unix: file:///home/user/project
+        } else {
+            "file:///" + rootPathNormalized; // Windows: file:///C:/Users/project
+        };
+
+        var params = {
+            processId: untyped process.pid,
+            rootUri: rootUri,
+            rootPath: projectRoot,  // legacy, но некоторые серверы требуют
+            capabilities: {
+                textDocument: {
+                    completion: {
+                        completionItem: {
+                            snippetSupport: true,
+                            resolveSupport: { properties: ["documentation", "detail"] }
+                        }
+                    },
+                    hover: { contentFormat: ["markdown", "plaintext"] },
+                    signatureHelp: {},
+                    definition: { linkSupport: true },
+                    references: {},
+                    documentSymbol: { hierarchicalDocumentSymbolSupport: true },
+                    codeAction: {},
+                    formatting: {},
+                    publishDiagnostics: { 
+                        relatedInformation: true,
+                        tagSupport: { valueSet: [1, 2] }
+                    },
+                    synchronization: {
+                        didSave: true,  // ← ВАЖНО: поддерживаем didSave
+                        willSave: false,
+                        willSaveWaitUntil: false
+                    }
+                },
+                workspace: {
+                    applyEdit: true,
+                    configuration: true,  // ← ВАЖНО: сервер может запрашивать конфиг
+                    didChangeConfiguration: { dynamicRegistration: true }
+                }
+            },
+            initializationOptions: {}
+        };
+
+        // ✅ ИСПРАВЛЕНО: используем callback прямо в sendRequest
+        sendRequest("initialize", params, function(result) {
+            trace("✅ [LSP] Initialize response received");
+            trace("   Server capabilities: " + haxe.Json.stringify(result != null ? Reflect.field(result, "capabilities") : null));
+            
+            // ✅ КРИТИЧНО: отправляем initialized notification
+            sendNotification("initialized", {});
+            isInitialized = true;
+            trace("✅ [LSP] Initialized notification sent");
+        });
+    }
+
+    /**
      * Останавливает Language Server.
      */
     public static function stop():Void {
         if (serverProcess != null) {
-            // Отправляем shutdown request
-            sendRequest("shutdown", {});
-            
-            // Даём серверу время на завершение
-            haxe.Timer.delay(function() {
-                if (serverProcess != null) {
-                    serverProcess.kill();
-                    serverProcess = null;
-                }
-                isStarted = false;
-                trace("🛑 [LSP] Language Server stopped");
-            }, 1000);
+            sendRequest("shutdown", {}, function(_) {
+                sendNotification("exit", {});
+                haxe.Timer.delay(function() {
+                    if (serverProcess != null) {
+                        serverProcess.kill();
+                        serverProcess = null;
+                    }
+                    isStarted = false;
+                    isInitialized = false;
+                    trace("🛑 [LSP] Language Server stopped");
+                }, 500);
+            });
         }
     }
 
     /**
-     * Отправляет JSON-RPC запрос в Language Server.
+     * Отправляет JSON-RPC запрос с callback'ом.
+     * ✅ ИСПРАВЛЕНО: callback регистрируется ДО отправки (нет race condition)
      */
-    public static function sendRequest(method:String, params:Dynamic):Int {
+    public static function sendRequest(method:String, params:Dynamic, ?callback:Dynamic->Void):Int {
         if (serverProcess == null || !isStarted) {
             trace("❌ [LSP] Server not started");
+            if (callback != null) callback(null);
             return -1;
         }
 
         requestId++;
+        var id = requestId;
+        
+        // ✅ Регистрируем callback ДО отправки
+        if (callback != null) {
+            pendingRequests.set(id, callback);
+            
+            // ✅ Таймаут 10 секунд
+            haxe.Timer.delay(function() {
+                if (pendingRequests.exists(id)) {
+                    pendingRequests.remove(id);
+                    trace('⚠️ [LSP] Request $id ($method) timed out');
+                    callback(null);
+                }
+            }, 10000);
+        }
+
         var message = {
             jsonrpc: "2.0",
-            id: requestId,
+            id: id,
             method: method,
             params: params
         };
 
         sendJsonRpc(message);
-        return requestId;
+        return id;
     }
 
     /**
@@ -144,6 +231,52 @@ class HaxeLanguageServerManager {
     }
 
     /**
+     * Уведомляет сервер об открытии файла.
+     */
+    public static function didOpen(uri:String, languageId:String, version:Int, text:String):Void {
+        sendNotification("textDocument/didOpen", {
+            textDocument: {
+                uri: uri,
+                languageId: languageId,
+                version: version,
+                text: text
+            }
+        });
+    }
+
+    /**
+     * Уведомляет сервер об изменении файла.
+     */
+    public static function didChange(uri:String, version:Int, text:String):Void {
+        sendNotification("textDocument/didChange", {
+            textDocument: {
+                uri: uri,
+                version: version
+            },
+            contentChanges: [{ text: text }]
+        });
+    }
+
+    /**
+     * Уведомляет сервер о закрытии файла.
+     */
+    public static function didClose(uri:String):Void {
+        sendNotification("textDocument/didClose", {
+            textDocument: { uri: uri }
+        });
+    }
+
+    /**
+     * ✅ НОВОЕ: Уведомляет сервер о сохранении файла.
+     */
+    public static function didSave(uri:String, ?text:String):Void {
+        sendNotification("textDocument/didSave", {
+            textDocument: { uri: uri },
+            text: text  // включаем текст, т.к. сервер может требовать
+        });
+    }
+
+    /**
      * Сериализует и отправляет JSON-RPC сообщение.
      */
     private static function sendJsonRpc(message:Dynamic):Void {
@@ -159,25 +292,22 @@ class HaxeLanguageServerManager {
      */
     private static function processMessages():Void {
         while (true) {
-            // Ищем конец заголовка
             var headerEnd = buffer.indexOf("\r\n\r\n");
             if (headerEnd == -1) break;
 
-            // Парсим Content-Length
             var header = buffer.substring(0, headerEnd);
-            var match = ~/Content-Length: (\d+)/.exec(header);
-            if (match == null) {
+            // ✅ ПРАВИЛЬНО (Haxe-синтаксис):
+            var regex = ~/Content-Length: (\d+)/;
+            if (!regex.match(header)) {
                 trace("❌ [LSP] Invalid header: " + header);
-                break;
+                buffer = buffer.substring(headerEnd + 4);
+                continue;
             }
-
-            var length = Std.parseInt(match[1]);
+            var length = Std.parseInt(regex.matched(1));
             var messageStart = headerEnd + 4;
             
-            // Проверяем, есть ли полное сообщение в буфере
             if (buffer.length < messageStart + length) break;
 
-            // Извлекаем JSON
             var messageJson = buffer.substring(messageStart, messageStart + length);
             buffer = buffer.substring(messageStart + length);
 
@@ -194,21 +324,27 @@ class HaxeLanguageServerManager {
      * Обрабатывает одно JSON-RPC сообщение от сервера.
      */
     private static function handleMessage(message:Dynamic):Void {
-        // Если это ответ на наш запрос
+        // ✅ ИСПРАВЛЕНО: обрабатываем ошибки
         if (message.id != null && pendingRequests.exists(message.id)) {
             var callback = pendingRequests.get(message.id);
             pendingRequests.remove(message.id);
-            if (callback != null) callback(message.result);
+            
+            if (message.error != null) {
+                trace('❌ [LSP] Error for request ${message.id}: ${message.error.message}');
+                if (callback != null) callback({ error: message.error });
+            } else {
+                if (callback != null) callback(message.result);
+            }
             return;
         }
 
-        // Если это запрос от сервера к клиенту
+        // Запрос от сервера к клиенту
         if (message.id != null && message.method != null) {
             handleServerRequest(message);
             return;
         }
 
-        // Если это notification от сервера
+        // Notification от сервера
         if (message.method != null) {
             handleServerNotification(message);
             return;
@@ -217,78 +353,69 @@ class HaxeLanguageServerManager {
 
     /**
      * Обрабатывает запрос от сервера к клиенту.
+     * ✅ ИСПРАВЛЕНО: отвечаем на workspace/configuration
      */
     private static function handleServerRequest(message:Dynamic):Void {
         trace("📨 [LSP] Server request: " + message.method);
         
-        // Пересылаем в renderer через IPC
-        if (AutoWindow.window != null) {
-            AutoWindow.window.webContents.send("lsp:server-request", {
-                id: message.id,
-                method: message.method,
-                params: message.params
-            });
+        switch (message.method) {
+            case "workspace/configuration":
+                // Сервер запрашивает конфигурацию — отвечаем дефолтами
+                var items:Array<Dynamic> = message.params.items;
+                var result = [for (_ in items) {}];
+                sendResponse(message.id, result);
+                trace("   ✅ Responded with default configuration");
+                
+            case "window/workDoneProgress/create":
+                // Принимаем создание progress
+                sendResponse(message.id, null);
+                
+            case "client/registerCapability":
+                // Принимаем регистрацию capabilities
+                sendResponse(message.id, null);
+                
+            default:
+                // Пересылаем в renderer через IPC
+                if (AutoWindow.window != null) {
+                    AutoWindow.window.webContents.send("lsp:server-request", {
+                        id: message.id,
+                        method: message.method,
+                        params: message.params
+                    });
+                }
         }
     }
 
     /**
      * Обрабатывает notification от сервера.
+     * ✅ ИСПРАВЛЕНО: отдельно обрабатываем diagnostics
      */
     private static function handleServerNotification(message:Dynamic):Void {
         trace("📨 [LSP] Server notification: " + message.method);
         
-        // Пересылаем в renderer через IPC
-        if (AutoWindow.window != null) {
-            AutoWindow.window.webContents.send("lsp:notification", {
-                method: message.method,
-                params: message.params
-            });
-        }
-    }
-
-    /**
-     * Регистрирует callback для ожидания ответа на запрос.
-     */
-    public static function waitForResponse(id:Int, callback:Dynamic->Void):Void {
-        pendingRequests.set(id, callback);
-    }
-
-    /**
-     * Инициализирует Language Server Protocol.
-     * Вызывается после start().
-     */
-    public static function initialize():Void {
-        var params = {
-            processId: js.node.Process.pid,
-            rootUri: "file://" + projectRoot,
-            capabilities: {
-                textDocument: {
-                    completion: {
-                        completionItem: {
-                            snippetSupport: true
-                        }
-                    },
-                    hover: {},
-                    signatureHelp: {},
-                    definition: {},
-                    references: {},
-                    documentSymbol: {},
-                    codeAction: {},
-                    formatting: {},
-                    publishDiagnostics: {
-                        relatedInformation: true
-                    }
-                },
-                workspace: {
-                    applyEdit: true,
-                   DidChangeConfiguration: {
-                        dynamicRegistration: true
-                    }
+        switch (message.method) {
+            case "window/logMessage":
+                trace("[LSP Log] " + message.params.message);
+                
+            case "window/showMessage":
+                trace("[LSP Message] " + message.params.message);
+                
+            case "textDocument/publishDiagnostics":
+                // ✅ Пересылаем diagnostics в renderer
+                if (AutoWindow.window != null) {
+                    AutoWindow.window.webContents.send("lsp:diagnostics", {
+                        uri: message.params.uri,
+                        diagnostics: message.params.diagnostics
+                    });
                 }
-            }
-        };
-
-        sendRequest("initialize", params);
-        trace("✅ [LSP] Initialize request sent");
+                
+            default:
+                if (AutoWindow.window != null) {
+                    AutoWindow.window.webContents.send("lsp:notification", {
+                        method: message.method,
+                        params: message.params
+                    });
+                }
+        }
     }
 }

@@ -234,6 +234,12 @@ class AutoWindow {
             event.returnValue = null;
         });
 
+        // В setupIpc() добавить:
+        IpcMain.on("lsp:didSave", function(event:IpcMainEvent, data:Dynamic) {
+            HaxeLanguageServerManager.didSave(data.uri, data.text);
+            event.returnValue = null;
+        });
+
         // Открытие файла в LSP (didOpen)
         IpcMain.on("lsp:didOpen", function(event:IpcMainEvent, data:Dynamic) {
             HaxeLanguageServerManager.sendNotification("textDocument/didOpen", {
@@ -271,14 +277,12 @@ class AutoWindow {
 
         // Запрос автодополнения
         IpcMain.handle("lsp:completion", function(event:Dynamic, data:Dynamic) {
-            var id = HaxeLanguageServerManager.sendRequest("textDocument/completion", {
-                textDocument: { uri: data.uri },
-                position: { line: data.line, character: data.character },
-                context: data.context
-            });
-            
             return new js.lib.Promise(function(resolve, reject) {
-                HaxeLanguageServerManager.waitForResponse(id, function(result) {
+                HaxeLanguageServerManager.sendRequest("textDocument/completion", {
+                    textDocument: { uri: data.uri },
+                    position: { line: data.line, character: data.character },
+                    context: data.context
+                }, function(result) {
                     resolve(result);
                 });
             });
@@ -286,13 +290,11 @@ class AutoWindow {
 
         // Запрос hover информации
         IpcMain.handle("lsp:hover", function(event:Dynamic, data:Dynamic) {
-            var id = HaxeLanguageServerManager.sendRequest("textDocument/hover", {
-                textDocument: { uri: data.uri },
-                position: { line: data.line, character: data.character }
-            });
-            
             return new js.lib.Promise(function(resolve, reject) {
-                HaxeLanguageServerManager.waitForResponse(id, function(result) {
+                HaxeLanguageServerManager.sendRequest("textDocument/hover", {
+                    textDocument: { uri: data.uri },
+                    position: { line: data.line, character: data.character }
+                }, function(result) {
                     resolve(result);
                 });
             });
@@ -300,13 +302,11 @@ class AutoWindow {
 
         // Запрос перехода к определению
         IpcMain.handle("lsp:definition", function(event:Dynamic, data:Dynamic) {
-            var id = HaxeLanguageServerManager.sendRequest("textDocument/definition", {
-                textDocument: { uri: data.uri },
-                position: { line: data.line, character: data.character }
-            });
-            
             return new js.lib.Promise(function(resolve, reject) {
-                HaxeLanguageServerManager.waitForResponse(id, function(result) {
+                HaxeLanguageServerManager.sendRequest("textDocument/definition", {
+                    textDocument: { uri: data.uri },
+                    position: { line: data.line, character: data.character }
+                }, function(result) {
                     resolve(result);
                 });
             });

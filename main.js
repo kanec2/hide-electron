@@ -166,6 +166,64 @@ AutoWindow.processMenuTemplate = function(items,sender) {
 	return result;
 };
 AutoWindow.setupIpc = function() {
+	electron_main_IpcMain.handle("lsp:start",function(event,rootPath) {
+		HaxeLanguageServerManager.start(rootPath);
+		HaxeLanguageServerManager.initialize();
+		return { success : true};
+	});
+	electron_main_IpcMain.handle("lsp:stop",function(event) {
+		HaxeLanguageServerManager.stop();
+		return { success : true};
+	});
+	electron_main_IpcMain.handle("lsp:request",function(event,data) {
+		var id = HaxeLanguageServerManager.sendRequest(data.method,data.params);
+		return { id : id};
+	});
+	electron_main_IpcMain.on("lsp:notification",function(event,data) {
+		HaxeLanguageServerManager.sendNotification(data.method,data.params);
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.on("lsp:response",function(event,data) {
+		HaxeLanguageServerManager.sendResponse(data.id,data.result);
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.on("lsp:didSave",function(event,data) {
+		HaxeLanguageServerManager.didSave(data.uri,data.text);
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.on("lsp:didOpen",function(event,data) {
+		HaxeLanguageServerManager.sendNotification("textDocument/didOpen",{ textDocument : { uri : data.uri, languageId : data.languageId, version : data.version, text : data.text}});
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.on("lsp:didChange",function(event,data) {
+		HaxeLanguageServerManager.sendNotification("textDocument/didChange",{ textDocument : { uri : data.uri, version : data.version}, contentChanges : data.contentChanges});
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.on("lsp:didClose",function(event,data) {
+		HaxeLanguageServerManager.sendNotification("textDocument/didClose",{ textDocument : { uri : data.uri}});
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.handle("lsp:completion",function(event,data) {
+		return new Promise(function(resolve,reject) {
+			HaxeLanguageServerManager.sendRequest("textDocument/completion",{ textDocument : { uri : data.uri}, position : { line : data.line, character : data.character}, context : data.context},function(result) {
+				resolve(result);
+			});
+		});
+	});
+	electron_main_IpcMain.handle("lsp:hover",function(event,data) {
+		return new Promise(function(resolve,reject) {
+			HaxeLanguageServerManager.sendRequest("textDocument/hover",{ textDocument : { uri : data.uri}, position : { line : data.line, character : data.character}},function(result) {
+				resolve(result);
+			});
+		});
+	});
+	electron_main_IpcMain.handle("lsp:definition",function(event,data) {
+		return new Promise(function(resolve,reject) {
+			HaxeLanguageServerManager.sendRequest("textDocument/definition",{ textDocument : { uri : data.uri}, position : { line : data.line, character : data.character}},function(result) {
+				resolve(result);
+			});
+		});
+	});
 	electron_main_IpcMain.on("app:quit",function(event) {
 		electron_main_App.quit();
 	});
@@ -299,16 +357,16 @@ AutoWindow.setupIpc = function() {
 		event.returnValue = null;
 	});
 	electron_main_IpcMain.on("menu:build",function(event,menuData) {
-		console.log("AutoWindow.hx:338:","[AutoWindow] 📥 Received menu data");
+		console.log("AutoWindow.hx:449:","[AutoWindow] 📥 Received menu data");
 		var template = AutoWindow.processMenuTemplate(menuData,event.sender);
 		var menu = electron_main_Menu.buildFromTemplate(template);
 		electron_main_Menu.setApplicationMenu(menu);
-		console.log("AutoWindow.hx:342:","[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
+		console.log("AutoWindow.hx:453:","[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
 	});
 	electron_main_IpcMain.on("window:open",function(event,data) {
 		var url = data.url;
 		if(url.indexOf("?subView=") != -1) {
-			console.log("AutoWindow.hx:350:","[AutoWindow] ⚠️ Sub-view request: " + url);
+			console.log("AutoWindow.hx:461:","[AutoWindow] ⚠️ Sub-view request: " + url);
 			event.sender.send("window:open:subview",{ url : url});
 			return;
 		}
@@ -316,6 +374,27 @@ AutoWindow.setupIpc = function() {
 		var child = new electron_main_BrowserWindow(opts);
 		child.loadFile(url);
 	});
+};
+var EReg = function(r,opt) {
+	this.r = new RegExp(r,opt.split("u").join(""));
+};
+EReg.__name__ = true;
+EReg.prototype = {
+	match: function(s) {
+		if(this.r.global) {
+			this.r.lastIndex = 0;
+		}
+		this.r.m = this.r.exec(s);
+		this.r.s = s;
+		return this.r.m != null;
+	}
+	,matched: function(n) {
+		if(this.r.m != null && n >= 0 && n < this.r.m.length) {
+			return this.r.m[n];
+		} else {
+			throw haxe_Exception.thrown("EReg::matched");
+		}
+	}
 };
 var ElectronMain = function() { };
 ElectronMain.__name__ = true;
@@ -325,11 +404,238 @@ ElectronMain.main = function() {
 ElectronMain.startup = function() {
 	console.log("ElectronMain.hx:21:","🚀 ElectronMain: Startup complete");
 };
+var HaxeLanguageServerManager = function() { };
+HaxeLanguageServerManager.__name__ = true;
+HaxeLanguageServerManager.start = function(rootPath) {
+	if(HaxeLanguageServerManager.isStarted) {
+		console.log("HaxeLanguageServerManager.hx:28:","⚠️ [LSP] Already started");
+		return;
+	}
+	HaxeLanguageServerManager.projectRoot = rootPath;
+	var serverPath = js_node_Path.join(__dirname,"server.js");
+	console.log("HaxeLanguageServerManager.hx:37:","🚀 [LSP] Starting Haxe Language Server...");
+	console.log("HaxeLanguageServerManager.hx:38:","📁 [LSP] Project root: " + rootPath);
+	console.log("HaxeLanguageServerManager.hx:39:","📄 [LSP] Server path: " + serverPath);
+	HaxeLanguageServerManager.serverProcess = js_node_ChildProcess.spawn("node",[serverPath],{ cwd : rootPath, stdio : ["pipe","pipe","pipe"]});
+	HaxeLanguageServerManager.serverProcess.stdout.on("data",function(data) {
+		HaxeLanguageServerManager.buffer += data.toString();
+		HaxeLanguageServerManager.processMessages();
+	});
+	HaxeLanguageServerManager.serverProcess.stderr.on("data",function(data) {
+		console.log("HaxeLanguageServerManager.hx:55:","[LSP Server] " + data.toString());
+	});
+	HaxeLanguageServerManager.serverProcess.on("error",function(err) {
+		console.log("HaxeLanguageServerManager.hx:60:","❌ [LSP] Server error: " + Std.string(err));
+	});
+	HaxeLanguageServerManager.serverProcess.on("exit",function(code) {
+		console.log("HaxeLanguageServerManager.hx:64:","⚠️ [LSP] Server exited with code: " + code);
+		HaxeLanguageServerManager.isStarted = false;
+		HaxeLanguageServerManager.isInitialized = false;
+	});
+	HaxeLanguageServerManager.isStarted = true;
+	console.log("HaxeLanguageServerManager.hx:70:","✅ [LSP] Language Server started");
+};
+HaxeLanguageServerManager.initialize = function() {
+	if(!HaxeLanguageServerManager.isStarted || HaxeLanguageServerManager.serverProcess == null) {
+		console.log("HaxeLanguageServerManager.hx:79:","❌ [LSP] Cannot initialize: server not started");
+		return;
+	}
+	var rootPathNormalized = HaxeLanguageServerManager.projectRoot.split("\\").join("/");
+	var rootUri = rootPathNormalized.charAt(0) == "/" ? "file://" + rootPathNormalized : "file:///" + rootPathNormalized;
+	var params = { processId : process.pid, rootUri : rootUri, rootPath : HaxeLanguageServerManager.projectRoot, capabilities : { textDocument : { completion : { completionItem : { snippetSupport : true, resolveSupport : { properties : ["documentation","detail"]}}}, hover : { contentFormat : ["markdown","plaintext"]}, signatureHelp : { }, definition : { linkSupport : true}, references : { }, documentSymbol : { hierarchicalDocumentSymbolSupport : true}, codeAction : { }, formatting : { }, publishDiagnostics : { relatedInformation : true, tagSupport : { valueSet : [1,2]}}, synchronization : { didSave : true, willSave : false, willSaveWaitUntil : false}}, workspace : { applyEdit : true, configuration : true, didChangeConfiguration : { dynamicRegistration : true}}}, initializationOptions : { }};
+	HaxeLanguageServerManager.sendRequest("initialize",params,function(result) {
+		console.log("HaxeLanguageServerManager.hx:131:","✅ [LSP] Initialize response received");
+		console.log("HaxeLanguageServerManager.hx:132:","   Server capabilities: " + JSON.stringify(result != null ? Reflect.field(result,"capabilities") : null));
+		HaxeLanguageServerManager.sendNotification("initialized",{ });
+		HaxeLanguageServerManager.isInitialized = true;
+		console.log("HaxeLanguageServerManager.hx:137:","✅ [LSP] Initialized notification sent");
+	});
+};
+HaxeLanguageServerManager.stop = function() {
+	if(HaxeLanguageServerManager.serverProcess != null) {
+		HaxeLanguageServerManager.sendRequest("shutdown",{ },function(_) {
+			HaxeLanguageServerManager.sendNotification("exit",{ });
+			haxe_Timer.delay(function() {
+				if(HaxeLanguageServerManager.serverProcess != null) {
+					HaxeLanguageServerManager.serverProcess.kill();
+					HaxeLanguageServerManager.serverProcess = null;
+				}
+				HaxeLanguageServerManager.isStarted = false;
+				HaxeLanguageServerManager.isInitialized = false;
+				console.log("HaxeLanguageServerManager.hx:155:","🛑 [LSP] Language Server stopped");
+			},500);
+		});
+	}
+};
+HaxeLanguageServerManager.sendRequest = function(method,params,callback) {
+	if(HaxeLanguageServerManager.serverProcess == null || !HaxeLanguageServerManager.isStarted) {
+		console.log("HaxeLanguageServerManager.hx:167:","❌ [LSP] Server not started");
+		if(callback != null) {
+			callback(null);
+		}
+		return -1;
+	}
+	HaxeLanguageServerManager.requestId++;
+	var id = HaxeLanguageServerManager.requestId;
+	if(callback != null) {
+		HaxeLanguageServerManager.pendingRequests.h[id] = callback;
+		haxe_Timer.delay(function() {
+			if(HaxeLanguageServerManager.pendingRequests.h.hasOwnProperty(id)) {
+				HaxeLanguageServerManager.pendingRequests.remove(id);
+				console.log("HaxeLanguageServerManager.hx:183:","⚠️ [LSP] Request " + id + " (" + method + ") timed out");
+				callback(null);
+			}
+		},10000);
+	}
+	var message = { jsonrpc : "2.0", id : id, method : method, params : params};
+	HaxeLanguageServerManager.sendJsonRpc(message);
+	return id;
+};
+HaxeLanguageServerManager.sendNotification = function(method,params) {
+	if(HaxeLanguageServerManager.serverProcess == null || !HaxeLanguageServerManager.isStarted) {
+		console.log("HaxeLanguageServerManager.hx:205:","❌ [LSP] Server not started");
+		return;
+	}
+	var message = { jsonrpc : "2.0", method : method, params : params};
+	HaxeLanguageServerManager.sendJsonRpc(message);
+};
+HaxeLanguageServerManager.sendResponse = function(id,result) {
+	if(HaxeLanguageServerManager.serverProcess == null) {
+		return;
+	}
+	var message = { jsonrpc : "2.0", id : id, result : result};
+	HaxeLanguageServerManager.sendJsonRpc(message);
+};
+HaxeLanguageServerManager.didSave = function(uri,text) {
+	HaxeLanguageServerManager.sendNotification("textDocument/didSave",{ textDocument : { uri : uri}, text : text});
+};
+HaxeLanguageServerManager.sendJsonRpc = function(message) {
+	var json = JSON.stringify(message);
+	var contentLength = js_node_buffer_Buffer.byteLength(json,"utf8");
+	var header = "Content-Length: " + contentLength + "\r\n\r\n";
+	HaxeLanguageServerManager.serverProcess.stdin.write(header + json);
+};
+HaxeLanguageServerManager.processMessages = function() {
+	while(true) {
+		var headerEnd = HaxeLanguageServerManager.buffer.indexOf("\r\n\r\n");
+		if(headerEnd == -1) {
+			break;
+		}
+		var header = HaxeLanguageServerManager.buffer.substring(0,headerEnd);
+		var regex = new EReg("Content-Length: (\\d+)","");
+		if(!regex.match(header)) {
+			console.log("HaxeLanguageServerManager.hx:302:","❌ [LSP] Invalid header: " + header);
+			HaxeLanguageServerManager.buffer = HaxeLanguageServerManager.buffer.substring(headerEnd + 4);
+			continue;
+		}
+		var length = Std.parseInt(regex.matched(1));
+		var messageStart = headerEnd + 4;
+		if(HaxeLanguageServerManager.buffer.length < messageStart + length) {
+			break;
+		}
+		var messageJson = HaxeLanguageServerManager.buffer.substring(messageStart,messageStart + length);
+		HaxeLanguageServerManager.buffer = HaxeLanguageServerManager.buffer.substring(messageStart + length);
+		try {
+			var message = JSON.parse(messageJson);
+			HaxeLanguageServerManager.handleMessage(message);
+		} catch( _g ) {
+			var e = haxe_Exception.caught(_g).unwrap();
+			console.log("HaxeLanguageServerManager.hx:318:","❌ [LSP] Failed to parse message: " + Std.string(e));
+		}
+	}
+};
+HaxeLanguageServerManager.handleMessage = function(message) {
+	if(message.id != null && HaxeLanguageServerManager.pendingRequests.h.hasOwnProperty(message.id)) {
+		var callback = HaxeLanguageServerManager.pendingRequests.h[message.id];
+		HaxeLanguageServerManager.pendingRequests.remove(message.id);
+		if(message.error != null) {
+			console.log("HaxeLanguageServerManager.hx:333:","❌ [LSP] Error for request " + Std.string(message.id) + ": " + Std.string(message.error.message));
+			if(callback != null) {
+				callback({ error : message.error});
+			}
+		} else if(callback != null) {
+			callback(message.result);
+		}
+		return;
+	}
+	if(message.id != null && message.method != null) {
+		HaxeLanguageServerManager.handleServerRequest(message);
+		return;
+	}
+	if(message.method != null) {
+		HaxeLanguageServerManager.handleServerNotification(message);
+		return;
+	}
+};
+HaxeLanguageServerManager.handleServerRequest = function(message) {
+	console.log("HaxeLanguageServerManager.hx:359:","📨 [LSP] Server request: " + Std.string(message.method));
+	switch(message.method) {
+	case "client/registerCapability":
+		HaxeLanguageServerManager.sendResponse(message.id,null);
+		break;
+	case "window/workDoneProgress/create":
+		HaxeLanguageServerManager.sendResponse(message.id,null);
+		break;
+	case "workspace/configuration":
+		var items = message.params.items;
+		var _g = [];
+		var _g1 = 0;
+		while(_g1 < items.length) {
+			var _ = items[_g1];
+			++_g1;
+			_g.push({ });
+		}
+		var result = _g;
+		HaxeLanguageServerManager.sendResponse(message.id,result);
+		console.log("HaxeLanguageServerManager.hx:367:","   ✅ Responded with default configuration");
+		break;
+	default:
+		if(AutoWindow.window != null) {
+			AutoWindow.window.webContents.send("lsp:server-request",{ id : message.id, method : message.method, params : message.params});
+		}
+	}
+};
+HaxeLanguageServerManager.handleServerNotification = function(message) {
+	console.log("HaxeLanguageServerManager.hx:394:","📨 [LSP] Server notification: " + Std.string(message.method));
+	switch(message.method) {
+	case "textDocument/publishDiagnostics":
+		if(AutoWindow.window != null) {
+			AutoWindow.window.webContents.send("lsp:diagnostics",{ uri : message.params.uri, diagnostics : message.params.diagnostics});
+		}
+		break;
+	case "window/logMessage":
+		console.log("HaxeLanguageServerManager.hx:398:","[LSP Log] " + Std.string(message.params.message));
+		break;
+	case "window/showMessage":
+		console.log("HaxeLanguageServerManager.hx:401:","[LSP Message] " + Std.string(message.params.message));
+		break;
+	default:
+		if(AutoWindow.window != null) {
+			AutoWindow.window.webContents.send("lsp:notification",{ method : message.method, params : message.params});
+		}
+	}
+};
 Math.__name__ = true;
+var Reflect = function() { };
+Reflect.__name__ = true;
+Reflect.field = function(o,field) {
+	try {
+		return o[field];
+	} catch( _g ) {
+		return null;
+	}
+};
 var Std = function() { };
 Std.__name__ = true;
 Std.string = function(s) {
 	return js_Boot.__string_rec(s,"");
+};
+Std.parseInt = function(x) {
+	var v = parseInt(x);
+	if(isNaN(v)) {
+		return null;
+	}
+	return v;
 };
 var Sys = function() { };
 Sys.__name__ = true;
@@ -370,12 +676,51 @@ haxe_Exception.caught = function(value) {
 		return new haxe_ValueException(value,null,value);
 	}
 };
+haxe_Exception.thrown = function(value) {
+	if(((value) instanceof haxe_Exception)) {
+		return value.get_native();
+	} else if(((value) instanceof Error)) {
+		return value;
+	} else {
+		var e = new haxe_ValueException(value);
+		return e;
+	}
+};
 haxe_Exception.__super__ = Error;
 haxe_Exception.prototype = $extend(Error.prototype,{
 	unwrap: function() {
 		return this.__nativeException;
 	}
+	,get_native: function() {
+		return this.__nativeException;
+	}
 });
+var haxe_Timer = function(time_ms) {
+	var me = this;
+	this.id = setInterval(function() {
+		me.run();
+	},time_ms);
+};
+haxe_Timer.__name__ = true;
+haxe_Timer.delay = function(f,time_ms) {
+	var t = new haxe_Timer(time_ms);
+	t.run = function() {
+		t.stop();
+		f();
+	};
+	return t;
+};
+haxe_Timer.prototype = {
+	stop: function() {
+		if(this.id == null) {
+			return;
+		}
+		clearInterval(this.id);
+		this.id = null;
+	}
+	,run: function() {
+	}
+};
 var haxe_ValueException = function(value,previous,native) {
 	haxe_Exception.call(this,String(value),previous,native);
 	this.value = value;
@@ -387,6 +732,19 @@ haxe_ValueException.prototype = $extend(haxe_Exception.prototype,{
 		return this.value;
 	}
 });
+var haxe_ds_IntMap = function() {
+	this.h = { };
+};
+haxe_ds_IntMap.__name__ = true;
+haxe_ds_IntMap.prototype = {
+	remove: function(key) {
+		if(!this.h.hasOwnProperty(key)) {
+			return false;
+		}
+		delete(this.h[key]);
+		return true;
+	}
+};
 var haxe_iterators_ArrayIterator = function(array) {
 	this.current = 0;
 	this.array = array;
@@ -466,11 +824,19 @@ js_Boot.__string_rec = function(o,s) {
 		return String(o);
 	}
 };
+var js_node_ChildProcess = require("child_process");
 var js_node_Fs = require("fs");
 var js_node_Path = require("path");
+var js_node_buffer_Buffer = require("buffer").Buffer;
 String.__name__ = true;
 Array.__name__ = true;
 js_Boot.__toStr = ({ }).toString;
+HaxeLanguageServerManager.buffer = "";
+HaxeLanguageServerManager.isStarted = false;
+HaxeLanguageServerManager.isInitialized = false;
+HaxeLanguageServerManager.projectRoot = "";
+HaxeLanguageServerManager.requestId = 0;
+HaxeLanguageServerManager.pendingRequests = new haxe_ds_IntMap();
 ElectronMain.main();
 })({});
 

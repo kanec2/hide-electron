@@ -48,6 +48,13 @@ class ElectronLanguageServerAdapter implements ILanguageServer implements Servic
         });
     }
     
+    public function didSave(uri:String, ?text:String):Void {
+        ipcBridge.invokeSync("lsp:didSave", {
+            uri: uri,
+            text: text
+        });
+    }
+
     public function didChange(uri:String, version:Int, text:String):Void {
         ipcBridge.invokeSync("lsp:didChange", {
             uri: uri,

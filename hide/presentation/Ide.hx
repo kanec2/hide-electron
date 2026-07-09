@@ -1,5 +1,6 @@
 package hide.presentation;
 
+import hide.domain.services.ILanguageServer;
 import hide.domain.services.IFileSystem;
 import hide.application.services.IViewModule;
 import hide.application.services.ShaderHistoryService;
@@ -94,7 +95,7 @@ class Ide implements Service {
     private var shaderHistory:ShaderHistoryService;
     private var saveShader:SaveShaderUseCase;
     private var loadShader:LoadShaderUseCase;
-
+    private var languageServer:ILanguageServer;
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -120,7 +121,8 @@ class Ide implements Service {
         shaderNodeRegistry:ShaderNodeRegistry,
         shaderHistory:ShaderHistoryService,
         saveShader:SaveShaderUseCase,
-        loadShader:LoadShaderUseCase
+        loadShader:LoadShaderUseCase,
+        languageServer:ILanguageServer
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -147,6 +149,7 @@ class Ide implements Service {
         this.shaderHistory = shaderHistory;
         this.saveShader = saveShader;
         this.loadShader = loadShader;
+        this.languageServer = languageServer;
         inst = this;
         
         //views = viewRegistry.all(); 
@@ -365,6 +368,8 @@ class Ide implements Service {
     public function get_windowService():WindowService return windowService;
     public function get_menuService():MenuService return menuService;
     public function get_viewRegistry():ViewRegistry return viewRegistry;
+    public function get_languageServer():ILanguageServer return languageServer;
+
     public function get_layoutEngine():ILayoutEngine return layoutEngine;
     public function get_sceneService():ISceneService return sceneService;
     public function get_shaderPreviewRenderer():ShaderPreviewRenderer return shaderPreviewRenderer;
