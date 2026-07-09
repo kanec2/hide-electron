@@ -4,7 +4,6 @@ import h3d.mat.Data.TextureFormat;
 import h3d.mat.Data.TextureFlags;
 import h3d.scene.Scene;
 import h3d.mat.Texture;
-import js.html.webgl.RenderingContext;
 /**
  * Один viewport = сцена + камера + render target + canvas
  */
@@ -18,7 +17,6 @@ class Viewport {
     public var height:Int;
     public var renderWidth:Int;
     public var renderHeight:Int;
-    public var frameCount:Int = 0;  // ✅ НОВОЕ ПОЛЕ
 
     public function new(id:String, scene:Scene, width:Int, height:Int) {
         this.id = id;
@@ -44,7 +42,6 @@ class Viewport {
         // ✅ Явно задаем внутренние размеры буфера
         canvas.width = width;
         canvas.height = height;
-        
 
         // ✅ ВАЖНО: CSS стили для масштабирования без размытия
         canvas.style.width = "100%";
@@ -56,27 +53,12 @@ class Viewport {
     }
     
     /**
-    GPU-only рендеринг текстуры на canvas через fullscreen quad shader.
-    Вызывается из ViewportService после рендеринга сцены в RenderTexture.
+    Копирует RenderTexture → Canvas через CPU.
 
-    */
-    public function renderToScreen(engine:h3d.Engine):Void {
-            blitToCanvas();
-        frameCount++;
-    }
-
-    /**
-     * Копирует RenderTexture → Canvas (пока через CPU)
-     *
-     * Fallback: CPU blit (используется только если GPU blit недоступен).
+    ⚠️ Это медленный путь (GPU → CPU → GPU), но единственный рабочий
+    для WebGL/Electron окружения.
     */
     public function blitToCanvas():Void {
-
-        // ✅ Blit раз в 2 кадра для плавности
-        /*if (frameCount % 2 != 0) {
-            frameCount++;
-            return;
-        }*/
         var pixels = renderTarget.capturePixels();
     
         // ✅ Диагностика: проверяем, есть ли реальные данные
@@ -84,20 +66,22 @@ class Viewport {
             trace('⚠️ [Viewport $id] capturePixels returned EMPTY data!');
             return;
         }
-        
+
         var ctx = canvas.getContext("2d");
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
+
         if (ctx == null) {
             trace('⚠️ [Viewport $id] Canvas 2D context is NULL!');
             return;
         }
 
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+
         var imageData = ctx.createImageData(width, height);
         var bytes = pixels.bytes;
         var data = imageData.data;
-        
         var len = width * height;
+
         // ✅ Оптимизированная конвертация BGRA → RGBA
         var i = 0;
         while (i < len) {
@@ -111,25 +95,6 @@ class Viewport {
         }
         
         ctx.putImageData(imageData, 0, 0);
-        // ✅ Рисуем высококачественную текстуру, браузер сам масштабирует с сглаживанием
-        // Создаём временный canvas для масштабирования
-        var tempCanvas = js.Browser.document.createCanvasElement();
-        tempCanvas.width = renderWidth;
-        tempCanvas.height = renderHeight;
-        var tempCtx = tempCanvas.getContext("2d");
-        tempCtx.putImageData(imageData, 0, 0);
-        
-        // ✅ Рисуем с масштабированием (браузер использует imageSmoothingQuality)
-        ctx.clearRect(0, 0, width, height);
-        ctx.drawImage(tempCanvas, 0, 0, width, height);
-        // ✅ Временная рамка для диагностики
-        ctx.strokeStyle = "#00ff00";
-        ctx.lineWidth = 3;
-        ctx.strokeRect(0, 0, width, height);
-            // ✅ ОТЛАДКА: Рисуем текст
-        ctx.fillStyle = "#00ff00";
-        ctx.font = "20px monospace";
-        ctx.fillText("VIEWPORT ACTIVE", 10, 30);
     }
     
     public function resize(w:Int, h:Int):Void {

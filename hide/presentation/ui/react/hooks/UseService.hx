@@ -2,11 +2,15 @@ package hide.presentation.ui.react.hooks;
 
 import hide.engine.infrastructure.ShaderPreviewRenderer;
 import hide.engine.infrastructure.ViewportService;
+import hide.engine.infrastructure.ShaderNodeRegistry;
 import hide.presentation.Ide;
 import hide.application.services.WindowService;
 import hide.application.services.MenuService;
 import hide.application.services.ViewRegistry;
 import hide.application.services.PluginManager;
+import hide.application.services.ShaderHistoryService;
+import hide.application.commands.SaveShaderUseCase;
+import hide.application.commands.LoadShaderUseCase;
 import hide.shared.types.IEventBus;
 import hide.domain.services.ILayoutEngine;
 import hide.engine.domain.services.ISceneService;
@@ -53,5 +57,22 @@ class UseService {
 
     public static function fileDialog():IFileDialog {
         return Ide.inst.get_fileDialog();
+    }
+
+    // === НОВЫЕ СЕРВИСЫ ===
+    public static function shaderNodeRegistry():ShaderNodeRegistry {
+        return Ide.inst.get_shaderNodeRegistry();
+    }
+
+    public static function shaderHistory():ShaderHistoryService {
+        return Ide.inst.get_shaderHistory();
+    }
+
+    public static function saveShader():SaveShaderUseCase {
+        return Ide.inst.get_saveShader();
+    }
+
+    public static function loadShader():LoadShaderUseCase {
+        return Ide.inst.get_loadShader();
     }
 }

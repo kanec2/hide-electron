@@ -2,7 +2,11 @@ package hide.presentation;
 
 import hide.domain.services.IFileSystem;
 import hide.application.services.IViewModule;
+import hide.application.services.ShaderHistoryService;
+import hide.application.commands.SaveShaderUseCase;
+import hide.application.commands.LoadShaderUseCase;
 import hide.engine.infrastructure.ShaderPreviewRenderer;
+import hide.engine.infrastructure.ShaderNodeRegistry;
 import hide.presentation.controllers.ToolbarController;
 import hide.presentation.controllers.WindowController;
 import hide.application.services.MenuService;
@@ -14,9 +18,7 @@ import hide.domain.services.IPlatform;
 import hide.domain.services.IAppInfo;
 import hide.presentation.ui.StatusBar;
 import hide.presentation.controllers.MenuController;
-
 import hide.application.integration.SceneEditorService;
-
 import hide.application.commands.LoadProjectUseCase;
 import hide.application.commands.SetFullscreenUseCase;
 import hide.application.commands.SaveLayoutUseCase;
@@ -25,27 +27,21 @@ import hide.application.commands.OpenViewUseCase;
 import hide.application.dto.ViewDto;
 import hide.domain.valueobjects.DisplayPosition;
 import hide.domain.valueobjects.FilePath;
-
 import hide.shared.events.ProjectLoaded;
 import hide.shared.events.ErrorOccurred;
 import hide.shared.events.LayoutChanged;
 import hide.shared.events.ProjectClosed;
 import hide.shared.events.RecentProjectsUpdated;
-
 import hide.shared.types.IEventBus;
 import hide.shared.types.Result;
-
 import hide.domain.services.ILayoutEngine;
-
 import hide.engine.domain.services.ISceneService;
 import hide.engine.infrastructure.ViewportService;
 import hide.infrastructure.external.SceneViewFactory;
-
 import hx.injection.Service;
 import hx.injection.ServiceCollection;
 import hx.injection.ServiceProvider;
 import tink.core.*;
-
 using tink.CoreApi;
 using hx.injection.ServiceExtensions;
 using Lambda;
@@ -71,14 +67,13 @@ class Ide implements Service {
     private var _layoutChangedUnsub:CallbackLink;
     private var _projectClosedUnsub:CallbackLink;
     
+    // Сервисы
     private var windowService:WindowService;
     private var menuService:MenuService;
     private var layoutEngine:ILayoutEngine;
     private var menuController:MenuController;
     private var loadProjectUseCase:LoadProjectUseCase;
     private var setFullscreenUseCase:SetFullscreenUseCase;
-    //private var saveLayoutUseCase:SaveLayoutUseCase;
-    //private var closeProjectUseCase:CloseProjectUseCase;
     private var openViewUseCase:OpenViewUseCase;
     private var viewRegistry:ViewRegistry;
     private var pluginManager:PluginManager;
@@ -94,15 +89,17 @@ class Ide implements Service {
     private var shaderPreviewRenderer:ShaderPreviewRenderer;
     private var viewportService:ViewportService;
     private var viewModules:Iterable<IViewModule>;
-
+    // Новые сервисы для Shader Editor
+    private var shaderNodeRegistry:ShaderNodeRegistry;
+    private var shaderHistory:ShaderHistoryService;
+    private var saveShader:SaveShaderUseCase;
+    private var loadShader:LoadShaderUseCase;
 
     public function new(
         windowService:WindowService,
         menuService:MenuService,
         loadProjectUseCase:LoadProjectUseCase,
         setFullscreenUseCase:SetFullscreenUseCase,
-        //saveLayoutUseCase:SaveLayoutUseCase,
-        //closeProjectUseCase:CloseProjectUseCase,
         openViewUseCase:OpenViewUseCase,
         viewRegistry:ViewRegistry,
         pluginManager:PluginManager,
@@ -119,14 +116,16 @@ class Ide implements Service {
         sceneViewFactory:SceneViewFactory,
         shaderPreviewRenderer:ShaderPreviewRenderer,
         viewportService:ViewportService,
-        viewModules:Iterable<IViewModule>
+        viewModules:Iterable<IViewModule>,
+        shaderNodeRegistry:ShaderNodeRegistry,
+        shaderHistory:ShaderHistoryService,
+        saveShader:SaveShaderUseCase,
+        loadShader:LoadShaderUseCase
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
         this.loadProjectUseCase = loadProjectUseCase;
         this.setFullscreenUseCase = setFullscreenUseCase;
-        //this.saveLayoutUseCase = saveLayoutUseCase;
-        //this.closeProjectUseCase = closeProjectUseCase;
         this.openViewUseCase = openViewUseCase;
         this.viewRegistry = viewRegistry;
         this.pluginManager = pluginManager;
@@ -144,6 +143,10 @@ class Ide implements Service {
         this.shaderPreviewRenderer = shaderPreviewRenderer;
         this.viewportService = viewportService;
         this.viewModules = viewModules;
+        this.shaderNodeRegistry = shaderNodeRegistry;
+        this.shaderHistory = shaderHistory;
+        this.saveShader = saveShader;
+        this.loadShader = loadShader;
         inst = this;
         
         //views = viewRegistry.all(); 
@@ -369,4 +372,9 @@ class Ide implements Service {
     // Геттеры:
     public function get_fileSystem():IFileSystem return fileSystem;
     public function get_fileDialog():IFileDialog return fileDialog;
+
+    public function get_shaderNodeRegistry():ShaderNodeRegistry return shaderNodeRegistry;
+    public function get_shaderHistory():ShaderHistoryService return shaderHistory;
+    public function get_saveShader():SaveShaderUseCase return saveShader;
+    public function get_loadShader():LoadShaderUseCase return loadShader;
 }

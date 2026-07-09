@@ -4,9 +4,7 @@ package hide.engine.bootstrap;
 import hide.engine.infrastructure.SceneViewportController;
 import hide.engine.infrastructure.ViewportService;
 import hide.engine.infrastructure.ShaderPreviewRenderer;
-import hide.engine.infrastructure.SceneGraphMapper;
-import hide.engine.infrastructure.SelectionSystem;
-import hide.engine.infrastructure.InputHandler;
+import hide.engine.infrastructure.ShaderNodeRegistry;
 import hx.injection.ServiceCollection;
 import hide.engine.domain.services.ISceneService;
 import hide.engine.domain.services.IEngineManager;
@@ -16,8 +14,6 @@ import hide.engine.infrastructure.SceneServiceImpl;
 import hide.engine.infrastructure.HeapsEngineManager;
 import hide.engine.infrastructure.HeapsResourceLoader;
 import hide.engine.infrastructure.EngineEventBusImpl;
-// Конкретные реализации выбираются в AppModule IDE
-
 using hx.injection.ServiceExtensions;
 
 class EngineModule {
@@ -32,9 +28,14 @@ class EngineModule {
         collection.addSingleton(IEngineEventBus, EngineEventBusImpl);
         collection.addSingleton(ISceneService, SceneServiceImpl);
         collection.addSingleton(IEngineManager, HeapsEngineManager);
-        collection.addSingleton(ViewportService);  // ← НОВОЕ
-        collection.addSingleton(SceneViewportController); // ← НОВОЕ
-        collection.addSingleton(ShaderPreviewRenderer); // ← НОВОЕ
+
+        // Viewport сервисы
+        collection.addSingleton(ViewportService);
+        collection.addSingleton(SceneViewportController);
+        collection.addSingleton(ShaderPreviewRenderer);
+
+            // Shader Editor сервисы
+        collection.addSingleton(ShaderNodeRegistry);
 
         // initialize embeded ressources
         // ✅ НОВОЕ: ResourceLoader

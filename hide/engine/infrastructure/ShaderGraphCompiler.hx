@@ -2,16 +2,18 @@
 package hide.engine.infrastructure;
 
 import hide.infrastructure.external.litegraph.*;
-
-
-
-class ShaderGraphCompiler {
-    
+import hx.injection.Service;
+/**
+    Компилятор графа нод в ShaderData.
+    Отвечает за рекурсивный обход графа и вычисление значений.
+*/
+class ShaderGraphCompiler implements Service {
+    public function new() {}
     /**
-     * Компилирует LiteGraph граф в ShaderData.
-     * Ищет ноду "material/output" и обходит граф от неё.
+     * Компилирует граф в ShaderData.
+     * Ищет ноду Material Output и обходит граф от неё.
      */
-    public static function compile(graph:LGraph):ShaderData {
+    public function compile(graph:LGraph):ShaderData {
         var result:ShaderData = {
             albedo: new h3d.Vector(0.8, 0.8, 0.8),
             metallic: 0.0,
@@ -22,28 +24,20 @@ class ShaderGraphCompiler {
             texturePath: null
         };
         
-        // ✅ ЗАЩИТА 1: проверяем что граф существует
         if (graph == null) {
             trace("⚠️ [Compiler] Graph is null");
             return result;
         }
         
-        // ✅ ЗАЩИТА 2: graph.nodes может быть undefined в LiteGraph
-        // Используем untyped для безопасного доступа
-        var nodes:Dynamic = untyped graph.nodes;
+        var nodes:Dynamic = untyped graph._nodes;
         if (nodes == null) {
-            trace("⚠️ [Compiler] graph.nodes is null/undefined");
+            trace("⚠️ [Compiler] graph._nodes is null");
             return result;
         }
         
-        // ✅ ЗАЩИТА 3: приводим к массиву и проверяем длину
         var nodesArray:Array<Dynamic> = cast nodes;
-        if (nodesArray.length == 0) {
-            trace("⚠️ [Compiler] No nodes in graph");
-            return result;
-        }
         
-        // 1. Ищем выходную ноду (Material Output)
+        // Ищем Material Output
         var outputNode:Dynamic = null;
         for (node in nodesArray) {
             if (node.type == "material/output") {
@@ -53,135 +47,189 @@ class ShaderGraphCompiler {
         }
         
         if (outputNode == null) {
-            trace("⚠️ [Compiler] No 'material/output' node found");
+            trace("⚠️ [Compiler] No Material Output found");
             return result;
         }
         
-        // 2. Обходим граф от выхода ко входам
-        trace("🔍 [Compiler] Starting graph traversal from output node");
-        traverseNode(outputNode, graph, result);
+        // Вычисляем все PBR-параметры
+        var albedo = evaluateInput(outputNode, 0, new Map());
+        var metallic = evaluateInput(outputNode, 1, new Map());
+        var roughness = evaluateInput(outputNode, 2, new Map());
+        var normal = evaluateInput(outputNode, 3, new Map());
+        var emissive = evaluateInput(outputNode, 4, new Map());
+        
+        result.albedo = convertToVector(albedo, new h3d.Vector(0.8, 0.8, 0.8));
+        result.metallic = convertToFloat(metallic, 0.0);
+        result.roughness = convertToFloat(roughness, 0.5);
+        result.normal = convertToVector(normal, new h3d.Vector(0, 0, 1));
+        result.emissive = convertToVector(emissive, new h3d.Vector(0, 0, 0));
         
         return result;
     }
-    
+
     /**
-     * Рекурсивный обход графа.
-     * Для каждого входа ноды смотрим, что к нему подключено.
+     * Рекурсивно вычисляет значение выхода ноды.
      */
-    private static function traverseNode(
-        node:LGraphNode, 
-        graph:LGraph, 
-        result:ShaderData,
-        ?visited:Map<Int, Bool>
-    ):Dynamic {
+    private function evaluateNode(node:Dynamic, outputSlot:Int, visited:Map<Int, Bool>):Dynamic {
+        if (node == null) return null;
+        
         if (visited == null) visited = new Map();
-        if (visited.exists(node.id)) return null;
+        if (visited.exists(node.id)) {
+            trace('⚠️ [Compiler] Cycle detected at node ${node.title}');
+            return null;
+        }
         visited.set(node.id, true);
         
-        trace('  🔎 Visiting node: ${node.title} (type: ${node.type})');
-        
-        // Обрабатываем саму ноду (её свойства)
-        processNode(node, result);
-        
-        // Рекурсивно обходим подключенные ноды
-        if (node.inputs != null) {
-            for (i in 0...node.inputs.length) {
-                var link:LGraphLink = node.getInputLink(i);
-                if (link != null) {
-                    var originNode = graph.getNodeById(link.origin_id);
-                    if (originNode != null) {
-                        var inputData = traverseNode(originNode, graph, result, visited);
-                        // Передаём данные от входа в текущую ноду
-                        connectNodes(originNode, node, i, inputData, result);
-                    }
-                }
-            }
-        }
-        
-        return getNodeOutput(node, result);
-    }
-    
-    /**
-     * Обрабатывает свойства конкретной ноды.
-     */
-    private static function processNode(node:LGraphNode, result:ShaderData):Void {
-        switch (node.type) {
+        return switch (node.type) {
             case "value/float":
-                // Значение берётся из properties.value
-                // (будет использовано, когда подключится к metallic/roughness)
+                Reflect.field(node.properties, "value");
                 
             case "value/vec3":
-                // Аналогично
+                {
+                    x: Reflect.field(node.properties, "x"),
+                    y: Reflect.field(node.properties, "y"),
+                    z: Reflect.field(node.properties, "z")
+                };
                 
-            case "material/output":
-                // Выходная нода — просто триггер для обхода
+            case "value/color":
+                {
+                    x: Reflect.field(node.properties, "r"),
+                    y: Reflect.field(node.properties, "g"),
+                    z: Reflect.field(node.properties, "b")
+                };
+                
+            case "texture/normal":
+                var inputNormal = evaluateInput(node, 0, visited);
+                var strength = Reflect.field(node.properties, "strength");
+                if (strength == null) strength = 1.0;
+                
+                if (inputNormal == null) {
+                    inputNormal = { x: 0.0, y: 0.0, z: 1.0 };
+                }
+                
+                var nx = isVec3(inputNormal) ? inputNormal.x : 0.0;
+                var ny = isVec3(inputNormal) ? inputNormal.y : 0.0;
+                var nz = isVec3(inputNormal) ? inputNormal.z : 1.0;
+                
+                {
+                    x: nx * strength,
+                    y: ny * strength,
+                    z: nz
+                };
                 
             case "texture/sample":
-                var texPath = node.properties != null ? node.properties.texture : null;
+                var texPath = Reflect.field(node.properties, "texture");
                 if (texPath != null && texPath != "") {
-                    result.hasTexture = true;
-                    result.texturePath = texPath;
+                    // Возвращаем путь к текстуре для обработки в ShaderEditorPanel
+                    { texturePath: texPath };
                 }
+                { x: 1.0, y: 1.0, z: 1.0 };
+                
+            case "math/operation" | "math/add" | "math/subtract" | "math/multiply" | "math/divide" | "math/lerp":
+                evaluateMathNode(node, visited);
                 
             default:
-        }
+                trace('⚠️ [Compiler] Unsupported node type: ${node.type}');
+                null;
+        };
     }
-    
+
     /**
-     * Возвращает выходные данные ноды.
+     * Вычисляет математическую ноду.
      */
-    private static function getNodeOutput(node:LGraphNode, result:ShaderData):Dynamic {
-        return switch (node.type) {
-            case "value/float": 
-                node.properties != null ? node.properties.value : 0.0;
-            case "value/vec3":
-                if (node.properties != null) {
-                    new h3d.Vector(
-                        node.properties.x, 
-                        node.properties.y, 
-                        node.properties.z
-                    );
-                } else new h3d.Vector(0, 0, 0);
-            case "texture/sample":
-                // Возвращаем "цвет текстуры" (пока заглушка)
-                new h3d.Vector(1, 1, 1);
+    private function evaluateMathNode(node:Dynamic, visited:Map<Int, Bool>):Dynamic {
+        var a = evaluateInput(node, 0, visited);
+        var b = evaluateInput(node, 1, visited);
+        
+        if (a == null) a = 0;
+        if (b == null) b = 0;
+        
+        var operation = Reflect.field(node.properties, "operation");
+        
+        if (operation == null) {
+            operation = switch (node.type) {
+                case "math/add": "add";
+                case "math/subtract": "subtract";
+                case "math/multiply": "multiply";
+                case "math/divide": "divide";
+                case "math/lerp": "lerp";
+                default: "add";
+            };
+        }
+        
+        return switch (operation) {
+            case "add":
+                if (Std.is(a, Float) && Std.is(b, Float)) a + b;
+                else if (isVec3(a) && isVec3(b)) { x: toVec3(a).x + toVec3(b).x, y: toVec3(a).y + toVec3(b).y, z: toVec3(a).z + toVec3(b).z };
+                else if (isVec3(a) && Std.is(b, Float)) { x: toVec3(a).x + b, y: toVec3(a).y + b, z: toVec3(a).z + b };
+                else null;
+                
+            case "subtract":
+                if (Std.is(a, Float) && Std.is(b, Float)) a - b;
+                else if (isVec3(a) && isVec3(b)) { x: toVec3(a).x - toVec3(b).x, y: toVec3(a).y - toVec3(b).y, z: toVec3(a).z - toVec3(b).z };
+                else null;
+                
+            case "multiply":
+                if (Std.is(a, Float) && Std.is(b, Float)) a * b;
+                else if (isVec3(a) && Std.is(b, Float)) { x: toVec3(a).x * b, y: toVec3(a).y * b, z: toVec3(a).z * b };
+                else if (isVec3(a) && isVec3(b)) { x: toVec3(a).x * toVec3(b).x, y: toVec3(a).y * toVec3(b).y, z: toVec3(a).z * toVec3(b).z };
+                else null;
+                
+            case "divide":
+                if (Std.is(a, Float) && Std.is(b, Float) && b != 0) a / b;
+                else if (isVec3(a) && Std.is(b, Float) && b != 0) { x: toVec3(a).x / b, y: toVec3(a).y / b, z: toVec3(a).z / b };
+                else null;
+                
+            case "lerp":
+                if (Std.is(a, Float) && Std.is(b, Float)) (a + b) / 2;
+                else null;
+                
             default: null;
-        }
+        };
     }
-    
+
     /**
-     * Соединяет выход одной ноды со входом другой.
-     * Здесь определяется семантика: "float → metallic" значит 
-     * "значение этого float'а становится параметром metallic".
+     * Вычисляет значение входа ноды.
      */
-    private static function connectNodes(
-        origin:LGraphNode, 
-        target:LGraphNode, 
-        inputSlot:Int, 
-        inputData:Dynamic, 
-        result:ShaderData
-    ):Void {
-        if (inputData == null) return;
+    private function evaluateInput(node:Dynamic, inputSlot:Int, visited:Map<Int, Bool>):Dynamic {
+        var link = node.getInputLink(inputSlot);
+        if (link == null) return null;
         
-        var inputName = target.inputs != null && target.inputs.length > inputSlot 
-            ? target.inputs[inputSlot].name 
-            : "";
+        var sourceNode = node.graph.getNodeById(link.origin_id);
+        if (sourceNode == null) return null;
         
-        // Определяем, к какому параметру материала относится этот вход
-        if (target.type == "material/output") {
-/*            switch (inputName) {
-                case "Albedo":
-                    if (Std.is(inputData, h3d.Vector)) result.albedo = inputData;
-                case "Metallic":
-                    if (Std.is(inputData, Float)) result.metallic = inputData;
-                case "Roughness":
-                    if (Std.is(inputData, Float)) result.roughness = inputData;
-                case "Normal":
-                    if (Std.is(inputData, h3d.Vector)) result.normal = inputData;
-                case "Emissive":
-                    if (Std.is(inputData, h3d.Vector)) result.emissive = inputData;
-            }*/
+        return evaluateNode(sourceNode, link.origin_slot, visited);
+    }
+
+    /**
+     * Конвертирует Dynamic в h3d.Vector.
+     */
+    private function convertToVector(value:Dynamic, defaultValue:h3d.Vector):h3d.Vector {
+        if (value == null) return defaultValue;
+        
+        if (isVec3(value)) {
+            return new h3d.Vector(value.x, value.y, value.z);
         }
-        // Для других нод (math, lerp и т.д.) — своя логика
+        
+        return defaultValue;
+    }
+
+    /**
+     * Конвертирует Dynamic в Float.
+     */
+    private function convertToFloat(value:Dynamic, defaultValue:Float):Float {
+        if (value == null) return defaultValue;
+        
+        if (Std.is(value, Float)) return value;
+        
+        return defaultValue;
+    }
+
+    private function toVec3(param:Dynamic):h3d.Vector {
+        return cast(param, h3d.Vector);
+    }
+
+    private function isVec3(v:Dynamic):Bool {
+        return v != null && Reflect.hasField(v, "x") && Reflect.hasField(v, "y") && Reflect.hasField(v, "z");
     }
 }

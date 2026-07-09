@@ -11,11 +11,11 @@ import hide.presentation.modules.HierarchyModule;
 import hide.presentation.modules.SceneModule;
 import hide.presentation.modules.InspectorModule;
 import hide.application.services.IViewModule;
+import hide.application.services.ShaderHistoryService;
 import hide.presentation.controllers.ToolbarController;
 import hx.injection.ServiceCollection;
 import hide.shared.types.IEventBus;
 import hide.shared.types.EventBusImpl;
-
 // Domain
 import hide.domain.services.IFileSystem;
 import hide.domain.services.IWindowManager;
@@ -23,11 +23,9 @@ import hide.domain.services.ILayoutEngine;
 import hide.domain.services.IAppInfo;
 import hide.domain.services.IPlatform;
 import hide.domain.services.IFileDialog;
-
 // Infrastructure (Electron)
 #if electron
 import hide.infrastructure.platform.electron.*;
-// Добавьте заглушки для остальных, если их еще нет
 #end
 import hide.infrastructure.external.GoldenLayoutAdapter;
 // Application
@@ -36,7 +34,6 @@ import hide.application.services.MenuService;
 import hide.application.services.PluginManager;
 import hide.application.services.ViewRegistry;
 import hide.application.services.PluginRegistry;
-
 import hide.application.integration.SceneEditorService;
 // Commands (Use Cases)
 import hide.application.commands.LoadProjectUseCase;
@@ -44,15 +41,14 @@ import hide.application.commands.SetFullscreenUseCase;
 import hide.application.commands.SaveLayoutUseCase;
 import hide.application.commands.CloseProjectUseCase;
 import hide.application.commands.OpenViewUseCase;
-
+import hide.application.commands.SaveShaderUseCase;
+import hide.application.commands.LoadShaderUseCase;
 import hide.presentation.controllers.MenuController;
 import hide.presentation.controllers.WindowController;
 // Presentation
 import hide.presentation.Ide;
 import hide.engine.bootstrap.EngineModule;
 import hide.infrastructure.external.SceneViewFactory;
-
-// Подключаем extension-методы для красивого синтаксиса (addSingleton и т.д.)
 using hx.injection.ServiceExtensions;
 
 class AppModule {
@@ -78,14 +74,15 @@ class AppModule {
         collection.addSingleton(ViewRegistry);
         collection.addSingleton(PluginRegistry);
         
-        // === 4. ДВИЖОК (отдельная подсистема!) ===
-        EngineModule.configure(collection);  // ← Вызываем модуль движка
+        // === 4. ДВИЖОК ===
+        EngineModule.configure(collection);
+        collection.addSingleton(SceneViewFactory);
         
-        collection.addSingleton(SceneViewFactory); // ← ДОБАВИТЬ
         // === 5. Application services ===
         collection.addSingleton(WindowService);
         collection.addSingleton(MenuService);
         collection.addSingleton(PluginManager);
+        collection.addSingleton(ShaderHistoryService);
         
         // === 6. Мост между IDE и движком ===
         collection.addSingleton(SceneEditorService);
@@ -99,9 +96,10 @@ class AppModule {
         collection.addSingleton(LoadProjectUseCase);
         collection.addSingleton(SetFullscreenUseCase);
         collection.addSingleton(OpenViewUseCase);
-        // === 9. View-модули (НОВОЕ!) ===
-        // Все регистрируются под интерфейсом IViewModule.
-        // Контейнер соберёт их в Iterable<IViewModule> для Ide.
+        collection.addSingleton(SaveShaderUseCase);
+        collection.addSingleton(LoadShaderUseCase);
+        
+        // === 9. View-модули ===
         collection.addSingleton(IViewModule, SceneModule);
         collection.addSingleton(IViewModule, InspectorModule);
         collection.addSingleton(IViewModule, HierarchyModule);
@@ -112,6 +110,7 @@ class AppModule {
         collection.addSingleton(IViewModule, EditorModule);
         collection.addSingleton(IViewModule, PropertiesModule);
         collection.addSingleton(IViewModule, ConsoleModule);
+        
         // === 10. Presentation ===
         collection.addSingleton(Ide);
 

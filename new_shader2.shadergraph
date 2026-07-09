@@ -1,0 +1,180 @@
+{
+	"version": "1.0",
+	"createdAt": "2026-07-09 10:36:46",
+	"modifiedAt": "2026-07-09 10:36:46",
+	"graph": {
+		"last_node_id": 4,
+		"last_link_id": 3,
+		"nodes": [
+			{
+				"id": 1,
+				"type": "material/output",
+				"pos": [
+					122,
+					216
+				],
+				"size": {
+					"0": 140,
+					"1": 106
+				},
+				"flags": {},
+				"order": 3,
+				"mode": 0,
+				"inputs": [
+					{
+						"name": "Albedo",
+						"type": "vec3,vec4",
+						"link": 1
+					},
+					{
+						"name": "Metallic",
+						"type": "float",
+						"link": 2
+					},
+					{
+						"name": "Roughness",
+						"type": "float",
+						"link": 3
+					},
+					{
+						"name": "Normal",
+						"type": "vec3",
+						"link": null
+					},
+					{
+						"name": "Emissive",
+						"type": "vec3",
+						"link": null
+					}
+				],
+				"title": "Material Output",
+				"properties": {},
+				"color": "#4a9"
+			},
+			{
+				"id": 2,
+				"type": "value/color",
+				"pos": [
+					-81.84525747985836,
+					82.00157967529302
+				],
+				"size": {
+					"0": 140,
+					"1": 26
+				},
+				"flags": {},
+				"order": 0,
+				"mode": 0,
+				"outputs": [
+					{
+						"name": "Color",
+						"type": "vec3",
+						"links": [
+							1
+						],
+						"slot_index": 0
+					}
+				],
+				"title": "Color",
+				"properties": {
+					"r": 1,
+					"g": 1,
+					"b": 1
+				}
+			},
+			{
+				"id": 3,
+				"type": "value/float",
+				"pos": [
+					-195,
+					234
+				],
+				"size": {
+					"0": 140,
+					"1": 26
+				},
+				"flags": {},
+				"order": 1,
+				"mode": 0,
+				"outputs": [
+					{
+						"name": "Value",
+						"type": "float",
+						"links": [
+							2
+						],
+						"slot_index": 0
+					}
+				],
+				"title": "Float",
+				"properties": {
+					"value": 1
+				}
+			},
+			{
+				"id": 4,
+				"type": "value/float",
+				"pos": [
+					-179,
+					357
+				],
+				"size": {
+					"0": 140,
+					"1": 26
+				},
+				"flags": {},
+				"order": 2,
+				"mode": 0,
+				"outputs": [
+					{
+						"name": "Value",
+						"type": "float",
+						"links": [
+							3
+						],
+						"slot_index": 0
+					}
+				],
+				"title": "Float",
+				"properties": {
+					"value": 1
+				}
+			}
+		],
+		"links": [
+			[
+				1,
+				2,
+				0,
+				1,
+				0,
+				"vec3,vec4"
+			],
+			[
+				2,
+				3,
+				0,
+				1,
+				1,
+				"float"
+			],
+			[
+				3,
+				4,
+				0,
+				1,
+				2,
+				"float"
+			]
+		],
+		"groups": [],
+		"config": {},
+		"extra": {},
+		"version": 0.4
+	},
+	"viewport": {
+		"x": 219.63494873046875,
+		"y": 64.35069274902344,
+		"scale": 0.6830134553650705
+	}
+}
