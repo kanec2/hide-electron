@@ -75,4 +75,7 @@ class UseService {
     public static function loadShader():LoadShaderUseCase {
         return Ide.inst.get_loadShader();
     }
+    public static function languageServer():ILanguageServer {
+        return Ide.inst.get_languageServer();
+    }
 }

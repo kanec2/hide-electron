@@ -201,6 +201,117 @@ class AutoWindow {
         return result;
     }
     static function setupIpc():Void {
+        // === Language Server Protocol ===
+
+        // Запуск LSP
+        IpcMain.handle("lsp:start", function(event:Dynamic, rootPath:String) {
+            HaxeLanguageServerManager.start(rootPath);
+            HaxeLanguageServerManager.initialize();
+            return { success: true };
+        });
+
+        // Остановка LSP
+        IpcMain.handle("lsp:stop", function(event:Dynamic) {
+            HaxeLanguageServerManager.stop();
+            return { success: true };
+        });
+
+        // Отправка запроса в LSP
+        IpcMain.handle("lsp:request", function(event:Dynamic, data:Dynamic) {
+            var id = HaxeLanguageServerManager.sendRequest(data.method, data.params);
+            return { id: id };
+        });
+
+        // Отправка notification в LSP
+        IpcMain.on("lsp:notification", function(event:IpcMainEvent, data:Dynamic) {
+            HaxeLanguageServerManager.sendNotification(data.method, data.params);
+            event.returnValue = null;
+        });
+
+        // Ответ на запрос от сервера
+        IpcMain.on("lsp:response", function(event:IpcMainEvent, data:Dynamic) {
+            HaxeLanguageServerManager.sendResponse(data.id, data.result);
+            event.returnValue = null;
+        });
+
+        // Открытие файла в LSP (didOpen)
+        IpcMain.on("lsp:didOpen", function(event:IpcMainEvent, data:Dynamic) {
+            HaxeLanguageServerManager.sendNotification("textDocument/didOpen", {
+                textDocument: {
+                    uri: data.uri,
+                    languageId: data.languageId,
+                    version: data.version,
+                    text: data.text
+                }
+            });
+            event.returnValue = null;
+        });
+
+        // Изменение файла в LSP (didChange)
+        IpcMain.on("lsp:didChange", function(event:IpcMainEvent, data:Dynamic) {
+            HaxeLanguageServerManager.sendNotification("textDocument/didChange", {
+                textDocument: {
+                    uri: data.uri,
+                    version: data.version
+                },
+                contentChanges: data.contentChanges
+            });
+            event.returnValue = null;
+        });
+
+        // Закрытие файла в LSP (didClose)
+        IpcMain.on("lsp:didClose", function(event:IpcMainEvent, data:Dynamic) {
+            HaxeLanguageServerManager.sendNotification("textDocument/didClose", {
+                textDocument: {
+                    uri: data.uri
+                }
+            });
+            event.returnValue = null;
+        });
+
+        // Запрос автодополнения
+        IpcMain.handle("lsp:completion", function(event:Dynamic, data:Dynamic) {
+            var id = HaxeLanguageServerManager.sendRequest("textDocument/completion", {
+                textDocument: { uri: data.uri },
+                position: { line: data.line, character: data.character },
+                context: data.context
+            });
+            
+            return new js.lib.Promise(function(resolve, reject) {
+                HaxeLanguageServerManager.waitForResponse(id, function(result) {
+                    resolve(result);
+                });
+            });
+        });
+
+        // Запрос hover информации
+        IpcMain.handle("lsp:hover", function(event:Dynamic, data:Dynamic) {
+            var id = HaxeLanguageServerManager.sendRequest("textDocument/hover", {
+                textDocument: { uri: data.uri },
+                position: { line: data.line, character: data.character }
+            });
+            
+            return new js.lib.Promise(function(resolve, reject) {
+                HaxeLanguageServerManager.waitForResponse(id, function(result) {
+                    resolve(result);
+                });
+            });
+        });
+
+        // Запрос перехода к определению
+        IpcMain.handle("lsp:definition", function(event:Dynamic, data:Dynamic) {
+            var id = HaxeLanguageServerManager.sendRequest("textDocument/definition", {
+                textDocument: { uri: data.uri },
+                position: { line: data.line, character: data.character }
+            });
+            
+            return new js.lib.Promise(function(resolve, reject) {
+                HaxeLanguageServerManager.waitForResponse(id, function(result) {
+                    resolve(result);
+                });
+            });
+        });
+        
         // === Базовые команды приложения ===
         IpcMain.on("app:quit", function(event:IpcMainEvent) { 
             App.quit(); 
@@ -368,41 +479,3 @@ class AutoWindow {
         });
     }
 }
-
-/* === JS ===
-// main.js (Electron Main Process)
-const { app, ipcMain, dialog } = require('electron');
-const fs = require('fs');
-
-// Dialog handlers
-ipcMain.handle('dialog:showOpen', async (event, options) => {
-    return await dialog.showOpenDialog(options);
-});
-
-ipcMain.handle('dialog:showSave', async (event, options) => {
-    return await dialog.showSaveDialog(options);
-});
-
-ipcMain.handle('dialog:showDirectory', async (event, options) => {
-    return await dialog.showOpenDialog(options);
-});
-
-// File system handlers
-ipcMain.handle('fs:readText', async (event, path) => {
-    try {
-        const content = fs.readFileSync(path, 'utf-8');
-        return { content };
-    } catch (err) {
-        return { error: err.message };
-    }
-});
-
-ipcMain.handle('fs:writeText', async (event, path, content) => {
-    try {
-        fs.writeFileSync(path, content, 'utf-8');
-        return { success: true };
-    } catch (err) {
-        return { error: err.message };
-    }
-});
-*/

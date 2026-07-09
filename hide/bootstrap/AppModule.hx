@@ -64,6 +64,7 @@ class AppModule {
         collection.addSingleton(IFileDialog, ElectronFileDialogAdapter);
         collection.addSingleton(IWindowManager, ElectronWindowAdapter);
         collection.addSingleton(IPlatform, ElectronPlatformAdapter);
+        collection.addSingleton(ILanguageServer, ElectronLanguageServerAdapter);  // ← НОВОЕ
         #end
         
         // === 2. Layout Engine ===

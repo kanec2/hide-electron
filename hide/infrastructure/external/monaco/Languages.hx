@@ -64,5 +64,9 @@ typedef CompletionItem = {
 extern class Languages {
 
 	public static function registerCompletionItemProvider( language : String, provider : CompletionProvider ) : Void;
+	public static function register(language:{id:String}):Void;
+    public static function setMonarchTokensProvider(language:String, provider:Dynamic):Void;
+    public static function setLanguageConfiguration(language:String, config:Dynamic):Void;
+    public static function getLanguages():Array<Dynamic>;
 
 }
