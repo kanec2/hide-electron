@@ -23,6 +23,7 @@ class HaxeLanguageServerManager {
     private static var requestId:Int = 0;
     private static var pendingRequests:Map<Int, Dynamic->Void> = [];
 
+    private static var registeredCapabilities:Array<Dynamic> = [];
     /**
      * Запускает Haxe Language Server.
      */
@@ -48,15 +49,60 @@ class HaxeLanguageServerManager {
         trace("📄 [LSP] Server path: " + serverPath);
 
         // Запускаем сервер как child process
-        serverProcess = ChildProcess.spawn("node", [serverPath, "--stdio"], {
+        serverProcess = ChildProcess.spawn("node", [serverPath], {
             cwd: rootPath,
             stdio: ["pipe", "pipe", "pipe"]
         });
 
         // Обработка stdout (ответы от LSP)
         serverProcess.stdout.on("data", function(data:Buffer) {
-            buffer += data.toString();
-            processMessages();
+            buffer += data;
+    
+            // ✅ Парсим все полные сообщения из буфера
+            while (true) {
+                // Ищем конец заголовка
+                var headerEnd = buffer.indexOf("\r\n\r\n");
+                if (headerEnd == -1) {
+                    // Заголовок ещё не полностью получен
+                    break;
+                }
+                
+                var header = buffer.substring(0, headerEnd);
+                
+                // Парсим Content-Length
+                var headerRegex = ~/Content-Length:\s*(\d+)/i;
+                if (!headerRegex.match(header)) {
+                    trace("❌ [LSP] Invalid header: " + header);
+                    buffer = buffer.substring(headerEnd + 4);
+                    continue;
+                }
+
+                var contentLength = Std.parseInt(headerRegex.matched(1));
+                
+                var messageStart = headerEnd + 4; // После \r\n\r\n
+                var messageEnd = messageStart + contentLength;
+                
+                // Проверяем, есть ли полное сообщение в буфере
+                if (buffer.length < messageEnd) {
+                    // Сообщение ещё не полностью получено
+                    break;
+                }
+                
+                // Извлекаем сообщение
+                var message = buffer.substring(messageStart, messageEnd);
+                
+                // Удаляем обработанное сообщение из буфера
+                buffer = buffer.substring(messageEnd);
+                
+                // Парсим JSON
+                try {
+                    var json = haxe.Json.parse(message);
+                    handleMessage(json);
+                } catch (e:Dynamic) {
+                    trace("❌ [LSP] Failed to parse message: " + e);
+                    trace("   Message: " + message.substring(0, 200));
+                }
+            }
         });
 
         // Обработка stderr (логи сервера)
@@ -103,7 +149,6 @@ class HaxeLanguageServerManager {
     var params = {
     processId: untyped process.pid,
     rootUri: rootUri,
-    rootPath: projectRoot,
     capabilities: {
         textDocument: {
             completion: {
@@ -199,7 +244,7 @@ class HaxeLanguageServerManager {
 }
 
 private static function sendConfiguration():Void {
-    var settings = {
+    var settings:Dynamic = {
         settings: {  // ← ДОБАВИТЬ ОБЁРТКУ settings
             haxe: {
                 enableCodeLens: false,
@@ -289,6 +334,9 @@ private static function sendConfiguration():Void {
                     }
                     isStarted = false;
                     isInitialized = false;
+                    buffer = "";  // ← ДОБАВИТЬ
+                    requestId = 0;  // ← ДОБАВИТЬ
+                    pendingRequests.clear();  // ← ДОБАВИТЬ
                     trace("🛑 [LSP] Language Server stopped");
                 }, 500);
             });
@@ -320,7 +368,7 @@ private static function sendConfiguration():Void {
                     trace('⚠️ [LSP] Request $id ($method) timed out');
                     callback(null);
                 }
-            }, 10000);
+            }, 30000);
         }
 
         var message = {
@@ -410,7 +458,7 @@ private static function sendConfiguration():Void {
     public static function didSave(uri:String, ?text:String):Void {
         sendNotification("textDocument/didSave", {
             textDocument: { uri: uri },
-            text: text  // включаем текст, т.к. сервер может требовать
+            //text: text  // включаем текст, т.к. сервер может требовать
         });
     }
 
@@ -423,39 +471,6 @@ private static function sendConfiguration():Void {
         var header = 'Content-Length: $contentLength\r\n\r\n';
         
         serverProcess.stdin.write(header + json);
-    }
-
-    /**
-     * Парсит и обрабатывает сообщения от Language Server.
-     */
-    private static function processMessages():Void {
-        while (true) {
-            var headerEnd = buffer.indexOf("\r\n\r\n");
-            if (headerEnd == -1) break;
-
-            var header = buffer.substring(0, headerEnd);
-            // ✅ ПРАВИЛЬНО (Haxe-синтаксис):
-            var regex = ~/Content-Length: (\d+)/;
-            if (!regex.match(header)) {
-                trace("❌ [LSP] Invalid header: " + header);
-                buffer = buffer.substring(headerEnd + 4);
-                continue;
-            }
-            var length = Std.parseInt(regex.matched(1));
-            var messageStart = headerEnd + 4;
-            
-            if (buffer.length < messageStart + length) break;
-
-            var messageJson = buffer.substring(messageStart, messageStart + length);
-            buffer = buffer.substring(messageStart + length);
-
-            try {
-                var message:Dynamic = haxe.Json.parse(messageJson);
-                handleMessage(message);
-            } catch (e:Dynamic) {
-                trace("❌ [LSP] Failed to parse message: " + e);
-            }
-        }
     }
 
     /**
@@ -498,11 +513,85 @@ private static function sendConfiguration():Void {
         
         switch (message.method) {
             case "workspace/configuration":
-                // Сервер запрашивает конфигурацию — отвечаем дефолтами
-                var items:Array<Dynamic> = message.params.items;
-                var result = [for (_ in items) {}];
-                sendResponse(message.id, result);
-                trace("   ✅ Responded with default configuration");
+    var items:Array<Dynamic> = message.params.items;
+    var result:Array<Dynamic> = [];
+    
+    for (item in items) {
+        if (item.section == "haxe") {
+            result.push({
+                enableCodeLens: false,
+                enableDiagnostics: true,
+                enableServerView: false,
+                enableSignatureHelpDocumentation: true,
+                diagnosticsOnFileOpen: true,
+                diagnosticsForAllOpenFiles: true,
+                diagnosticsPathFilter: "${workspaceRoot}",
+                displayHost: null,
+                displayPort: null,
+                buildCompletionCache: true,
+                enableCompletionCacheWarning: true,
+                useLegacyCompletion: false,
+                useLegacyDiagnostics: false,
+                codeGeneration: {
+                    functions: {
+                        anonymous: {
+                            argumentTypeHints: false,
+                            returnTypeHint: "never",
+                            useArrowSyntax: true,
+                            placeOpenBraceOnNewLine: false,
+                            explicitPublic: false,
+                            explicitPrivate: false,
+                            explicitNull: false
+                        },
+                        field: {
+                            argumentTypeHints: true,
+                            returnTypeHint: "non-void",
+                            useArrowSyntax: false,
+                            placeOpenBraceOnNewLine: false,
+                            explicitPublic: false,
+                            explicitPrivate: false,
+                            explicitNull: false
+                        }
+                    },
+                    imports: {
+                        style: "type",
+                        enableAutoImports: true
+                    },
+                    'switch': {
+                        parentheses: false
+                    }
+                },
+                exclude: ["zpp_nape"],
+                postfixCompletion: {
+                    level: "full"
+                },
+                importsSortOrder: "all-alphabetical",
+                maxCompletionItems: 1000,
+                renameSourceFolders: ["src", "source", "Source", "test", "tests"],
+                disableRefactorCache: false,
+                disableInlineValue: true,
+                inlayHints: {
+                    variableTypes: false,
+                    parameterNames: false,
+                    parameterTypes: false,
+                    functionReturnTypes: false,
+                    conditionals: false
+                },
+                serverRecording: {
+                    enabled: false,
+                    path: ".haxelsp/recording/",
+                    exclude: [],
+                    excludeUntracked: false,
+                    watch: []
+                }
+            });
+        } else {
+            result.push({});
+        }
+    }
+    
+    sendResponse(message.id, result);
+    trace("   ✅ Responded with configuration for " + items.length + " items");
                 
             case "window/workDoneProgress/create":
                 // Принимаем создание progress
@@ -510,6 +599,11 @@ private static function sendConfiguration():Void {
                 
             case "client/registerCapability":
                 // Принимаем регистрацию capabilities
+                var registrations:Array<Dynamic> = message.params.registrations;
+                for (reg in registrations) {
+                    registeredCapabilities.push(reg);
+                    trace("   ✅ Registered capability: " + reg.method);
+                }
                 sendResponse(message.id, null);
                 
             default:
