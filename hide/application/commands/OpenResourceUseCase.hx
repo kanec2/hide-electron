@@ -20,6 +20,6 @@ class OpenResourceUseCase implements Service {
         }
         
         // TODO: Определить тип ресурса и открыть соответствующий редактор
-        eventBus.publish(ResourceOpened, new ResourceOpened());
+        eventBus.publish(ResourceOpened, new ResourceOpened(path));
     }
 }

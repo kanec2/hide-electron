@@ -1,3 +1,4 @@
+import hide.domain.services.SemanticTokensLegend;
 import js.node.ChildProcess;
 import js.node.Buffer;
 import js.node.Path;
@@ -13,6 +14,7 @@ import electron.IpcMainEvent;
  * между Monaco Editor (renderer) и Language Server через IPC.
  */
 class HaxeLanguageServerManager {
+    private static var semanticTokensLegend:Null<SemanticTokensLegend> = null;
     private static var serverProcess:js.node.child_process.ChildProcess = null;
     private static var buffer:String = "";
     private static var isStarted:Bool = false;
@@ -86,68 +88,192 @@ class HaxeLanguageServerManager {
      * ВАЖНО: Вызывать ПОСЛЕ start()!
      */
     public static function initialize():Void {
-        if (!isStarted || serverProcess == null) {
-            trace("❌ [LSP] Cannot initialize: server not started");
-            return;
-        }
+    if (!isStarted || serverProcess == null) {
+        trace("❌ [LSP] Cannot initialize: server not started");
+        return;
+    }
 
-        // ✅ ИСПРАВЛЕНО: правильный rootUri для Windows и Unix
-        var rootPathNormalized = projectRoot.split("\\").join("/");
-        var rootUri = if (rootPathNormalized.charAt(0) == "/") {
-            "file://" + rootPathNormalized;  // Unix: file:///home/user/project
-        } else {
-            "file:///" + rootPathNormalized; // Windows: file:///C:/Users/project
-        };
+    var rootPathNormalized = projectRoot.split("\\").join("/");
+    var rootUri = if (rootPathNormalized.charAt(0) == "/") {
+        "file://" + rootPathNormalized;
+    } else {
+        "file:///" + rootPathNormalized;
+    };
 
-        var params = {
-            processId: untyped process.pid,
-            rootUri: rootUri,
-            rootPath: projectRoot,  // legacy, но некоторые серверы требуют
-            capabilities: {
-                textDocument: {
-                    completion: {
-                        completionItem: {
-                            snippetSupport: true,
-                            resolveSupport: { properties: ["documentation", "detail"] }
-                        }
-                    },
-                    hover: { contentFormat: ["markdown", "plaintext"] },
-                    signatureHelp: {},
-                    definition: { linkSupport: true },
-                    references: {},
-                    documentSymbol: { hierarchicalDocumentSymbolSupport: true },
-                    codeAction: {},
-                    formatting: {},
-                    publishDiagnostics: { 
-                        relatedInformation: true,
-                        tagSupport: { valueSet: [1, 2] }
-                    },
-                    synchronization: {
-                        didSave: true,  // ← ВАЖНО: поддерживаем didSave
-                        willSave: false,
-                        willSaveWaitUntil: false
-                    }
-                },
-                workspace: {
-                    applyEdit: true,
-                    configuration: true,  // ← ВАЖНО: сервер может запрашивать конфиг
-                    didChangeConfiguration: { dynamicRegistration: true }
+    var params = {
+    processId: untyped process.pid,
+    rootUri: rootUri,
+    rootPath: projectRoot,
+    capabilities: {
+        textDocument: {
+            completion: {
+                completionItem: {
+                    snippetSupport: true,
+                    resolveSupport: { properties: ["documentation", "detail"] }
                 }
             },
-            initializationOptions: {}
-        };
-
-        // ✅ ИСПРАВЛЕНО: используем callback прямо в sendRequest
-        sendRequest("initialize", params, function(result) {
-            trace("✅ [LSP] Initialize response received");
-            trace("   Server capabilities: " + haxe.Json.stringify(result != null ? Reflect.field(result, "capabilities") : null));
-            
-            // ✅ КРИТИЧНО: отправляем initialized notification
-            sendNotification("initialized", {});
-            isInitialized = true;
-            trace("✅ [LSP] Initialized notification sent");
-        });
+            hover: { contentFormat: ["markdown", "plaintext"] },
+            signatureHelp: {},
+            definition: { linkSupport: true },
+            references: {},
+            documentSymbol: { hierarchicalDocumentSymbolSupport: true },
+            codeAction: {},
+            formatting: {},
+            publishDiagnostics: {
+                relatedInformation: true,
+                tagSupport: { valueSet: [1, 2] }
+            },
+            synchronization: {
+                didSave: true,
+                willSave: false,
+                willSaveWaitUntil: false
+            },
+            semanticTokens: {
+                requests: {
+                    full: true,
+                    range: false
+                },
+                formats: ["relative"],
+                overlappingTokenSupport: false,
+                multilineTokenSupport: false,
+                serverCancelSupport: false,
+                augmentsSyntaxTokens: true
+            }
+        },
+        workspace: {
+            applyEdit: true,
+            configuration: true,
+            didChangeConfiguration: { dynamicRegistration: true }  // ← Это можно оставить
+        }
+    },
+    initializationOptions: {
+        displayServerConfig: {
+            path: "haxe",
+            env: {},
+            arguments: [],
+            print: {
+                completion: false,
+                reusing: false
+            },
+            useSocket: true
+        },
+        displayArguments: [],
+        haxelibConfig: {
+            executable: "haxelib"
+        },
+        sendMethodResults: false,
+        experimentalClientCapabilities: {
+            supportedCommands: []
+        }
     }
+};
+
+    sendRequest("initialize", params, function(result) {
+        trace("✅ [LSP] Initialize response received");
+        
+        if (result != null && result.capabilities != null) {
+            var caps = result.capabilities;
+            
+            if (Reflect.hasField(caps, "semanticTokensProvider") && caps.semanticTokensProvider != null) {
+                var provider = caps.semanticTokensProvider;
+                
+                if (provider.legend != null) {
+                    trace("✅ [LSP] Semantic tokens SUPPORTED!");
+                    semanticTokensLegend = provider.legend;
+                }
+            } else {
+                trace("⚠️ [LSP] Semantic tokens NOT supported by server");
+                trace("   Available capabilities: " + haxe.Json.stringify(Reflect.fields(caps)));
+            }
+        }
+
+        // ✅ ОТПРАВЛЯЕМ initialized notification
+        sendNotification("initialized", {});
+        
+        // ✅ НОВОЕ: ОТПРАВЛЯЕМ workspace/didChangeConfiguration
+        sendConfiguration();
+        
+        isInitialized = true;
+        trace("✅ [LSP] Initialized notification sent");
+    });
+}
+
+private static function sendConfiguration():Void {
+    var settings = {
+        settings: {  // ← ДОБАВИТЬ ОБЁРТКУ settings
+            haxe: {
+                enableCodeLens: false,
+                enableDiagnostics: true,
+                enableServerView: false,
+                enableSignatureHelpDocumentation: true,
+                diagnosticsOnFileOpen: true,
+                diagnosticsForAllOpenFiles: true,
+                diagnosticsPathFilter: "${workspaceRoot}",
+                displayHost: null,
+                displayPort: null,
+                buildCompletionCache: true,
+                enableCompletionCacheWarning: true,
+                useLegacyCompletion: false,
+                useLegacyDiagnostics: false,
+                codeGeneration: {
+                    functions: {
+                        anonymous: {
+                            argumentTypeHints: false,
+                            returnTypeHint: "never",
+                            useArrowSyntax: true,
+                            placeOpenBraceOnNewLine: false,
+                            explicitPublic: false,
+                            explicitPrivate: false,
+                            explicitNull: false
+                        },
+                        field: {
+                            argumentTypeHints: true,
+                            returnTypeHint: "non-void",
+                            useArrowSyntax: false,
+                            placeOpenBraceOnNewLine: false,
+                            explicitPublic: false,
+                            explicitPrivate: false,
+                            explicitNull: false
+                        }
+                    },
+                    imports: {
+                        style: "type",
+                        enableAutoImports: true
+                    },
+                    'switch': {
+                        parentheses: false
+                    }
+                },
+                exclude: ["zpp_nape"],
+                postfixCompletion: {
+                    level: "full"
+                },
+                importsSortOrder: "all-alphabetical",
+                maxCompletionItems: 1000,
+                renameSourceFolders: ["src", "source", "Source", "test", "tests"],
+                disableRefactorCache: false,
+                disableInlineValue: true,
+                inlayHints: {
+                    variableTypes: false,
+                    parameterNames: false,
+                    parameterTypes: false,
+                    functionReturnTypes: false,
+                    conditionals: false
+                },
+                serverRecording: {
+                    enabled: false,
+                    path: ".haxelsp/recording/",
+                    exclude: [],
+                    excludeUntracked: false,
+                    watch: []
+                }
+            }
+        }
+    };
+    
+    sendNotification("workspace/didChangeConfiguration", settings);
+    trace("✅ [LSP] Configuration sent");
+}
 
     /**
      * Останавливает Language Server.
@@ -207,6 +333,7 @@ class HaxeLanguageServerManager {
         sendJsonRpc(message);
         return id;
     }
+
 
     /**
      * Отправляет JSON-RPC notification (без id, без ответа).
@@ -428,5 +555,9 @@ class HaxeLanguageServerManager {
                     });
                 }
         }
+    }
+
+    public static function getSemanticTokensLegend():Null<SemanticTokensLegend> {
+        return semanticTokensLegend;
     }
 }

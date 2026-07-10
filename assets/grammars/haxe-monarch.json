@@ -1,0 +1,101 @@
+{
+  "keywords": [
+    "abstract", "break", "case", "cast", "catch", "class", "continue",
+    "default", "do", "dynamic", "else", "enum", "extends", "extern",
+    "false", "final", "for", "function", "if", "implements", "import",
+    "in", "inline", "interface", "macro", "new", "null", "override",
+    "package", "private", "public", "return", "static", "switch",
+    "this", "throw", "true", "try", "typedef", "untyped", "using",
+    "var", "while", "super"
+  ],
+  "typeKeywords": [
+    "Int", "Float", "String", "Bool", "Void", "Dynamic", "Any",
+    "Null", "Array", "Map", "Iterator", "Iterable", "Class",
+    "Enum", "EnumValue", "Reflect", "Std", "Type", "Math"
+  ],
+  "operators": [
+    "=", ">", "<", "!", "~", "?", ":",
+    "==", "<=", ">=", "!=", "&&", "||",
+    "++", "--", "+", "-", "*", "/", "&", "|", "^", "%",
+    "<<", ">>", ">>>", "+=", "-=", "*=", "/=", "&=", "|=",
+    "^=", "%=", "<<=", ">>=", "=>", "??", "??=", "?.", "..."
+  ],
+  "symbols": "[=><!~?:&|+\\-*\\/\\^%]+",
+  "escapes": "\\\\(?:[abfnrtv\\\\\"']|x[0-9A-Fa-f]{1,4}|u[0-9A-Fa-f]{4}|U[0-9A-Fa-f]{8})",
+  "tokenizer": {
+    "root": [
+      ["/#(if|elseif|else|end|error|line)\\b.*$/", "keyword.preprocessor"],
+      ["/@:?[:a-zA-Z_]\\w*/", "annotation"],
+      ["/[A-Z][\\w\\$]*/", "type.identifier"],
+      ["/[a-z_$][\\w$]*/", {
+        "cases": {
+          "@keywords": "keyword",
+          "@typeKeywords": "type.keyword",
+          "@default": "identifier"
+        }
+      }],
+      { "include": "@whitespace" },
+      ["/[{}()\\[\\]]/", "@brackets"],
+      ["/@symbols/", {
+        "cases": {
+          "@operators": "operator",
+          "@default": ""
+        }
+      }],
+      ["/\\d*\\.\\d+([eE][\\-+]?\\d+)?[fFdD]?/", "number.float"],
+      ["/0[xX][0-9a-fA-F]+[lL]?/", "number.hex"],
+      ["/0[bB][01]+[lL]?/", "number.binary"],
+      ["/\\d+[lL]?/", "number"],
+      ["/[;,.]/", "delimiter"],
+      ["/\"/", { "token": "string.quote", "bracket": "@open", "next": "@string_double" }],
+      ["/'/", { "token": "string.quote", "bracket": "@open", "next": "@string_single" }],
+      ["/`/", { "token": "string.quote", "bracket": "@open", "next": "@string_template" }],
+      ["/~\\//", { "token": "regexp", "next": "@regexp" }]
+    ],
+    "whitespace": [
+      ["/[ \\t\\r\\n]+/", "white"],
+      ["/\\/\\*/", "comment", "@comment"],
+      ["/\\/\\/.*$/", "comment"]
+    ],
+    "comment": [
+      ["/[^\\/*]+/", "comment"],
+      ["/\\*\\//", "comment", "@pop"],
+      ["/[\\/*]/", "comment"]
+    ],
+    "string_double": [
+      ["/[^\\\\\"]+/", "string"],
+      ["/@escapes/", "string.escape"],
+      ["/\\\\./", "string.escape.invalid"],
+      ["/\"/", { "token": "string.quote", "bracket": "@close", "next": "@pop" }]
+    ],
+    "string_single": [
+      ["/[^\\\\']+/", "string"],
+      ["/@escapes/", "string.escape"],
+      ["/\\\\./", "string.escape.invalid"],
+      ["/'/", { "token": "string.quote", "bracket": "@close", "next": "@pop" }]
+    ],
+    "string_template": [
+      ["/\\$\\{/", { "token": "variable", "next": "@interpolation" }],
+      ["/\\$[a-zA-Z_]\\w*/", "variable"],
+      ["/[^\\\\`$]+/", "string"],
+      ["/@escapes/", "string.escape"],
+      ["/\\\\./", "string.escape.invalid"],
+      ["/`/", { "token": "string.quote", "bracket": "@close", "next": "@pop" }]
+    ],
+    "interpolation": [
+      ["/[^}]+/", "variable"],
+      ["/\\}/", { "token": "variable", "next": "@pop" }]
+    ],
+    "regexp": [
+      ["/[^\\[\\/\\\\]+/", "regexp"],
+      ["/\\\\./", "regexp.escape"],
+      ["/\\[/", "regexp", "@regexp_class"],
+      ["/\\//", { "token": "regexp", "next": "@pop" }]
+    ],
+    "regexp_class": [
+      ["/[^\\]\\\\]+/", "regexp"],
+      ["/\\\\./", "regexp.escape"],
+      ["/\\]/", "regexp", "@pop"]
+    ]
+  }
+}

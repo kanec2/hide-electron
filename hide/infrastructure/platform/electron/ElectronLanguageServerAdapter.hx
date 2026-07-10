@@ -1,10 +1,16 @@
 package hide.infrastructure.platform.electron;
 
+import hide.domain.services.SemanticTokensResult;
+import hide.domain.services.SemanticTokensLegend;
+import hide.domain.services.Diagnostic;
+import hide.domain.services.Location;
+import hide.domain.services.HoverInfo;
+import hide.domain.services.CompletionItem;
 import hide.domain.services.ILanguageServer;
-import hide.domain.services.ILanguageServer.CompletionItem;
-import hide.domain.services.ILanguageServer.HoverInfo;
-import hide.domain.services.ILanguageServer.Location;
-import hide.domain.services.ILanguageServer.Diagnostic;
+import hide.domain.services.CompletionItem;
+import hide.domain.services.HoverInfo;
+import hide.domain.services.Location;
+import hide.domain.services.Diagnostic;
 import hide.infrastructure.platform.electron.ElectronIpcBridge;
 import tink.core.Future;
 import hx.injection.Service;
@@ -101,5 +107,22 @@ class ElectronLanguageServerAdapter implements ILanguageServer implements Servic
     
     public function onDiagnostics(callback:String->Array<Diagnostic>->Void):Void {
         this.diagnosticsCallback = callback;
+    }
+
+    public function semanticTokensFull(uri:String):Future<Null<SemanticTokensResult>> {
+        return ipcBridge.invokeSafe("lsp:semanticTokensFull", {
+            uri: uri
+        });
+    }
+    
+    public function semanticTokensRange(uri:String, range:{start:{line:Int, character:Int}, end:{line:Int, character:Int}}):Future<Null<SemanticTokensResult>> {
+        return ipcBridge.invokeSafe("lsp:semanticTokensRange", {
+            uri: uri,
+            range: range
+        });
+    }
+    
+    public function semanticTokensLegend():Future<Null<SemanticTokensLegend>> {
+        return ipcBridge.invokeSafe("lsp:semanticTokensLegend", {});
     }
 }

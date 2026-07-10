@@ -5,7 +5,9 @@ import js.html.Element;
 import hide.infrastructure.external.monaco.Model;
 import hide.infrastructure.external.monaco.Position;
 import hide.infrastructure.external.monaco.*;
-import hide.domain.services.ILanguageServer.CompletionItem;
+import hide.domain.services.CompletionItem;
+import js.node.Path;  // ← ДОБАВИТЬ
+import js.node.Fs;    // ← ДОБАВИТЬ
 import tink.core.*;
 using tink.CoreApi;
 /**
@@ -27,34 +29,116 @@ class MonacoEditorAdapter {
     }
     
     private function initMonaco():Void {
-        // ✅ ИСПОЛЬЗУЕМ глобальный window.monaco вместо require
+        trace("🎬 [MonacoEditor] Initializing Monaco Editor...");
+        // ✅ Пытаемся получить Monaco из глобальной области (если загружен через AMD)
         monaco = untyped js.Browser.window.monaco;
         
+        // Если не найден, пробуем Node.js require
         if (monaco == null) {
-            trace("❌ [MonacoEditor] Monaco not loaded! Check app.html");
+            monaco = untyped require('monaco-editor');
+        }
+        
+        if (monaco == null) {
+            trace("❌ [MonacoEditor] Monaco not loaded!");
             return;
         }
         
-        editor = monaco.editor.create(container, {
-            value: "// Welcome to HIDE IDE\n",
-            language: "haxe",
-            theme: "vs-dark",
-            automaticLayout: true,
-            minimap: { enabled: true },
-            fontSize: 14,
-            lineNumbers: "on",
-            scrollBeyondLastLine: true,
-            renderWhitespace: "selection",
-            wordWrap: "off",
-            tabSize: 4,
-            insertSpaces: true,
-            formatOnPaste: true,
-            formatOnType: true
-        });
+        // ✅ Настраиваем worker'ы для Electron
+        untyped monaco.environment = untyped monaco.environment != null ? monaco.environment : {};
+        untyped monaco.environment.getWorkerUrl = function(workerId:String, label:String):String {
+            // Возвращаем пустую строку или правильный путь к worker'ам
+            return '';
+        };
         
-        trace("✅ [MonacoEditor] Editor initialized via global monaco");
+        trace("📦 [MonacoEditor] Monaco Editor required successfully");
+        trace("📦 [MonacoEditor] Monaco version: " + (monaco.editor ? "has editor API" : "NO editor API"));
+        // ✅ Загружаем конфигурацию Haxe из JSON
+        registerHaxeLanguage();
+        // ✅ Инициализируем TextMate Grammar ПЕРЕД созданием редактора
+        //hide.infrastructure.external.monaco.TextMateInitializer.initialize(monaco);
+
+        // Небольшая задержка чтобы grammar успел загрузиться
+        haxe.Timer.delay(function() {
+            trace("🎨 [MonacoEditor] Creating editor instance...");
+            editor = monaco.editor.create(container, {
+                value: "// Welcome to HIDE IDE\n",
+                language: "haxe",
+                theme: "vs-dark",
+                automaticLayout: true,
+                minimap: { enabled: true },
+                fontSize: 14,
+                lineNumbers: "on",
+                scrollBeyondLastLine: true,
+                renderWhitespace: "selection",
+                wordWrap: "off",
+                tabSize: 4,
+                insertSpaces: true,
+                formatOnPaste: true,
+                formatOnType: true
+            });
+            
+            trace("✅ [MonacoEditor] Editor created successfully");
+            trace("🔍 [MonacoEditor] Editor language: " + editor.getModel().getLanguageId());
+            trace("🔍 [MonacoEditor] Editor value length: " + editor.getValue().length);
+        }, 200);
+        
+        trace("✅ [MonacoEditor] Editor initialized");
     }
-    
+
+    private function registerHaxeLanguage():Void {
+        // ✅ Загружаем JSON через fetch (работает в renderer)
+        /*
+        untyped fetch("assets/grammars/haxe-monarch.json")
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(grammar) {
+                // Регистрируем язык
+                // Устанавливаем токенизатор
+                monaco.languages.setMonarchTokensProvider('haxe', grammar);
+                trace("✅ [MonacoEditor] Haxe Monarch grammar loaded");
+            })
+            .catchError(function(err) {
+                trace("❌ [MonacoEditor] Failed to load Haxe grammar: " + err);
+            });*/
+        var grammar = untyped window.haxeGrammar;
+        // Проверяем что grammar не пустой
+        if (grammar == null) {
+            trace("❌ [MonacoEditor] Grammar is NULL!");
+            return;
+        }
+        
+        if (!Reflect.hasField(grammar, "tokenizer")) {
+            trace("❌ [MonacoEditor] Grammar has no tokenizer field!");
+            return;
+        }
+
+        // ✅ Минимальная регистрация языка Haxe (без Monarch)
+        var languages:Array<Dynamic> = monaco.languages.getLanguages();
+        var haxeExists = false;
+        for (lang in languages) {
+            if (lang.id == 'haxe') {
+                haxeExists = true;
+                break;
+            }
+        }
+        
+        if (!haxeExists) {
+            untyped monaco.languages.register({ id: 'haxe' });
+            trace("✅ [MonacoEditor] Haxe language registered");
+        }
+
+        if (grammar == null) {
+            trace("⚠️ [MonacoEditor] Grammar not loaded yet, using default");
+            return;
+        }
+        // Устанавливаем токенизатор
+        trace(" [MonacoEditor] Setting Monarch tokens provider...");
+        monaco.languages.setMonarchTokensProvider('haxe', grammar);
+        trace("✅ [MonacoEditor] Haxe Monarch grammar loaded and applied");
+        
+    }
+
     public function setValue(value:String):Void {
         if (editor != null) {
             editor.setValue(value);
@@ -142,6 +226,7 @@ class MonacoEditorAdapter {
         registerCompletionProvider();
         registerHoverProvider();
         registerDefinitionProvider();
+        registerSemanticTokensProvider();  // ← НОВОЕ
         
         lsp.onDiagnostics(function(uri, diagnostics) {
             updateDiagnostics(uri, diagnostics);
@@ -150,13 +235,27 @@ class MonacoEditorAdapter {
     }
 
     public function setCurrentFile(path:String):Void {
-        currentUri = "file:///" + path.split("\\").join("/");
+        // ✅ Конвертируем путь в file:// URI
+        var normalizedPath = path.split("\\").join("/");
+        if (normalizedPath.charAt(0) != "/") {
+            normalizedPath = "/" + normalizedPath;
+        }
+        currentUri = "file://" + normalizedPath;
+        
+        // ✅ Создаем модель с правильным URI
+        var model = monaco.editor.getModel(untyped js.Lib.nativeThis.monaco.Uri.parse(currentUri));
+        if (model == null) {
+            var content = editor.getValue();
+            var language = getLanguage();
+            model = monaco.editor.createModel(content, language, untyped js.Lib.nativeThis.monaco.Uri.parse(currentUri));
+            editor.setModel(model);
+        }
+        
         documentVersion = 1;
         
         if (lspService != null) {
-            var content = editor.getValue();
-            var language = getLanguage();
-            lspService.didOpen(currentUri, language, documentVersion, content);
+            lspService.didOpen(currentUri, getLanguage(), documentVersion, editor.getValue());
+            trace("📂 [MonacoEditor] File opened: " + currentUri);
         }
     }
 
@@ -257,6 +356,40 @@ class MonacoEditorAdapter {
                     });
                 });
             }
+        });
+    }
+
+    private function registerSemanticTokensProvider():Void {
+        if (lspService == null) return;
+        
+        // Сначала получаем legend
+        lspService.semanticTokensLegend().handle(function(legend) {
+            if (legend == null) {
+                trace("⚠️ [MonacoEditor] Semantic tokens not supported by server");
+                return;
+            }
+            
+            trace("✅ [MonacoEditor] Registering semantic tokens provider");
+            
+            // Регистрируем провайдер
+            monaco.languages.registerDocumentSemanticTokensProvider('haxe', {
+                getLegend: function() {
+                    return legend;
+                },
+                provideDocumentSemanticTokens: function(model, lastResultId, token) {
+                    var uri = model.uri.toString();
+                    return lspService.semanticTokensFull(uri).map(function(result) {
+                        if (result == null) return null;
+                        return {
+                            data: result.data,
+                            resultId: result.resultId
+                        };
+                    });
+                },
+                releaseDocumentSemanticTokens: function(resultId) {
+                    // Можно кэшировать результаты
+                }
+            });
         });
     }
 

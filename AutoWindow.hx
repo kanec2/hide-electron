@@ -453,6 +453,35 @@ class AutoWindow {
             Menu.setApplicationMenu(menu);
             trace("[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
         });
+        
+        // Semantic Tokens
+        IpcMain.handle("lsp:semanticTokensFull", function(event:Dynamic, data:Dynamic) {
+            return new js.lib.Promise(function(resolve, reject) {
+                HaxeLanguageServerManager.sendRequest("textDocument/semanticTokens/full", {
+                    textDocument: { uri: data.uri }
+                }, function(result) {
+                    resolve(result);
+                });
+            });
+        });
+
+        IpcMain.handle("lsp:semanticTokensRange", function(event:Dynamic, data:Dynamic) {
+            return new js.lib.Promise(function(resolve, reject) {
+                HaxeLanguageServerManager.sendRequest("textDocument/semanticTokens/range", {
+                    textDocument: { uri: data.uri },
+                    range: data.range
+                }, function(result) {
+                    resolve(result);
+                });
+            });
+        });
+
+        IpcMain.handle("lsp:semanticTokensLegend", function(event:Dynamic) {
+            return new js.lib.Promise(function(resolve, reject) {
+                // Возвращаем кэшированную легенду из initialize
+                resolve(HaxeLanguageServerManager.getSemanticTokensLegend());
+            });
+        });
 
         // === Открытие окон ===
         IpcMain.on("window:open", function(event:IpcMainEvent, data:Dynamic) {

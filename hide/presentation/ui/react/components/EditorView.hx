@@ -6,7 +6,7 @@ import hide.presentation.ui.react.BaseReactComponent;
 import hide.presentation.ui.react.hooks.UseService;
 import hide.shared.events.ResourceOpened;
 import hide.domain.services.ILanguageServer;
-import hide.domain.services.ILanguageServer.Diagnostic;
+import hide.domain.services.Diagnostic;
 import hide.domain.valueobjects.FilePath;
 import tink.core.*;
 using tink.CoreApi;
@@ -28,7 +28,7 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
     private var editorContainerRef:Dynamic;
     private var editorAdapter:Null<hide.infrastructure.external.MonacoEditorAdapter>;
     private var lspClient:Null<ILanguageServer>;
-    private var documentVersion:Int = 0;
+    private var eventSubscription:CallbackLink;
 
     public function new() {
         super();
@@ -43,10 +43,14 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
     }
 
     override function componentDidMount():Void {
+        // Подписка на события
         var eventBus = UseService.eventBus();
-        subscribe(eventBus, ResourceOpened, function(e:ResourceOpened) {
-            trace('📂 [EditorView] Resource opened');
+        eventSubscription = eventBus.subscribe(ResourceOpened, function(e:ResourceOpened) {
+            trace('📂 [EditorView] Resource opened: ' + e.path);
+            openFile(e.path);
         });
+        
+        // ✅ ИНИЦИАЛИЗАЦИЯ В ПРАВИЛЬНОМ ПОРЯДКЕ
         haxe.Timer.delay(function() {
             initEditor();
             initLsp();
@@ -55,69 +59,108 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
 
     private function initEditor():Void {
         var container = editorContainerRef.current;
-        if (container == null) return;
-        editorAdapter = new hide.infrastructure.external.MonacoEditorAdapter(container);
+        if (container == null) {
+            trace('❌ [EditorView] Editor container is null');
+            return;
+        }
         
-        editorAdapter.onDidChangeModelContent(function(_) {
+        editorAdapter = new hide.infrastructure.external.MonacoEditorAdapter(container);
+        // ✅ Ждём пока редактор создастся перед подпиской
+        haxe.Timer.delay(function() {
+            editorAdapter.onContentChanged(function() {
+                var newContent = editorAdapter.getValue();
+                if (!state.isDirty) {
+                    setState(function(prevState:EditorViewState) {
+                        return {
+                            currentFile: prevState.currentFile,
+                            content: newContent,
+                            isDirty: true,
+                            language: prevState.language,
+                            lspConnected: prevState.lspConnected
+                        };
+                    });
+                }
+            });
+            trace("✅ [EditorView] Content change handler attached");
+        }, 300); // Увеличиваем задержку чтобы редактор точно создался
+        /*
+        // ✅ ИСПОЛЬЗУЕМ onContentChanged из адаптера (он сам уведомляет LSP)
+        editorAdapter.onContentChanged(function() {
             var newContent = editorAdapter.getValue();
-            if (!state.isDirty) {
-                setState({
-                    currentFile: state.currentFile,
+            // ✅ Используем setState с функцией для избежания stale closure
+            setState(function(prevState:EditorViewState) {
+                return {
+                    currentFile: prevState.currentFile,
                     content: newContent,
                     isDirty: true,
-                    language: state.language,
-                    lspConnected: state.lspConnected
-                });
-            }
-            if (lspClient != null && state.currentFile != null) {
-                documentVersion++;
-                var uri = "file:///" + state.currentFile.split("\\").join("/");
-                lspClient.didChange(uri, documentVersion, newContent);
-            }
-        });
+                    language: prevState.language,
+                    lspConnected: prevState.lspConnected
+                };
+            });
+        });*/
+        
         trace('✅ [EditorView] Monaco Editor initialized');
     }
 
     private function initLsp():Void {
         var lsp = UseService.languageServer();
         if (lsp == null) {
-            trace('⚠️ [EditorView] Language Server not available');
+            trace('⚠️ [EditorView] Language Server service not available');
+            setState(function(prevState:EditorViewState) {
+                return {
+                    currentFile: prevState.currentFile,
+                    content: prevState.content,
+                    isDirty: prevState.isDirty,
+                    language: prevState.language,
+                    lspConnected: false
+                };
+            });
             return;
         }
+        
         lspClient = lsp;
+        trace('✅ [EditorView] LSP service obtained');
         
         var rootPath = "D:\\Dev\\hide-electron";
+        trace('🚀 [EditorView] Starting LSP for: ' + rootPath);
+        
         lspClient.start(rootPath).handle(function(success) {
             if (success) {
-                trace("✅ [EditorView] LSP connected");
-                setState({
-                    currentFile: state.currentFile,
-                    content: state.content,
-                    isDirty: state.isDirty,
-                    language: state.language,
-                    lspConnected: true
+                trace('✅ [EditorView] LSP connected successfully');
+                setState(function(prevState:EditorViewState) {
+                    return {
+                        currentFile: prevState.currentFile,
+                        content: prevState.content,
+                        isDirty: prevState.isDirty,
+                        language: prevState.language,
+                        lspConnected: true
+                    };
                 });
                 
-                // ✅ КРИТИЧНО: передаём LSP в адаптер!
-                // Адаптер сам зарегистрирует все провайдеры
+                // ✅ Передаём LSP в адаптер (он сам зарегистрирует провайдеры)
                 if (editorAdapter != null) {
-                    editorAdapter.setLanguageServer(lsp);
+                    editorAdapter.setLanguageServer(lspClient);
+                    trace('✅ [EditorView] LSP passed to Monaco adapter');
+                    
+                    // ✅ Если файл уже открыт, уведомляем LSP
+                    if (state.currentFile != null) {
+                        editorAdapter.setCurrentFile(state.currentFile);
+                    }
                 }
             } else {
-                trace("❌ [EditorView] LSP failed to start");
+                trace('❌ [EditorView] LSP failed to start');
+                setState(function(prevState:EditorViewState) {
+                    return {
+                        currentFile: prevState.currentFile,
+                        content: prevState.content,
+                        isDirty: prevState.isDirty,
+                        language: prevState.language,
+                        lspConnected: false
+                    };
+                });
             }
         });
-        
-        // ✅ Diagnostics подписка остаётся здесь, 
-        // потому что это UI-логика (обновление маркеров в Monaco)
-        // НО! Она уже есть в setLanguageServer() — можно убрать дубликат
-        trace('✅ [EditorView] LSP client initialized');
     }
-
-    // ❌ УДАЛЕНО: registerCompletionProvider() — теперь в адаптере
-    // ❌ УДАЛЕНО: mapCompletionKind() — теперь в адаптере
-    // ❌ УДАЛЕНО: updateDiagnostics() — теперь в адаптере
-    // ❌ УДАЛЕНО: mapSeverity() — теперь в адаптере
 
     private function handleOpenFile():Void {
         var fileDialog = UseService.fileDialog();
@@ -127,7 +170,9 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
                 {name: "All Files", extensions: ["*"]}
             ]
         }).handle(function(path:Null<String>) {
-            if (path != null) openFile(path);
+            if (path != null) {
+                openFile(path);
+            }
         });
     }
 
@@ -136,22 +181,27 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
         try {
             var content = fileSystem.readText(new FilePath(path));
             var language = detectLanguage(path);
+            
             if (editorAdapter != null) {
-                editorAdapter.setValue(content);
-                editorAdapter.setLanguage(language);
-                // ✅ Уведомляем адаптер о новом файле (он сам уведомит LSP)
+                // ✅ ВАЖНО: Сначала setCurrentFile (didOpen), потом setValue
                 editorAdapter.setCurrentFile(path);
+                editorAdapter.setLanguage(language);
+                editorAdapter.setValue(content);
             }
-            setState({
-                currentFile: path,
-                content: content,
-                isDirty: false,
-                language: language,
-                lspConnected: lspClient != null
+            
+            setState(function(prevState:EditorViewState) {
+                return {
+                    currentFile: path,
+                    content: content,
+                    isDirty: false,
+                    language: language,
+                    lspConnected: lspClient != null
+                };
             });
-            trace('📂 [EditorView] File opened: $path');
+            
+            trace('📂 [EditorView] File opened: ' + path);
         } catch (e:Dynamic) {
-            trace('❌ [EditorView] Open error: $e');
+            trace('❌ [EditorView] Open error: ' + e);
         }
     }
 
@@ -169,19 +219,31 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
         var fileName = state.currentFile != null ? state.currentFile.split('/').pop() : "Untitled";
         var dirtyIndicator = state.isDirty ? " ●" : "";
         var lspStatus = state.lspConnected ? "✅ LSP" : "⚠️ No LSP";
+        
         return jsx('
             <div style={{display: "flex", flexDirection: "column", height: "100%", background: "#1e1e1e"}}>
                 <div style={{
-                    padding: "8px 12px", background: "#2d2d2d",
+                    padding: "8px 12px",
+                    background: "#2d2d2d",
                     borderBottom: "1px solid #3e3e3e",
-                    display: "flex", alignItems: "center", gap: "8px"
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px"
                 }}>
                     <button onClick={handleOpenFile} style={{
-                        background: "#0e639c", color: "#fff", border: "none",
-                        padding: "4px 12px", borderRadius: "3px", cursor: "pointer"
-                    }}>Open</button>
+                        background: "#0e639c",
+                        color: "#fff",
+                        border: "none",
+                        padding: "4px 12px",
+                        borderRadius: "3px",
+                        cursor: "pointer"
+                    }}>
+                        📂 Open
+                    </button>
                     <div style={{flex: 1}}></div>
-                    <span style={{color: "#888", fontSize: "11px"}}>{lspStatus}</span>
+                    <span style={{color: state.lspConnected ? "#4caf50" : "#f44336", fontSize: "11px"}}>
+                        {lspStatus}
+                    </span>
                     <span style={{color: "#ccc", fontSize: "12px"}}>
                         {fileName}{dirtyIndicator}
                     </span>
@@ -195,13 +257,17 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
     }
 
     override function componentWillUnmount():Void {
-        if (lspClient != null) {
-            if (state.currentFile != null) {
-                var uri = "file:///" + state.currentFile.split("\\").join("/");
-                lspClient.didClose(uri);
-            }
-            lspClient.stop();
+        // ✅ Отписка от событий
+        if (eventSubscription != null) {
+            eventSubscription.cancel();
         }
-        if (editorAdapter != null) editorAdapter.dispose();
+        
+        // ✅ Закрываем файл в LSP
+        if (lspClient != null && state.currentFile != null) {
+            editorAdapter.dispose();  // Это вызовет didClose внутри адаптера
+        }
+        
+        // ✅ Останавливаем LSP (но только если это последний EditorView)
+        // lspClient.stop();  // ← НЕ вызываем здесь, т.к. LSP может использоваться другими компонентами
     }
 }

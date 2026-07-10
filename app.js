@@ -109936,6 +109936,9 @@ hide_domain_services_ILanguageServer.prototype = {
 	,onDiagnostics: null
 	,didSave: null
 	,isRunning: null
+	,semanticTokensFull: null
+	,semanticTokensRange: null
+	,semanticTokensLegend: null
 	,__class__: hide_domain_services_ILanguageServer
 };
 var hide_domain_services_ILayoutEngine = function() { };
@@ -113170,13 +113173,64 @@ hide_infrastructure_external_MonacoEditorAdapter.prototype = {
 	,currentUri: null
 	,documentVersion: null
 	,initMonaco: function() {
+		var _gthis = this;
+		haxe_Log.trace("🎬 [MonacoEditor] Initializing Monaco Editor...",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 32, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
 		this.monaco = window.monaco;
 		if(this.monaco == null) {
-			haxe_Log.trace("❌ [MonacoEditor] Monaco not loaded! Check app.html",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 34, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
+			this.monaco = require("monaco-editor");
+		}
+		if(this.monaco == null) {
+			haxe_Log.trace("❌ [MonacoEditor] Monaco not loaded!",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 42, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
 			return;
 		}
-		this.editor = this.monaco.editor.create(this.container,{ value : "// Welcome to HIDE IDE\n", language : "haxe", theme : "vs-dark", automaticLayout : true, minimap : { enabled : true}, fontSize : 14, lineNumbers : "on", scrollBeyondLastLine : true, renderWhitespace : "selection", wordWrap : "off", tabSize : 4, insertSpaces : true, formatOnPaste : true, formatOnType : true});
-		haxe_Log.trace("✅ [MonacoEditor] Editor initialized via global monaco",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 55, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
+		this.monaco.environment = this.monaco.environment != null ? this.monaco.environment : { };
+		this.monaco.environment.getWorkerUrl = function(workerId,label) {
+			return "";
+		};
+		haxe_Log.trace("📦 [MonacoEditor] Monaco Editor required successfully",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 53, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
+		haxe_Log.trace("📦 [MonacoEditor] Monaco version: " + (this.monaco.editor ? "has editor API" : "NO editor API"),{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 54, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
+		this.registerHaxeLanguage();
+		haxe_Timer.delay(function() {
+			haxe_Log.trace("🎨 [MonacoEditor] Creating editor instance...",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 62, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
+			_gthis.editor = _gthis.monaco.editor.create(_gthis.container,{ value : "// Welcome to HIDE IDE\n", language : "haxe", theme : "vs-dark", automaticLayout : true, minimap : { enabled : true}, fontSize : 14, lineNumbers : "on", scrollBeyondLastLine : true, renderWhitespace : "selection", wordWrap : "off", tabSize : 4, insertSpaces : true, formatOnPaste : true, formatOnType : true});
+			haxe_Log.trace("✅ [MonacoEditor] Editor created successfully",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 80, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
+			haxe_Log.trace("🔍 [MonacoEditor] Editor language: " + Std.string(_gthis.editor.getModel().getLanguageId()),{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 81, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
+			haxe_Log.trace("🔍 [MonacoEditor] Editor value length: " + Std.string(_gthis.editor.getValue().length),{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 82, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
+		},200);
+		haxe_Log.trace("✅ [MonacoEditor] Editor initialized",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 85, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
+	}
+	,registerHaxeLanguage: function() {
+		var grammar = window.haxeGrammar;
+		if(grammar == null) {
+			haxe_Log.trace("❌ [MonacoEditor] Grammar is NULL!",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 107, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "registerHaxeLanguage"});
+			return;
+		}
+		if(!Object.prototype.hasOwnProperty.call(grammar,"tokenizer")) {
+			haxe_Log.trace("❌ [MonacoEditor] Grammar has no tokenizer field!",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 112, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "registerHaxeLanguage"});
+			return;
+		}
+		var languages = this.monaco.languages.getLanguages();
+		var haxeExists = false;
+		var _g = 0;
+		while(_g < languages.length) {
+			var lang = languages[_g];
+			++_g;
+			if(lang.id == "haxe") {
+				haxeExists = true;
+				break;
+			}
+		}
+		if(!haxeExists) {
+			this.monaco.languages.register({ id : "haxe"});
+			haxe_Log.trace("✅ [MonacoEditor] Haxe language registered",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 128, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "registerHaxeLanguage"});
+		}
+		if(grammar == null) {
+			haxe_Log.trace("⚠️ [MonacoEditor] Grammar not loaded yet, using default",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 132, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "registerHaxeLanguage"});
+			return;
+		}
+		haxe_Log.trace(" [MonacoEditor] Setting Monarch tokens provider...",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 136, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "registerHaxeLanguage"});
+		this.monaco.languages.setMonarchTokensProvider("haxe",grammar);
+		haxe_Log.trace("✅ [MonacoEditor] Haxe Monarch grammar loaded and applied",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 138, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "registerHaxeLanguage"});
 	}
 	,setValue: function(value) {
 		if(this.editor != null) {
@@ -113255,18 +113309,29 @@ hide_infrastructure_external_MonacoEditorAdapter.prototype = {
 		this.registerCompletionProvider();
 		this.registerHoverProvider();
 		this.registerDefinitionProvider();
+		this.registerSemanticTokensProvider();
 		lsp.onDiagnostics(function(uri,diagnostics) {
 			_gthis.updateDiagnostics(uri,diagnostics);
 		});
-		haxe_Log.trace("✅ [MonacoEditor] LSP providers registered",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 149, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "setLanguageServer"});
+		haxe_Log.trace("✅ [MonacoEditor] LSP providers registered",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 234, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "setLanguageServer"});
 	}
 	,setCurrentFile: function(path) {
-		this.currentUri = "file:///" + path.split("\\").join("/");
-		this.documentVersion = 1;
-		if(this.lspService != null) {
+		var normalizedPath = path.split("\\").join("/");
+		if(normalizedPath.charAt(0) != "/") {
+			normalizedPath = "/" + normalizedPath;
+		}
+		this.currentUri = "file://" + normalizedPath;
+		var model = this.monaco.editor.getModel(this.monaco.Uri.parse(this.currentUri));
+		if(model == null) {
 			var content = this.editor.getValue();
 			var language = this.getLanguage();
-			this.lspService.didOpen(this.currentUri,language,this.documentVersion,content);
+			model = this.monaco.editor.createModel(content,language,this.monaco.Uri.parse(this.currentUri));
+			this.editor.setModel(model);
+		}
+		this.documentVersion = 1;
+		if(this.lspService != null) {
+			this.lspService.didOpen(this.currentUri,this.getLanguage(),this.documentVersion,this.editor.getValue());
+			haxe_Log.trace("📂 [MonacoEditor] File opened: " + this.currentUri,{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 258, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "setCurrentFile"});
 		}
 	}
 	,registerCompletionProvider: function() {
@@ -113333,6 +113398,31 @@ hide_infrastructure_external_MonacoEditorAdapter.prototype = {
 				});
 			});
 		}});
+	}
+	,registerSemanticTokensProvider: function() {
+		var _gthis = this;
+		if(this.lspService == null) {
+			return;
+		}
+		this.lspService.semanticTokensLegend().handle(function(legend) {
+			if(legend == null) {
+				haxe_Log.trace("⚠️ [MonacoEditor] Semantic tokens not supported by server",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 368, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "registerSemanticTokensProvider"});
+				return;
+			}
+			haxe_Log.trace("✅ [MonacoEditor] Registering semantic tokens provider",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 372, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "registerSemanticTokensProvider"});
+			_gthis.monaco.languages.registerDocumentSemanticTokensProvider("haxe",{ getLegend : function() {
+				return legend;
+			}, provideDocumentSemanticTokens : function(model,lastResultId,token) {
+				var uri = model.uri.toString();
+				return tink_core_Future.map(_gthis.lspService.semanticTokensFull(uri),function(result) {
+					if(result == null) {
+						return null;
+					}
+					return { data : result.data, resultId : result.resultId};
+				});
+			}, releaseDocumentSemanticTokens : function(resultId) {
+			}});
+		});
 	}
 	,mapCompletionKind: function(lspKind) {
 		switch(lspKind) {
@@ -113706,6 +113796,15 @@ hide_infrastructure_platform_electron_ElectronLanguageServerAdapter.prototype = 
 	}
 	,onDiagnostics: function(callback) {
 		this.diagnosticsCallback = callback;
+	}
+	,semanticTokensFull: function(uri) {
+		return this.ipcBridge.invokeSafe("lsp:semanticTokensFull",{ uri : uri});
+	}
+	,semanticTokensRange: function(uri,range) {
+		return this.ipcBridge.invokeSafe("lsp:semanticTokensRange",{ uri : uri, range : range});
+	}
+	,semanticTokensLegend: function() {
+		return this.ipcBridge.invokeSafe("lsp:semanticTokensLegend",{ });
 	}
 	,getConstructorArgs: function() {
 		return ["hide.infrastructure.platform.electron.ElectronIpcBridge"];
@@ -114754,7 +114853,6 @@ hide_presentation_ui_react_components_ContextMenu.prototype = $extend(React_Comp
 	,__class__: hide_presentation_ui_react_components_ContextMenu
 });
 var hide_presentation_ui_react_components_EditorView = function() {
-	this.documentVersion = 0;
 	hide_presentation_ui_react_BaseReactComponent.call(this);
 	this.state = { currentFile : null, content : "", isDirty : false, language : "haxe", lspConnected : false};
 	this.editorContainerRef = React.createRef();
@@ -114766,12 +114864,13 @@ hide_presentation_ui_react_components_EditorView.prototype = $extend(hide_presen
 	editorContainerRef: null
 	,editorAdapter: null
 	,lspClient: null
-	,documentVersion: null
+	,eventSubscription: null
 	,componentDidMount: function() {
 		var _gthis = this;
 		var eventBus = hide_presentation_ui_react_hooks_UseService.eventBus();
-		this.subscribe(eventBus,hide_shared_events_ResourceOpened,function(e) {
-			haxe_Log.trace("📂 [EditorView] Resource opened",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 48, className : "hide.presentation.ui.react.components.EditorView", methodName : "componentDidMount"});
+		this.eventSubscription = eventBus.subscribe(hide_shared_events_ResourceOpened,function(e) {
+			haxe_Log.trace("📂 [EditorView] Resource opened: " + e.path,{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 49, className : "hide.presentation.ui.react.components.EditorView", methodName : "componentDidMount"});
+			_gthis.openFile(e.path);
 		});
 		haxe_Timer.delay(function() {
 			_gthis.initEditor();
@@ -114782,43 +114881,57 @@ hide_presentation_ui_react_components_EditorView.prototype = $extend(hide_presen
 		var _gthis = this;
 		var container = this.editorContainerRef.current;
 		if(container == null) {
+			haxe_Log.trace("❌ [EditorView] Editor container is null",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 63, className : "hide.presentation.ui.react.components.EditorView", methodName : "initEditor"});
 			return;
 		}
 		this.editorAdapter = new hide_infrastructure_external_MonacoEditorAdapter(container);
-		this.editorAdapter.onDidChangeModelContent(function(_) {
-			var newContent = _gthis.editorAdapter.getValue();
-			if(!_gthis.state.isDirty) {
-				_gthis.setState({ currentFile : _gthis.state.currentFile, content : newContent, isDirty : true, language : _gthis.state.language, lspConnected : _gthis.state.lspConnected});
-			}
-			if(_gthis.lspClient != null && _gthis.state.currentFile != null) {
-				_gthis.documentVersion++;
-				var uri = "file:///" + _gthis.state.currentFile.split("\\").join("/");
-				_gthis.lspClient.didChange(uri,_gthis.documentVersion,newContent);
-			}
-		});
-		haxe_Log.trace("✅ [EditorView] Monaco Editor initialized",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 78, className : "hide.presentation.ui.react.components.EditorView", methodName : "initEditor"});
+		haxe_Timer.delay(function() {
+			_gthis.editorAdapter.onContentChanged(function() {
+				var newContent = _gthis.editorAdapter.getValue();
+				if(!_gthis.state.isDirty) {
+					_gthis.setState(function(prevState) {
+						return { currentFile : prevState.currentFile, content : newContent, isDirty : true, language : prevState.language, lspConnected : prevState.lspConnected};
+					});
+				}
+			});
+			haxe_Log.trace("✅ [EditorView] Content change handler attached",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 84, className : "hide.presentation.ui.react.components.EditorView", methodName : "initEditor"});
+		},300);
+		haxe_Log.trace("✅ [EditorView] Monaco Editor initialized",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 102, className : "hide.presentation.ui.react.components.EditorView", methodName : "initEditor"});
 	}
 	,initLsp: function() {
 		var _gthis = this;
 		var lsp = hide_presentation_ui_react_hooks_UseService.languageServer();
 		if(lsp == null) {
-			haxe_Log.trace("⚠️ [EditorView] Language Server not available",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 84, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
+			haxe_Log.trace("⚠️ [EditorView] Language Server service not available",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 108, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
+			this.setState(function(prevState) {
+				return { currentFile : prevState.currentFile, content : prevState.content, isDirty : prevState.isDirty, language : prevState.language, lspConnected : false};
+			});
 			return;
 		}
 		this.lspClient = lsp;
+		haxe_Log.trace("✅ [EditorView] LSP service obtained",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 122, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
 		var rootPath = "D:\\Dev\\hide-electron";
+		haxe_Log.trace("🚀 [EditorView] Starting LSP for: " + rootPath,{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 125, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
 		this.lspClient.start(rootPath).handle(function(success) {
 			if(success) {
-				haxe_Log.trace("✅ [EditorView] LSP connected",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 92, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
-				_gthis.setState({ currentFile : _gthis.state.currentFile, content : _gthis.state.content, isDirty : _gthis.state.isDirty, language : _gthis.state.language, lspConnected : true});
+				haxe_Log.trace("✅ [EditorView] LSP connected successfully",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 129, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
+				_gthis.setState(function(prevState) {
+					return { currentFile : prevState.currentFile, content : prevState.content, isDirty : prevState.isDirty, language : prevState.language, lspConnected : true};
+				});
 				if(_gthis.editorAdapter != null) {
-					_gthis.editorAdapter.setLanguageServer(lsp);
+					_gthis.editorAdapter.setLanguageServer(_gthis.lspClient);
+					haxe_Log.trace("✅ [EditorView] LSP passed to Monaco adapter",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 143, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
+					if(_gthis.state.currentFile != null) {
+						_gthis.editorAdapter.setCurrentFile(_gthis.state.currentFile);
+					}
 				}
 			} else {
-				haxe_Log.trace("❌ [EditorView] LSP failed to start",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 107, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
+				haxe_Log.trace("❌ [EditorView] LSP failed to start",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 151, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
+				_gthis.setState(function(prevState) {
+					return { currentFile : prevState.currentFile, content : prevState.content, isDirty : prevState.isDirty, language : prevState.language, lspConnected : false};
+				});
 			}
 		});
-		haxe_Log.trace("✅ [EditorView] LSP client initialized",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 114, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
 	}
 	,handleOpenFile: function() {
 		var _gthis = this;
@@ -114830,21 +114943,24 @@ hide_presentation_ui_react_components_EditorView.prototype = $extend(hide_presen
 		});
 	}
 	,openFile: function(path) {
+		var _gthis = this;
 		var fileSystem = hide_presentation_ui_react_hooks_UseService.fileSystem();
 		try {
 			var content = fileSystem.readText(hide_domain_valueobjects_FilePath._new(path));
 			var language = this.detectLanguage(path);
 			if(this.editorAdapter != null) {
-				this.editorAdapter.setValue(content);
-				this.editorAdapter.setLanguage(language);
 				this.editorAdapter.setCurrentFile(path);
+				this.editorAdapter.setLanguage(language);
+				this.editorAdapter.setValue(content);
 			}
-			this.setState({ currentFile : path, content : content, isDirty : false, language : language, lspConnected : this.lspClient != null});
-			haxe_Log.trace("📂 [EditorView] File opened: " + path,{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 152, className : "hide.presentation.ui.react.components.EditorView", methodName : "openFile"});
+			this.setState(function(prevState) {
+				return { currentFile : path, content : content, isDirty : false, language : language, lspConnected : _gthis.lspClient != null};
+			});
+			haxe_Log.trace("📂 [EditorView] File opened: " + path,{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 202, className : "hide.presentation.ui.react.components.EditorView", methodName : "openFile"});
 		} catch( _g ) {
 			haxe_NativeStackTrace.lastError = _g;
 			var e = haxe_Exception.caught(_g).unwrap();
-			haxe_Log.trace("❌ [EditorView] Open error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 154, className : "hide.presentation.ui.react.components.EditorView", methodName : "openFile"});
+			haxe_Log.trace("❌ [EditorView] Open error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 204, className : "hide.presentation.ui.react.components.EditorView", methodName : "openFile"});
 		}
 	}
 	,detectLanguage: function(path) {
@@ -114864,9 +114980,9 @@ hide_presentation_ui_react_components_EditorView.prototype = $extend(hide_presen
 		var fileName = this.state.currentFile != null ? this.state.currentFile.split("/").pop() : "Untitled";
 		var dirtyIndicator = this.state.isDirty ? " ●" : "";
 		var lspStatus = this.state.lspConnected ? "✅ LSP" : "⚠️ No LSP";
-		var tmp = React.createElement("button",{ style : { background : "#0e639c", color : "#fff", border : "none", padding : "4px 12px", borderRadius : "3px", cursor : "pointer"}, onClick : $bind(this,this.handleOpenFile)},"Open");
+		var tmp = React.createElement("button",{ style : { background : "#0e639c", color : "#fff", border : "none", padding : "4px 12px", borderRadius : "3px", cursor : "pointer"}, onClick : $bind(this,this.handleOpenFile)},"📂 Open");
 		var tmp1 = React.createElement("div",{ style : { flex : 1}});
-		var tmp2 = React.createElement("span",{ style : { color : "#888", fontSize : "11px"}},lspStatus);
+		var tmp2 = React.createElement("span",{ style : { color : this.state.lspConnected ? "#4caf50" : "#f44336", fontSize : "11px"}},lspStatus);
 		var tmp3 = React.createElement("span",{ style : { color : "#ccc", fontSize : "12px"}},fileName,dirtyIndicator);
 		var tmp4 = React.createElement("span",{ style : { color : "#888", fontSize : "11px", marginLeft : "12px"}},this.state.language.toUpperCase());
 		var tmp5 = React.createElement("div",{ style : { padding : "8px 12px", background : "#2d2d2d", borderBottom : "1px solid #3e3e3e", display : "flex", alignItems : "center", gap : "8px"}},tmp,tmp1,tmp2,tmp3,tmp4);
@@ -114874,14 +114990,13 @@ hide_presentation_ui_react_components_EditorView.prototype = $extend(hide_presen
 		return React.createElement("div",{ style : { display : "flex", flexDirection : "column", height : "100%", background : "#1e1e1e"}},tmp5,tmp);
 	}
 	,componentWillUnmount: function() {
-		if(this.lspClient != null) {
-			if(this.state.currentFile != null) {
-				var uri = "file:///" + this.state.currentFile.split("\\").join("/");
-				this.lspClient.didClose(uri);
+		if(this.eventSubscription != null) {
+			var this1 = this.eventSubscription;
+			if(this1 != null) {
+				this1.cancel();
 			}
-			this.lspClient.stop();
 		}
-		if(this.editorAdapter != null) {
+		if(this.lspClient != null && this.state.currentFile != null) {
 			this.editorAdapter.dispose();
 		}
 	}
@@ -116192,12 +116307,14 @@ hide_shared_events_RecentProjectsUpdated.prototype = {
 	recentProjects: null
 	,__class__: hide_shared_events_RecentProjectsUpdated
 };
-var hide_shared_events_ResourceOpened = function() {
+var hide_shared_events_ResourceOpened = function(path) {
+	this.path = path;
 };
 $hxClasses["hide.shared.events.ResourceOpened"] = hide_shared_events_ResourceOpened;
 hide_shared_events_ResourceOpened.__name__ = "hide.shared.events.ResourceOpened";
 hide_shared_events_ResourceOpened.prototype = {
-	__class__: hide_shared_events_ResourceOpened
+	path: null
+	,__class__: hide_shared_events_ResourceOpened
 };
 var hide_shared_events_SceneChanged = function() {
 };

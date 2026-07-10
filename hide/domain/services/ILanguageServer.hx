@@ -57,29 +57,20 @@ interface ILanguageServer extends Service {
 
     /** Проверяет, запущен ли сервер. */
     function isRunning():Bool;
-}
 
-typedef CompletionItem = {
-    var label:String;
-    var kind:Int;
-    var ?detail:String;
-    var ?documentation:String;
-    var ?insertText:String;
-}
-
-typedef HoverInfo = {
-    var contents:String;
-    var ?range:{start:{line:Int, character:Int}, end:{line:Int, character:Int}};
-}
-
-typedef Location = {
-    var uri:String;
-    var range:{start:{line:Int, character:Int}, end:{line:Int, character:Int}};
-}
-
-typedef Diagnostic = {
-    var range:{start:{line:Int, character:Int}, end:{line:Int, character:Int}};
-    var severity:Int;  // 1=Error, 2=Warning, 3=Info, 4=Hint
-    var message:String;
-    var ?source:String;
+    /**
+     * Запрашивает семантические токены для документа.
+     * @return SemanticTokensResult или null если не поддерживается
+     */
+    function semanticTokensFull(uri:String):Future<Null<SemanticTokensResult>>;
+    
+    /**
+     * Запрашивает семантические токены для диапазона.
+     */
+    function semanticTokensRange(uri:String, range:{start:{line:Int, character:Int}, end:{line:Int, character:Int}}):Future<Null<SemanticTokensResult>>;
+    
+    /**
+     * Получает легенду семантических токенов.
+     */
+    function semanticTokensLegend():Future<Null<SemanticTokensLegend>>;
 }

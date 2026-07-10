@@ -1,0 +1,162 @@
+{
+  "name": "Haxe",
+  "scopeName": "source.haxe",
+  "fileTypes": ["hx"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#metadata" },
+    { "include": "#keywords" },
+    { "include": "#types" },
+    { "include": "#constants" },
+    { "include": "#strings" },
+    { "include": "#functions" },
+    { "include": "#variables" },
+    { "include": "#operators" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.documentation.haxe",
+          "begin": "/\\*\\*",
+          "end": "\\*/",
+          "patterns": [
+            { "name": "keyword.other.documentation.haxe", "match": "@\\w+" }
+          ]
+        },
+        {
+          "name": "comment.block.haxe",
+          "begin": "/\\*",
+          "end": "\\*/"
+        },
+        {
+          "name": "comment.line.double-slash.haxe",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "metadata": {
+      "name": "meta.metadata.haxe",
+      "begin": "@:",
+      "end": "(?=[\\s\\w])",
+      "patterns": [
+        { "name": "entity.name.tag.metadata.haxe", "match": "\\w+" }
+      ]
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.control.haxe",
+          "match": "\\b(if|else|while|do|for|return|break|continue|switch|case|default|throw|try|catch|new)\\b"
+        },
+        {
+          "name": "keyword.other.haxe",
+          "match": "\\b(var|final|function|class|interface|enum|typedef|abstract|extends|implements|import|using|package|extern|inline|override|static|public|private|dynamic|macro|untyped|cast|in|is|from|to)\\b"
+        },
+        {
+          "name": "constant.language.haxe",
+          "match": "\\b(true|false|null)\\b"
+        },
+        {
+          "name": "keyword.operator.haxe",
+          "match": "\\b(cast|is)\\b"
+        }
+      ]
+    },
+    "types": {
+      "patterns": [
+        {
+          "name": "storage.type.haxe",
+          "match": "\\b(Int|Float|Bool|String|Void|Dynamic|Any|Null|Array|Map|Iterator|Iterable|Class|Enum|EnumValue)\\b"
+        },
+        {
+          "name": "entity.name.type.haxe",
+          "match": "\\b[A-Z][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "constants": {
+      "patterns": [
+        {
+          "name": "constant.numeric.haxe",
+          "match": "\\b(0[xX][0-9a-fA-F]+|0[bB][01]+|\\d+\\.?\\d*([eE][+-]?\\d+)?)\\b"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.haxe",
+          "begin": "\"",
+          "end": "\"",
+          "patterns": [
+            {
+              "name": "constant.character.escape.haxe",
+              "match": "\\\\."
+            },
+            {
+              "name": "variable.other.interpolation.haxe",
+              "begin": "\\$\\{",
+              "end": "\\}"
+            },
+            {
+              "name": "variable.other.interpolation.haxe",
+              "match": "\\$[a-zA-Z_][a-zA-Z0-9_]*"
+            }
+          ]
+        },
+        {
+          "name": "string.quoted.single.haxe",
+          "begin": "'",
+          "end": "'",
+          "patterns": [
+            {
+              "name": "constant.character.escape.haxe",
+              "match": "\\\\."
+            }
+          ]
+        }
+      ]
+    },
+    "functions": {
+      "patterns": [
+        {
+          "name": "entity.name.function.haxe",
+          "match": "\\b([a-zA-Z_][a-zA-Z0-9_]*)\\s*(?=\\()"
+        }
+      ]
+    },
+    "variables": {
+      "patterns": [
+        {
+          "name": "variable.other.haxe",
+          "match": "\\b[a-z_][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "operators": {
+      "patterns": [
+        {
+          "name": "keyword.operator.haxe",
+          "match": "(==|!=|<=|>=|&&|\\|\\||\\+\\+|--|=>|\\?\\.|\\?\\?)"
+        },
+        {
+          "name": "keyword.operator.assignment.haxe",
+          "match": "(=|\\+=|-=|\\*=|/=|%=|&=|\\|=|\\^=|<<=|>>=)"
+        },
+        {
+          "name": "keyword.operator.arithmetic.haxe",
+          "match": "(\\+|-|\\*|/|%)"
+        },
+        {
+          "name": "keyword.operator.comparison.haxe",
+          "match": "(<|>|==|!=|<=|>=)"
+        },
+        {
+          "name": "keyword.operator.logical.haxe",
+          "match": "(&&|\\|\\||!)"
+        }
+      ]
+    }
+  }
+}

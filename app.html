@@ -30,7 +30,16 @@
     flex-direction: column;
     height: 100vh;
 ">
-    
+    <script>
+        // Загружаем grammar для Haxe
+        fetch('assets/grammars/haxe-monarch.json')
+            .then(response => response.json())
+            .then(grammar => {
+                window.haxeGrammar = grammar;
+                console.log('✅ Haxe grammar loaded');
+            })
+            .catch(err => console.error('❌ Failed to load Haxe grammar:', err));
+    </script>
     <!-- 2.1. jQuery — ДО ВСЕХ плагинов -->
     <script>
         (function() {
@@ -114,7 +123,6 @@
     ">
         Ready
     </div>
-    <div id="editor"></div>
     <!-- Scripts... -->
         <!-- === 2. JS зависимости — СТРОГИЙ ПОРЯДОК === -->
     
