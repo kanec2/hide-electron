@@ -54,6 +54,9 @@ interface ILanguageServer extends Service {
     function onDiagnostics(callback:String->Array<Diagnostic>->Void):Void;
 
     function didSave(uri:String, ?text:String):Void;
+
+    /** Проверяет, запущен ли сервер. */
+    function isRunning():Bool;
 }
 
 typedef CompletionItem = {

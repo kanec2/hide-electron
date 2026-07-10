@@ -1,4 +1,4 @@
-package monaco;
+package hide.infrastructure.external.monaco;
 
 typedef ModelDeltaDecoration = {
 	var range : Range;

@@ -16,11 +16,9 @@
     <link rel="stylesheet" type="text/css" href="libs/goldenlayout-base.css"/>
     <link rel="stylesheet" type="text/css" href="libs/goldenlayout-dark-theme.css"/>
     <link rel="stylesheet" type="text/css" href="style.css"/>
-    <link rel="stylesheet" type="text/css" href="hidekit.css"/>
-    <link rel="stylesheet" type="text/css" href="cdb.css"/>
-    <link rel="stylesheet" type="text/css" href="icons.css"/>
     <link rel="stylesheet" type="text/css" href="libs/spectrum.css"/>
-    <link rel="stylesheet" href="libs/monaco/min/vs/editor/editor.main.css"/>
+    <!-- ✅ НОВОЕ: CSS Monaco Editor -->
+    <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css"/>
 </head>
 <body style="
     margin: 0; 
@@ -116,6 +114,7 @@
     ">
         Ready
     </div>
+    <div id="editor"></div>
     <!-- Scripts... -->
         <!-- === 2. JS зависимости — СТРОГИЙ ПОРЯДОК === -->
     
@@ -127,32 +126,15 @@
     <script src="libs/litegraph.js"></script>
     <!-- 2.3. GoldenLayout -->
     <script src="libs/goldenlayout.js"></script>
-    
-    <!-- 2.4. Monaco: СОХРАНЯЕМ nodeRequire ПЕРЕД загрузкой -->
-    <script>
-        // Сохраняем Node.js require ДО загрузки AMD-загрузчика Monaco
-        if (typeof require !== 'undefined' && typeof module !== 'undefined') {
-            window.nodeRequire = require;
-            window.moduleExports = module.exports;
-        }
-    </script>
-    
-    <!-- 2.5. Загрузчик Monaco -->
-    <script src="libs/monaco/min/vs/loader.js"></script>
-    
-    <!-- 2.6. ВОССТАНАВЛИВАЕМ nodeRequire ПОСЛЕ Monaco -->
-    <script>
-        // Восстанавливаем Node.js require для Electron
-        if (window.nodeRequire) {
-            require = window.nodeRequire;
-            module.exports = window.moduleExports;
-        }
-        // Экспортируем для удобства
-        window.electron = typeof require !== 'undefined' ? require('electron') : null;
-    </script>
-    
-    <!-- 2.7. Основное приложение (скомпилированный Haxe) -->
-    <script src="app.js"></script>
+    <!-- === Monaco Editor === -->
+    <!-- 1. Сохраняем Node.js require ПЕРЕД AMD loader -->
+     <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css"/>
+     <script> window.nodeRequire = require; </script>
+     <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+     <script> require.config({ paths: { vs: 'node_modules/monaco-editor/min/vs' } }); </script>
+     <script> require(['vs/editor/editor.main'], function() { window.monaco = monaco; }); </script>
+     <script> require = window.nodeRequire; </script>  
+     <script src="app.js"></script>  
     
     <!-- === 3. Инициализация — ПОСЛЕ загрузки app.js === -->
     <script>

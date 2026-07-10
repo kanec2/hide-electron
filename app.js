@@ -109690,6 +109690,7 @@ hide_bootstrap_AppModule.configure = function(collection) {
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IFileDialog.__name__,hide_infrastructure_platform_electron_ElectronFileDialogAdapter);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IWindowManager.__name__,hide_infrastructure_platform_electron_ElectronWindowAdapter);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IPlatform.__name__,hide_infrastructure_platform_electron_ElectronPlatformAdapter);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_ILanguageServer.__name__,hide_infrastructure_platform_electron_ElectronLanguageServerAdapter);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_ILayoutEngine.__name__,hide_infrastructure_external_GoldenLayoutAdapter);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_shared_types_IEventBus.__name__,hide_shared_types_EventBusImpl);
 	var implementation = hide_application_services_ViewRegistry;
@@ -109917,6 +109918,25 @@ hide_domain_services_IFileSystem.prototype = {
 	,getAppDataPath: null
 	,readBinary: null
 	,__class__: hide_domain_services_IFileSystem
+};
+var hide_domain_services_ILanguageServer = function() { };
+$hxClasses["hide.domain.services.ILanguageServer"] = hide_domain_services_ILanguageServer;
+hide_domain_services_ILanguageServer.__name__ = "hide.domain.services.ILanguageServer";
+hide_domain_services_ILanguageServer.__isInterface__ = true;
+hide_domain_services_ILanguageServer.__interfaces__ = [hx_injection_Service];
+hide_domain_services_ILanguageServer.prototype = {
+	start: null
+	,stop: null
+	,didOpen: null
+	,didChange: null
+	,didClose: null
+	,completion: null
+	,hover: null
+	,definition: null
+	,onDiagnostics: null
+	,didSave: null
+	,isRunning: null
+	,__class__: hide_domain_services_ILanguageServer
 };
 var hide_domain_services_ILayoutEngine = function() { };
 $hxClasses["hide.domain.services.ILayoutEngine"] = hide_domain_services_ILayoutEngine;
@@ -113135,6 +113155,252 @@ hide_infrastructure_external_HtmlElement.prototype = {
 	}
 	,__class__: hide_infrastructure_external_HtmlElement
 };
+var hide_infrastructure_external_MonacoEditorAdapter = function(container) {
+	this.documentVersion = 0;
+	this.container = container;
+	this.initMonaco();
+};
+$hxClasses["hide.infrastructure.external.MonacoEditorAdapter"] = hide_infrastructure_external_MonacoEditorAdapter;
+hide_infrastructure_external_MonacoEditorAdapter.__name__ = "hide.infrastructure.external.MonacoEditorAdapter";
+hide_infrastructure_external_MonacoEditorAdapter.prototype = {
+	editor: null
+	,container: null
+	,monaco: null
+	,lspService: null
+	,currentUri: null
+	,documentVersion: null
+	,initMonaco: function() {
+		this.monaco = window.monaco;
+		if(this.monaco == null) {
+			haxe_Log.trace("❌ [MonacoEditor] Monaco not loaded! Check app.html",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 34, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
+			return;
+		}
+		this.editor = this.monaco.editor.create(this.container,{ value : "// Welcome to HIDE IDE\n", language : "haxe", theme : "vs-dark", automaticLayout : true, minimap : { enabled : true}, fontSize : 14, lineNumbers : "on", scrollBeyondLastLine : true, renderWhitespace : "selection", wordWrap : "off", tabSize : 4, insertSpaces : true, formatOnPaste : true, formatOnType : true});
+		haxe_Log.trace("✅ [MonacoEditor] Editor initialized via global monaco",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 55, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "initMonaco"});
+	}
+	,setValue: function(value) {
+		if(this.editor != null) {
+			this.editor.setValue(value);
+		}
+	}
+	,getValue: function() {
+		if(this.editor != null) {
+			return this.editor.getValue();
+		}
+		return "";
+	}
+	,setLanguage: function(language) {
+		if(this.editor != null) {
+			var model = this.editor.getModel();
+			if(model != null) {
+				this.monaco.editor.setModelLanguage(model,language);
+			}
+		}
+	}
+	,getLanguage: function() {
+		if(this.editor != null) {
+			var model = this.editor.getModel();
+			if(model != null) {
+				return model.getLanguageId();
+			}
+		}
+		return "plaintext";
+	}
+	,getModel: function() {
+		if(this.editor != null) {
+			return this.editor.getModel();
+		}
+		return null;
+	}
+	,focus: function() {
+		if(this.editor != null) {
+			this.editor.focus();
+		}
+	}
+	,dispose: function() {
+		if(this.editor != null) {
+			this.editor.dispose();
+			this.editor = null;
+		}
+	}
+	,onDidChangeModelContent: function(callback) {
+		if(this.editor != null) {
+			this.editor.onDidChangeModelContent(callback);
+		}
+	}
+	,getPosition: function() {
+		if(this.editor != null) {
+			var pos = this.editor.getPosition();
+			return { line : pos.lineNumber, column : pos.column};
+		}
+		return { line : 1, column : 1};
+	}
+	,setPosition: function(line,column) {
+		if(this.editor != null) {
+			this.editor.setPosition({ lineNumber : line, column : column});
+			this.editor.revealLineInCenter(line);
+		}
+	}
+	,setTheme: function(theme) {
+		this.monaco.editor.setTheme(theme);
+	}
+	,updateOptions: function(options) {
+		if(this.editor != null) {
+			this.editor.updateOptions(options);
+		}
+	}
+	,setLanguageServer: function(lsp) {
+		var _gthis = this;
+		this.lspService = lsp;
+		this.registerCompletionProvider();
+		this.registerHoverProvider();
+		this.registerDefinitionProvider();
+		lsp.onDiagnostics(function(uri,diagnostics) {
+			_gthis.updateDiagnostics(uri,diagnostics);
+		});
+		haxe_Log.trace("✅ [MonacoEditor] LSP providers registered",{ fileName : "hide/infrastructure/external/MonacoEditorAdapter.hx", lineNumber : 149, className : "hide.infrastructure.external.MonacoEditorAdapter", methodName : "setLanguageServer"});
+	}
+	,setCurrentFile: function(path) {
+		this.currentUri = "file:///" + path.split("\\").join("/");
+		this.documentVersion = 1;
+		if(this.lspService != null) {
+			var content = this.editor.getValue();
+			var language = this.getLanguage();
+			this.lspService.didOpen(this.currentUri,language,this.documentVersion,content);
+		}
+	}
+	,registerCompletionProvider: function() {
+		var _gthis = this;
+		if(this.lspService == null) {
+			return;
+		}
+		this.monaco.languages.registerCompletionItemProvider("haxe",{ triggerCharacters : [".",":"], provideCompletionItems : function(model,position,token,context) {
+			var uri = model.uri.toString();
+			var line = position.lineNumber - 1;
+			var character = position.column - 1;
+			return new Promise(function(resolve,reject) {
+				_gthis.lspService.completion(uri,line,character).handle(function(items) {
+					var suggestions = [];
+					if(items != null) {
+						var _g = 0;
+						while(_g < items.length) {
+							var item = items[_g];
+							++_g;
+							suggestions.push({ label : item.label, kind : _gthis.mapCompletionKind(item.kind), insertText : item.insertText != null ? item.insertText : item.label, detail : item.detail, documentation : item.documentation != null ? { value : item.documentation} : null, range : new hide.infrastructure.external.monaco.Range(position.lineNumber,position.column,position.lineNumber,position.column)});
+						}
+					}
+					resolve({ suggestions : suggestions});
+				});
+			});
+		}});
+	}
+	,registerHoverProvider: function() {
+		var _gthis = this;
+		if(this.lspService == null) {
+			return;
+		}
+		this.monaco.languages.registerHoverProvider("haxe",{ provideHover : function(model,position,token) {
+			var uri = model.uri.toString();
+			var line = position.lineNumber - 1;
+			var character = position.column - 1;
+			return new Promise(function(resolve,reject) {
+				_gthis.lspService.hover(uri,line,character).handle(function(info) {
+					if(info == null) {
+						resolve(null);
+						return;
+					}
+					resolve({ contents : [{ value : info.contents}], range : info.range != null ? new hide.infrastructure.external.monaco.Range(info.range.start.line + 1,info.range.start.character + 1,info.range.end.line + 1,info.range.end.character + 1) : null});
+				});
+			});
+		}});
+	}
+	,registerDefinitionProvider: function() {
+		var _gthis = this;
+		if(this.lspService == null) {
+			return;
+		}
+		this.monaco.languages.registerDefinitionProvider("haxe",{ provideDefinition : function(model,position,token) {
+			var uri = model.uri.toString();
+			var line = position.lineNumber - 1;
+			var character = position.column - 1;
+			return new Promise(function(resolve,reject) {
+				_gthis.lspService.definition(uri,line,character).handle(function(location) {
+					if(location == null) {
+						resolve(null);
+						return;
+					}
+					resolve({ uri : location.uri, range : new hide.infrastructure.external.monaco.Range(location.range.start.line + 1,location.range.start.character + 1,location.range.end.line + 1,location.range.end.character + 1)});
+				});
+			});
+		}});
+	}
+	,mapCompletionKind: function(lspKind) {
+		switch(lspKind) {
+		case 1:
+			return 1;
+		case 2:
+			return 1;
+		case 3:
+			return 1;
+		case 4:
+			return 4;
+		case 5:
+			return 5;
+		case 6:
+			return 6;
+		case 7:
+			return 8;
+		case 8:
+			return 9;
+		case 9:
+			return 10;
+		case 10:
+			return 13;
+		default:
+			return 0;
+		}
+	}
+	,updateDiagnostics: function(uri,diagnostics) {
+		var model = this.editor.getModel();
+		if(model == null) {
+			return;
+		}
+		var markers = [];
+		var _g = 0;
+		while(_g < diagnostics.length) {
+			var diag = diagnostics[_g];
+			++_g;
+			markers.push({ severity : this.mapSeverity(diag.severity), message : diag.message, startLineNumber : diag.range.start.line + 1, startColumn : diag.range.start.character + 1, endLineNumber : diag.range.end.line + 1, endColumn : diag.range.end.character + 1});
+		}
+		this.monaco.editor.setModelMarkers(model,"haxe",markers);
+	}
+	,mapSeverity: function(lspSeverity) {
+		switch(lspSeverity) {
+		case 1:
+			return 8;
+		case 2:
+			return 4;
+		case 3:
+			return 2;
+		case 4:
+			return 1;
+		default:
+			return 1;
+		}
+	}
+	,onContentChanged: function(callback) {
+		var _gthis = this;
+		this.editor.onDidChangeModelContent(function(_) {
+			callback();
+			if(_gthis.lspService != null && _gthis.currentUri != null) {
+				_gthis.documentVersion++;
+				var content = _gthis.editor.getValue();
+				_gthis.lspService.didChange(_gthis.currentUri,_gthis.documentVersion,content);
+			}
+		});
+	}
+	,__class__: hide_infrastructure_external_MonacoEditorAdapter
+};
 var hide_infrastructure_external_SceneViewFactory = function(sceneViewportController) {
 	this.sceneViewportController = sceneViewportController;
 };
@@ -113169,21 +113435,6 @@ hide_infrastructure_external_StubConsoleFactory.prototype = {
 		return [];
 	}
 	,__class__: hide_infrastructure_external_StubConsoleFactory
-};
-var hide_infrastructure_external_StubEditorFactory = function() {
-};
-$hxClasses["hide.infrastructure.external.StubEditorFactory"] = hide_infrastructure_external_StubEditorFactory;
-hide_infrastructure_external_StubEditorFactory.__name__ = "hide.infrastructure.external.StubEditorFactory";
-hide_infrastructure_external_StubEditorFactory.__interfaces__ = [hx_injection_Service,hide_domain_services_IViewFactory];
-hide_infrastructure_external_StubEditorFactory.prototype = {
-	create: function(container,state) {
-		container.setInnerHtml("\r\n            <div style='padding:20px; color:#d4d4d4; background:#1e1e1e; height:100%; font-family: monospace;'>\r\n                <h2>📝 Stub Editor</h2>\r\n                <p>Здесь будет <b>Monaco Editor</b>.</p>\r\n                <p>Состояние: " + JSON.stringify(state) + "</p>\r\n            </div>\r\n        ");
-		return null;
-	}
-	,getConstructorArgs: function() {
-		return [];
-	}
-	,__class__: hide_infrastructure_external_StubEditorFactory
 };
 var hide_infrastructure_external_StubGameFactory = function() {
 };
@@ -113392,6 +113643,75 @@ hide_infrastructure_platform_electron_ElectronIpcBridge.prototype = {
 	}
 	,__class__: hide_infrastructure_platform_electron_ElectronIpcBridge
 };
+var hide_infrastructure_platform_electron_ElectronLanguageServerAdapter = function(ipcBridge) {
+	this.running = false;
+	var _gthis = this;
+	this.ipcBridge = ipcBridge;
+	ipcBridge.on("lsp:diagnostics",function(data) {
+		if(_gthis.diagnosticsCallback != null) {
+			_gthis.diagnosticsCallback(data.uri,data.diagnostics);
+		}
+	});
+};
+$hxClasses["hide.infrastructure.platform.electron.ElectronLanguageServerAdapter"] = hide_infrastructure_platform_electron_ElectronLanguageServerAdapter;
+hide_infrastructure_platform_electron_ElectronLanguageServerAdapter.__name__ = "hide.infrastructure.platform.electron.ElectronLanguageServerAdapter";
+hide_infrastructure_platform_electron_ElectronLanguageServerAdapter.__interfaces__ = [hx_injection_Service,hide_domain_services_ILanguageServer];
+hide_infrastructure_platform_electron_ElectronLanguageServerAdapter.prototype = {
+	ipcBridge: null
+	,diagnosticsCallback: null
+	,running: null
+	,start: function(rootPath) {
+		var _gthis = this;
+		return tink_core_Future.map(this.ipcBridge.invokeSafe("lsp:start",rootPath),function(result) {
+			_gthis.running = result != null && result.success == true;
+			return _gthis.running;
+		});
+	}
+	,stop: function() {
+		this.ipcBridge.invokeSafe("lsp:stop",null);
+		this.running = false;
+	}
+	,didOpen: function(uri,languageId,version,text) {
+		this.ipcBridge.invokeSync("lsp:didOpen",{ uri : uri, languageId : languageId, version : version, text : text});
+	}
+	,isRunning: function() {
+		return this.running;
+	}
+	,didSave: function(uri,text) {
+		this.ipcBridge.invokeSync("lsp:didSave",{ uri : uri, text : text});
+	}
+	,didChange: function(uri,version,text) {
+		this.ipcBridge.invokeSync("lsp:didChange",{ uri : uri, version : version, contentChanges : [{ text : text}]});
+	}
+	,didClose: function(uri) {
+		this.ipcBridge.invokeSync("lsp:didClose",{ uri : uri});
+	}
+	,completion: function(uri,line,character) {
+		return tink_core_Future.map(this.ipcBridge.invokeSafe("lsp:completion",{ uri : uri, line : line, character : character}),function(result) {
+			if(result == null) {
+				return [];
+			}
+			if(result.items != null) {
+				return result.items;
+			} else {
+				return [];
+			}
+		});
+	}
+	,hover: function(uri,line,character) {
+		return this.ipcBridge.invokeSafe("lsp:hover",{ uri : uri, line : line, character : character});
+	}
+	,definition: function(uri,line,character) {
+		return this.ipcBridge.invokeSafe("lsp:definition",{ uri : uri, line : line, character : character});
+	}
+	,onDiagnostics: function(callback) {
+		this.diagnosticsCallback = callback;
+	}
+	,getConstructorArgs: function() {
+		return ["hide.infrastructure.platform.electron.ElectronIpcBridge"];
+	}
+	,__class__: hide_infrastructure_platform_electron_ElectronLanguageServerAdapter
+};
 var hide_infrastructure_platform_electron_ElectronPlatformAdapter = function() {
 };
 $hxClasses["hide.infrastructure.platform.electron.ElectronPlatformAdapter"] = hide_infrastructure_platform_electron_ElectronPlatformAdapter;
@@ -113543,7 +113863,7 @@ hide_infrastructure_platform_electron_ElectronWindowAdapter.prototype = {
 	}
 	,__class__: hide_infrastructure_platform_electron_ElectronWindowAdapter
 };
-var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,openViewUseCase,viewRegistry,pluginManager,eventBus,fileDialog,fileSystem,platform,layoutEngine,menuController,windowController,toolbarController,sceneService,sceneEditorService,sceneViewFactory,shaderPreviewRenderer,viewportService,viewModules,shaderNodeRegistry,shaderHistory,saveShader,loadShader) {
+var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,openViewUseCase,viewRegistry,pluginManager,eventBus,fileDialog,fileSystem,platform,layoutEngine,menuController,windowController,toolbarController,sceneService,sceneEditorService,sceneViewFactory,shaderPreviewRenderer,viewportService,viewModules,shaderNodeRegistry,shaderHistory,saveShader,loadShader,languageServer) {
 	var _gthis = this;
 	this.windowService = windowService;
 	this.menuService = menuService;
@@ -113570,6 +113890,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this.shaderHistory = shaderHistory;
 	this.saveShader = saveShader;
 	this.loadShader = loadShader;
+	this.languageServer = languageServer;
 	hide_presentation_Ide.inst = this;
 	menuService.onItemClick("project.open",$bind(this,this.onMenuOpenProject));
 	menuService.onItemClick("view.fullscreen",$bind(this,this.onToggleFullscreen));
@@ -113584,7 +113905,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this._projectLoadedUnsub = eventBus.subscribe(hide_shared_events_ProjectLoaded,$bind(this,this.onProjectLoadedHandler));
 	this._errorUnsub = eventBus.subscribe(hide_shared_events_ErrorOccurred,$bind(this,this.onErrorOccurred));
 	this._layoutChangedUnsub = eventBus.subscribe(hide_shared_events_LayoutChanged,function(e) {
-		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 178, className : "hide.presentation.Ide", methodName : "new"});
+		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 181, className : "hide.presentation.Ide", methodName : "new"});
 	});
 	this._projectClosedUnsub = eventBus.subscribe(hide_shared_events_ProjectClosed,function(e) {
 		_gthis._currentProject = null;
@@ -113631,15 +113952,16 @@ hide_presentation_Ide.prototype = {
 	,shaderHistory: null
 	,saveShader: null
 	,loadShader: null
+	,languageServer: null
 	,onMenuOpenProject: function() {
 		this.layoutEngine.open("welcome",{ },hide_domain_valueobjects_DisplayPosition.Center);
 	}
 	,onErrorOccurred: function(event) {
-		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 205, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
+		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 208, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
 	}
 	,onProjectLoadedHandler: function(event) {
 		this._currentProject = event.project.name;
-		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 210, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
+		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 213, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
 		this.updateWindowTitle();
 	}
 	,onToggleFullscreen: function() {
@@ -113650,7 +113972,7 @@ hide_presentation_Ide.prototype = {
 	,onCloseProject: function() {
 	}
 	,openView: function(viewName) {
-		haxe_Log.trace("[Open view] search view to open: " + viewName,{ fileName : "hide/presentation/Ide.hx", lineNumber : 231, className : "hide.presentation.Ide", methodName : "openView"});
+		haxe_Log.trace("[Open view] search view to open: " + viewName,{ fileName : "hide/presentation/Ide.hx", lineNumber : 234, className : "hide.presentation.Ide", methodName : "openView"});
 		var view = Lambda.find(this.viewRegistry.all(),function(v) {
 			return v.name == viewName;
 		});
@@ -113668,7 +113990,7 @@ hide_presentation_Ide.prototype = {
 		default:
 			position = hide_domain_valueobjects_DisplayPosition.Center;
 		}
-		haxe_Log.trace("[Open view] view opened",{ fileName : "hide/presentation/Ide.hx", lineNumber : 242, className : "hide.presentation.Ide", methodName : "openView"});
+		haxe_Log.trace("[Open view] view opened",{ fileName : "hide/presentation/Ide.hx", lineNumber : 245, className : "hide.presentation.Ide", methodName : "openView"});
 		this.openViewUseCase.execute(view.name,view.defaultState,position);
 	}
 	,onOpenRecent: function(path) {
@@ -113676,11 +113998,11 @@ hide_presentation_Ide.prototype = {
 	}
 	,updateWindowTitle: function() {
 		var title = this._currentProject != null ? "" + this._currentProject + " - HIDE IDE" : "HIDE IDE";
-		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 252, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
+		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 255, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
 		this.windowService.setTitle(title);
 	}
 	,showAboutDialog: function() {
-		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 257, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
+		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 260, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
 	}
 	,get_currentProjectName: function() {
 		if(this._currentProject != null) {
@@ -113691,7 +114013,7 @@ hide_presentation_Ide.prototype = {
 	}
 	,startup: function() {
 		var _gthis = this;
-		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 267, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 270, className : "hide.presentation.Ide", methodName : "startup"});
 		var $module = $getIterator(this.viewModules);
 		while($module.hasNext()) {
 			var module1 = $module.next();
@@ -113704,29 +114026,29 @@ hide_presentation_Ide.prototype = {
 					_gthis.openView(descriptor[0].dto.name);
 				};
 			})(descriptor));
-			haxe_Log.trace("📦 View registered: " + descriptor[0].dto.name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 281, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📦 View registered: " + descriptor[0].dto.name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 284, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		this.windowController.init();
-		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 285, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 288, className : "hide.presentation.Ide", methodName : "startup"});
 		var toolbarEl = window.document.getElementById("main-toolbar");
 		if(toolbarEl != null) {
 			this.toolbarController.setContainer(toolbarEl);
-			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 293, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 296, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var layoutEl = window.document.getElementById("golden-layout-root");
 		if(layoutEl != null) {
 			this.layoutEngine.setContainer(layoutEl);
 			this.layoutEngine.init({ content : [], fullScreen : null});
-			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 301, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 304, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 303, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 306, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var menuContainer = window.document.getElementById("main-menu");
 		if(menuContainer != null) {
 			this.menuController.setContainer(menuContainer);
-			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 309, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 312, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 311, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 314, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var args = this.platform.getAppArgs();
 		var projectFile = null;
@@ -113750,10 +114072,10 @@ hide_presentation_Ide.prototype = {
 			}
 		}
 		if(projectFile != null) {
-			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 338, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 341, className : "hide.presentation.Ide", methodName : "startup"});
 			this.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._new(projectFile));
 		} else {
-			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 341, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 344, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 	}
 	,dispose: function() {
@@ -113804,6 +114126,9 @@ hide_presentation_Ide.prototype = {
 	,get_viewRegistry: function() {
 		return this.viewRegistry;
 	}
+	,get_languageServer: function() {
+		return this.languageServer;
+	}
 	,get_layoutEngine: function() {
 		return this.layoutEngine;
 	}
@@ -113835,7 +114160,7 @@ hide_presentation_Ide.prototype = {
 		return this.loadShader;
 	}
 	,getConstructorArgs: function() {
-		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.commands.OpenViewUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IFileSystem","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController","hide.presentation.controllers.WindowController","hide.presentation.controllers.ToolbarController","hide.engine.domain.services.ISceneService","hide.application.integration.SceneEditorService","hide.infrastructure.external.SceneViewFactory","hide.engine.infrastructure.ShaderPreviewRenderer","hide.engine.infrastructure.ViewportService","Iterable(hide.application.services.IViewModule)","hide.engine.infrastructure.ShaderNodeRegistry","hide.application.services.ShaderHistoryService","hide.application.commands.SaveShaderUseCase","hide.application.commands.LoadShaderUseCase"];
+		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.commands.OpenViewUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IFileSystem","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController","hide.presentation.controllers.WindowController","hide.presentation.controllers.ToolbarController","hide.engine.domain.services.ISceneService","hide.application.integration.SceneEditorService","hide.infrastructure.external.SceneViewFactory","hide.engine.infrastructure.ShaderPreviewRenderer","hide.engine.infrastructure.ViewportService","Iterable(hide.application.services.IViewModule)","hide.engine.infrastructure.ShaderNodeRegistry","hide.application.services.ShaderHistoryService","hide.application.commands.SaveShaderUseCase","hide.application.commands.LoadShaderUseCase","hide.domain.services.ILanguageServer"];
 	}
 	,__class__: hide_presentation_Ide
 	,__properties__: {get_currentProjectName:"get_currentProjectName"}
@@ -114129,7 +114454,7 @@ hide_presentation_modules_EditorModule.__name__ = "hide.presentation.modules.Edi
 hide_presentation_modules_EditorModule.__interfaces__ = [hide_application_services_IViewModule];
 hide_presentation_modules_EditorModule.prototype = {
 	getDescriptor: function() {
-		return { dto : { name : "editor", label : "Editor", description : "Редактор кода", icon : "code", defaultState : { }}, factory : new hide_infrastructure_external_StubEditorFactory()};
+		return { dto : { name : "editor", label : "Editor", description : "Редактор кода", icon : "code", defaultState : { }}, factory : new hide_presentation_ui_react_factories_ReactViewFactory().withComponent(hide_presentation_ui_react_components_EditorView)};
 	}
 	,getConstructorArgs: function() {
 		return [];
@@ -114427,6 +114752,140 @@ hide_presentation_ui_react_components_ContextMenu.prototype = $extend(React_Comp
 		return React.createElement("div",{ key : item.label, style : { padding : "4px 12px", cursor : isDisabled ? "default" : "pointer", display : "flex", alignItems : "center", gap : "8px", opacity : isDisabled ? 0.5 : 1, transition : "background 0.1s"}, onMouseOver : tmp, onMouseOut : tmp1, onClick : !isDisabled ? item.action : null, className : isDisabled ? "context-item disabled" : "context-item"},innerElement,React.createElement("span",{ },item.label));
 	}
 	,__class__: hide_presentation_ui_react_components_ContextMenu
+});
+var hide_presentation_ui_react_components_EditorView = function() {
+	this.documentVersion = 0;
+	hide_presentation_ui_react_BaseReactComponent.call(this);
+	this.state = { currentFile : null, content : "", isDirty : false, language : "haxe", lspConnected : false};
+	this.editorContainerRef = React.createRef();
+};
+$hxClasses["hide.presentation.ui.react.components.EditorView"] = hide_presentation_ui_react_components_EditorView;
+hide_presentation_ui_react_components_EditorView.__name__ = "hide.presentation.ui.react.components.EditorView";
+hide_presentation_ui_react_components_EditorView.__super__ = hide_presentation_ui_react_BaseReactComponent;
+hide_presentation_ui_react_components_EditorView.prototype = $extend(hide_presentation_ui_react_BaseReactComponent.prototype,{
+	editorContainerRef: null
+	,editorAdapter: null
+	,lspClient: null
+	,documentVersion: null
+	,componentDidMount: function() {
+		var _gthis = this;
+		var eventBus = hide_presentation_ui_react_hooks_UseService.eventBus();
+		this.subscribe(eventBus,hide_shared_events_ResourceOpened,function(e) {
+			haxe_Log.trace("📂 [EditorView] Resource opened",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 48, className : "hide.presentation.ui.react.components.EditorView", methodName : "componentDidMount"});
+		});
+		haxe_Timer.delay(function() {
+			_gthis.initEditor();
+			_gthis.initLsp();
+		},100);
+	}
+	,initEditor: function() {
+		var _gthis = this;
+		var container = this.editorContainerRef.current;
+		if(container == null) {
+			return;
+		}
+		this.editorAdapter = new hide_infrastructure_external_MonacoEditorAdapter(container);
+		this.editorAdapter.onDidChangeModelContent(function(_) {
+			var newContent = _gthis.editorAdapter.getValue();
+			if(!_gthis.state.isDirty) {
+				_gthis.setState({ currentFile : _gthis.state.currentFile, content : newContent, isDirty : true, language : _gthis.state.language, lspConnected : _gthis.state.lspConnected});
+			}
+			if(_gthis.lspClient != null && _gthis.state.currentFile != null) {
+				_gthis.documentVersion++;
+				var uri = "file:///" + _gthis.state.currentFile.split("\\").join("/");
+				_gthis.lspClient.didChange(uri,_gthis.documentVersion,newContent);
+			}
+		});
+		haxe_Log.trace("✅ [EditorView] Monaco Editor initialized",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 78, className : "hide.presentation.ui.react.components.EditorView", methodName : "initEditor"});
+	}
+	,initLsp: function() {
+		var _gthis = this;
+		var lsp = hide_presentation_ui_react_hooks_UseService.languageServer();
+		if(lsp == null) {
+			haxe_Log.trace("⚠️ [EditorView] Language Server not available",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 84, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
+			return;
+		}
+		this.lspClient = lsp;
+		var rootPath = "D:\\Dev\\hide-electron";
+		this.lspClient.start(rootPath).handle(function(success) {
+			if(success) {
+				haxe_Log.trace("✅ [EditorView] LSP connected",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 92, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
+				_gthis.setState({ currentFile : _gthis.state.currentFile, content : _gthis.state.content, isDirty : _gthis.state.isDirty, language : _gthis.state.language, lspConnected : true});
+				if(_gthis.editorAdapter != null) {
+					_gthis.editorAdapter.setLanguageServer(lsp);
+				}
+			} else {
+				haxe_Log.trace("❌ [EditorView] LSP failed to start",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 107, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
+			}
+		});
+		haxe_Log.trace("✅ [EditorView] LSP client initialized",{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 114, className : "hide.presentation.ui.react.components.EditorView", methodName : "initLsp"});
+	}
+	,handleOpenFile: function() {
+		var _gthis = this;
+		var fileDialog = hide_presentation_ui_react_hooks_UseService.fileDialog();
+		fileDialog.showOpen({ filters : [{ name : "Haxe Files", extensions : ["hx","hxml"]},{ name : "All Files", extensions : ["*"]}]}).handle(function(path) {
+			if(path != null) {
+				_gthis.openFile(path);
+			}
+		});
+	}
+	,openFile: function(path) {
+		var fileSystem = hide_presentation_ui_react_hooks_UseService.fileSystem();
+		try {
+			var content = fileSystem.readText(hide_domain_valueobjects_FilePath._new(path));
+			var language = this.detectLanguage(path);
+			if(this.editorAdapter != null) {
+				this.editorAdapter.setValue(content);
+				this.editorAdapter.setLanguage(language);
+				this.editorAdapter.setCurrentFile(path);
+			}
+			this.setState({ currentFile : path, content : content, isDirty : false, language : language, lspConnected : this.lspClient != null});
+			haxe_Log.trace("📂 [EditorView] File opened: " + path,{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 152, className : "hide.presentation.ui.react.components.EditorView", methodName : "openFile"});
+		} catch( _g ) {
+			haxe_NativeStackTrace.lastError = _g;
+			var e = haxe_Exception.caught(_g).unwrap();
+			haxe_Log.trace("❌ [EditorView] Open error: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/EditorView.hx", lineNumber : 154, className : "hide.presentation.ui.react.components.EditorView", methodName : "openFile"});
+		}
+	}
+	,detectLanguage: function(path) {
+		var ext = path.split(".").pop().toLowerCase();
+		switch(ext) {
+		case "hx":case "hxml":
+			return "haxe";
+		case "json":
+			return "json";
+		case "xml":
+			return "xml";
+		default:
+			return "plaintext";
+		}
+	}
+	,render: function() {
+		var fileName = this.state.currentFile != null ? this.state.currentFile.split("/").pop() : "Untitled";
+		var dirtyIndicator = this.state.isDirty ? " ●" : "";
+		var lspStatus = this.state.lspConnected ? "✅ LSP" : "⚠️ No LSP";
+		var tmp = React.createElement("button",{ style : { background : "#0e639c", color : "#fff", border : "none", padding : "4px 12px", borderRadius : "3px", cursor : "pointer"}, onClick : $bind(this,this.handleOpenFile)},"Open");
+		var tmp1 = React.createElement("div",{ style : { flex : 1}});
+		var tmp2 = React.createElement("span",{ style : { color : "#888", fontSize : "11px"}},lspStatus);
+		var tmp3 = React.createElement("span",{ style : { color : "#ccc", fontSize : "12px"}},fileName,dirtyIndicator);
+		var tmp4 = React.createElement("span",{ style : { color : "#888", fontSize : "11px", marginLeft : "12px"}},this.state.language.toUpperCase());
+		var tmp5 = React.createElement("div",{ style : { padding : "8px 12px", background : "#2d2d2d", borderBottom : "1px solid #3e3e3e", display : "flex", alignItems : "center", gap : "8px"}},tmp,tmp1,tmp2,tmp3,tmp4);
+		var tmp = React.createElement("div",{ ref : this.editorContainerRef, style : { flex : 1, overflow : "hidden"}});
+		return React.createElement("div",{ style : { display : "flex", flexDirection : "column", height : "100%", background : "#1e1e1e"}},tmp5,tmp);
+	}
+	,componentWillUnmount: function() {
+		if(this.lspClient != null) {
+			if(this.state.currentFile != null) {
+				var uri = "file:///" + this.state.currentFile.split("\\").join("/");
+				this.lspClient.didClose(uri);
+			}
+			this.lspClient.stop();
+		}
+		if(this.editorAdapter != null) {
+			this.editorAdapter.dispose();
+		}
+	}
+	,__class__: hide_presentation_ui_react_components_EditorView
 });
 var hide_presentation_ui_react_components_ObjectType = $hxEnums["hide.presentation.ui.react.components.ObjectType"] = { __ename__:"hide.presentation.ui.react.components.ObjectType",__constructs__:null
 	,Camera: {_hx_name:"Camera",_hx_index:0,__enum__:"hide.presentation.ui.react.components.ObjectType",toString:$estr}
@@ -115642,6 +116101,9 @@ hide_presentation_ui_react_hooks_UseService.saveShader = function() {
 hide_presentation_ui_react_hooks_UseService.loadShader = function() {
 	return hide_presentation_Ide.inst.get_loadShader();
 };
+hide_presentation_ui_react_hooks_UseService.languageServer = function() {
+	return hide_presentation_Ide.inst.get_languageServer();
+};
 var hide_shared_events_ErrorOccurred = function(context,error) {
 	this.context = context;
 	this.error = error;
@@ -115729,6 +116191,13 @@ hide_shared_events_RecentProjectsUpdated.__name__ = "hide.shared.events.RecentPr
 hide_shared_events_RecentProjectsUpdated.prototype = {
 	recentProjects: null
 	,__class__: hide_shared_events_RecentProjectsUpdated
+};
+var hide_shared_events_ResourceOpened = function() {
+};
+$hxClasses["hide.shared.events.ResourceOpened"] = hide_shared_events_ResourceOpened;
+hide_shared_events_ResourceOpened.__name__ = "hide.shared.events.ResourceOpened";
+hide_shared_events_ResourceOpened.prototype = {
+	__class__: hide_shared_events_ResourceOpened
 };
 var hide_shared_events_SceneChanged = function() {
 };
@@ -179516,6 +179985,7 @@ hide_engine_infrastructure_shaders_NormalMapModifier._MODULE = "hide.engine.infr
 hide_presentation_ui_react_BaseReactComponent.displayName = "BaseReactComponent";
 hide_presentation_ui_react_components_ComponentIcon.displayName = "ComponentIcon";
 hide_presentation_ui_react_components_ContextMenu.displayName = "ContextMenu";
+hide_presentation_ui_react_components_EditorView.displayName = "EditorView";
 hide_presentation_ui_react_components_HierarchyIcon.displayName = "HierarchyIcon";
 hide_presentation_ui_react_components_HierarchyPanel.displayName = "HierarchyPanel";
 hide_presentation_ui_react_components_InspectorPanel.displayName = "InspectorPanel";

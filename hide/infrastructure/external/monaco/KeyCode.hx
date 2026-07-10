@@ -1,4 +1,4 @@
-package monaco;
+package hide.infrastructure.external.monaco;
 
 enum abstract KeyCode(Int) from Int to Int {
 	var Unknown = 0;

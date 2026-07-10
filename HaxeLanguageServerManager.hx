@@ -1,6 +1,7 @@
 import js.node.ChildProcess;
 import js.node.Buffer;
 import js.node.Path;
+import js.node.Fs;
 import electron.main.IpcMain;
 import electron.IpcMainEvent;
 
@@ -23,10 +24,10 @@ class HaxeLanguageServerManager {
     /**
      * Запускает Haxe Language Server.
      */
-    public static function start(rootPath:String):Void {
+    public static function start(rootPath:String):Bool {
         if (isStarted) {
             trace("⚠️ [LSP] Already started");
-            return;
+            return true;
         }
 
         projectRoot = rootPath;
@@ -34,12 +35,18 @@ class HaxeLanguageServerManager {
         // Путь к haxe-language-server
         var serverPath = Path.join(__dirname, "server.js");
         
+        // Проверяем существование
+        if (!Fs.existsSync(serverPath)) {
+            trace("❌ [LSP] Server not found at: " + serverPath);
+            return false;
+        }
+
         trace("🚀 [LSP] Starting Haxe Language Server...");
         trace("📁 [LSP] Project root: " + rootPath);
         trace("📄 [LSP] Server path: " + serverPath);
 
         // Запускаем сервер как child process
-        serverProcess = ChildProcess.spawn("node", [serverPath], {
+        serverProcess = ChildProcess.spawn("node", [serverPath, "--stdio"], {
             cwd: rootPath,
             stdio: ["pipe", "pipe", "pipe"]
         });
@@ -67,7 +74,11 @@ class HaxeLanguageServerManager {
         });
 
         isStarted = true;
+        // Инициализация LSP
+        initialize();
+        
         trace("✅ [LSP] Language Server started");
+        return true;
     }
 
     /**

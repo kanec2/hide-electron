@@ -1,4 +1,4 @@
-package monaco;
+package hide.infrastructure.external.monaco;
 
 extern class Range {
 	var startColumn : Int;

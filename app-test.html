@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Monaco Test</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: sans-serif; }
+        #status { 
+            padding: 10px; 
+            background: #2d2d2d; 
+            color: #fff; 
+            font-family: monospace;
+        }
+        #editor { 
+            width: 100%; 
+            height: calc(100vh - 40px); 
+        }
+    </style>
+</head>
+<body>
+    <div id="status">⏳ Loading Monaco...</div>
+    <div id="editor"></div>
+
+    <!-- 1. Сохраняем Node.js require ПЕРЕД AMD loader -->
+    <script>
+        console.log('🔧 Step 1: Saving Node.js require');
+        if (typeof require !== 'undefined') {
+            window.nodeRequire = require;
+            window.nodeModule = module;
+            console.log('✅ Node.js require saved to window.nodeRequire');
+        } else {
+            console.warn('⚠️ Node.js require not available');
+        }
+    </script>
+
+    <!-- 2. Загружаем AMD loader Monaco из node_modules -->
+    <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+    <script>
+        console.log('🔧 Step 2: AMD loader loaded');
+        console.log('   typeof require:', typeof require);
+        console.log('   typeof define:', typeof define);
+    </script>
+
+    <!-- 3. Настраиваем пути и загружаем Monaco -->
+    <script>
+        console.log('🔧 Step 3: Configuring Monaco paths');
+        
+        // Настраиваем пути для AMD loader
+        require.config({
+            paths: {
+                'vs': 'node_modules/monaco-editor/min/vs'
+            }
+        });
+        
+        console.log('🔧 Step 4: Loading Monaco editor main');
+        
+        // Загружаем Monaco
+        require(['vs/editor/editor.main'], function() {
+            console.log('✅ Step 5: Monaco loaded!');
+            console.log('   window.monaco:', window.monaco);
+            console.log('   monaco version:', window.monaco ? 'available' : 'MISSING');
+            
+            if (!window.monaco) {
+                document.getElementById('status').innerHTML = '❌ window.monaco is UNDEFINED!';
+                document.getElementById('status').style.background = '#8a2d2d';
+                return;
+            }
+            
+            // Проверяем ключевые API
+            console.log('   monaco.editor:', typeof monaco.editor);
+            console.log('   monaco.languages:', typeof monaco.languages);
+            console.log('   monaco.KeyMod:', typeof monaco.KeyMod);
+            
+            // Создаём тестовый редактор
+            console.log('🔧 Step 6: Creating test editor');
+            var editor = monaco.editor.create(document.getElementById('editor'), {
+                value: '// Hello from Monaco!\nfunction test() {\n\treturn 42;\n}',
+                language: 'javascript',
+                theme: 'vs-dark',
+                automaticLayout: true
+            });
+            
+            document.getElementById('status').innerHTML = 
+                '✅ Monaco loaded successfully! Editor created. ' +
+                'Open DevTools (Ctrl+Shift+I) to see details.';
+            document.getElementById('status').style.background = '#2d8a2d';
+            
+            console.log('✅ Test editor created successfully');
+        }, function(err) {
+            console.error('❌ Monaco load error:', err);
+            document.getElementById('status').innerHTML = '❌ Error: ' + err.message;
+            document.getElementById('status').style.background = '#8a2d2d';
+        });
+    </script>
+
+    <!-- 4. Восстанавливаем Node.js require ПОСЛЕ Monaco -->
+    <script>
+        console.log('🔧 Step 7: Restoring Node.js require');
+        if (window.nodeRequire) {
+            require = window.nodeRequire;
+            module = window.nodeModule;
+            console.log('✅ Node.js require restored');
+            
+            // Проверяем, что Node.js require работает
+            try {
+                var path = require('path');
+                console.log('✅ Node.js path module loaded:', typeof path.join);
+            } catch (e) {
+                console.error('❌ Node.js require broken:', e);
+            }
+        }
+    </script>
+</body>
+</html>

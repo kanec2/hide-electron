@@ -1,8 +1,4 @@
 package hide.infrastructure.external.monaco;
-
-// infrastructure/external/monaco/MonacoEditorReact.hx
-package hide.infrastructure.external.monaco;
-
 import react.ReactComponent;
 
 @:jsRequire("@huyhuy/monaco-editor-react-electron")

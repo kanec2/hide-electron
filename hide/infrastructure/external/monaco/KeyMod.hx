@@ -1,4 +1,4 @@
-package monaco;
+package hide.infrastructure.external.monaco;
 
 extern class KeyMod {
 	static var CtrlCmd : Int;

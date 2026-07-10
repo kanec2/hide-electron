@@ -16,7 +16,8 @@ import hx.injection.Service;
 class ElectronLanguageServerAdapter implements ILanguageServer implements Service {
     private var ipcBridge:ElectronIpcBridge;
     private var diagnosticsCallback:Null<String->Array<Diagnostic>->Void>;
-    
+    private var running:Bool = false;
+
     public function new(ipcBridge:ElectronIpcBridge) {
         this.ipcBridge = ipcBridge;
         
@@ -31,12 +32,14 @@ class ElectronLanguageServerAdapter implements ILanguageServer implements Servic
     public function start(rootPath:String):Future<Bool> {
         return ipcBridge.invokeSafe("lsp:start", rootPath)
             .map(function(result:Dynamic) {
-                return result != null && result.success == true;
+                running = result != null && result.success == true;
+                return running;
             });
     }
     
     public function stop():Void {
         ipcBridge.invokeSafe("lsp:stop", null);
+        running = false;
     }
     
     public function didOpen(uri:String, languageId:String, version:Int, text:String):Void {
@@ -47,7 +50,9 @@ class ElectronLanguageServerAdapter implements ILanguageServer implements Servic
             text: text
         });
     }
-    
+    public function isRunning():Bool {
+        return running;
+    }
     public function didSave(uri:String, ?text:String):Void {
         ipcBridge.invokeSync("lsp:didSave", {
             uri: uri,

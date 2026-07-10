@@ -6,9 +6,10 @@ import hide.presentation.ui.react.BaseReactComponent;
 import hide.presentation.ui.react.hooks.UseService;
 import hide.shared.events.ResourceOpened;
 import hide.domain.services.ILanguageServer;
-import hide.domain.services.ILanguageServer.CompletionItem;
 import hide.domain.services.ILanguageServer.Diagnostic;
 import hide.domain.valueobjects.FilePath;
+import tink.core.*;
+using tink.CoreApi;
 
 typedef EditorViewProps = {
     var initialState:Dynamic;
@@ -28,7 +29,7 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
     private var editorAdapter:Null<hide.infrastructure.external.MonacoEditorAdapter>;
     private var lspClient:Null<ILanguageServer>;
     private var documentVersion:Int = 0;
-    
+
     public function new() {
         super();
         state = {
@@ -40,28 +41,23 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
         };
         editorContainerRef = untyped React.createRef();
     }
-    
+
     override function componentDidMount():Void {
         var eventBus = UseService.eventBus();
         subscribe(eventBus, ResourceOpened, function(e:ResourceOpened) {
             trace('📂 [EditorView] Resource opened');
         });
-        
         haxe.Timer.delay(function() {
             initEditor();
             initLsp();
         }, 100);
     }
-    
+
     private function initEditor():Void {
         var container = editorContainerRef.current;
         if (container == null) return;
-        
         editorAdapter = new hide.infrastructure.external.MonacoEditorAdapter(container);
         
-        var editor = untyped editorAdapter.editor;
-        
-        // Подписка на изменения контента
         editorAdapter.onDidChangeModelContent(function(_) {
             var newContent = editorAdapter.getValue();
             if (!state.isDirty) {
@@ -73,126 +69,56 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
                     lspConnected: state.lspConnected
                 });
             }
-            
-            // Отправляем изменения в LSP
             if (lspClient != null && state.currentFile != null) {
                 documentVersion++;
-                lspClient.didChange(state.currentFile, documentVersion, newContent);
+                var uri = "file:///" + state.currentFile.split("\\").join("/");
+                lspClient.didChange(uri, documentVersion, newContent);
             }
         });
-        
         trace('✅ [EditorView] Monaco Editor initialized');
     }
-    
+
     private function initLsp():Void {
         var lsp = UseService.languageServer();
         if (lsp == null) {
             trace('⚠️ [EditorView] Language Server not available');
             return;
         }
-        
         lspClient = lsp;
         
-        // Подписка на диагностику
-        lspClient.onDiagnostics(function(uri:String, diagnostics:Array<Diagnostic>) {
-            updateDiagnostics(uri, diagnostics);
-        });
-        
-        trace('✅ [EditorView] LSP client initialized');
-    }
-    
-    private function registerCompletionProvider():Void {
-        if (editorAdapter == null || lspClient == null) return;
-        
-        var monaco = untyped require('monaco-editor');
-        
-        monaco.languages.registerCompletionItemProvider('haxe', {
-            triggerCharacters: ['.', ':'],
-            provideCompletionItems: function(model:Dynamic, position:Dynamic, _:Dynamic, _:Dynamic) {
-                var uri = model.uri.toString();
-                var line:Int = Math.ceil(position.lineNumber) - 1;
-                var character:Int = Math.ceil(position.column) - 1;
-                
-                return lspClient.completion(uri, line, character).then(function(result:Dynamic) {
-                    if (result == null) return { suggestions: [] };
-                    
-                    var items = result.items != null ? result.items : result;
-                    var suggestions = [];
-                    
-                    for (item in items) {
-                        suggestions.push({
-                            label: item.label,
-                            kind: mapCompletionKind(item.kind),
-                            insertText: item.insertText != null ? item.insertText : item.label,
-                            detail: item.detail,
-                            documentation: item.documentation,
-                            range: {
-                                startLineNumber: position.lineNumber,
-                                startColumn: position.column,
-                                endLineNumber: position.lineNumber,
-                                endColumn: position.column
-                            }
-                        });
-                    }
-                    
-                    return { suggestions: suggestions };
+        var rootPath = "D:\\Dev\\hide-electron";
+        lspClient.start(rootPath).handle(function(success) {
+            if (success) {
+                trace("✅ [EditorView] LSP connected");
+                setState({
+                    currentFile: state.currentFile,
+                    content: state.content,
+                    isDirty: state.isDirty,
+                    language: state.language,
+                    lspConnected: true
                 });
+                
+                // ✅ КРИТИЧНО: передаём LSP в адаптер!
+                // Адаптер сам зарегистрирует все провайдеры
+                if (editorAdapter != null) {
+                    editorAdapter.setLanguageServer(lsp);
+                }
+            } else {
+                trace("❌ [EditorView] LSP failed to start");
             }
         });
         
-        trace("✅ [EditorView] Completion provider registered");
+        // ✅ Diagnostics подписка остаётся здесь, 
+        // потому что это UI-логика (обновление маркеров в Monaco)
+        // НО! Она уже есть в setLanguageServer() — можно убрать дубликат
+        trace('✅ [EditorView] LSP client initialized');
     }
-    
-    private function mapCompletionKind(lspKind:Int):Int {
-        return switch (lspKind) {
-            case 1: 1;   // Text
-            case 2: 1;   // Method
-            case 3: 1;   // Function
-            case 4: 4;   // Field
-            case 5: 5;   // Variable
-            case 6: 6;   // Class
-            case 7: 8;   // Interface
-            case 8: 9;   // Module
-            case 9: 10;  // Property
-            case 10: 13; // Keyword
-            case 11: 17; // Value
-            case 12: 12; // Enum
-            default: 0;
-        };
-    }
-    
-    private function updateDiagnostics(uri:String, diagnostics:Array<Diagnostic>):Void {
-        if (editorAdapter == null) return;
-        
-        var monaco = untyped require('monaco-editor');
-        var model = editorAdapter.getModel();
-        if (model == null) return;
-        
-        var markers = [];
-        for (diag in diagnostics) {
-            markers.push({
-                severity: mapSeverity(diag.severity),
-                message: diag.message,
-                startLineNumber: diag.range.start.line + 1,
-                startColumn: diag.range.start.character + 1,
-                endLineNumber: diag.range.end.line + 1,
-                endColumn: diag.range.end.character + 1
-            });
-        }
-        
-        monaco.editor.setModelMarkers(model, "haxe", markers);
-    }
-    
-    private function mapSeverity(lspSeverity:Int):Int {
-        return switch (lspSeverity) {
-            case 1: 8; // Error
-            case 2: 4; // Warning
-            case 3: 2; // Information
-            case 4: 1; // Hint
-            default: 1;
-        };
-    }
-    
+
+    // ❌ УДАЛЕНО: registerCompletionProvider() — теперь в адаптере
+    // ❌ УДАЛЕНО: mapCompletionKind() — теперь в адаптере
+    // ❌ УДАЛЕНО: updateDiagnostics() — теперь в адаптере
+    // ❌ УДАЛЕНО: mapSeverity() — теперь в адаптере
+
     private function handleOpenFile():Void {
         var fileDialog = UseService.fileDialog();
         fileDialog.showOpen({
@@ -201,30 +127,21 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
                 {name: "All Files", extensions: ["*"]}
             ]
         }).handle(function(path:Null<String>) {
-            if (path != null) {
-                openFile(path);
-            }
+            if (path != null) openFile(path);
         });
     }
-    
+
     private function openFile(path:String):Void {
         var fileSystem = UseService.fileSystem();
         try {
             var content = fileSystem.readText(new FilePath(path));
             var language = detectLanguage(path);
-            
             if (editorAdapter != null) {
                 editorAdapter.setValue(content);
                 editorAdapter.setLanguage(language);
+                // ✅ Уведомляем адаптер о новом файле (он сам уведомит LSP)
+                editorAdapter.setCurrentFile(path);
             }
-            
-            // Уведомляем LSP об открытии файла
-            if (lspClient != null) {
-                var uri = "file://" + path;
-                documentVersion = 1;
-                lspClient.didOpen(uri, language, documentVersion, content);
-            }
-            
             setState({
                 currentFile: path,
                 content: content,
@@ -232,13 +149,12 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
                 language: language,
                 lspConnected: lspClient != null
             });
-            
             trace('📂 [EditorView] File opened: $path');
         } catch (e:Dynamic) {
             trace('❌ [EditorView] Open error: $e');
         }
     }
-    
+
     private function detectLanguage(path:String):String {
         var ext = path.split('.').pop().toLowerCase();
         return switch (ext) {
@@ -248,28 +164,22 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
             default: 'plaintext';
         };
     }
-    
+
     override function render():ReactElement {
         var fileName = state.currentFile != null ? state.currentFile.split('/').pop() : "Untitled";
         var dirtyIndicator = state.isDirty ? " ●" : "";
         var lspStatus = state.lspConnected ? "✅ LSP" : "⚠️ No LSP";
-        
         return jsx('
             <div style={{display: "flex", flexDirection: "column", height: "100%", background: "#1e1e1e"}}>
                 <div style={{
-                    padding: "8px 12px",
-                    background: "#2d2d2d",
+                    padding: "8px 12px", background: "#2d2d2d",
                     borderBottom: "1px solid #3e3e3e",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px"
+                    display: "flex", alignItems: "center", gap: "8px"
                 }}>
                     <button onClick={handleOpenFile} style={{
                         background: "#0e639c", color: "#fff", border: "none",
                         padding: "4px 12px", borderRadius: "3px", cursor: "pointer"
-                    }}>
-                         Open
-                    </button>
+                    }}>Open</button>
                     <div style={{flex: 1}}></div>
                     <span style={{color: "#888", fontSize: "11px"}}>{lspStatus}</span>
                     <span style={{color: "#ccc", fontSize: "12px"}}>
@@ -283,17 +193,15 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
             </div>
         ');
     }
-    
+
     override function componentWillUnmount():Void {
         if (lspClient != null) {
             if (state.currentFile != null) {
-                var uri = "file://" + state.currentFile;
+                var uri = "file:///" + state.currentFile.split("\\").join("/");
                 lspClient.didClose(uri);
             }
             lspClient.stop();
         }
-        if (editorAdapter != null) {
-            editorAdapter.dispose();
-        }
+        if (editorAdapter != null) editorAdapter.dispose();
     }
 }

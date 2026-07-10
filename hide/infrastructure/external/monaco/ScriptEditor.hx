@@ -1,4 +1,4 @@
-package monaco;
+package hide.infrastructure.external.monaco;
 
 enum abstract ScrollType(Int) {
 	var Smooth = 0;

@@ -116,7 +116,8 @@ class AutoWindow {
             webPreferences: {
                 nodeIntegration: true,
                 contextIsolation: false,
-                enableRemoteModule: true
+                enableRemoteModule: true,
+                preload: Path.join(__dirname, "preload.js")  // ← ДОБАВИТЬ
             }
         };
 
@@ -311,7 +312,7 @@ class AutoWindow {
                 });
             });
         });
-        
+
         // === Базовые команды приложения ===
         IpcMain.on("app:quit", function(event:IpcMainEvent) { 
             App.quit(); 
@@ -470,7 +471,8 @@ class AutoWindow {
                 parent: window,
                 webPreferences: {
                     nodeIntegration: true,
-                    contextIsolation: false
+                    contextIsolation: false,
+                    preload: Path.join(__dirname, "preload.js")  // ← ДОБАВИТЬ
                 }
             };
             
