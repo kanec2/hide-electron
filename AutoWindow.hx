@@ -117,7 +117,6 @@ class AutoWindow {
                 nodeIntegration: true,
                 contextIsolation: false,
                 enableRemoteModule: true,
-                preload: Path.join(__dirname, "preload.js")  // ← ДОБАВИТЬ
             }
         };
 
@@ -171,39 +170,10 @@ class AutoWindow {
         Fs.mkdirSync(dir);
     }
 
-    static function processMenuTemplate(items:Array<Dynamic>, sender:Dynamic):Array<Dynamic> {
-        if (items == null) return [];
-        
-        var result = [];
-        for (item in items) {
-            // 跳过无效项（但保留 separator）
-            if (item.label == null && item.type != "separator") continue;
-            
-            var processed:Dynamic = {
-                label: item.label,
-                type: item.type != null ? item.type : null,
-                enabled: item.enabled != false, // 默认 true
-                submenu: item.submenu != null ? processMenuTemplate(item.submenu, sender) : null
-            };
-            
-            // 如果有 id，说明是可点击的菜单项，注入 click 处理
-            if (item.id != null) {
-                var itemId:String = item.id; // 闭包捕获当前 id
-                processed.click = function(menuItem:Dynamic, browserWindow:Dynamic, event:Dynamic) {
-                    trace("[AutoWindow] 🖱 Click: '" + itemId + "'");
-                    // 将点击事件发回 Renderer 进程
-                    sender.send("menu:click", { id: itemId });
-                };
-            }
-            
-            result.push(processed);
-        }
-        
-        return result;
-    }
+   
     static function setupIpc():Void {
         // === Language Server Protocol ===
-
+        /*
         // Запуск LSP
         IpcMain.handle("lsp:start", function(event:Dynamic, rootPath:String) {
             HaxeLanguageServerManager.start(rootPath);
@@ -312,7 +282,7 @@ class AutoWindow {
                 });
             });
         });
-
+        */
         // === Базовые команды приложения ===
         IpcMain.on("app:quit", function(event:IpcMainEvent) { 
             App.quit(); 
@@ -401,15 +371,15 @@ class AutoWindow {
         });
 
         // === Диалоги (асинхронные вызовы через invoke) ===
-        IpcMain.handle("dialog:showOpen", function(event:Dynamic, options:Dynamic) {
+        IpcMain.handle("dialog:showOpen", function(event:IpcMainEvent, options:Dynamic) {
             return Dialog.showOpenDialog(window, options);
         });
 
-        IpcMain.handle("dialog:showSave", function(event:Dynamic, options:Dynamic) {
+        IpcMain.handle("dialog:showSave", function(event:IpcMainEvent, options:Dynamic) {
             return Dialog.showSaveDialog(window, options);
         });
 
-        IpcMain.handle("dialog:showDirectory", function(event:Dynamic, options:Dynamic) {
+        IpcMain.handle("dialog:showDirectory", function(event:IpcMainEvent, options:Dynamic) {
             options.properties = ["openDirectory", "createDirectory"];
             return Dialog.showOpenDialog(window, options);
         });
@@ -448,12 +418,12 @@ class AutoWindow {
         // === Меню (существующий код) ===
         IpcMain.on("menu:build", function(event:IpcMainEvent, menuData:Dynamic) {
             trace("[AutoWindow] 📥 Received menu data");
-            var template = processMenuTemplate(cast menuData, event.sender);
-            var menu = Menu.buildFromTemplate(template);
-            Menu.setApplicationMenu(menu);
-            trace("[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
+            //var template = processMenuTemplate(cast menuData, event.sender);
+            //var menu = Menu.buildFromTemplate(template);
+            //Menu.setApplicationMenu(menu);
+            //trace("[AutoWindow] ✅ Menu set (" + template.length + " top-level items)");
         });
-        
+        /*
         // Semantic Tokens
         IpcMain.handle("lsp:semanticTokensFull", function(event:Dynamic, data:Dynamic) {
             return new js.lib.Promise(function(resolve, reject) {
@@ -482,7 +452,7 @@ class AutoWindow {
                 resolve(HaxeLanguageServerManager.getSemanticTokensLegend());
             });
         });
-
+*/
         // === Открытие окон ===
         IpcMain.on("window:open", function(event:IpcMainEvent, data:Dynamic) {
             var url:String = data.url;
@@ -501,7 +471,6 @@ class AutoWindow {
                 webPreferences: {
                     nodeIntegration: true,
                     contextIsolation: false,
-                    preload: Path.join(__dirname, "preload.js")  // ← ДОБАВИТЬ
                 }
             };
             

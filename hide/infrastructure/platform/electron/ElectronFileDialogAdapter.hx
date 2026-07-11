@@ -11,6 +11,7 @@ class ElectronFileDialogAdapter implements IFileDialog {
     }
     
     public function showOpen(?options: { ?filters: Array<FileFilter> }):Future<Null<String>> {
+        trace("Want to open file");
         var electronOptions = {
             properties: ["openFile"],
             filters: options != null && options.filters != null ? options.filters : []
@@ -18,6 +19,7 @@ class ElectronFileDialogAdapter implements IFileDialog {
         
         return ipcBridge.invokeSafe("dialog:showOpen", electronOptions)
             .map(function(result:Dynamic) {
+                trace("wait mor");
                 if (result == null || result.canceled || result.filePaths.length == 0) {
                     return null;
                 }

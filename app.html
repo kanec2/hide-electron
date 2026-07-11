@@ -31,6 +31,7 @@
     height: 100vh;
 ">
     <script>
+        /*
         // Загружаем grammar для Haxe
         fetch('assets/grammars/haxe-monarch.json')
             .then(response => response.json())
@@ -38,7 +39,7 @@
                 window.haxeGrammar = grammar;
                 console.log('✅ Haxe grammar loaded');
             })
-            .catch(err => console.error('❌ Failed to load Haxe grammar:', err));
+            .catch(err => console.error('❌ Failed to load Haxe grammar:', err)); */
     </script>
     <!-- 2.1. jQuery — ДО ВСЕХ плагинов -->
     <script>
@@ -134,14 +135,8 @@
     <script src="libs/litegraph.js"></script>
     <!-- 2.3. GoldenLayout -->
     <script src="libs/goldenlayout.js"></script>
-    <!-- === Monaco Editor === -->
-    <!-- 1. Сохраняем Node.js require ПЕРЕД AMD loader -->
-     <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css"/>
-     <script> window.nodeRequire = require; </script>
-     <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
-     <script> require.config({ paths: { vs: 'node_modules/monaco-editor/min/vs' } }); </script>
-     <script> require(['vs/editor/editor.main'], function() { window.monaco = monaco; }); </script>
-     <script> require = window.nodeRequire; </script>  
+
+    
      <script src="app.js"></script>  
     
     <!-- === 3. Инициализация — ПОСЛЕ загрузки app.js === -->

@@ -11,6 +11,7 @@ import hide.presentation.modules.WelcomeModule;
 import hide.presentation.modules.HierarchyModule;
 import hide.presentation.modules.SceneModule;
 import hide.presentation.modules.InspectorModule;
+import hide.presentation.modules.*;
 import hide.application.services.IViewModule;
 import hide.application.services.ShaderHistoryService;
 import hide.presentation.controllers.ToolbarController;
@@ -109,7 +110,8 @@ class AppModule {
         collection.addSingleton(IViewModule, ShaderEditorModule);
         collection.addSingleton(IViewModule, GameModule);
         collection.addSingleton(IViewModule, ProjectModule);
-        collection.addSingleton(IViewModule, EditorModule);
+        //collection.addSingleton(IViewModule, EditorModule);
+        collection.addSingleton(IViewModule, MonacoEditorModule);
         collection.addSingleton(IViewModule, PropertiesModule);
         collection.addSingleton(IViewModule, ConsoleModule);
         

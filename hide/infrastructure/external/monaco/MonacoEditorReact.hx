@@ -1,36 +1,91 @@
 package hide.infrastructure.external.monaco;
+
 import react.ReactComponent;
 
-@:jsRequire("@huyhuy/monaco-editor-react-electron")
-extern class MonacoEditorReact extends ReactComponentOfProps<MonacoEditorProps> {
-}
+/**
+ * Extern для @monaco-editor/react
+ * https://github.com/suren-atoyan/monaco-react
+ */
+@:jsRequire('@monaco-editor/react', 'default')
+extern class MonacoEditor extends ReactComponentOfProps<MonacoEditorProps> {}
 
 typedef MonacoEditorProps = {
-    var ?defaultValue:String;
+    /** Высота редактора */
+    var height:String;
+    
+    /** Ширина редактора */
+    var ?width:String;
+    
+    /** Язык по умолчанию */
     var ?defaultLanguage:String;
-    var ?defaultPath:String;
+    
+    /** Значение по умолчанию */
+    var ?defaultValue:String;
+    
+    /** Текущее значение (controlled mode) */
     var ?value:String;
+    
+    /** Язык модели */
     var ?language:String;
+    
+    /** Путь модели (для multi-model editor) */
     var ?path:String;
-    var ?theme:String;  // "vs-dark" | "light"
-    var ?line:Int;
-    var ?loading:Dynamic;  // React Node
-    var ?options:Dynamic;  // IStandaloneEditorConstructionOptions
+    
+    /** Тема редактора */
+    var ?theme:String;
+    
+    /** Опции Monaco Editor */
+    var ?options:Dynamic;
+    
+    /** Callback при изменении содержимого */
+    var ?onChange:String->Dynamic->Void;
+    
+    /** Callback при монтировании редактора */
+    var ?onMount:Dynamic->Dynamic->Void;
+    
+    /** Callback перед монтированием */
+    var ?beforeMount:Dynamic->Void;
+    
+    /** Callback при валидации */
+    var ?onValidate:Dynamic->Void;
+    
+    /** Сохранять состояние вида при переключении моделей */
     var ?saveViewState:Bool;
-    var ?keepCurrentModel:Bool;
-    var ?width:Dynamic;  // Int | String
-    var ?height:Dynamic; // Int | String
+    
+    /** Класс для контейнера */
     var ?className:String;
-    var ?wrapperProps:Dynamic;
-    var ?beforeMount:Dynamic->Void;  // (monaco) -> Void
-    var ?onMount:Dynamic->Dynamic->Void;  // (editor, monaco) -> Void
-    var ?onChange:Dynamic->Dynamic->Void;  // (value, event) -> Void
-    var ?onValidate:Dynamic->Void;  // (markers) -> Void
+    
+    /** Индикатор загрузки */
+    var ?loading:Dynamic;
 }
 
-// Экспорт loader для конфигурации
-@:jsRequire("@huyhuy/monaco-editor-react-electron", "loader")
+/**
+ * Загрузчик Monaco
+ */
+@:jsRequire('@monaco-editor/react', 'loader')
 extern class MonacoLoader {
-    static function config(cfg:Dynamic):Void;
+    /**
+     * Настройка загрузчика Monaco
+     */
+    static function config(options:LoaderConfig):Void;
+    
+    /**
+     * Инициализация Monaco
+     */
     static function init():js.lib.Promise<Dynamic>;
+}
+
+typedef LoaderConfig = {
+    /** Путь к папке с Monaco */
+    var ?paths:{
+        var vs:String;
+    };
+    
+    /** Использовать локальную версию Monaco */
+    var ?monaco:Dynamic;
+    
+    /** Конфигурация локалей */
+    @:optional
+    @:native('vs/nls')
+    var vsNls:Dynamic;
 }

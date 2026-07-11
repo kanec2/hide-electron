@@ -5,9 +5,25 @@ import js.node.Path;
 import js.node.Fs;
 import electron.main.IpcMain;
 import electron.IpcMainEvent;
-
+// И создайте алиас для удобства:
+@:using(BufferTools)
 @:native("__dirname") extern var __dirname:String;
+// В начале файла добавьте:
 
+
+class BufferTools {
+    public static function concat(buffers:Array<Buffer>):Buffer {
+        return untyped __js__("Buffer").concat(buffers);
+    }
+    
+    public static function alloc(size:Int):Buffer {
+        return untyped __js__("Buffer").alloc(size);
+    }
+    
+    public static function byteLength(str:String, encoding:String = "utf8"):Int {
+        return untyped __js__("Buffer").byteLength(str, encoding);
+    }
+}
 /**
  * Менеджер Haxe Language Server.
  * Запускает LSP сервер как child process и маршрутизирует сообщения
@@ -16,7 +32,7 @@ import electron.IpcMainEvent;
 class HaxeLanguageServerManager {
     private static var semanticTokensLegend:Null<SemanticTokensLegend> = null;
     private static var serverProcess:js.node.child_process.ChildProcess = null;
-    private static var buffer:String = "";
+    private static var buffer:js.node.Buffer = BufferTools.alloc(0);
     private static var isStarted:Bool = false;
     private static var isInitialized:Bool = false;  // ← НОВОЕ: отслеживаем инициализацию
     private static var projectRoot:String = "";
@@ -55,55 +71,71 @@ class HaxeLanguageServerManager {
         });
 
         // Обработка stdout (ответы от LSP)
-        serverProcess.stdout.on("data", function(data:Buffer) {
-            buffer += data;
+        // Обработка stdout (ответы от LSP)
+serverProcess.stdout.on("data", function(data:js.node.Buffer) {
+    // ✅ Конкатенируем Buffer'ы, а не строки
+    buffer = BufferTools.concat([buffer, data]);
     
-            // ✅ Парсим все полные сообщения из буфера
-            while (true) {
-                // Ищем конец заголовка
-                var headerEnd = buffer.indexOf("\r\n\r\n");
-                if (headerEnd == -1) {
-                    // Заголовок ещё не полностью получен
-                    break;
-                }
-                
-                var header = buffer.substring(0, headerEnd);
-                
-                // Парсим Content-Length
-                var headerRegex = ~/Content-Length:\s*(\d+)/i;
-                if (!headerRegex.match(header)) {
-                    trace("❌ [LSP] Invalid header: " + header);
-                    buffer = buffer.substring(headerEnd + 4);
-                    continue;
-                }
-
-                var contentLength = Std.parseInt(headerRegex.matched(1));
-                
-                var messageStart = headerEnd + 4; // После \r\n\r\n
-                var messageEnd = messageStart + contentLength;
-                
-                // Проверяем, есть ли полное сообщение в буфере
-                if (buffer.length < messageEnd) {
-                    // Сообщение ещё не полностью получено
-                    break;
-                }
-                
-                // Извлекаем сообщение
-                var message = buffer.substring(messageStart, messageEnd);
-                
-                // Удаляем обработанное сообщение из буфера
-                buffer = buffer.substring(messageEnd);
-                
-                // Парсим JSON
-                try {
-                    var json = haxe.Json.parse(message);
-                    handleMessage(json);
-                } catch (e:Dynamic) {
-                    trace("❌ [LSP] Failed to parse message: " + e);
-                    trace("   Message: " + message.substring(0, 200));
-                }
+    // ✅ Парсим все полные сообщения из буфера
+    while (true) {
+        // Ищем \r\n\r\n в бинарном буфере
+        var headerEnd:Int = -1;
+        var bufLength:Int = buffer.length;
+        
+        var i = 0;
+        while (i < bufLength - 3) {
+            if (buffer[i] == 0x0D &&       // \r
+                buffer[i + 1] == 0x0A &&   // \n
+                buffer[i + 2] == 0x0D &&   // \r
+                buffer[i + 3] == 0x0A) {   // \n
+                headerEnd = i;
+                break;
             }
-        });
+            i++;
+        }
+        
+        if (headerEnd == -1) {
+            // Заголовок ещё не полностью получен
+            break;
+        }
+        
+        // ✅ Извлекаем заголовок как строку (он всегда ASCII)
+        var header:String = buffer.slice(0, headerEnd).toString("utf8");
+        
+        // Парсим Content-Length
+        var headerRegex = ~/Content-Length:\s*(\d+)/i;
+        if (!headerRegex.match(header)) {
+            trace("❌ [LSP] Invalid header: " + header);
+            buffer = buffer.slice(headerEnd + 4);
+            continue;
+        }
+        
+        var contentLength:Int = Std.parseInt(headerRegex.matched(1));
+        var messageStart:Int = headerEnd + 4; // После \r\n\r\n
+        var messageEnd:Int = messageStart + contentLength;
+        
+        // Проверяем, есть ли полное сообщение в буфере (в БАЙТАХ!)
+        if (buffer.length < messageEnd) {
+            // Сообщение ещё не полностью получено
+            break;
+        }
+        
+        // ✅ Извлекаем сообщение как строку ТОЛЬКО когда оно полное
+        var message:String = buffer.slice(messageStart, messageEnd).toString("utf8");
+        
+        // ✅ Удаляем обработанное сообщение из буфера (в БАЙТАХ!)
+        buffer = buffer.slice(messageEnd);
+        
+        // Парсим JSON
+        try {
+            var json = haxe.Json.parse(message);
+            handleMessage(json);
+        } catch (e:Dynamic) {
+            trace("❌ [LSP] Failed to parse message: " + e);
+            trace("   Message: " + message.substring(0, 200));
+        }
+    }
+});
 
         // Обработка stderr (логи сервера)
         serverProcess.stderr.on("data", function(data:Buffer) {
@@ -334,7 +366,7 @@ private static function sendConfiguration():Void {
                     }
                     isStarted = false;
                     isInitialized = false;
-                    buffer = "";  // ← ДОБАВИТЬ
+                    //buffer = "";  // ← ДОБАВИТЬ
                     requestId = 0;  // ← ДОБАВИТЬ
                     pendingRequests.clear();  // ← ДОБАВИТЬ
                     trace("🛑 [LSP] Language Server stopped");

@@ -22,7 +22,7 @@ class MonacoEditorAdapter {
     private var lspService:Null<hide.domain.services.ILanguageServer>;
     private var currentUri:String;
     private var documentVersion:Int = 0;
-
+    public var isDocumentOpened:Bool;
     public function new(container:Element) {
         this.container = container;
         initMonaco();
@@ -55,14 +55,21 @@ class MonacoEditorAdapter {
         // ✅ Загружаем конфигурацию Haxe из JSON
         registerHaxeLanguage();
         // ✅ Инициализируем TextMate Grammar ПЕРЕД созданием редактора
-        //hide.infrastructure.external.monaco.TextMateInitializer.initialize(monaco);
-
+        
+        // ✅ Создаём URI для нового документа (untitled схема)
+        var untitledUri = untyped monaco.Uri.parse('untitled:Untitled-1.hx');
+        
+        // ✅ Создаём модель с правильным URI
+        var model = untyped monaco.editor.createModel(
+            "// Welcome to HIDE IDE\n",
+            "haxe",
+            untitledUri
+        );
         // Небольшая задержка чтобы grammar успел загрузиться
         haxe.Timer.delay(function() {
             trace("🎨 [MonacoEditor] Creating editor instance...");
             editor = monaco.editor.create(container, {
-                value: "// Welcome to HIDE IDE\n",
-                language: "haxe",
+                model: model,  // ← Используем созданную модель
                 theme: "vs-dark",
                 automaticLayout: true,
                 minimap: { enabled: true },
@@ -81,8 +88,27 @@ class MonacoEditorAdapter {
             trace("🔍 [MonacoEditor] Editor language: " + editor.getModel().getLanguageId());
             trace("🔍 [MonacoEditor] Editor value length: " + editor.getValue().length);
         }, 200);
-        
+        // ✅ Устанавливаем текущий URI
+        currentUri = 'untitled:Untitled-1.hx';
+        documentVersion = 1;
+
+        // ✅ Отправляем didOpen если LSP уже установлен
+        openCurrentDocument();
+
         trace("✅ [MonacoEditor] Editor initialized");
+    }
+
+    // ✅ НОВЫЙ МЕТОД: открывает текущий документ в LSP
+    private function openCurrentDocument():Void {
+        if (lspService == null || currentUri == null || isDocumentOpened) {
+            return;
+        }
+        
+        var content = editor.getValue();
+        var language = getLanguage();
+        lspService.didOpen(currentUri, language, documentVersion, content);
+        isDocumentOpened = true;
+        trace("📂 [MonacoEditor] File opened: " + currentUri);
     }
 
     private function registerHaxeLanguage():Void {
@@ -185,6 +211,10 @@ class MonacoEditorAdapter {
     }
     
     public function dispose():Void {
+        if (lspService != null && currentUri != null && isDocumentOpened) {
+            lspService.didClose(currentUri);
+            isDocumentOpened = false;
+        }
         if (editor != null) {
             editor.dispose();
             editor = null;
@@ -233,31 +263,52 @@ class MonacoEditorAdapter {
         });
         trace("✅ [MonacoEditor] LSP providers registered");
     }
-
-    public function setCurrentFile(path:String):Void {
-        // ✅ Конвертируем путь в file:// URI
-        var normalizedPath = path.split("\\").join("/");
-        if (normalizedPath.charAt(0) != "/") {
-            normalizedPath = "/" + normalizedPath;
-        }
-        currentUri = "file://" + normalizedPath;
-        
-        // ✅ Создаем модель с правильным URI
-        var model = monaco.editor.getModel(untyped js.Lib.nativeThis.monaco.Uri.parse(currentUri));
-        if (model == null) {
-            var content = editor.getValue();
-            var language = getLanguage();
-            model = monaco.editor.createModel(content, language, untyped js.Lib.nativeThis.monaco.Uri.parse(currentUri));
-            editor.setModel(model);
-        }
-        
-        documentVersion = 1;
-        
-        if (lspService != null) {
-            lspService.didOpen(currentUri, getLanguage(), documentVersion, editor.getValue());
-            trace("📂 [MonacoEditor] File opened: " + currentUri);
-        }
+public function setCurrentFile(path:String):Void {
+    // ✅ Закрываем предыдущий документ
+    if (lspService != null && currentUri != null) {
+        lspService.didClose(currentUri);
+            isDocumentOpened = false;
     }
+    
+    // ✅ Конвертируем путь в file:// URI
+    var normalizedPath = path.split("\\").join("/");
+    if (!StringTools.startsWith(normalizedPath, "/")) {
+        normalizedPath = "/" + normalizedPath;
+    }
+    currentUri = "file://" + normalizedPath;
+    
+    documentVersion = 1;
+    isDocumentOpened = false;  // ← Сбрасываем флаг
+    // ✅ Получаем содержимое редактора
+    // ✅ Отправляем didOpen для нового файла
+    openCurrentDocument();
+}
+
+public function createNewFile():Void {
+    // ✅ Закрываем предыдущий документ
+    if (lspService != null && currentUri != null) {
+        lspService.didClose(currentUri);
+    }
+    
+    // ✅ Генерируем уникальный URI для нового файла
+    var untitledNumber = Date.now().getTime();
+    currentUri = 'untitled:Untitled-$untitledNumber.hx';
+    
+    // ✅ Создаём новую модель
+    var monacoUri = untyped monaco.Uri.parse(currentUri);
+    var model = untyped monaco.editor.createModel("", "haxe", monacoUri);
+    
+    // ✅ Устанавливаем новую модель
+    editor.setModel(model);
+    
+    documentVersion = 1;
+    
+    // ✅ Отправляем didOpen в LSP
+    if (lspService != null) {
+        lspService.didOpen(currentUri, "haxe", documentVersion, "");
+        trace("📄 [MonacoEditor] New untitled file created: " + currentUri);
+    }
+}
 
     // ✅ ИСПРАВЛЕНО: все три провайдера возвращают Promise
     private function registerCompletionProvider():Void {
@@ -440,11 +491,12 @@ class MonacoEditorAdapter {
 
     // В методе onContentChanged добавляем уведомление LSP
     public function onContentChanged(callback:Void->Void):Void {
+        if (editor == null) return;
         editor.onDidChangeModelContent(function(_) {
             callback();
             
             // Уведомляем LSP об изменении
-            if (lspService != null && currentUri != null) {
+            if (lspService != null && currentUri != null && isDocumentOpened) {
                 documentVersion++;
                 var content = editor.getValue();
                 lspService.didChange(currentUri, documentVersion, content);

@@ -103,64 +103,71 @@ class EditorView extends BaseReactComponent<EditorViewProps, EditorViewState> {
     }
 
     private function initLsp():Void {
-        var lsp = UseService.languageServer();
-        if (lsp == null) {
-            trace('⚠️ [EditorView] Language Server service not available');
-            setState(function(prevState:EditorViewState) {
-                return {
-                    currentFile: prevState.currentFile,
-                    content: prevState.content,
-                    isDirty: prevState.isDirty,
-                    language: prevState.language,
-                    lspConnected: false
-                };
-            });
-            return;
-        }
-        
-        lspClient = lsp;
-        trace('✅ [EditorView] LSP service obtained');
-        
-        var rootPath = "D:\\Dev\\hide-electron";
-        trace('🚀 [EditorView] Starting LSP for: ' + rootPath);
-        
-        lspClient.start(rootPath).handle(function(success) {
-            if (success) {
-                trace('✅ [EditorView] LSP connected successfully');
-                setState(function(prevState:EditorViewState) {
-                    return {
-                        currentFile: prevState.currentFile,
-                        content: prevState.content,
-                        isDirty: prevState.isDirty,
-                        language: prevState.language,
-                        lspConnected: true
-                    };
-                });
-                
-                // ✅ Передаём LSP в адаптер (он сам зарегистрирует провайдеры)
-                if (editorAdapter != null) {
-                    editorAdapter.setLanguageServer(lspClient);
-                    trace('✅ [EditorView] LSP passed to Monaco adapter');
-                    
-                    // ✅ Если файл уже открыт, уведомляем LSP
-                    if (state.currentFile != null) {
-                        editorAdapter.setCurrentFile(state.currentFile);
-                    }
-                }
-            } else {
-                trace('❌ [EditorView] LSP failed to start');
-                setState(function(prevState:EditorViewState) {
-                    return {
-                        currentFile: prevState.currentFile,
-                        content: prevState.content,
-                        isDirty: prevState.isDirty,
-                        language: prevState.language,
-                        lspConnected: false
-                    };
-                });
-            }
+    var lsp = UseService.languageServer();
+    
+    if (lsp == null) {
+        trace('⚠️ [EditorView] Language Server service is NULL!');
+        setState({
+            currentFile: state.currentFile,
+            content: state.content,
+            isDirty: state.isDirty,
+            language: state.language,
+            lspConnected: false
         });
+        return;
     }
+    
+    lspClient = lsp;
+    trace('✅ [EditorView] LSP service obtained');
+    
+    // ✅ ПРОВЕРЯЕМ, ЗАПУЩЕН ЛИ УЖЕ LSP
+    var isRunning = lspClient.isRunning();
+    if (isRunning) {
+        trace('ℹ️ [EditorView] LSP already running, skipping start');
+        setState({
+            currentFile: state.currentFile,
+            content: state.content,
+            isDirty: state.isDirty,
+            language: state.language,
+            lspConnected: true
+        });
+        
+        if (editorAdapter != null) {
+            editorAdapter.setLanguageServer(lspClient);
+        }
+        return;
+    }
+    
+    var rootPath = "D:\\Dev\\hide-electron";
+    trace('🚀 [EditorView] Starting LSP for: ' + rootPath);
+    
+    lspClient.start(rootPath).handle(function(success) {
+        if (success) {
+            trace('✅ [EditorView] LSP connected successfully');
+            setState({
+                currentFile: state.currentFile,
+                content: state.content,
+                isDirty: state.isDirty,
+                language: state.language,
+                lspConnected: true
+            });
+            
+            if (editorAdapter != null) {
+                editorAdapter.setLanguageServer(lspClient);
+                trace('✅ [EditorView] LSP passed to Monaco adapter');
+            }
+        } else {
+            trace('❌ [EditorView] LSP failed to start');
+            setState({
+                currentFile: state.currentFile,
+                content: state.content,
+                isDirty: state.isDirty,
+                language: state.language,
+                lspConnected: false
+            });
+        }
+    });
+}
 
     private function handleOpenFile():Void {
         var fileDialog = UseService.fileDialog();
