@@ -10,9 +10,9 @@ var AutoWindow = function() { };
 AutoWindow.__name__ = true;
 AutoWindow.start = function(overrides) {
 	AutoWindow.cfg = AutoWindow.loadPackageConfig();
-	console.log("AutoWindow.hx:43:",AutoWindow.cfg);
+	console.log("AutoWindow.hx:44:",AutoWindow.cfg);
 	AutoWindow.applyDefaults();
-	console.log("AutoWindow.hx:46:",AutoWindow.cfg);
+	console.log("AutoWindow.hx:47:",AutoWindow.cfg);
 	if(overrides != null) {
 		if(overrides.width != null) {
 			AutoWindow.cfg.width = overrides.width;
@@ -54,7 +54,7 @@ AutoWindow.start = function(overrides) {
 			AutoWindow.cfg.onClose = overrides.onClose;
 		}
 	}
-	console.log("AutoWindow.hx:63:",AutoWindow.cfg);
+	console.log("AutoWindow.hx:64:",AutoWindow.cfg);
 	electron_main_App.whenReady().then(function(_) {
 		AutoWindow.createWindow();
 		AutoWindow.setupLifecycle();
@@ -140,6 +140,48 @@ AutoWindow.ensureDirectoryExists = function(dir) {
 	js_node_Fs.mkdirSync(dir);
 };
 AutoWindow.setupIpc = function() {
+	electron_main_IpcMain.handle("asset:init",function(event,data) {
+		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+		if(pipeline == null) {
+			return { success : false, error : "AssetPipeline not initialized in ServiceLocator"};
+		}
+		try {
+			pipeline.setProjectRoot(data.projectRoot);
+			console.log("AutoWindow.hx:301:","✅ [Main] Asset Pipeline initialized for: " + Std.string(data.projectRoot));
+			console.log("AutoWindow.hx:302:","   Assets folder: " + Std.string(data.assetsFolder));
+			console.log("AutoWindow.hx:303:","   Build folder: " + Std.string(data.buildFolder));
+			return { success : true, data : { assetsPath : pipeline.getAssetsPath(), supportedExtensions : pipeline.getSupportedExtensions()}};
+		} catch( _g ) {
+			var e = haxe_Exception.caught(_g).unwrap();
+			console.log("AutoWindow.hx:313:","❌ [Main] Failed to init Asset Pipeline: " + Std.string(e));
+			return { success : false, error : Std.string(e)};
+		}
+	});
+	electron_main_IpcMain.handle("asset:getMeta",function(event,guid) {
+		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+		if(pipeline == null) {
+			return { success : false, error : "Pipeline not ready"};
+		}
+		var meta = pipeline.getMeta(guid);
+		if(meta != null) {
+			return { success : true, data : meta};
+		} else {
+			return { success : false, error : "Meta not found for GUID: " + guid};
+		}
+	});
+	electron_main_IpcMain.handle("asset:import",function(event,paths) {
+		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+		if(pipeline == null) {
+			return { success : false, error : "Pipeline not ready"};
+		}
+		return new Promise((resolve) => {
+                pipeline.importAssets(paths).then(function(results) {
+                    resolve({ success: true, data: results });
+                }).catch(function(err) {
+                    resolve({ success: false, error: err.message || String(err) });
+                });
+            });
+	});
 	electron_main_IpcMain.on("app:quit",function(event) {
 		electron_main_App.quit();
 	});
@@ -273,12 +315,12 @@ AutoWindow.setupIpc = function() {
 		event.returnValue = null;
 	});
 	electron_main_IpcMain.on("menu:build",function(event,menuData) {
-		console.log("AutoWindow.hx:420:","[AutoWindow] 📥 Received menu data");
+		console.log("AutoWindow.hx:483:","[AutoWindow] 📥 Received menu data");
 	});
 	electron_main_IpcMain.on("window:open",function(event,data) {
 		var url = data.url;
 		if(url.indexOf("?subView=") != -1) {
-			console.log("AutoWindow.hx:461:","[AutoWindow] ⚠️ Sub-view request: " + url);
+			console.log("AutoWindow.hx:524:","[AutoWindow] ⚠️ Sub-view request: " + url);
 			event.sender.send("window:open:subview",{ url : url});
 			return;
 		}
@@ -290,16 +332,35 @@ AutoWindow.setupIpc = function() {
 var ElectronMain = function() { };
 ElectronMain.__name__ = true;
 ElectronMain.main = function() {
+	src_main_services_ServiceLocator.init();
 	AutoWindow.start({ onReady : ElectronMain.startup});
 };
 ElectronMain.startup = function() {
-	console.log("ElectronMain.hx:21:","🚀 ElectronMain: Startup complete");
+	console.log("ElectronMain.hx:23:","🚀 ElectronMain: Startup complete");
 };
 Math.__name__ = true;
 var Std = function() { };
 Std.__name__ = true;
 Std.string = function(s) {
 	return js_Boot.__string_rec(s,"");
+};
+var StringTools = function() { };
+StringTools.__name__ = true;
+StringTools.startsWith = function(s,start) {
+	if(s.length >= start.length) {
+		return s.lastIndexOf(start,0) == 0;
+	} else {
+		return false;
+	}
+};
+StringTools.endsWith = function(s,end) {
+	var elen = end.length;
+	var slen = s.length;
+	if(slen >= elen) {
+		return s.indexOf(end,slen - elen) == slen - elen;
+	} else {
+		return false;
+	}
 };
 var Sys = function() { };
 Sys.__name__ = true;
@@ -356,6 +417,10 @@ haxe_ValueException.prototype = $extend(haxe_Exception.prototype,{
 		return this.value;
 	}
 });
+var haxe_ds_StringMap = function() {
+	this.h = Object.create(null);
+};
+haxe_ds_StringMap.__name__ = true;
 var haxe_iterators_ArrayIterator = function(array) {
 	this.current = 0;
 	this.array = array;
@@ -437,6 +502,152 @@ js_Boot.__string_rec = function(o,s) {
 };
 var js_node_Fs = require("fs");
 var js_node_Path = require("path");
+var src_main_assets_AssetPipelineService = function(registry) {
+	this.registry = registry;
+	this.projectRoot = "";
+	this.assetsPath = "";
+};
+src_main_assets_AssetPipelineService.__name__ = true;
+src_main_assets_AssetPipelineService.prototype = {
+	setProjectRoot: function(root) {
+		this.projectRoot = root;
+		this.assetsPath = js_node_Path.join(root,"Assets");
+		this.stopWatching();
+		this.startWatching();
+		console.log("src/main/assets/AssetPipelineService.hx:40:","📂 [AssetPipeline] Project root set to: " + root);
+		console.log("src/main/assets/AssetPipelineService.hx:41:","   Watching: " + this.assetsPath);
+	}
+	,getAssetsPath: function() {
+		return this.assetsPath;
+	}
+	,getSupportedExtensions: function() {
+		return this.registry.getAllSupportedExtensions();
+	}
+	,getMeta: function(guid) {
+		if(this.projectRoot == "") {
+			return null;
+		}
+		return this.findMetaByGuid(this.assetsPath,guid);
+	}
+	,startWatching: function() {
+		if(this.assetsPath == "" || !js_node_Fs.existsSync(this.assetsPath)) {
+			console.log("src/main/assets/AssetPipelineService.hx:91:","⚠️ [AssetPipeline] Assets folder does not exist yet: " + this.assetsPath);
+			return;
+		}
+		
+            const chokidar = require('chokidar');
+            
+            this.watcher = chokidar.watch(this.assetsPath + '/**/*', {
+                
+                persistent: true,
+                awaitWriteFinish: {
+                    stabilityThreshold: 500,       // Ждем 500ms после записи
+                    pollInterval: 100
+                },
+                ignoreInitial: false               // Сканируем существующие файлы при старте
+            });
+            
+            this.watcher
+                .on('add', (path) => this.onFileAdded(path))
+                .on('change', (path) => this.onFileChanged(path))
+                .on('unlink', (path) => this.onFileDeleted(path));
+                
+            console.log('✅ [AssetPipeline] Watcher started on: ' + this.assetsPath);
+        ;
+	}
+	,stopWatching: function() {
+		if(this.watcher != null) {
+			this.watcher.close();
+			this.watcher = null;
+			console.log("src/main/assets/AssetPipelineService.hx:121:"," [AssetPipeline] Watcher stopped");
+		}
+	}
+	,findMetaByGuid: function(dir,guid) {
+		if(!js_node_Fs.existsSync(dir)) {
+			return null;
+		}
+		var entries = js_node_Fs.readdirSync(dir);
+		var _g = 0;
+		while(_g < entries.length) {
+			var entry = entries[_g];
+			++_g;
+			var fullPath = js_node_Path.join(dir,entry);
+			var stat = js_node_Fs.statSync(fullPath);
+			if(stat.isDirectory() && entry != "node_modules" && entry != ".git") {
+				var result = this.findMetaByGuid(fullPath,guid);
+				if(result != null) {
+					return result;
+				}
+			} else if(StringTools.endsWith(entry,".meta")) {
+				try {
+					var content = js_node_Fs.readFileSync(fullPath,{ encoding : "utf-8"});
+					var meta = JSON.parse(content);
+					if(meta.guid == guid) {
+						return meta;
+					}
+				} catch( _g1 ) {
+				}
+			}
+		}
+		return null;
+	}
+};
+var src_main_assets_AssetTypeRegistry = function() {
+	this.converters = new haxe_ds_StringMap();
+};
+src_main_assets_AssetTypeRegistry.__name__ = true;
+src_main_assets_AssetTypeRegistry.prototype = {
+	register: function(converter) {
+		var _g = 0;
+		var _g1 = converter.supportedExtensions;
+		while(_g < _g1.length) {
+			var ext = _g1[_g];
+			++_g;
+			var normalizedExt = ext.toLowerCase();
+			if(!StringTools.startsWith(normalizedExt,".")) {
+				normalizedExt = "." + normalizedExt;
+			}
+			this.converters.h[normalizedExt] = converter;
+		}
+	}
+	,getAllSupportedExtensions: function() {
+		var extensions = [];
+		var h = this.converters.h;
+		var ext_h = h;
+		var ext_keys = Object.keys(h);
+		var ext_length = ext_keys.length;
+		var ext_current = 0;
+		while(ext_current < ext_length) {
+			var ext = ext_keys[ext_current++];
+			extensions.push(ext);
+		}
+		return extensions;
+	}
+};
+var src_main_assets_converters_ImageConverter = function() {
+	this.supportedExtensions = [".png",".jpg",".jpeg",".webp",".tga",".bmp"];
+};
+src_main_assets_converters_ImageConverter.__name__ = true;
+var src_main_lsp_HaxeLanguageServerManager = function() {
+};
+src_main_lsp_HaxeLanguageServerManager.__name__ = true;
+var src_main_services_ServiceLocator = function() {
+};
+src_main_services_ServiceLocator.__name__ = true;
+src_main_services_ServiceLocator.get = function() {
+	if(src_main_services_ServiceLocator._instance == null) {
+		src_main_services_ServiceLocator._instance = new src_main_services_ServiceLocator();
+	}
+	return src_main_services_ServiceLocator._instance;
+};
+src_main_services_ServiceLocator.init = function() {
+	var loc = src_main_services_ServiceLocator.get();
+	var registry = new src_main_assets_AssetTypeRegistry();
+	registry.register(new src_main_assets_converters_ImageConverter());
+	loc.assetPipeline = new src_main_assets_AssetPipelineService(registry);
+	loc.lspManager = new src_main_lsp_HaxeLanguageServerManager();
+	console.log("src/main/services/ServiceLocator.hx:31:","✅ [ServiceLocator] Main Process services ready");
+};
 String.__name__ = true;
 Array.__name__ = true;
 js_Boot.__toStr = ({ }).toString;

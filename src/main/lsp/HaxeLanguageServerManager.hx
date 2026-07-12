@@ -1,3 +1,5 @@
+package src.main.lsp;
+
 import hide.domain.services.SemanticTokensLegend;
 import js.node.ChildProcess;
 import js.node.Buffer;
@@ -40,6 +42,11 @@ class HaxeLanguageServerManager {
     private static var pendingRequests:Map<Int, Dynamic->Void> = [];
 
     private static var registeredCapabilities:Array<Dynamic> = [];
+
+    public function new() {
+        
+    }
+
     /**
      * Запускает Haxe Language Server.
      */

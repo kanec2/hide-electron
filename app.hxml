@@ -44,3 +44,4 @@
 --debug
 -D no-deprecation-warnings
 -D message.log-format=pretty
+-D tink_core_auto_using

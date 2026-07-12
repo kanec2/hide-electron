@@ -1,3 +1,4 @@
+import js.lib.Promise;
 import electron.main.Menu;
 import electron.main.App;
 import electron.main.BrowserWindow;
@@ -7,8 +8,8 @@ import electron.IpcMainEvent;
 import js.node.Fs;
 import js.node.Path;
 import haxe.Json;
-
-
+import src.main.services.ServiceLocator;
+import hide.shared.types.IpcResponse;
 
 
 // Electron предоставляет __dirname в main процессе
@@ -283,6 +284,68 @@ class AutoWindow {
             });
         });
         */
+
+
+        // === Asset Pipeline IPC Handlers ===
+        // 1. Инициализация пайплайна при открытии проекта
+        IpcMain.handle("asset:init", function(event:Dynamic, data:Dynamic):IpcResponse<Dynamic> {
+            var pipeline = ServiceLocator.get().assetPipeline;
+            if (pipeline == null) {
+                return { success: false, error: "AssetPipeline not initialized in ServiceLocator" };
+            }
+            
+            try {
+                // Устанавливаем корень проекта
+                pipeline.setProjectRoot(data.projectRoot);
+                
+                trace('✅ [Main] Asset Pipeline initialized for: ${data.projectRoot}');
+                trace('   Assets folder: ${data.assetsFolder}');
+                trace('   Build folder: ${data.buildFolder}');
+                
+                return { 
+                    success: true, 
+                    data: {
+                        assetsPath: pipeline.getAssetsPath(),
+                        supportedExtensions: pipeline.getSupportedExtensions()
+                    }
+                };
+            } catch (e:Dynamic) {
+                trace('❌ [Main] Failed to init Asset Pipeline: ${Std.string(e)}');
+                return { success: false, error: Std.string(e) };
+            }
+        });
+
+        // 2. Получение метаданных ассета по GUID
+        IpcMain.handle("asset:getMeta", function(event:Dynamic, guid:String):IpcResponse<Dynamic> {
+            var pipeline = ServiceLocator.get().assetPipeline;
+            if (pipeline == null) {
+                return { success: false, error: "Pipeline not ready" };
+            }
+
+            var meta = pipeline.getMeta(guid);
+            if (meta != null) {
+                return { success: true, data: meta };
+            } else {
+                return { success: false, error: 'Meta not found for GUID: $guid' };
+            }
+        });
+
+        // 3. Импорт новых файлов (Drag & Drop или добавление в папку)
+        IpcMain.handle("asset:import", function(event:Dynamic, paths:Array<String>):IpcResponse<Dynamic> {
+            var pipeline = ServiceLocator.get().assetPipeline;
+            if (pipeline == null) {
+                return { success: false, error: "Pipeline not ready" };
+            }
+
+            // Запускаем асинхронный импорт
+            return untyped __js__("new Promise((resolve) => {
+                pipeline.importAssets(paths).then(function(results) {
+                    resolve({ success: true, data: results });
+                }).catch(function(err) {
+                    resolve({ success: false, error: err.message || String(err) });
+                });
+            })");
+        });
         // === Базовые команды приложения ===
         IpcMain.on("app:quit", function(event:IpcMainEvent) { 
             App.quit(); 

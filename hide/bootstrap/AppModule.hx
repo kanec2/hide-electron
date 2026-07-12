@@ -25,6 +25,7 @@ import hide.domain.services.ILayoutEngine;
 import hide.domain.services.IAppInfo;
 import hide.domain.services.IPlatform;
 import hide.domain.services.IFileDialog;
+import hide.domain.services.IProjectManager;
 // Infrastructure (Electron)
 #if electron
 import hide.infrastructure.platform.electron.*;
@@ -36,6 +37,7 @@ import hide.application.services.MenuService;
 import hide.application.services.PluginManager;
 import hide.application.services.ViewRegistry;
 import hide.application.services.PluginRegistry;
+import hide.application.services.ProjectService;
 import hide.application.integration.SceneEditorService;
 // Commands (Use Cases)
 import hide.application.commands.LoadProjectUseCase;
@@ -67,6 +69,7 @@ class AppModule {
         collection.addSingleton(IWindowManager, ElectronWindowAdapter);
         collection.addSingleton(IPlatform, ElectronPlatformAdapter);
         collection.addSingleton(ILanguageServer, ElectronLanguageServerAdapter);  // ← НОВОЕ
+        collection.addSingleton(IProjectManager, ElectronProjectManagerAdapter);
         #end
         
         // === 2. Layout Engine ===
@@ -86,7 +89,7 @@ class AppModule {
         collection.addSingleton(MenuService);
         collection.addSingleton(PluginManager);
         collection.addSingleton(ShaderHistoryService);
-        
+        collection.addSingleton(ProjectService);
         // === 6. Мост между IDE и движком ===
         collection.addSingleton(SceneEditorService);
         

@@ -14,6 +14,7 @@ import hide.application.services.MenuService;
 import hide.application.services.WindowService;
 import hide.application.services.PluginManager;
 import hide.application.services.ViewRegistry;
+import hide.application.services.ProjectService;
 import hide.domain.services.IFileDialog;
 import hide.domain.services.IPlatform;
 import hide.domain.services.IAppInfo;
@@ -96,6 +97,8 @@ class Ide implements Service {
     private var saveShader:SaveShaderUseCase;
     private var loadShader:LoadShaderUseCase;
     private var languageServer:ILanguageServer;
+    private var projectService:ProjectService;
+
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -122,11 +125,13 @@ class Ide implements Service {
         shaderHistory:ShaderHistoryService,
         saveShader:SaveShaderUseCase,
         loadShader:LoadShaderUseCase,
-        languageServer:ILanguageServer
+        languageServer:ILanguageServer,
+        projectService:ProjectService
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
         this.loadProjectUseCase = loadProjectUseCase;
+        this.projectService = projectService;
         this.setFullscreenUseCase = setFullscreenUseCase;
         this.openViewUseCase = openViewUseCase;
         this.viewRegistry = viewRegistry;
@@ -247,7 +252,8 @@ class Ide implements Service {
     }
     
     private function onOpenRecent(path:String):Void {
-        loadProjectUseCase.execute(new FilePath(path));
+        projectService.openProject(new FilePath(path));
+        //loadProjectUseCase.execute(new FilePath(path));
     }
     
     private function updateWindowTitle():Void {
@@ -336,10 +342,11 @@ class Ide implements Service {
                 break;
             }
         }
-        
+        projectFile = 'D:\\Dev\\tetris-game-project\\tetris-game-project.hideproj';
         if (projectFile != null) {
             trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile);
-            loadProjectUseCase.execute(new FilePath(projectFile));
+            projectService.openProject(new FilePath(projectFile));
+            //loadProjectUseCase.execute(new FilePath(projectFile));
         } else {
             trace("👋 Приложение запущено без проекта.");
 

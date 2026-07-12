@@ -108916,12 +108916,11 @@ hide_application_commands_LoadProjectUseCase.prototype = {
 			if(!this.fileSystem.exists(projectPath)) {
 				var msg = "Project file not found: " + projectPath.toString();
 				this.eventBus.publish(hide_shared_events_ErrorOccurred,new hide_shared_events_ErrorOccurred("LoadProjectUseCase",msg));
-				return hide_shared_types_Result.Failure(msg);
+				return;
 			}
 			var content = this.fileSystem.readText(projectPath);
 			var project = hide_domain_entities_Project.fromJson(content,projectPath);
 			this.eventBus.publish(hide_shared_events_ProjectLoaded,new hide_shared_events_ProjectLoaded(project));
-			return hide_shared_types_Result.Success(project);
 		} catch( _g ) {
 			haxe_NativeStackTrace.lastError = _g;
 			var _g1 = haxe_Exception.caught(_g);
@@ -108929,7 +108928,6 @@ hide_application_commands_LoadProjectUseCase.prototype = {
 			var e = _g1;
 			var errorMsg = "Failed to load project: " + e.get_message();
 			this.eventBus.publish(hide_shared_events_ErrorOccurred,new hide_shared_events_ErrorOccurred("LoadProjectUseCase",errorMsg));
-			return hide_shared_types_Result.Failure(errorMsg);
 		}
 	}
 	,getConstructorArgs: function() {
@@ -109407,6 +109405,49 @@ hide_application_services_PluginRegistry.prototype = {
 	}
 	,__class__: hide_application_services_PluginRegistry
 };
+var hide_application_services_ProjectService = function(loadProjectUseCase,ipcBridge,eventBus) {
+	this.loadProjectUseCase = loadProjectUseCase;
+	this.ipcBridge = ipcBridge;
+	this.eventBus = eventBus;
+	eventBus.subscribe(hide_shared_events_ProjectLoaded,$bind(this,this.onProjectLoaded));
+};
+$hxClasses["hide.application.services.ProjectService"] = hide_application_services_ProjectService;
+hide_application_services_ProjectService.__name__ = "hide.application.services.ProjectService";
+hide_application_services_ProjectService.__interfaces__ = [hx_injection_Service];
+hide_application_services_ProjectService.prototype = {
+	eventBus: null
+	,ipcBridge: null
+	,currentProject: null
+	,loadProjectUseCase: null
+	,openProject: function(path) {
+		this.loadProjectUseCase.execute(path);
+	}
+	,onProjectLoaded: function(e) {
+		this.currentProject = e.project;
+		haxe_Log.trace("📂 [ProjectService] Current project set to: " + this.currentProject.name,{ fileName : "hide/application/services/ProjectService.hx", lineNumber : 41, className : "hide.application.services.ProjectService", methodName : "onProjectLoaded"});
+		this.initBackendPipeline(this.currentProject);
+	}
+	,initBackendPipeline: function(project) {
+		haxe_Log.trace("🚀 [ProjectService] Initializing backend services...",{ fileName : "hide/application/services/ProjectService.hx", lineNumber : 48, className : "hide.application.services.ProjectService", methodName : "initBackendPipeline"});
+		this.ipcBridge.invokeSafe("asset:init",{ projectRoot : project.rootPath.toString(), assetsFolder : project.assetsPath, buildFolder : project.buildPath}).handle(function(response) {
+			if(response != null && response.success) {
+				haxe_Log.trace("✅ [ProjectService] Backend initialized. Assets path: " + Std.string(response.data.assetsPath),{ fileName : "hide/application/services/ProjectService.hx", lineNumber : 56, className : "hide.application.services.ProjectService", methodName : "initBackendPipeline"});
+			} else {
+				haxe_Log.trace("❌ [ProjectService] Backend init failed: " + (response != null ? response.error : "Unknown error"),{ fileName : "hide/application/services/ProjectService.hx", lineNumber : 58, className : "hide.application.services.ProjectService", methodName : "initBackendPipeline"});
+			}
+		});
+	}
+	,getCurrentProject: function() {
+		return this.currentProject;
+	}
+	,hasActiveProject: function() {
+		return this.currentProject != null;
+	}
+	,getConstructorArgs: function() {
+		return ["hide.application.commands.LoadProjectUseCase","hide.infrastructure.platform.electron.ElectronIpcBridge","hide.shared.types.IEventBus"];
+	}
+	,__class__: hide_application_services_ProjectService
+};
 var hide_application_services_ShaderHistoryService = function() {
 	this.isUndoRedoInProgress = false;
 	this.maxUndoSteps = 50;
@@ -109691,6 +109732,7 @@ hide_bootstrap_AppModule.configure = function(collection) {
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IWindowManager.__name__,hide_infrastructure_platform_electron_ElectronWindowAdapter);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IPlatform.__name__,hide_infrastructure_platform_electron_ElectronPlatformAdapter);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_ILanguageServer.__name__,hide_infrastructure_platform_electron_ElectronLanguageServerAdapter);
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_IProjectManager.__name__,hide_infrastructure_platform_electron_ElectronProjectManagerAdapter);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_domain_services_ILayoutEngine.__name__,hide_infrastructure_external_GoldenLayoutAdapter);
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,hide_shared_types_IEventBus.__name__,hide_shared_types_EventBusImpl);
 	var implementation = hide_application_services_ViewRegistry;
@@ -109707,6 +109749,8 @@ hide_bootstrap_AppModule.configure = function(collection) {
 	var implementation = hide_application_services_PluginManager;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
 	var implementation = hide_application_services_ShaderHistoryService;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_application_services_ProjectService;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
 	var implementation = hide_application_integration_SceneEditorService;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
@@ -109754,6 +109798,13 @@ hide_bootstrap_Application.main = function() {
 	ide.startup();
 };
 var hide_domain_entities_Project = function(id,name,rootPath) {
+	this.startupScene = null;
+	this.defaultRenderer = "PBR";
+	this.recentScenes = [];
+	this.lastLayout = "Default";
+	this.buildPath = "Build";
+	this.sourcePath = "Source";
+	this.assetsPath = "Assets";
 	this.id = id;
 	this.name = name;
 	var tmp;
@@ -109763,7 +109814,6 @@ var hide_domain_entities_Project = function(id,name,rootPath) {
 		throw haxe_Exception.thrown("Invalid path: " + rootPath);
 	}
 	this.rootPath = tmp;
-	this.resources = new haxe_ds_StringMap();
 	this._isDirty = false;
 };
 $hxClasses["hide.domain.entities.Project"] = hide_domain_entities_Project;
@@ -109773,41 +109823,62 @@ hide_domain_entities_Project.fromJson = function(json,filePath) {
 	if(data.name == null || StringTools.trim(data.name) == "") {
 		throw haxe_Exception.thrown("Invalid project file: missing or empty 'name' field");
 	}
-	var id = data.id != null ? Std.string(data.id) : Std.string(new Date().getTime());
-	var pathStr = data.rootPath != null ? data.rootPath : filePath.toString();
-	var finalPath = hide_domain_valueobjects_FilePath._new(pathStr);
-	return new hide_domain_entities_Project(id,data.name,finalPath);
+	var pathObj = new haxe_io_Path(filePath.toString());
+	var parentDir = pathObj.dir != null && pathObj.dir != "" ? pathObj.dir : ".";
+	var rootPath = hide_domain_valueobjects_FilePath._new(parentDir);
+	var project = new hide_domain_entities_Project(data.id != null ? Std.string(data.id) : Std.string(new Date().getTime()),data.name,rootPath);
+	if(data.paths != null) {
+		if(data.paths.assets != null) {
+			project.assetsPath = data.paths.assets;
+		}
+		if(data.paths.source != null) {
+			project.sourcePath = data.paths.source;
+		}
+		if(data.paths.build != null) {
+			project.buildPath = data.paths.build;
+		}
+	}
+	if(data.editor != null) {
+		if(data.editor.lastLayout != null) {
+			project.lastLayout = data.editor.lastLayout;
+		}
+		if(data.editor.recentScenes != null) {
+			project.recentScenes = data.editor.recentScenes;
+		}
+		if(data.editor.startupScene != null) {
+			project.startupScene = data.editor.startupScene;
+		}
+	}
+	if(data.engine != null) {
+		if(data.engine.defaultRenderer != null) {
+			project.defaultRenderer = data.engine.defaultRenderer;
+		}
+	}
+	return project;
 };
 hide_domain_entities_Project.prototype = {
 	id: null
 	,name: null
 	,rootPath: null
-	,resources: null
+	,assetsPath: null
+	,sourcePath: null
+	,buildPath: null
+	,lastLayout: null
+	,recentScenes: null
+	,defaultRenderer: null
+	,startupScene: null
 	,_isDirty: null
-	,addResource: function(resource) {
-		if(Object.prototype.hasOwnProperty.call(this.resources.h,resource.id)) {
-			throw haxe_Exception.thrown("Resource " + resource.id + " already exists");
-		}
-		this.resources.h[resource.id] = resource;
-		this._isDirty = true;
+	,getFullAssetsPath: function() {
+		return hide_domain_valueobjects_FilePath._new(this.rootPath.toString() + "/" + this.assetsPath);
 	}
-	,getResource: function(id) {
-		return this.resources.h[id];
+	,getFullSourcePath: function() {
+		return hide_domain_valueobjects_FilePath._new(this.rootPath.toString() + "/" + this.sourcePath);
 	}
-	,getResourcesByType: function(type) {
-		var _g = [];
-		var h = this.resources.h;
-		var r_h = h;
-		var r_keys = Object.keys(h);
-		var r_length = r_keys.length;
-		var r_current = 0;
-		while(r_current < r_length) {
-			var r = r_h[r_keys[r_current++]];
-			if(r.type == type) {
-				_g.push(r);
-			}
-		}
-		return _g;
+	,getFullBuildPath: function() {
+		return hide_domain_valueobjects_FilePath._new(this.rootPath.toString() + "/" + this.buildPath);
+	}
+	,toJson: function() {
+		return JSON.stringify({ version : "1.0.0", name : this.name, paths : { assets : this.assetsPath, source : this.sourcePath, build : this.buildPath}, editor : { lastLayout : this.lastLayout, recentScenes : this.recentScenes, startupScene : this.startupScene}, engine : { defaultRenderer : this.defaultRenderer}},null,"  ");
 	}
 	,get_isDirty: function() {
 		return this._isDirty;
@@ -109815,20 +109886,10 @@ hide_domain_entities_Project.prototype = {
 	,markSaved: function() {
 		this._isDirty = false;
 	}
+	,markDirty: function() {
+		this._isDirty = true;
+	}
 	,__class__: hide_domain_entities_Project
-};
-var hide_domain_entities_Resource = function(id,type,path) {
-	this.id = id;
-	this.type = type;
-	this.path = path;
-};
-$hxClasses["hide.domain.entities.Resource"] = hide_domain_entities_Resource;
-hide_domain_entities_Resource.__name__ = "hide.domain.entities.Resource";
-hide_domain_entities_Resource.prototype = {
-	id: null
-	,type: null
-	,path: null
-	,__class__: hide_domain_entities_Resource
 };
 var hide_domain_enums_MenuItemType = $hxEnums["hide.domain.enums.MenuItemType"] = { __ename__:"hide.domain.enums.MenuItemType",__constructs__:null
 	,Normal: {_hx_name:"Normal",_hx_index:0,__enum__:"hide.domain.enums.MenuItemType",toString:$estr}
@@ -109837,17 +109898,6 @@ var hide_domain_enums_MenuItemType = $hxEnums["hide.domain.enums.MenuItemType"] 
 };
 hide_domain_enums_MenuItemType.__constructs__ = [hide_domain_enums_MenuItemType.Normal,hide_domain_enums_MenuItemType.Separator,hide_domain_enums_MenuItemType.Submenu];
 hide_domain_enums_MenuItemType.__empty_constructs__ = [hide_domain_enums_MenuItemType.Normal,hide_domain_enums_MenuItemType.Separator,hide_domain_enums_MenuItemType.Submenu];
-var hide_domain_enums_ResourceType = $hxEnums["hide.domain.enums.ResourceType"] = { __ename__:"hide.domain.enums.ResourceType",__constructs__:null
-	,File: {_hx_name:"File",_hx_index:0,__enum__:"hide.domain.enums.ResourceType",toString:$estr}
-	,Texture: {_hx_name:"Texture",_hx_index:1,__enum__:"hide.domain.enums.ResourceType",toString:$estr}
-	,Model: {_hx_name:"Model",_hx_index:2,__enum__:"hide.domain.enums.ResourceType",toString:$estr}
-	,Prefab: {_hx_name:"Prefab",_hx_index:3,__enum__:"hide.domain.enums.ResourceType",toString:$estr}
-	,Script: {_hx_name:"Script",_hx_index:4,__enum__:"hide.domain.enums.ResourceType",toString:$estr}
-	,Database: {_hx_name:"Database",_hx_index:5,__enum__:"hide.domain.enums.ResourceType",toString:$estr}
-	,Unknown: {_hx_name:"Unknown",_hx_index:6,__enum__:"hide.domain.enums.ResourceType",toString:$estr}
-};
-hide_domain_enums_ResourceType.__constructs__ = [hide_domain_enums_ResourceType.File,hide_domain_enums_ResourceType.Texture,hide_domain_enums_ResourceType.Model,hide_domain_enums_ResourceType.Prefab,hide_domain_enums_ResourceType.Script,hide_domain_enums_ResourceType.Database,hide_domain_enums_ResourceType.Unknown];
-hide_domain_enums_ResourceType.__empty_constructs__ = [hide_domain_enums_ResourceType.File,hide_domain_enums_ResourceType.Texture,hide_domain_enums_ResourceType.Model,hide_domain_enums_ResourceType.Prefab,hide_domain_enums_ResourceType.Script,hide_domain_enums_ResourceType.Database,hide_domain_enums_ResourceType.Unknown];
 var hide_domain_enums_WindowEvent = $hxEnums["hide.domain.enums.WindowEvent"] = { __ename__:"hide.domain.enums.WindowEvent",__constructs__:null
 	,Focus: {_hx_name:"Focus",_hx_index:0,__enum__:"hide.domain.enums.WindowEvent",toString:$estr}
 	,Blur: {_hx_name:"Blur",_hx_index:1,__enum__:"hide.domain.enums.WindowEvent",toString:$estr}
@@ -109976,6 +110026,19 @@ hide_domain_services_IPlugin.prototype = {
 	,deactivate: null
 	,__class__: hide_domain_services_IPlugin
 	,__properties__: {get_name:"get_name"}
+};
+var hide_domain_services_IProjectManager = function() { };
+$hxClasses["hide.domain.services.IProjectManager"] = hide_domain_services_IProjectManager;
+hide_domain_services_IProjectManager.__name__ = "hide.domain.services.IProjectManager";
+hide_domain_services_IProjectManager.__isInterface__ = true;
+hide_domain_services_IProjectManager.__interfaces__ = [hx_injection_Service];
+hide_domain_services_IProjectManager.prototype = {
+	openProject: null
+	,closeProject: null
+	,saveProject: null
+	,createProject: null
+	,getRecentProjects: null
+	,__class__: hide_domain_services_IProjectManager
 };
 var hide_domain_services_IViewFactory = function() { };
 $hxClasses["hide.domain.services.IViewFactory"] = hide_domain_services_IViewFactory;
@@ -113857,6 +113920,8 @@ hide_infrastructure_platform_electron_ElectronPlatformAdapter.__interfaces__ = [
 hide_infrastructure_platform_electron_ElectronPlatformAdapter.prototype = {
 	getAppArgs: function() {
 		var argv = process.argv;
+		haxe_Log.trace("ARRRGS:",{ fileName : "hide/infrastructure/platform/electron/ElectronPlatformAdapter.hx", lineNumber : 11, className : "hide.infrastructure.platform.electron.ElectronPlatformAdapter", methodName : "getAppArgs"});
+		haxe_Log.trace(argv,{ fileName : "hide/infrastructure/platform/electron/ElectronPlatformAdapter.hx", lineNumber : 12, className : "hide.infrastructure.platform.electron.ElectronPlatformAdapter", methodName : "getAppArgs"});
 		if(argv.length > 2) {
 			return argv.slice(2);
 		} else {
@@ -113867,6 +113932,58 @@ hide_infrastructure_platform_electron_ElectronPlatformAdapter.prototype = {
 		return [];
 	}
 	,__class__: hide_infrastructure_platform_electron_ElectronPlatformAdapter
+};
+var hide_infrastructure_platform_electron_ElectronProjectManagerAdapter = function(ipcBridge) {
+	this.ipcBridge = ipcBridge;
+};
+$hxClasses["hide.infrastructure.platform.electron.ElectronProjectManagerAdapter"] = hide_infrastructure_platform_electron_ElectronProjectManagerAdapter;
+hide_infrastructure_platform_electron_ElectronProjectManagerAdapter.__name__ = "hide.infrastructure.platform.electron.ElectronProjectManagerAdapter";
+hide_infrastructure_platform_electron_ElectronProjectManagerAdapter.__interfaces__ = [hx_injection_Service,hide_domain_services_IProjectManager];
+hide_infrastructure_platform_electron_ElectronProjectManagerAdapter.prototype = {
+	ipcBridge: null
+	,openProject: function(path) {
+		return tink_core_Future.map(this.ipcBridge.invokeSafe("project:open",path.toString()),function(data) {
+			if(data == null || !data.success) {
+				throw haxe_Exception.thrown("Failed to open project at " + path.toString());
+			}
+			return hide_domain_entities_Project.fromJson(data.content,path);
+		});
+	}
+	,closeProject: function() {
+		return tink_core_Future.map(this.ipcBridge.invokeSafe("project:close",null),function(res) {
+			if(res != null) {
+				return res.success;
+			} else {
+				return false;
+			}
+		});
+	}
+	,saveProject: function(project) {
+		return tink_core_Future.map(this.ipcBridge.invokeSafe("project:save",{ path : project.rootPath.toString(), content : project.toJson()}),function(res) {
+			if(res != null) {
+				return res.success;
+			} else {
+				return false;
+			}
+		});
+	}
+	,createProject: function(name,path) {
+		return tink_core_Future.map(this.ipcBridge.invokeSafe("project:create",{ name : name, path : path.toString()}),function(data) {
+			return null;
+		});
+	}
+	,getRecentProjects: function() {
+		return tink_core_Future.map(this.ipcBridge.invokeSafe("project:getRecent",null),function(data) {
+			if(data == null) {
+				return [];
+			}
+			return data.paths;
+		});
+	}
+	,getConstructorArgs: function() {
+		return ["hide.infrastructure.platform.electron.ElectronIpcBridge"];
+	}
+	,__class__: hide_infrastructure_platform_electron_ElectronProjectManagerAdapter
 };
 var hide_infrastructure_platform_electron_ElectronWindowAdapter = function(ipcBridge) {
 	this.ipcBridge = ipcBridge;
@@ -114000,11 +114117,12 @@ hide_infrastructure_platform_electron_ElectronWindowAdapter.prototype = {
 	}
 	,__class__: hide_infrastructure_platform_electron_ElectronWindowAdapter
 };
-var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,openViewUseCase,viewRegistry,pluginManager,eventBus,fileDialog,fileSystem,platform,layoutEngine,menuController,windowController,toolbarController,sceneService,sceneEditorService,sceneViewFactory,shaderPreviewRenderer,viewportService,viewModules,shaderNodeRegistry,shaderHistory,saveShader,loadShader,languageServer) {
+var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,openViewUseCase,viewRegistry,pluginManager,eventBus,fileDialog,fileSystem,platform,layoutEngine,menuController,windowController,toolbarController,sceneService,sceneEditorService,sceneViewFactory,shaderPreviewRenderer,viewportService,viewModules,shaderNodeRegistry,shaderHistory,saveShader,loadShader,languageServer,projectService) {
 	var _gthis = this;
 	this.windowService = windowService;
 	this.menuService = menuService;
 	this.loadProjectUseCase = loadProjectUseCase;
+	this.projectService = projectService;
 	this.setFullscreenUseCase = setFullscreenUseCase;
 	this.openViewUseCase = openViewUseCase;
 	this.viewRegistry = viewRegistry;
@@ -114042,7 +114160,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this._projectLoadedUnsub = eventBus.subscribe(hide_shared_events_ProjectLoaded,$bind(this,this.onProjectLoadedHandler));
 	this._errorUnsub = eventBus.subscribe(hide_shared_events_ErrorOccurred,$bind(this,this.onErrorOccurred));
 	this._layoutChangedUnsub = eventBus.subscribe(hide_shared_events_LayoutChanged,function(e) {
-		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 181, className : "hide.presentation.Ide", methodName : "new"});
+		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 186, className : "hide.presentation.Ide", methodName : "new"});
 	});
 	this._projectClosedUnsub = eventBus.subscribe(hide_shared_events_ProjectClosed,function(e) {
 		_gthis._currentProject = null;
@@ -114090,15 +114208,16 @@ hide_presentation_Ide.prototype = {
 	,saveShader: null
 	,loadShader: null
 	,languageServer: null
+	,projectService: null
 	,onMenuOpenProject: function() {
 		this.layoutEngine.open("welcome",{ },hide_domain_valueobjects_DisplayPosition.Center);
 	}
 	,onErrorOccurred: function(event) {
-		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 208, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
+		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 213, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
 	}
 	,onProjectLoadedHandler: function(event) {
 		this._currentProject = event.project.name;
-		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 213, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
+		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 218, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
 		this.updateWindowTitle();
 	}
 	,onToggleFullscreen: function() {
@@ -114109,7 +114228,7 @@ hide_presentation_Ide.prototype = {
 	,onCloseProject: function() {
 	}
 	,openView: function(viewName) {
-		haxe_Log.trace("[Open view] search view to open: " + viewName,{ fileName : "hide/presentation/Ide.hx", lineNumber : 234, className : "hide.presentation.Ide", methodName : "openView"});
+		haxe_Log.trace("[Open view] search view to open: " + viewName,{ fileName : "hide/presentation/Ide.hx", lineNumber : 239, className : "hide.presentation.Ide", methodName : "openView"});
 		var view = Lambda.find(this.viewRegistry.all(),function(v) {
 			return v.name == viewName;
 		});
@@ -114127,19 +114246,19 @@ hide_presentation_Ide.prototype = {
 		default:
 			position = hide_domain_valueobjects_DisplayPosition.Center;
 		}
-		haxe_Log.trace("[Open view] view opened",{ fileName : "hide/presentation/Ide.hx", lineNumber : 245, className : "hide.presentation.Ide", methodName : "openView"});
+		haxe_Log.trace("[Open view] view opened",{ fileName : "hide/presentation/Ide.hx", lineNumber : 250, className : "hide.presentation.Ide", methodName : "openView"});
 		this.openViewUseCase.execute(view.name,view.defaultState,position);
 	}
 	,onOpenRecent: function(path) {
-		this.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._new(path));
+		this.projectService.openProject(hide_domain_valueobjects_FilePath._new(path));
 	}
 	,updateWindowTitle: function() {
 		var title = this._currentProject != null ? "" + this._currentProject + " - HIDE IDE" : "HIDE IDE";
-		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 255, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
+		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 261, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
 		this.windowService.setTitle(title);
 	}
 	,showAboutDialog: function() {
-		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 260, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
+		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 266, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
 	}
 	,get_currentProjectName: function() {
 		if(this._currentProject != null) {
@@ -114150,7 +114269,7 @@ hide_presentation_Ide.prototype = {
 	}
 	,startup: function() {
 		var _gthis = this;
-		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 270, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 276, className : "hide.presentation.Ide", methodName : "startup"});
 		var $module = $getIterator(this.viewModules);
 		while($module.hasNext()) {
 			var module1 = $module.next();
@@ -114163,29 +114282,29 @@ hide_presentation_Ide.prototype = {
 					_gthis.openView(descriptor[0].dto.name);
 				};
 			})(descriptor));
-			haxe_Log.trace("📦 View registered: " + descriptor[0].dto.name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 284, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📦 View registered: " + descriptor[0].dto.name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 290, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		this.windowController.init();
-		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 288, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 294, className : "hide.presentation.Ide", methodName : "startup"});
 		var toolbarEl = window.document.getElementById("main-toolbar");
 		if(toolbarEl != null) {
 			this.toolbarController.setContainer(toolbarEl);
-			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 296, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 302, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var layoutEl = window.document.getElementById("golden-layout-root");
 		if(layoutEl != null) {
 			this.layoutEngine.setContainer(layoutEl);
 			this.layoutEngine.init({ content : [], fullScreen : null});
-			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 304, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 310, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 306, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 312, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var menuContainer = window.document.getElementById("main-menu");
 		if(menuContainer != null) {
 			this.menuController.setContainer(menuContainer);
-			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 312, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 318, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 314, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 320, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var args = this.platform.getAppArgs();
 		var projectFile = null;
@@ -114208,11 +114327,12 @@ hide_presentation_Ide.prototype = {
 				break;
 			}
 		}
+		projectFile = "D:\\Dev\\tetris-game-project\\tetris-game-project.hideproj";
 		if(projectFile != null) {
-			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 341, className : "hide.presentation.Ide", methodName : "startup"});
-			this.loadProjectUseCase.execute(hide_domain_valueobjects_FilePath._new(projectFile));
+			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 347, className : "hide.presentation.Ide", methodName : "startup"});
+			this.projectService.openProject(hide_domain_valueobjects_FilePath._new(projectFile));
 		} else {
-			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 344, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 351, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 	}
 	,dispose: function() {
@@ -114297,7 +114417,7 @@ hide_presentation_Ide.prototype = {
 		return this.loadShader;
 	}
 	,getConstructorArgs: function() {
-		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.commands.OpenViewUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IFileSystem","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController","hide.presentation.controllers.WindowController","hide.presentation.controllers.ToolbarController","hide.engine.domain.services.ISceneService","hide.application.integration.SceneEditorService","hide.infrastructure.external.SceneViewFactory","hide.engine.infrastructure.ShaderPreviewRenderer","hide.engine.infrastructure.ViewportService","Iterable(hide.application.services.IViewModule)","hide.engine.infrastructure.ShaderNodeRegistry","hide.application.services.ShaderHistoryService","hide.application.commands.SaveShaderUseCase","hide.application.commands.LoadShaderUseCase","hide.domain.services.ILanguageServer"];
+		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.commands.OpenViewUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IFileSystem","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController","hide.presentation.controllers.WindowController","hide.presentation.controllers.ToolbarController","hide.engine.domain.services.ISceneService","hide.application.integration.SceneEditorService","hide.infrastructure.external.SceneViewFactory","hide.engine.infrastructure.ShaderPreviewRenderer","hide.engine.infrastructure.ViewportService","Iterable(hide.application.services.IViewModule)","hide.engine.infrastructure.ShaderNodeRegistry","hide.application.services.ShaderHistoryService","hide.application.commands.SaveShaderUseCase","hide.application.commands.LoadShaderUseCase","hide.domain.services.ILanguageServer","hide.application.services.ProjectService"];
 	}
 	,__class__: hide_presentation_Ide
 	,__properties__: {get_currentProjectName:"get_currentProjectName"}

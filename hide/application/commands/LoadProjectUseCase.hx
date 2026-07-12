@@ -1,3 +1,4 @@
+// hide/application/commands/LoadProjectUseCase.hx
 package hide.application.commands;
 
 import hide.domain.services.IFileSystem;
@@ -6,8 +7,10 @@ import hide.shared.events.ProjectLoaded;
 import hide.shared.events.ErrorOccurred;
 import hide.domain.valueobjects.FilePath;
 import hide.domain.entities.Project;
-import hide.shared.types.Result;
 import hx.injection.*;
+import tink.core.Future;
+import tink.core.Outcome;
+using tink.CoreApi;
 
 class LoadProjectUseCase implements Service {
     private var fileSystem:IFileSystem;
@@ -18,34 +21,33 @@ class LoadProjectUseCase implements Service {
         this.eventBus = eventBus;
     }
 
-    public function execute(projectPath:FilePath):Result<Project, String> {
+    /**
+     * Выполняет загрузку проекта.
+     * Возвращает Future<Outcome>, что позволяет элегантно обрабатывать ошибки в цепочках вызовов.
+     */
+    public function execute(projectPath:FilePath):Void {
         try {
-            // 1. Валидация существования файла (Fail-fast)
+            // 1. Валидация существования файла
             if (!fileSystem.exists(projectPath)) {
                 var msg = 'Project file not found: ${projectPath.toString()}';
                 eventBus.publish(ErrorOccurred, new ErrorOccurred("LoadProjectUseCase", msg));
-                return Failure(msg);
+                return;
             }
+
             // 2. Чтение содержимого
             var content = fileSystem.readText(projectPath);
-            // 3. Парсинг и валидация структуры (вызовет исключение, если JSON битый или нет поля 'name')
+            
+            // 3. Парсинг и валидация структуры
             var project = Project.fromJson(content, projectPath);
+            
             // 4. Уведомление системы об успешной загрузке
             eventBus.publish(ProjectLoaded, new ProjectLoaded(project));
-
-            return Success(project);
-
         } catch (e:haxe.Exception) {
-            // Ловим структурные ошибки (например, от Project.fromJson)
             var errorMsg = 'Failed to load project: ${e.message}';
             eventBus.publish(ErrorOccurred, new ErrorOccurred("LoadProjectUseCase", errorMsg));
-            return Failure(errorMsg);
-            
         } catch (e:Dynamic) {
-            // Ловим ошибки парсинга JSON или файловые ошибки (для совместимости со старыми версиями Haxe)
             var errorMsg = 'Failed to load project: ${Std.string(e)}';
             eventBus.publish(ErrorOccurred, new ErrorOccurred("LoadProjectUseCase", errorMsg));
-            return Failure(errorMsg);
         }
     }
 }
