@@ -115033,7 +115033,7 @@ hide_presentation_ui_react_BaseReactComponent.prototype = $extend(React_Componen
 var hide_presentation_ui_react_components_AssetBrowserPanel = function() {
 	hide_presentation_ui_react_BaseReactComponent.call(this);
 	this.service = hide_presentation_ui_react_hooks_UseService.assetBrowser();
-	this.state = { items : [], isLoading : true, currentFolder : "Assets"};
+	this.state = { items : [], isLoading : true, currentFolder : ""};
 };
 $hxClasses["hide.presentation.ui.react.components.AssetBrowserPanel"] = hide_presentation_ui_react_components_AssetBrowserPanel;
 hide_presentation_ui_react_components_AssetBrowserPanel.__name__ = "hide.presentation.ui.react.components.AssetBrowserPanel";
@@ -115041,7 +115041,7 @@ hide_presentation_ui_react_components_AssetBrowserPanel.__super__ = hide_present
 hide_presentation_ui_react_components_AssetBrowserPanel.prototype = $extend(hide_presentation_ui_react_BaseReactComponent.prototype,{
 	service: null
 	,componentDidMount: function() {
-		this.loadAssets("Assets");
+		this.loadAssets("");
 	}
 	,loadAssets: function(folder) {
 		var _gthis = this;

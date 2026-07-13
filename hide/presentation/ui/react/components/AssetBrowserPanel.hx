@@ -16,7 +16,7 @@ typedef AssetBrowserProps = {
 typedef AssetBrowserState = {
     var items:Array<AssetItem>;
     var isLoading:Bool;
-    var currentFolder:String;
+    var currentFolder:String; // Теперь это относительный путь внутри Assets
 }
 
 class AssetBrowserPanel extends BaseReactComponent<AssetBrowserProps, AssetBrowserState> {
@@ -28,12 +28,12 @@ class AssetBrowserPanel extends BaseReactComponent<AssetBrowserProps, AssetBrows
         state = {
             items: [],
             isLoading: true,
-            currentFolder: "Assets"
+            currentFolder: ""
         };
     }
 
     override function componentDidMount():Void {
-        loadAssets("Assets");
+        loadAssets("");
     }
 
     private function loadAssets(folder:String):Void {
