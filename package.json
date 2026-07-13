@@ -30,7 +30,7 @@
   "dependencies": {
     "@huyhuy/monaco-editor-react-electron": "^0.1.0",
     "@monaco-editor/react": "^4.7.0",
-    "chokidar": "^5.0.0",
+    "chokidar": "^3.6.0",
     "fluent-ffmpeg": "^2.1.3",
     "fontmin": "^1.1.1",
     "litegraph.js": "^0.7.18",

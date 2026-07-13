@@ -8,6 +8,11 @@ import haxe.Json;
 import src.main.assets.IAssetConverter;
 import src.main.assets.AssetMeta;
 import src.main.assets.ConversionResult;
+import chokidar.Chokidar; // <-- Импортируем из библиотеки
+import chokidar.WatchOptions;
+import chokidar.FSWatcher;
+import chokidar.AwaitWriteFinishOptions;
+import haxe.ds.Either; // <-- Добавь этот импорт
 using StringTools;
 /**
  * Главный сервис управления ассетами.
@@ -17,7 +22,7 @@ class AssetPipelineService {
     private var registry:AssetTypeRegistry;
     private var projectRoot:String;
     private var assetsPath:String;
-    private var watcher:Dynamic; // Chokidar instance
+    private var watcher:FSWatcher; // Chokidar instance
     
     public function new(registry:AssetTypeRegistry) {
         this.registry = registry;
@@ -31,13 +36,14 @@ class AssetPipelineService {
      */
     public function setProjectRoot(root:String):Void {
         this.projectRoot = root;
-        this.assetsPath = Path.join(root, "Assets");
+        // ✅ Принудительно заменяем слеши на прямые для Chokidar
+        var normalizedRoot = root.split("\\").join("/");
+        this.assetsPath = js.node.Path.join(normalizedRoot, "Assets");
         
-        // Перезапускаем watcher для новой папки
         stopWatching();
         startWatching();
         
-        trace('📂 [AssetPipeline] Project root set to: $root');
+        trace('📂 [AssetPipeline] Project root set to: $normalizedRoot');
         trace('   Watching: $assetsPath');
     }
     
@@ -86,42 +92,85 @@ class AssetPipelineService {
     
     // === PRIVATE METHODS ===
     
+    // hide/main/assets/AssetPipelineService.hx
+
+    // hide/main/assets/AssetPipelineService.hx
+
     private function startWatching():Void {
         if (assetsPath == "" || !Fs.existsSync(assetsPath)) {
             trace('⚠️ [AssetPipeline] Assets folder does not exist yet: $assetsPath');
-            return;
+            try {
+                untyped __js__("require('fs').mkdirSync(this.assetsPath, { recursive: true })");
+                trace('✅ [AssetPipeline] Created missing Assets folder');
+            } catch (e:Dynamic) {
+                trace('❌ [AssetPipeline] Failed to create Assets folder: ${Std.string(e)}');
+                return;
+            }
         }
+        // 1. Создаем объект настроек для awaitWriteFinish
+        var awfOptions:AwaitWriteFinishOptions = {
+            stabilityThreshold: 1000,
+            pollInterval: 500
+        };
+        trace('👀 [AssetPipeline] Starting Chokidar watcher on: $assetsPath');
+        // Настраиваем опции
+        var options:WatchOptions = {
+            ignored: [~/(\^|[\/\\])\../, "**/*.meta"],
+            persistent: true,
+            // ✅ ИСПРАВЛЕНО: передаем объект правильного типа
+            awaitWriteFinish: Right(awfOptions), 
+            ignoreInitial: false,
+            usePolling: true
+        };
         
-        untyped __js__("
-            const chokidar = require('chokidar');
-            
-            this.watcher = chokidar.watch(this.assetsPath + '/**/*', {
-                
-                persistent: true,
-                awaitWriteFinish: {
-                    stabilityThreshold: 500,       // Ждем 500ms после записи
-                    pollInterval: 100
-                },
-                ignoreInitial: false               // Сканируем существующие файлы при старте
-            });
-            
-            this.watcher
-                .on('add', (path) => this.onFileAdded(path))
-                .on('change', (path) => this.onFileChanged(path))
-                .on('unlink', (path) => this.onFileDeleted(path));
-                
-            console.log('✅ [AssetPipeline] Watcher started on: ' + this.assetsPath);
-        ");
+        // Создаем вотчер через библиотеку
+        watcher = Chokidar.watch(assetsPath + "/**/*", options);
+
+        // Подписываемся на события
+        watcher.on("add", function(path:String) {
+            trace('📥 [Chokidar] File ADDED: $path');
+            onFileAdded(path);
+        })
+        .on("change", function(path:String) {
+            trace('🔄 [Chokidar] File CHANGED: $path');
+            onFileChanged(path);
+        })
+        .on("unlink", function(path:String) {
+            trace('🗑️ [Chokidar] File DELETED: $path');
+            onFileDeleted(path);
+        })
+        .on("error", function(error:Dynamic) {
+            trace('❌ [Chokidar] Error: $error');
+        })
+        .on("ready", function() {
+            trace('✅ [Chokidar] Initial scan complete. Watching for changes...');
+            onInitialScanComplete();
+        });
+        this.watcher.on('all', function(event, path) {
+            trace('🔍 [Chokidar ALL] Event: ' + event + ' | Path: ' + path);
+        });
     }
     
     private function stopWatching():Void {
         if (watcher != null) {
-            untyped watcher.close();
+            watcher.close();
             watcher = null;
-            trace(' [AssetPipeline] Watcher stopped');
+            trace('🛑 [AssetPipeline] Watcher stopped');
         }
     }
+    /**
+     * Вызывается один раз после того, как Chokidar просканировал все существующие файлы.
+     */
+    @:keep
+    public function onInitialScanComplete():Void {
+        // Ручная индексация больше не нужна.
+        // Chokidar с ignoreInitial: false уже выдал события 'add' для всех существующих файлов.
+        trace('✅ [AssetPipeline] Initial scan complete. System ready.');
+    }
+
     
+
+    @:keep
     private function onFileAdded(path:String):Void {
         // Игнорируем .meta файлы — они не импортируются
         if (path.endsWith('.meta')) return;
@@ -129,14 +178,14 @@ class AssetPipelineService {
         trace('📥 [AssetPipeline] New file detected: $path');
         importSingleAsset(path);
     }
-    
+    @:keep
     private function onFileChanged(path:String):Void {
         if (path.endsWith('.meta')) return;
         
         trace('🔄 [AssetPipeline] File changed: $path');
         reimportAsset(path);
     }
-    
+    @:keep
     private function onFileDeleted(path:String):Void {
         trace('🗑️ [AssetPipeline] File deleted: $path');
         cleanupBuildFiles(path);
@@ -145,75 +194,82 @@ class AssetPipelineService {
     /**
      * Импортирует один ассет: создает .meta → конвертирует → обновляет индекс.
      */
-    private function importSingleAsset(sourcePath:String):Promise<ConversionResult> {
-        return untyped __js__("new Promise(async (resolve, reject) => {
-            try {
-                const fs = require('fs');
-                const path = require('path');
-                const { v4: uuidv4 } = require('uuid');
+    @:keep
+    public function importSingleAsset(sourcePath:String):Void {
+        var metaPath = sourcePath + '.meta';
+        var fs = untyped __js__("require('fs')");
+        
+        //var pathLib = untyped __js__("require('path')");
+        
+        var ext = js.node.Path.extname(sourcePath).toLowerCase();
+        var relativeSource = js.node.Path.relative(this.projectRoot, sourcePath);
+        
+        // Определяем путь для сборки
+        var buildDir = js.node.Path.join(this.projectRoot, 'Build', js.node.Path.dirname(relativeSource));
+        var baseName = js.node.Path.basename(sourcePath, ext);
+        var buildPath = js.node.Path.join(buildDir, baseName + '.webp');
+
+        var meta:Dynamic = null;
+
+        // 1. Работа с файловой системой и .meta (в JS блоке)
+        untyped __js__("
+            if (fs.existsSync(metaPath)) {
+                meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
+            } else {
+                meta = {
+                    guid: require('uuid').v4(),
+                    type: 'texture',
+                    sourcePath: relativeSource,
+                    buildPath: buildPath.replace(/\\\\\\\\/g, '/'),
+                    settings: {},
+                    lastModified: fs.statSync(sourcePath).mtimeMs,
+                    version: 1
+                };
                 
-                // Проверяем, есть ли уже .meta файл
-                const metaPath = sourcePath + '.meta';
-                let meta;
-                
-                if (fs.existsSync(metaPath)) {
-                    meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
-                } else {
-                    // Создаем новый .meta файл
-                    const ext = path.extname(sourcePath).toLowerCase();
-                    const relativeSource = path.relative(pipeline.projectRoot, sourcePath);
-                    const buildDir = path.join(pipeline.projectRoot, 'Build', path.dirname(relativeSource));
-                    const baseName = path.basename(sourcePath, ext);
-                    const buildPath = path.join(buildDir, baseName + '.webp');
-                    
-                    meta = {
-                        guid: uuidv4(),
-                        type: 'texture', // Будет определяться конвертером
-                        sourcePath: relativeSource,
-                        buildPath: buildPath.replace(/\\\\/g, '/'),
-                        settings: {},
-                        lastModified: fs.statSync(sourcePath).mtimeMs,
-                        version: 1
-                    };
-                    
-                    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
-                    console.log(' [AssetPipeline] Created .meta for: ' + relativeSource);
+                if (!fs.existsSync(buildDir)) {
+                    fs.mkdirSync(buildDir, { recursive: true });
                 }
                 
-                // Находим подходящий конвертер
-                const converter = pipeline.registry.getConverter(sourcePath);
-                
-                if (!converter) {
-                    // Нет конвертера — просто копируем или игнорируем
-                    resolve({
-                        buildPath: sourcePath,
-                        metadata: { skipped: true, reason: 'No converter found' }
-                    });
-                    return;
-                }
-                
-                // Обновляем тип в .meta
-                meta.type = converter.supportedExtensions.includes(path.extname(sourcePath)) 
-                    ? 'texture' : 'unknown';
                 fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
+                console.log(' [AssetPipeline] Created .meta for: ' + relativeSource);
+            }
+        ");
+
+        // 2. Вызов конвертера на чистом Haxe
+        var converter = registry.getConverter(sourcePath);
+        
+        if (converter == null) {
+            trace('⚠️ [AssetPipeline] No converter found for: $sourcePath');
+            return;
+        }
+
+        // Обновляем тип в мета-данных
+        meta.type = "texture"; 
+        
+        // Запускаем конвертацию. 
+        // ВАЖНО: Если converter.convert возвращает Promise, нам нужно его обработать.
+        // Предположим, что он возвращает Future<ConversionResult> или Promise.
+        
+        var resultPromise = converter.convert(sourcePath, meta);
+        
+        // Обрабатываем результат асинхронно
+        untyped __js__("
+            resultPromise.then(function(res) {
+                // Проверяем, что вернул конвертер
+                var finalSource = res.sourcePath != null ? res.sourcePath : sourcePath;
+                var finalBuild = res.buildPath != null ? res.buildPath : res; // Если вернул просто строку
                 
-                // Запускаем конвертацию
-                const result = await converter.convert(sourcePath, meta);
+                console.log('✅ [AssetPipeline] Converted: ' + finalSource + ' → ' + finalBuild);
                 
-                // Обновляем timestamp
                 meta.lastModified = fs.statSync(sourcePath).mtimeMs;
                 fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
-                
-                console.log('✅ [AssetPipeline] Converted: ' + meta.sourcePath + ' → ' + result.buildPath);
-                resolve(result);
-                
-            } catch (err) {
-                console.error(' [AssetPipeline] Import failed:', err);
-                reject(err);
-            }
-        })");
+            }).catch(function(err) {
+                console.error('❌ [AssetPipeline] Conversion failed:', err);
+            });
+        ");
     }
-    
+
+    @:keep
     private function reimportAsset(sourcePath:String):Void {
         importSingleAsset(sourcePath);
     }

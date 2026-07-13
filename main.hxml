@@ -2,6 +2,7 @@
 -main ElectronMain
 -lib electron
 -lib tink_core
+-lib hxchokidar
 -dce full
 --debug
 -D no-deprecation-warnings
