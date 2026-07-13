@@ -10,8 +10,10 @@ import hide.application.services.MenuService;
 import hide.application.services.ViewRegistry;
 import hide.application.services.PluginManager;
 import hide.application.services.ShaderHistoryService;
+import hide.application.services.AssetBrowserService;
 import hide.application.commands.SaveShaderUseCase;
 import hide.application.commands.LoadShaderUseCase;
+
 import hide.shared.types.IEventBus;
 import hide.domain.services.ILayoutEngine;
 import hide.engine.domain.services.ISceneService;
@@ -78,5 +80,8 @@ class UseService {
     }
     public static function languageServer():ILanguageServer {
         return Ide.inst.get_languageServer();
+    }
+    public static function assetBrowser():AssetBrowserService {
+        return Ide.inst.get_assetBrowser(); // Не забудь добавить геттер в Ide.hx
     }
 }

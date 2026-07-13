@@ -316,7 +316,13 @@ class GoldenLayoutAdapter implements ILayoutEngine implements Service {
     private function toGoldenConfig(state:LayoutState):Config {
         return {
             content: [for (item in state.content) toGoldenItem(item)],
-            settings: { reorderEnabled: true, constrainDragToHeader: true, showPopoutIcon: false, showMaximiseIcon: true }
+            settings: { 
+                reorderEnabled: true,       // ✅ РАЗРЕШАЕМ ПЕРЕТАСКИВАНИЕ
+                constrainDragToContainer: true,
+                constrainDragToHeader: false, // ✅ Позволяем тащить за любую часть вкладки, а не только за заголовок
+                showPopoutIcon: false,
+                showMaximiseIcon: true 
+            }
         };
     }
 

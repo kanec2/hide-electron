@@ -140,7 +140,61 @@ AutoWindow.ensureDirectoryExists = function(dir) {
 	AutoWindow.ensureDirectoryExists(js_node_Path.dirname(dir));
 	js_node_Fs.mkdirSync(dir);
 };
+AutoWindow.getFileType = function(filename) {
+	var ext = filename.split(".").pop().toLowerCase();
+	switch(ext) {
+	case "fbx":case "gltf":case "obj":
+		return "model";
+	case "mp3":case "ogg":case "wav":
+		return "audio";
+	case "jpeg":case "jpg":case "png":case "tga":case "webp":
+		return "image";
+	default:
+		return "unknown";
+	}
+};
 AutoWindow.setupIpc = function() {
+	electron_main_IpcMain.handle("asset:getList",function(event,data) {
+		var fs = require("fs");
+		var path = require("path");
+		var root = data.projectRoot;
+		var folder = data.folder != null ? data.folder : "Assets";
+		var fullPath = js_node_Path.join(root,folder);
+		if(!js_node_Fs.existsSync(fullPath)) {
+			return { success : false, error : "Folder not found: " + fullPath};
+		}
+		try {
+			var files = js_node_Fs.readdirSync(fullPath);
+			var result = [];
+			var _g = 0;
+			while(_g < files.length) {
+				var file = files[_g];
+				++_g;
+				if(StringTools.startsWith(file,".") || StringTools.endsWith(file,".meta")) {
+					continue;
+				}
+				var filePath = js_node_Path.join(fullPath,file);
+				var stat = js_node_Fs.statSync(filePath);
+				if(stat.isFile()) {
+					var hasMeta = js_node_Fs.existsSync(filePath + ".meta");
+					var metaContent = null;
+					if(hasMeta) {
+						try {
+							metaContent = JSON.parse(js_node_Fs.readFileSync(filePath + ".meta","utf-8"));
+						} catch( _g1 ) {
+						}
+					}
+					result.push({ name : file, path : filePath, relativePath : js_node_Path.relative(root,filePath).split("\\").join("/"), isDirectory : false, guid : metaContent != null ? metaContent.guid : null, buildPath : metaContent != null ? metaContent.buildPath : null, type : AutoWindow.getFileType(file)});
+				} else if(stat.isDirectory()) {
+					result.push({ name : file, path : filePath, relativePath : js_node_Path.relative(root,filePath).split("\\").join("/"), isDirectory : true, guid : null, buildPath : null, type : "folder"});
+				}
+			}
+			return { success : true, data : result};
+		} catch( _g ) {
+			var e = haxe_Exception.caught(_g).unwrap();
+			return { success : false, error : Std.string(e)};
+		}
+	});
 	electron_main_IpcMain.handle("asset:init",function(event,data) {
 		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
 		if(pipeline == null) {
@@ -148,13 +202,13 @@ AutoWindow.setupIpc = function() {
 		}
 		try {
 			pipeline.setProjectRoot(data.projectRoot);
-			console.log("AutoWindow.hx:301:","✅ [Main] Asset Pipeline initialized for: " + Std.string(data.projectRoot));
-			console.log("AutoWindow.hx:302:","   Assets folder: " + Std.string(data.assetsFolder));
-			console.log("AutoWindow.hx:303:","   Build folder: " + Std.string(data.buildFolder));
+			console.log("AutoWindow.hx:369:","✅ [Main] Asset Pipeline initialized for: " + Std.string(data.projectRoot));
+			console.log("AutoWindow.hx:370:","   Assets folder: " + Std.string(data.assetsFolder));
+			console.log("AutoWindow.hx:371:","   Build folder: " + Std.string(data.buildFolder));
 			return { success : true, data : { assetsPath : pipeline.getAssetsPath(), supportedExtensions : pipeline.getSupportedExtensions()}};
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			console.log("AutoWindow.hx:313:","❌ [Main] Failed to init Asset Pipeline: " + Std.string(e));
+			console.log("AutoWindow.hx:381:","❌ [Main] Failed to init Asset Pipeline: " + Std.string(e));
 			return { success : false, error : Std.string(e)};
 		}
 	});
@@ -316,12 +370,12 @@ AutoWindow.setupIpc = function() {
 		event.returnValue = null;
 	});
 	electron_main_IpcMain.on("menu:build",function(event,menuData) {
-		console.log("AutoWindow.hx:483:","[AutoWindow] 📥 Received menu data");
+		console.log("AutoWindow.hx:551:","[AutoWindow] 📥 Received menu data");
 	});
 	electron_main_IpcMain.on("window:open",function(event,data) {
 		var url = data.url;
 		if(url.indexOf("?subView=") != -1) {
-			console.log("AutoWindow.hx:524:","[AutoWindow] ⚠️ Sub-view request: " + url);
+			console.log("AutoWindow.hx:592:","[AutoWindow] ⚠️ Sub-view request: " + url);
 			event.sender.send("window:open:subview",{ url : url});
 			return;
 		}

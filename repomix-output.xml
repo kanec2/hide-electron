@@ -98,6 +98,7 @@ domain/services/ILanguageServer.hx
 domain/services/ILayoutEngine.hx
 domain/services/IPlatform.hx
 domain/services/IPlugin.hx
+domain/services/IProjectManager.hx
 domain/services/IViewFactory.hx
 domain/services/IWindowManager.hx
 domain/services/Location.hx
@@ -205,6 +206,7 @@ infrastructure/platform/electron/ElectronFileSystemAdapter.hx
 infrastructure/platform/electron/ElectronIpcBridge.hx
 infrastructure/platform/electron/ElectronLanguageServerAdapter.hx
 infrastructure/platform/electron/ElectronPlatformAdapter.hx
+infrastructure/platform/electron/ElectronProjectManagerAdapter.hx
 infrastructure/platform/electron/ElectronScreenAdapter.hx
 infrastructure/platform/electron/ElectronShortcutAdapter.hx
 infrastructure/platform/electron/ElectronWindowAdapter.hx
@@ -293,6 +295,7 @@ shared/extensions/DateExt.hx
 shared/extensions/StringExt.hx
 shared/types/EventBusImpl.hx
 shared/types/IEventBus.hx
+shared/types/IpcResponse.hx
 shared/types/NonEmptyArray.hx
 shared/types/Option.hx
 shared/types/Result.hx
@@ -425,6 +428,7 @@ class ExportDatabaseUseCase implements Service {
 </file>
 
 <file path="application/commands/LoadProjectUseCase.hx">
+// hide/application/commands/LoadProjectUseCase.hx
 package hide.application.commands;
 
 import hide.domain.services.IFileSystem;
@@ -433,8 +437,10 @@ import hide.shared.events.ProjectLoaded;
 import hide.shared.events.ErrorOccurred;
 import hide.domain.valueobjects.FilePath;
 import hide.domain.entities.Project;
-import hide.shared.types.Result;
 import hx.injection.*;
+import tink.core.Future;
+import tink.core.Outcome;
+using tink.CoreApi;
 
 class LoadProjectUseCase implements Service {
     private var fileSystem:IFileSystem;
@@ -445,34 +451,33 @@ class LoadProjectUseCase implements Service {
         this.eventBus = eventBus;
     }
 
-    public function execute(projectPath:FilePath):Result<Project, String> {
+    /**
+     * Выполняет загрузку проекта.
+     * Возвращает Future<Outcome>, что позволяет элегантно обрабатывать ошибки в цепочках вызовов.
+     */
+    public function execute(projectPath:FilePath):Void {
         try {
-            // 1. Валидация существования файла (Fail-fast)
+            // 1. Валидация существования файла
             if (!fileSystem.exists(projectPath)) {
                 var msg = 'Project file not found: ${projectPath.toString()}';
                 eventBus.publish(ErrorOccurred, new ErrorOccurred("LoadProjectUseCase", msg));
-                return Failure(msg);
+                return;
             }
+
             // 2. Чтение содержимого
             var content = fileSystem.readText(projectPath);
-            // 3. Парсинг и валидация структуры (вызовет исключение, если JSON битый или нет поля 'name')
+            
+            // 3. Парсинг и валидация структуры
             var project = Project.fromJson(content, projectPath);
+            
             // 4. Уведомление системы об успешной загрузке
             eventBus.publish(ProjectLoaded, new ProjectLoaded(project));
-
-            return Success(project);
-
         } catch (e:haxe.Exception) {
-            // Ловим структурные ошибки (например, от Project.fromJson)
             var errorMsg = 'Failed to load project: ${e.message}';
             eventBus.publish(ErrorOccurred, new ErrorOccurred("LoadProjectUseCase", errorMsg));
-            return Failure(errorMsg);
-            
         } catch (e:Dynamic) {
-            // Ловим ошибки парсинга JSON или файловые ошибки (для совместимости со старыми версиями Haxe)
             var errorMsg = 'Failed to load project: ${Std.string(e)}';
             eventBus.publish(ErrorOccurred, new ErrorOccurred("LoadProjectUseCase", errorMsg));
-            return Failure(errorMsg);
         }
     }
 }
@@ -1232,36 +1237,79 @@ class PluginRegistry implements Service {
 </file>
 
 <file path="application/services/ProjectService.hx">
+// hide/application/services/ProjectService.hx
 package hide.application.services;
 
 import hide.domain.entities.Project;
-import hide.domain.services.IFileSystem;
 import hide.domain.valueobjects.FilePath;
 import hide.shared.types.IEventBus;
 import hide.shared.events.ProjectLoaded;
-import hide.shared.events.ProjectClosed;
+import hide.infrastructure.platform.electron.ElectronIpcBridge;
+import hide.application.commands.LoadProjectUseCase;
 import hx.injection.Service;
+import tink.core.*;
+using tink.CoreApi;
+import hide.shared.types.IpcResponse;
+
 class ProjectService implements Service {
-    private var fileSystem:IFileSystem;
+//    private var fileSystem:IFileSystem;
     private var eventBus:IEventBus;
+    private var ipcBridge:ElectronIpcBridge; // <-- Инжектим мост
     private var currentProject:Null<Project>;
-    public function new(fileSystem:IFileSystem, eventBus:IEventBus) {
-        this.fileSystem = fileSystem;
+    private var loadProjectUseCase:LoadProjectUseCase;
+
+    public function new(loadProjectUseCase:LoadProjectUseCase, ipcBridge:ElectronIpcBridge,eventBus:IEventBus) {
+        this.loadProjectUseCase = loadProjectUseCase;
+        this.ipcBridge = ipcBridge;
         this.eventBus = eventBus;
+        // Подписываемся на успешную загрузку проекта
+        eventBus.subscribe(ProjectLoaded, onProjectLoaded);
+        //eventBus.subscribe(ProjectClosed, onProjectClosed);
     }
+
+    /**
+     * Публичный метод для UI.
+     */
+    public function openProject(path:FilePath):Void {
+        // Просто вызываем UseCase. Он сам опубликует событие при успехе.
+        loadProjectUseCase.execute(path);
+    }
+
+    private function onProjectLoaded(e:ProjectLoaded):Void {
+        currentProject = e.project;
+        trace('📂 [ProjectService] Current project set to: ${currentProject.name}');
+        
+        // ✅ ОТПРАВЛЯЕМ КОМАНДУ НА БЭКЕНД
+        initBackendPipeline(currentProject);
+    }
+
+    private function initBackendPipeline(project:Project):Void {
+        trace('🚀 [ProjectService] Initializing backend services...');
+    
+        ipcBridge.invokeSafe("asset:init", {
+            projectRoot: project.rootPath.toString(),
+            assetsFolder: project.assetsPath,
+            buildFolder: project.buildPath
+        }).handle(function(response:IpcResponse<Dynamic>) {
+            if (response != null && response.success) {
+                trace('✅ [ProjectService] Backend initialized. Assets path: ${response.data.assetsPath}');
+            } else {
+                trace('❌ [ProjectService] Backend init failed: ${response != null ? response.error : "Unknown error"}');
+            }
+        });
+    }
+
+/*    private function onProjectClosed(e:ProjectClosed):Void {
+        currentProject = null;
+        trace('❌ [ProjectService] Current project cleared');
+    }*/
 
     public function getCurrentProject():Null<Project> {
         return currentProject;
     }
-
-    public function loadProject(path:FilePath):Void {
-        // TODO: Реализовать загрузку проекта
-        trace("ProjectService.loadProject: Not fully implemented");
-    }
-
-    public function closeProject():Void {
-        currentProject = null;
-        eventBus.publish(ProjectClosed, new ProjectClosed());
+    
+    public function hasActiveProject():Bool {
+        return currentProject != null;
     }
 }
 </file>
@@ -1676,6 +1724,7 @@ import hide.domain.services.ILayoutEngine;
 import hide.domain.services.IAppInfo;
 import hide.domain.services.IPlatform;
 import hide.domain.services.IFileDialog;
+import hide.domain.services.IProjectManager;
 // Infrastructure (Electron)
 #if electron
 import hide.infrastructure.platform.electron.*;
@@ -1687,6 +1736,7 @@ import hide.application.services.MenuService;
 import hide.application.services.PluginManager;
 import hide.application.services.ViewRegistry;
 import hide.application.services.PluginRegistry;
+import hide.application.services.ProjectService;
 import hide.application.integration.SceneEditorService;
 // Commands (Use Cases)
 import hide.application.commands.LoadProjectUseCase;
@@ -1718,6 +1768,7 @@ class AppModule {
         collection.addSingleton(IWindowManager, ElectronWindowAdapter);
         collection.addSingleton(IPlatform, ElectronPlatformAdapter);
         collection.addSingleton(ILanguageServer, ElectronLanguageServerAdapter);  // ← НОВОЕ
+        collection.addSingleton(IProjectManager, ElectronProjectManagerAdapter);
         #end
         
         // === 2. Layout Engine ===
@@ -1737,7 +1788,7 @@ class AppModule {
         collection.addSingleton(MenuService);
         collection.addSingleton(PluginManager);
         collection.addSingleton(ShaderHistoryService);
-        
+        collection.addSingleton(ProjectService);
         // === 6. Мост между IDE и движком ===
         collection.addSingleton(SceneEditorService);
         
@@ -1810,58 +1861,122 @@ class LayoutConfig {
 package hide.domain.entities;
 
 import hide.domain.valueobjects.FilePath;
-import hide.domain.enums.ResourceType;
+import haxe.io.Path; // <-- Добавь этот импорт
 
 /**
- * Сущность проекта — чистая бизнес-логика, без зависимостей от UI или платформы.
+ * Сущность проекта — чистая бизнес-логика.
  */
 class Project {
     public final id:String;
-    public final name:String;
+    public var name:String;
     public final rootPath:FilePath;
     
-    private var resources:Map<String, Resource>;
-    private var _isDirty:Bool;
+    // Конфигурация путей
+    public var assetsPath:String = "Assets";
+    public var sourcePath:String = "Source";
+    public var buildPath:String = "Build";
     
+    // Настройки редактора
+    public var lastLayout:String = "Default";
+    public var recentScenes:Array<String> = [];
+    
+    // Настройки движка
+    public var defaultRenderer:String = "PBR";
+    public var startupScene:Null<String> = null;
+
+    private var _isDirty:Bool;
+
     public function new(id:String, name:String, rootPath:FilePath) {
         this.id = id;
         this.name = name;
         this.rootPath = rootPath.isValid() ? rootPath : throw 'Invalid path: $rootPath';
-        this.resources = new Map();
         this._isDirty = false;
     }
-    
-    public function addResource(resource:Resource):Void {
-        if (resources.exists(resource.id)) {
-            throw 'Resource ${resource.id} already exists';
-        }
-        resources.set(resource.id, resource);
-        _isDirty = true;
+
+    /**
+     * Получает полный путь к папке ассетов.
+     */
+    public function getFullAssetsPath():FilePath {
+        return new FilePath(rootPath.toString() + "/" + assetsPath);
     }
-    
-    public function getResource(id:String):Null<Resource> {
-        return resources.get(id);
+
+    /**
+     * Получает полный путь к папке исходников.
+     */
+    public function getFullSourcePath():FilePath {
+        return new FilePath(rootPath.toString() + "/" + sourcePath);
     }
-    
-    public function getResourcesByType(type:ResourceType):Array<Resource> {
-        return [for (r in resources) if (r.type == type) r];
+
+    /**
+     * Получает полный путь к папке сборки.
+     */
+    public function getFullBuildPath():FilePath {
+        return new FilePath(rootPath.toString() + "/" + buildPath);
     }
+
     public static function fromJson(json:String, filePath:FilePath):Project {
         var data = haxe.Json.parse(json);
-        // Валидация обязательных полей
+        
         if (data.name == null || StringTools.trim(data.name) == "") {
             throw "Invalid project file: missing or empty 'name' field";
         }
-        var id = data.id != null ? Std.string(data.id) : Std.string(Date.now().getTime());
-        // Если в JSON есть rootPath, используем его, иначе берем путь к самому файлу
-        var pathStr = data.rootPath != null ? data.rootPath : filePath.toString();
-        var finalPath = new FilePath(pathStr);
+        
+        // ✅ ИСПРАВЛЕНИЕ: Используем haxe.io.Path для получения родительской директории
+        var pathObj = new Path(filePath.toString());
+        var parentDir = pathObj.dir != null && pathObj.dir != "" ? pathObj.dir : ".";
+        var rootPath = new FilePath(parentDir);
 
-        return new Project(id, data.name, finalPath);
+        var project = new Project(
+            data.id != null ? Std.string(data.id) : Std.string(Date.now().getTime()),
+            data.name,
+            rootPath
+        );
+
+        // Восстанавливаем пути, если они есть в файле
+        if (data.paths != null) {
+            if (data.paths.assets != null) project.assetsPath = data.paths.assets;
+            if (data.paths.source != null) project.sourcePath = data.paths.source;
+            if (data.paths.build != null) project.buildPath = data.paths.build;
+        }
+
+        // Восстанавливаем настройки редактора
+        if (data.editor != null) {
+            if (data.editor.lastLayout != null) project.lastLayout = data.editor.lastLayout;
+            if (data.editor.recentScenes != null) project.recentScenes = data.editor.recentScenes;
+            if (data.editor.startupScene != null) project.startupScene = data.editor.startupScene;
+        }
+
+        // Восстанавливаем настройки движка
+        if (data.engine != null) {
+            if (data.engine.defaultRenderer != null) project.defaultRenderer = data.engine.defaultRenderer;
+        }
+
+        return project;
     }
+
+    public function toJson():String {
+        return haxe.Json.stringify({
+            version: "1.0.0",
+            name: name,
+            paths: {
+                assets: assetsPath,
+                source: sourcePath,
+                build: buildPath
+            },
+            editor: {
+                lastLayout: lastLayout,
+                recentScenes: recentScenes,
+                startupScene: startupScene
+            },
+            engine: {
+                defaultRenderer: defaultRenderer
+            }
+        }, null, "  ");
+    }
+
     public function get_isDirty():Bool return _isDirty;
     public function markSaved():Void _isDirty = false;
-
+    public function markDirty():Void _isDirty = true;
 }
 </file>
 
@@ -2310,6 +2425,48 @@ interface IPlugin {
      * Имя плагина (для логирования и реестра).
      */
     var name(get, never):String;
+}
+</file>
+
+<file path="domain/services/IProjectManager.hx">
+package hide.domain.services;
+
+import tink.core.Future;
+import hx.injection.Service;
+import hide.domain.entities.Project;
+import hide.domain.valueobjects.FilePath;
+
+/**
+ * Порт для управления жизненным циклом проектов.
+ * Реализуется в Infrastructure (через Electron IPC).
+ */
+interface IProjectManager extends Service {
+    /**
+     * Открывает проект по пути.
+     * На бэкенде это запустит AssetPipeline, LSP и загрузит метаданные.
+     */
+    function openProject(path:FilePath):Future<Project>;
+
+    /**
+     * Закрывает текущий проект.
+     * Очищает кэши, останавливает вотчеры.
+     */
+    function closeProject():Future<Bool>;
+
+    /**
+     * Сохраняет настройки текущего проекта.
+     */
+    function saveProject(project:Project):Future<Bool>;
+
+    /**
+     * Создает новый проект в указанной директории.
+     */
+    function createProject(name:String, path:FilePath):Future<Project>;
+
+    /**
+     * Возвращает список недавних проектов (из настроек редактора).
+     */
+    function getRecentProjects():Future<Array<String>>;
 }
 </file>
 
@@ -9287,6 +9444,67 @@ class ElectronPlatformAdapter implements IPlatform {
 }
 </file>
 
+<file path="infrastructure/platform/electron/ElectronProjectManagerAdapter.hx">
+package hide.infrastructure.platform.electron;
+
+import hide.domain.services.IProjectManager;
+import hide.domain.entities.Project;
+import hide.domain.valueobjects.FilePath;
+import tink.core.Future;
+import hx.injection.Service;
+
+class ElectronProjectManagerAdapter implements IProjectManager implements Service {
+    private var ipcBridge:ElectronIpcBridge;
+
+    public function new(ipcBridge:ElectronIpcBridge) {
+        this.ipcBridge = ipcBridge;
+    }
+
+    public function openProject(path:FilePath):Future<Project> {
+        // Вызываем метод на бэкенде
+        return ipcBridge.invokeSafe("project:open", path.toString())
+            .map(function(data:Dynamic) {
+                if (data == null || !data.success) {
+                    throw "Failed to open project at " + path.toString();
+                }
+                // Здесь можно распарсить ответ и вернуть объект Project, 
+                // если бэкенд возвращает его метаданные
+                return Project.fromJson(data.content, path); 
+            });
+    }
+
+    public function closeProject():Future<Bool> {
+        return ipcBridge.invokeSafe("project:close", null)
+            .map(function(res:Dynamic) return res != null && res.success);
+    }
+
+    public function saveProject(project:Project):Future<Bool> {
+        return ipcBridge.invokeSafe("project:save", {
+            path: project.rootPath.toString(),
+            content: project.toJson()
+        }).map(function(res:Dynamic) return res != null && res.success);
+    }
+
+    public function createProject(name:String, path:FilePath):Future<Project> {
+        return ipcBridge.invokeSafe("project:create", {
+            name: name,
+            path: path.toString()
+        }).map(function(data:Dynamic) {
+            // Логика создания структуры папок и файла проекта
+            return null; // TODO: вернуть созданный проект
+        });
+    }
+
+    public function getRecentProjects():Future<Array<String>> {
+        return ipcBridge.invokeSafe("project:getRecent", null)
+            .map(function(data:Dynamic) {
+                if (data == null) return [];
+                return data.paths;
+            });
+    }
+}
+</file>
+
 <file path="infrastructure/platform/electron/ElectronScreenAdapter.hx">
 package hide.infrastructure.platform.electron;
 
@@ -14461,6 +14679,7 @@ import hide.application.services.MenuService;
 import hide.application.services.WindowService;
 import hide.application.services.PluginManager;
 import hide.application.services.ViewRegistry;
+import hide.application.services.ProjectService;
 import hide.domain.services.IFileDialog;
 import hide.domain.services.IPlatform;
 import hide.domain.services.IAppInfo;
@@ -14543,6 +14762,8 @@ class Ide implements Service {
     private var saveShader:SaveShaderUseCase;
     private var loadShader:LoadShaderUseCase;
     private var languageServer:ILanguageServer;
+    private var projectService:ProjectService;
+
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -14569,11 +14790,13 @@ class Ide implements Service {
         shaderHistory:ShaderHistoryService,
         saveShader:SaveShaderUseCase,
         loadShader:LoadShaderUseCase,
-        languageServer:ILanguageServer
+        languageServer:ILanguageServer,
+        projectService:ProjectService
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
         this.loadProjectUseCase = loadProjectUseCase;
+        this.projectService = projectService;
         this.setFullscreenUseCase = setFullscreenUseCase;
         this.openViewUseCase = openViewUseCase;
         this.viewRegistry = viewRegistry;
@@ -14694,7 +14917,8 @@ class Ide implements Service {
     }
     
     private function onOpenRecent(path:String):Void {
-        loadProjectUseCase.execute(new FilePath(path));
+        projectService.openProject(new FilePath(path));
+        //loadProjectUseCase.execute(new FilePath(path));
     }
     
     private function updateWindowTitle():Void {
@@ -14783,10 +15007,11 @@ class Ide implements Service {
                 break;
             }
         }
-        
+        projectFile = 'D:\\Dev\\tetris-game-project\\tetris-game-project.hideproj';
         if (projectFile != null) {
             trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile);
-            loadProjectUseCase.execute(new FilePath(projectFile));
+            projectService.openProject(new FilePath(projectFile));
+            //loadProjectUseCase.execute(new FilePath(projectFile));
         } else {
             trace("👋 Приложение запущено без проекта.");
 
@@ -18397,6 +18622,17 @@ interface IEventBus extends Service {
      * Публикация события.
      */
     function publish<T>(eventClass:Class<T>, event:T):Void;
+}
+</file>
+
+<file path="shared/types/IpcResponse.hx">
+package hide.shared.types;
+
+// hide/main/ipc/IpcResponse.hx
+typedef IpcResponse<T> = {
+    var success:Bool;
+    var ?error:String;
+    var ?data:T;
 }
 </file>
 

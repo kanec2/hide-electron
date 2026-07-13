@@ -38,6 +38,9 @@ import hide.application.services.PluginManager;
 import hide.application.services.ViewRegistry;
 import hide.application.services.PluginRegistry;
 import hide.application.services.ProjectService;
+import hide.application.services.AssetBrowserService;
+
+
 import hide.application.integration.SceneEditorService;
 // Commands (Use Cases)
 import hide.application.commands.LoadProjectUseCase;
@@ -90,6 +93,7 @@ class AppModule {
         collection.addSingleton(PluginManager);
         collection.addSingleton(ShaderHistoryService);
         collection.addSingleton(ProjectService);
+        collection.addSingleton(AssetBrowserService);
         // === 6. Мост между IDE и движком ===
         collection.addSingleton(SceneEditorService);
         
@@ -117,6 +121,7 @@ class AppModule {
         collection.addSingleton(IViewModule, MonacoEditorModule);
         collection.addSingleton(IViewModule, PropertiesModule);
         collection.addSingleton(IViewModule, ConsoleModule);
+        collection.addSingleton(IViewModule, AssetBrowserModule);
         
         // === 10. Presentation ===
         collection.addSingleton(Ide);

@@ -171,7 +171,16 @@ class AutoWindow {
         Fs.mkdirSync(dir);
     }
 
-   
+   // Вспомогательная функция
+    static function getFileType(filename:String):String {
+        var ext = filename.split('.').pop().toLowerCase();
+        return switch (ext) {
+            case 'png', 'jpg', 'jpeg', 'webp', 'tga': "image";
+            case 'mp3', 'wav', 'ogg': "audio";
+            case 'fbx', 'obj', 'gltf': "model";
+            default: "unknown";
+        }
+    }
     static function setupIpc():Void {
         // === Language Server Protocol ===
         /*
@@ -285,7 +294,66 @@ class AutoWindow {
         });
         */
 
-
+        IpcMain.handle("asset:getList", function(event:Dynamic, data:Dynamic):IpcResponse<Dynamic> {
+            var fs = untyped require('fs');
+            var path = untyped require('path');
+            
+            var root = data.projectRoot;
+            var folder = data.folder != null ? data.folder : "Assets";
+            var fullPath = js.node.Path.join(root, folder);
+            
+            if (!js.node.Fs.existsSync(fullPath)) {
+                return { success: false, error: 'Folder not found: $fullPath' };
+            }
+            
+            try {
+                var files = js.node.Fs.readdirSync(fullPath);
+                var result = [];
+                
+                for (file in files) {
+                    // Игнорируем скрытые файлы и meta-файлы
+                    if (StringTools.startsWith(file, ".") || StringTools.endsWith(file, ".meta")) continue;
+                    
+                    var filePath = js.node.Path.join(fullPath, file);
+                    var stat = js.node.Fs.statSync(filePath);
+                    
+                    if (stat.isFile()) {
+                        // Проверяем, есть ли у файла .meta (значит он импортирован)
+                        var hasMeta = js.node.Fs.existsSync(filePath + '.meta');
+                        var metaContent = null;
+                        if (hasMeta) {
+                            try {
+                                metaContent = Json.parse(js.node.Fs.readFileSync(filePath + '.meta', 'utf-8'));
+                            } catch(_) {}
+                        }
+                        
+                        result.push({
+                            name: file,
+                            path: filePath,
+                            relativePath: js.node.Path.relative(root, filePath).split("\\").join("/"),
+                            isDirectory: false,
+                            guid: metaContent != null ? metaContent.guid : null,
+                            buildPath: metaContent != null ? metaContent.buildPath : null,
+                            type: getFileType(file) // Простая функция определения типа по расширению
+                        });
+                    } else if (stat.isDirectory()) {
+                        result.push({
+                            name: file,
+                            path: filePath,
+                            relativePath: js.node.Path.relative(root, filePath).split("\\").join("/"),
+                            isDirectory: true,
+                            guid: null,
+                            buildPath: null,
+                            type: "folder"
+                        });
+                    }
+                }
+                
+                return { success: true, data: result };
+            } catch (e:Dynamic) {
+                return { success: false, error: Std.string(e) };
+            }
+        });
         // === Asset Pipeline IPC Handlers ===
         // 1. Инициализация пайплайна при открытии проекта
         IpcMain.handle("asset:init", function(event:Dynamic, data:Dynamic):IpcResponse<Dynamic> {
