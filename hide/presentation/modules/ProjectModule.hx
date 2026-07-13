@@ -3,7 +3,8 @@ package hide.presentation.modules;
 import hide.application.services.IViewModule;
 import hide.application.services.ViewDescriptor;
 import hide.infrastructure.external.StubProjectFactory;
-
+import hide.presentation.ui.react.factories.ReactViewFactory;
+import hide.presentation.ui.react.components.ProjectPanel;
 class ProjectModule implements IViewModule {
     public function new() {}
     
@@ -16,7 +17,7 @@ class ProjectModule implements IViewModule {
                 icon: "folder",
                 defaultState: {}
             },
-            factory: new StubProjectFactory()
+            factory: new ReactViewFactory().withComponent(ProjectPanel)
         };
     }
 }

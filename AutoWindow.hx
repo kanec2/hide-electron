@@ -10,7 +10,7 @@ import js.node.Path;
 import haxe.Json;
 import src.main.services.ServiceLocator;
 import hide.shared.types.IpcResponse;
-
+using StringTools;
 
 // Electron предоставляет __dirname в main процессе
 @:native("__dirname") extern var __dirname:String;
@@ -295,62 +295,75 @@ class AutoWindow {
         */
 
         IpcMain.handle("asset:getList", function(event:Dynamic, data:Dynamic):IpcResponse<Dynamic> {
-            var fs = untyped require('fs');
-            var path = untyped require('path');
-            
-            var root = data.projectRoot;
-            var folder = data.folder != null ? data.folder : "Assets";
-            var fullPath = js.node.Path.join(root, folder);
-            
-            if (!js.node.Fs.existsSync(fullPath)) {
-                return { success: false, error: 'Folder not found: $fullPath' };
+            var pipeline = ServiceLocator.get().assetPipeline;
+            if (pipeline == null) {
+                return { success: false, error: "AssetPipeline not initialized" };
             }
             
             try {
-                var files = js.node.Fs.readdirSync(fullPath);
+                var folder = data.folder != null ? data.folder : null;
+                var items = pipeline.getAssetsList(folder);
+                return { success: true, data: items };
+            } catch (e:Dynamic) {
+                return { success: false, error: Std.string(e) };
+            }
+        });
+        IpcMain.handle("project:readDir", function(event:Dynamic, data:Dynamic):IpcResponse<Dynamic> {
+            var fs = js.node.Fs;
+            var pathLib = js.node.Path;
+            
+            // Берем корень из AssetPipeline (он уже знает projectRoot)
+            var pipeline = ServiceLocator.get().assetPipeline;
+            if (pipeline == null) return { success: false, error: "No project loaded" };
+            
+            var root = pipeline.getProjectRoot(); // Предполагаем, что поле публичное или есть геттер
+            var targetDir = data.path != null ? data.path : root;
+            
+            trace('🔍 [Backend] readDir requested for: $targetDir');
+            trace('   Project Root: $root');
+
+            // Защита: нельзя выйти за пределы корня проекта
+            if (!targetDir.startsWith(root)) {
+                trace('❌ [Backend] Access denied: $targetDir is outside $root');
+                return { success: false, error: "Access denied: path outside project root" };
+            }
+
+            try {
+                if (!fs.existsSync(targetDir)) {
+                    trace('⚠️ [Backend] Directory not found: $targetDir');
+                    return { success: true, data: [] }; // Возвращаем пустой массив, а не ошибку
+                }
+
+                var entries = fs.readdirSync(targetDir);
                 var result = [];
                 
-                for (file in files) {
-                    // Игнорируем скрытые файлы и meta-файлы
-                    if (StringTools.startsWith(file, ".") || StringTools.endsWith(file, ".meta")) continue;
+                for (entry in entries) {
+                    // Игнорируем скрытые файлы и системные папки
+                    if (StringTools.startsWith(entry, ".") || entry == "node_modules") continue;
                     
-                    var filePath = js.node.Path.join(fullPath, file);
-                    var stat = js.node.Fs.statSync(filePath);
+                    var fullPath = pathLib.join(targetDir, entry);
+                    var stat = fs.statSync(fullPath);
+                    var relPath = pathLib.relative(root, fullPath).split("\\").join("/");
                     
-                    if (stat.isFile()) {
-                        // Проверяем, есть ли у файла .meta (значит он импортирован)
-                        var hasMeta = js.node.Fs.existsSync(filePath + '.meta');
-                        var metaContent = null;
-                        if (hasMeta) {
-                            try {
-                                metaContent = Json.parse(js.node.Fs.readFileSync(filePath + '.meta', 'utf-8'));
-                            } catch(_) {}
-                        }
-                        
-                        result.push({
-                            name: file,
-                            path: filePath,
-                            relativePath: js.node.Path.relative(root, filePath).split("\\").join("/"),
-                            isDirectory: false,
-                            guid: metaContent != null ? metaContent.guid : null,
-                            buildPath: metaContent != null ? metaContent.buildPath : null,
-                            type: getFileType(file) // Простая функция определения типа по расширению
-                        });
-                    } else if (stat.isDirectory()) {
-                        result.push({
-                            name: file,
-                            path: filePath,
-                            relativePath: js.node.Path.relative(root, filePath).split("\\").join("/"),
-                            isDirectory: true,
-                            guid: null,
-                            buildPath: null,
-                            type: "folder"
-                        });
-                    }
+                    result.push({
+                        name: entry,
+                        path: fullPath,
+                        relativePath: relPath,
+                        isDirectory: stat.isDirectory(),
+                        extension: stat.isFile() ? entry.split('.').pop().toLowerCase() : null
+                    });
                 }
                 
+                // Сортировка: сначала папки, потом файлы, по алфавиту
+                result.sort(function(a, b) {
+                    if (a.isDirectory && !b.isDirectory) return -1;
+                    if (!a.isDirectory && b.isDirectory) return 1;
+                    return a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1;
+                });
+                trace('✅ [Backend] Listed ${result.length} items in: $targetDir');
                 return { success: true, data: result };
             } catch (e:Dynamic) {
+                trace('❌ [Backend] Error reading dir: $e');
                 return { success: false, error: Std.string(e) };
             }
         });

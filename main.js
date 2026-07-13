@@ -140,58 +140,73 @@ AutoWindow.ensureDirectoryExists = function(dir) {
 	AutoWindow.ensureDirectoryExists(js_node_Path.dirname(dir));
 	js_node_Fs.mkdirSync(dir);
 };
-AutoWindow.getFileType = function(filename) {
-	var ext = filename.split(".").pop().toLowerCase();
-	switch(ext) {
-	case "fbx":case "gltf":case "obj":
-		return "model";
-	case "mp3":case "ogg":case "wav":
-		return "audio";
-	case "jpeg":case "jpg":case "png":case "tga":case "webp":
-		return "image";
-	default:
-		return "unknown";
-	}
-};
 AutoWindow.setupIpc = function() {
 	electron_main_IpcMain.handle("asset:getList",function(event,data) {
-		var fs = require("fs");
-		var path = require("path");
-		var root = data.projectRoot;
-		var folder = data.folder != null ? data.folder : "Assets";
-		var fullPath = js_node_Path.join(root,folder);
-		if(!js_node_Fs.existsSync(fullPath)) {
-			return { success : false, error : "Folder not found: " + fullPath};
+		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+		if(pipeline == null) {
+			return { success : false, error : "AssetPipeline not initialized"};
 		}
 		try {
-			var files = js_node_Fs.readdirSync(fullPath);
+			var folder = data.folder != null ? data.folder : null;
+			var items = pipeline.getAssetsList(folder);
+			return { success : true, data : items};
+		} catch( _g ) {
+			var e = haxe_Exception.caught(_g).unwrap();
+			return { success : false, error : Std.string(e)};
+		}
+	});
+	electron_main_IpcMain.handle("project:readDir",function(event,data) {
+		var fs = js_node_Fs;
+		var pathLib = js_node_Path;
+		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+		if(pipeline == null) {
+			return { success : false, error : "No project loaded"};
+		}
+		var root = pipeline.getProjectRoot();
+		var targetDir = data.path != null ? data.path : root;
+		console.log("AutoWindow.hx:322:","🔍 [Backend] readDir requested for: " + targetDir);
+		console.log("AutoWindow.hx:323:","   Project Root: " + root);
+		if(!StringTools.startsWith(targetDir,root)) {
+			console.log("AutoWindow.hx:327:","❌ [Backend] Access denied: " + targetDir + " is outside " + root);
+			return { success : false, error : "Access denied: path outside project root"};
+		}
+		try {
+			if(!fs.existsSync(targetDir)) {
+				console.log("AutoWindow.hx:333:","⚠️ [Backend] Directory not found: " + targetDir);
+				return { success : true, data : []};
+			}
+			var entries = fs.readdirSync(targetDir);
 			var result = [];
 			var _g = 0;
-			while(_g < files.length) {
-				var file = files[_g];
+			while(_g < entries.length) {
+				var entry = entries[_g];
 				++_g;
-				if(StringTools.startsWith(file,".") || StringTools.endsWith(file,".meta")) {
+				if(StringTools.startsWith(entry,".") || entry == "node_modules") {
 					continue;
 				}
-				var filePath = js_node_Path.join(fullPath,file);
-				var stat = js_node_Fs.statSync(filePath);
-				if(stat.isFile()) {
-					var hasMeta = js_node_Fs.existsSync(filePath + ".meta");
-					var metaContent = null;
-					if(hasMeta) {
-						try {
-							metaContent = JSON.parse(js_node_Fs.readFileSync(filePath + ".meta","utf-8"));
-						} catch( _g1 ) {
-						}
-					}
-					result.push({ name : file, path : filePath, relativePath : js_node_Path.relative(root,filePath).split("\\").join("/"), isDirectory : false, guid : metaContent != null ? metaContent.guid : null, buildPath : metaContent != null ? metaContent.buildPath : null, type : AutoWindow.getFileType(file)});
-				} else if(stat.isDirectory()) {
-					result.push({ name : file, path : filePath, relativePath : js_node_Path.relative(root,filePath).split("\\").join("/"), isDirectory : true, guid : null, buildPath : null, type : "folder"});
-				}
+				var fullPath = pathLib.join(targetDir,entry);
+				var stat = fs.statSync(fullPath);
+				var relPath = pathLib.relative(root,fullPath).split("\\").join("/");
+				result.push({ name : entry, path : fullPath, relativePath : relPath, isDirectory : stat.isDirectory(), extension : stat.isFile() ? entry.split(".").pop().toLowerCase() : null});
 			}
+			result.sort(function(a,b) {
+				if(a.isDirectory && !b.isDirectory) {
+					return -1;
+				}
+				if(!a.isDirectory && b.isDirectory) {
+					return 1;
+				}
+				if(a.name.toLowerCase() < b.name.toLowerCase()) {
+					return -1;
+				} else {
+					return 1;
+				}
+			});
+			console.log("AutoWindow.hx:363:","✅ [Backend] Listed " + result.length + " items in: " + targetDir);
 			return { success : true, data : result};
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
+			console.log("AutoWindow.hx:366:","❌ [Backend] Error reading dir: " + Std.string(e));
 			return { success : false, error : Std.string(e)};
 		}
 	});
@@ -202,13 +217,13 @@ AutoWindow.setupIpc = function() {
 		}
 		try {
 			pipeline.setProjectRoot(data.projectRoot);
-			console.log("AutoWindow.hx:369:","✅ [Main] Asset Pipeline initialized for: " + Std.string(data.projectRoot));
-			console.log("AutoWindow.hx:370:","   Assets folder: " + Std.string(data.assetsFolder));
-			console.log("AutoWindow.hx:371:","   Build folder: " + Std.string(data.buildFolder));
+			console.log("AutoWindow.hx:382:","✅ [Main] Asset Pipeline initialized for: " + Std.string(data.projectRoot));
+			console.log("AutoWindow.hx:383:","   Assets folder: " + Std.string(data.assetsFolder));
+			console.log("AutoWindow.hx:384:","   Build folder: " + Std.string(data.buildFolder));
 			return { success : true, data : { assetsPath : pipeline.getAssetsPath(), supportedExtensions : pipeline.getSupportedExtensions()}};
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			console.log("AutoWindow.hx:381:","❌ [Main] Failed to init Asset Pipeline: " + Std.string(e));
+			console.log("AutoWindow.hx:394:","❌ [Main] Failed to init Asset Pipeline: " + Std.string(e));
 			return { success : false, error : Std.string(e)};
 		}
 	});
@@ -370,12 +385,12 @@ AutoWindow.setupIpc = function() {
 		event.returnValue = null;
 	});
 	electron_main_IpcMain.on("menu:build",function(event,menuData) {
-		console.log("AutoWindow.hx:551:","[AutoWindow] 📥 Received menu data");
+		console.log("AutoWindow.hx:564:","[AutoWindow] 📥 Received menu data");
 	});
 	electron_main_IpcMain.on("window:open",function(event,data) {
 		var url = data.url;
 		if(url.indexOf("?subView=") != -1) {
-			console.log("AutoWindow.hx:592:","[AutoWindow] ⚠️ Sub-view request: " + url);
+			console.log("AutoWindow.hx:605:","[AutoWindow] ⚠️ Sub-view request: " + url);
 			event.sender.send("window:open:subview",{ url : url});
 			return;
 		}
@@ -611,6 +626,9 @@ src_main_assets_AssetPipelineService.prototype = {
 		console.log("src/main/assets/AssetPipelineService.hx:46:","📂 [AssetPipeline] Project root set to: " + normalizedRoot);
 		console.log("src/main/assets/AssetPipelineService.hx:47:","   Watching: " + this.assetsPath);
 	}
+	,getProjectRoot: function() {
+		return this.projectRoot;
+	}
 	,getAssetsPath: function() {
 		return this.assetsPath;
 	}
@@ -666,25 +684,86 @@ src_main_assets_AssetPipelineService.prototype = {
 			console.log("src/main/assets/AssetPipelineService.hx:158:","🛑 [AssetPipeline] Watcher stopped");
 		}
 	}
+	,getAssetsList: function(folder) {
+		if(this.projectRoot == "") {
+			return [];
+		}
+		var fs = js_node_Fs;
+		var pathLib = js_node_Path;
+		var targetDir = folder != null ? pathLib.join(this.assetsPath,folder) : this.assetsPath;
+		if(!fs.existsSync(targetDir)) {
+			console.log("src/main/assets/AssetPipelineService.hx:177:","⚠️ [AssetPipeline] Directory not found: " + targetDir);
+			return [];
+		}
+		try {
+			var entries = fs.readdirSync(targetDir);
+			var result = [];
+			var _g = 0;
+			while(_g < entries.length) {
+				var entry = entries[_g];
+				++_g;
+				if(StringTools.startsWith(entry,".") || StringTools.endsWith(entry,".meta")) {
+					continue;
+				}
+				var fullPath = pathLib.join(targetDir,entry);
+				var stat = fs.statSync(fullPath);
+				var relPath = pathLib.relative(this.projectRoot,fullPath).split("\\").join("/");
+				if(stat.isDirectory()) {
+					result.push({ name : entry, path : fullPath, relativePath : relPath, isDirectory : true, guid : null, buildPath : null, type : "folder"});
+				} else {
+					var metaPath = fullPath + ".meta";
+					var guid = null;
+					var buildPath = null;
+					if(fs.existsSync(metaPath)) {
+						try {
+							var metaContent = fs.readFileSync(metaPath,"utf-8");
+							var meta = JSON.parse(metaContent);
+							guid = meta.guid;
+							buildPath = meta.buildPath;
+						} catch( _g1 ) {
+						}
+					}
+					var ext = entry.split(".").pop().toLowerCase();
+					var assetType;
+					switch(ext) {
+					case "mp3":case "ogg":case "wav":
+						assetType = "audio";
+						break;
+					case "jpeg":case "jpg":case "png":case "tga":case "webp":
+						assetType = "image";
+						break;
+					default:
+						assetType = "unknown";
+					}
+					result.push({ name : entry, path : fullPath, relativePath : relPath, isDirectory : false, guid : guid, buildPath : buildPath, type : assetType});
+				}
+			}
+			return result;
+		} catch( _g ) {
+			var e = haxe_Exception.caught(_g).unwrap();
+			console.log("src/main/assets/AssetPipelineService.hx:239:","❌ [AssetPipeline] Failed to list assets: " + Std.string(e));
+			return [];
+		}
+	}
 	,onInitialScanComplete: function() {
-		console.log("src/main/assets/AssetPipelineService.hx:168:","✅ [AssetPipeline] Initial scan complete. System ready.");
+		console.log("src/main/assets/AssetPipelineService.hx:250:","✅ [AssetPipeline] Initial scan complete. System ready.");
 	}
 	,onFileAdded: function(path) {
 		if(StringTools.endsWith(path,".meta")) {
 			return;
 		}
-		console.log("src/main/assets/AssetPipelineService.hx:178:","📥 [AssetPipeline] New file detected: " + path);
+		console.log("src/main/assets/AssetPipelineService.hx:260:","📥 [AssetPipeline] New file detected: " + path);
 		this.importSingleAsset(path);
 	}
 	,onFileChanged: function(path) {
 		if(StringTools.endsWith(path,".meta")) {
 			return;
 		}
-		console.log("src/main/assets/AssetPipelineService.hx:185:","🔄 [AssetPipeline] File changed: " + path);
+		console.log("src/main/assets/AssetPipelineService.hx:267:","🔄 [AssetPipeline] File changed: " + path);
 		this.reimportAsset(path);
 	}
 	,onFileDeleted: function(path) {
-		console.log("src/main/assets/AssetPipelineService.hx:190:","🗑️ [AssetPipeline] File deleted: " + path);
+		console.log("src/main/assets/AssetPipelineService.hx:272:","🗑️ [AssetPipeline] File deleted: " + path);
 		this.cleanupBuildFiles(path);
 	}
 	,importSingleAsset: function(sourcePath) {
@@ -720,7 +799,7 @@ src_main_assets_AssetPipelineService.prototype = {
         ;
 		var converter = this.registry.getConverter(sourcePath);
 		if(converter == null) {
-			console.log("src/main/assets/AssetPipelineService.hx:242:","⚠️ [AssetPipeline] No converter found for: " + sourcePath);
+			console.log("src/main/assets/AssetPipelineService.hx:324:","⚠️ [AssetPipeline] No converter found for: " + sourcePath);
 			return;
 		}
 		meta.type = "texture";

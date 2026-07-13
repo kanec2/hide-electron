@@ -109485,6 +109485,32 @@ hide_application_services_ProjectService.prototype = {
 	}
 	,__class__: hide_application_services_ProjectService
 };
+var hide_application_services_ProjectTreeService = function(ipcBridge) {
+	this.ipcBridge = ipcBridge;
+};
+$hxClasses["hide.application.services.ProjectTreeService"] = hide_application_services_ProjectTreeService;
+hide_application_services_ProjectTreeService.__name__ = "hide.application.services.ProjectTreeService";
+hide_application_services_ProjectTreeService.__interfaces__ = [hx_injection_Service];
+hide_application_services_ProjectTreeService.prototype = {
+	ipcBridge: null
+	,readDir: function(path) {
+		return tink_core_Future.map(this.ipcBridge.invokeSafe("project:readDir",{ path : path}),function(response) {
+			if(response != null && response.success) {
+				var nodes = response.data;
+				haxe_Log.trace(" [Service] Received " + nodes.length + " nodes for: " + path,{ fileName : "hide/application/services/ProjectTreeService.hx", lineNumber : 42, className : "hide.application.services.ProjectTreeService", methodName : "readDir"});
+				return nodes;
+			}
+			haxe_Log.trace("⚠️ [Service] Failed to read dir: " + path,{ fileName : "hide/application/services/ProjectTreeService.hx", lineNumber : 45, className : "hide.application.services.ProjectTreeService", methodName : "readDir"});
+			return [];
+		});
+	}
+	,invalidateCache: function() {
+	}
+	,getConstructorArgs: function() {
+		return ["hide.infrastructure.platform.electron.ElectronIpcBridge"];
+	}
+	,__class__: hide_application_services_ProjectTreeService
+};
 var hide_application_services_ShaderHistoryService = function() {
 	this.isUndoRedoInProgress = false;
 	this.maxUndoSteps = 50;
@@ -109790,6 +109816,8 @@ hide_bootstrap_AppModule.configure = function(collection) {
 	var implementation = hide_application_services_ProjectService;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
 	var implementation = hide_application_services_AssetBrowserService;
+	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
+	var implementation = hide_application_services_ProjectTreeService;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
 	var implementation = hide_application_integration_SceneEditorService;
 	collection.handleServiceAdd(hx_injection_ServiceType.Singleton,implementation.__name__,implementation);
@@ -114157,7 +114185,7 @@ hide_infrastructure_platform_electron_ElectronWindowAdapter.prototype = {
 	}
 	,__class__: hide_infrastructure_platform_electron_ElectronWindowAdapter
 };
-var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,openViewUseCase,viewRegistry,pluginManager,eventBus,fileDialog,fileSystem,platform,layoutEngine,menuController,windowController,toolbarController,sceneService,sceneEditorService,sceneViewFactory,shaderPreviewRenderer,viewportService,viewModules,shaderNodeRegistry,shaderHistory,saveShader,loadShader,languageServer,projectService,assetBrowserService) {
+var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCase,setFullscreenUseCase,openViewUseCase,viewRegistry,pluginManager,eventBus,fileDialog,fileSystem,platform,layoutEngine,menuController,windowController,toolbarController,sceneService,sceneEditorService,sceneViewFactory,shaderPreviewRenderer,viewportService,viewModules,shaderNodeRegistry,shaderHistory,saveShader,loadShader,languageServer,projectService,assetBrowserService,projectTreeService) {
 	var _gthis = this;
 	this.windowService = windowService;
 	this.menuService = menuService;
@@ -114187,6 +114215,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this.loadShader = loadShader;
 	this.languageServer = languageServer;
 	this.assetBrowserService = assetBrowserService;
+	this.projectTreeService = projectTreeService;
 	hide_presentation_Ide.inst = this;
 	menuService.onItemClick("project.open",$bind(this,this.onMenuOpenProject));
 	menuService.onItemClick("view.fullscreen",$bind(this,this.onToggleFullscreen));
@@ -114201,7 +114230,7 @@ var hide_presentation_Ide = function(windowService,menuService,loadProjectUseCas
 	this._projectLoadedUnsub = eventBus.subscribe(hide_shared_events_ProjectLoaded,$bind(this,this.onProjectLoadedHandler));
 	this._errorUnsub = eventBus.subscribe(hide_shared_events_ErrorOccurred,$bind(this,this.onErrorOccurred));
 	this._layoutChangedUnsub = eventBus.subscribe(hide_shared_events_LayoutChanged,function(e) {
-		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 189, className : "hide.presentation.Ide", methodName : "new"});
+		haxe_Log.trace("Layout changed",{ fileName : "hide/presentation/Ide.hx", lineNumber : 194, className : "hide.presentation.Ide", methodName : "new"});
 	});
 	this._projectClosedUnsub = eventBus.subscribe(hide_shared_events_ProjectClosed,function(e) {
 		_gthis._currentProject = null;
@@ -114251,15 +114280,16 @@ hide_presentation_Ide.prototype = {
 	,languageServer: null
 	,projectService: null
 	,assetBrowserService: null
+	,projectTreeService: null
 	,onMenuOpenProject: function() {
 		this.layoutEngine.open("welcome",{ },hide_domain_valueobjects_DisplayPosition.Center);
 	}
 	,onErrorOccurred: function(event) {
-		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 216, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
+		haxe_Log.trace("UI ERROR [" + event.context + "]: " + Std.string(event.error),{ fileName : "hide/presentation/Ide.hx", lineNumber : 221, className : "hide.presentation.Ide", methodName : "onErrorOccurred"});
 	}
 	,onProjectLoadedHandler: function(event) {
 		this._currentProject = event.project.name;
-		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 221, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
+		haxe_Log.trace("UI: Project loaded successfully: " + this._currentProject,{ fileName : "hide/presentation/Ide.hx", lineNumber : 226, className : "hide.presentation.Ide", methodName : "onProjectLoadedHandler"});
 		this.updateWindowTitle();
 	}
 	,onToggleFullscreen: function() {
@@ -114270,7 +114300,7 @@ hide_presentation_Ide.prototype = {
 	,onCloseProject: function() {
 	}
 	,openView: function(viewName) {
-		haxe_Log.trace("[Open view] search view to open: " + viewName,{ fileName : "hide/presentation/Ide.hx", lineNumber : 242, className : "hide.presentation.Ide", methodName : "openView"});
+		haxe_Log.trace("[Open view] search view to open: " + viewName,{ fileName : "hide/presentation/Ide.hx", lineNumber : 247, className : "hide.presentation.Ide", methodName : "openView"});
 		var view = Lambda.find(this.viewRegistry.all(),function(v) {
 			return v.name == viewName;
 		});
@@ -114288,7 +114318,7 @@ hide_presentation_Ide.prototype = {
 		default:
 			position = hide_domain_valueobjects_DisplayPosition.Center;
 		}
-		haxe_Log.trace("[Open view] view opened",{ fileName : "hide/presentation/Ide.hx", lineNumber : 253, className : "hide.presentation.Ide", methodName : "openView"});
+		haxe_Log.trace("[Open view] view opened",{ fileName : "hide/presentation/Ide.hx", lineNumber : 258, className : "hide.presentation.Ide", methodName : "openView"});
 		this.openViewUseCase.execute(view.name,view.defaultState,position);
 	}
 	,onOpenRecent: function(path) {
@@ -114296,11 +114326,11 @@ hide_presentation_Ide.prototype = {
 	}
 	,updateWindowTitle: function() {
 		var title = this._currentProject != null ? "" + this._currentProject + " - HIDE IDE" : "HIDE IDE";
-		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 264, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
+		haxe_Log.trace("Window title updated to: " + title,{ fileName : "hide/presentation/Ide.hx", lineNumber : 269, className : "hide.presentation.Ide", methodName : "updateWindowTitle"});
 		this.windowService.setTitle(title);
 	}
 	,showAboutDialog: function() {
-		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 269, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
+		haxe_Log.trace("HIDE IDE\nVersion 0.1.0",{ fileName : "hide/presentation/Ide.hx", lineNumber : 274, className : "hide.presentation.Ide", methodName : "showAboutDialog"});
 	}
 	,get_currentProjectName: function() {
 		if(this._currentProject != null) {
@@ -114311,7 +114341,7 @@ hide_presentation_Ide.prototype = {
 	}
 	,startup: function() {
 		var _gthis = this;
-		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 279, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("✅ DI Контейнер успешно инициализирован! Ide создан.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 284, className : "hide.presentation.Ide", methodName : "startup"});
 		var $module = $getIterator(this.viewModules);
 		while($module.hasNext()) {
 			var module1 = $module.next();
@@ -114324,29 +114354,29 @@ hide_presentation_Ide.prototype = {
 					_gthis.openView(descriptor[0].dto.name);
 				};
 			})(descriptor));
-			haxe_Log.trace("📦 View registered: " + descriptor[0].dto.name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 293, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📦 View registered: " + descriptor[0].dto.name,{ fileName : "hide/presentation/Ide.hx", lineNumber : 298, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		this.windowController.init();
-		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 297, className : "hide.presentation.Ide", methodName : "startup"});
+		haxe_Log.trace("🪟 WindowController инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 302, className : "hide.presentation.Ide", methodName : "startup"});
 		var toolbarEl = window.document.getElementById("main-toolbar");
 		if(toolbarEl != null) {
 			this.toolbarController.setContainer(toolbarEl);
-			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 305, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🔧 Toolbar инициализирован",{ fileName : "hide/presentation/Ide.hx", lineNumber : 310, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var layoutEl = window.document.getElementById("golden-layout-root");
 		if(layoutEl != null) {
 			this.layoutEngine.setContainer(layoutEl);
 			this.layoutEngine.init({ content : [], fullScreen : null});
-			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 313, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("🎨 GoldenLayout инициализирован.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 318, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 315, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("❌ Element #golden-layout-root not found in DOM! Проверьте app.html.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 320, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var menuContainer = window.document.getElementById("main-menu");
 		if(menuContainer != null) {
 			this.menuController.setContainer(menuContainer);
-			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 321, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📋 MenuController инициализирован с DOM-контейнером.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 326, className : "hide.presentation.Ide", methodName : "startup"});
 		} else {
-			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 323, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("⚠️ Контейнер #main-menu не найден в DOM!",{ fileName : "hide/presentation/Ide.hx", lineNumber : 328, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 		var args = this.platform.getAppArgs();
 		var projectFile = null;
@@ -114371,10 +114401,10 @@ hide_presentation_Ide.prototype = {
 		}
 		projectFile = "D:\\Dev\\tetris-game-project\\tetris-game-project.hideproj";
 		if(projectFile != null) {
-			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 350, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("📂 Загрузка проекта из аргумента командной строки: " + projectFile,{ fileName : "hide/presentation/Ide.hx", lineNumber : 355, className : "hide.presentation.Ide", methodName : "startup"});
 			this.projectService.openProject(hide_domain_valueobjects_FilePath._new(projectFile));
 		} else {
-			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 354, className : "hide.presentation.Ide", methodName : "startup"});
+			haxe_Log.trace("👋 Приложение запущено без проекта.",{ fileName : "hide/presentation/Ide.hx", lineNumber : 359, className : "hide.presentation.Ide", methodName : "startup"});
 		}
 	}
 	,dispose: function() {
@@ -114461,8 +114491,11 @@ hide_presentation_Ide.prototype = {
 	,get_assetBrowser: function() {
 		return this.assetBrowserService;
 	}
+	,get_projectTree: function() {
+		return this.projectTreeService;
+	}
 	,getConstructorArgs: function() {
-		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.commands.OpenViewUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IFileSystem","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController","hide.presentation.controllers.WindowController","hide.presentation.controllers.ToolbarController","hide.engine.domain.services.ISceneService","hide.application.integration.SceneEditorService","hide.infrastructure.external.SceneViewFactory","hide.engine.infrastructure.ShaderPreviewRenderer","hide.engine.infrastructure.ViewportService","Iterable(hide.application.services.IViewModule)","hide.engine.infrastructure.ShaderNodeRegistry","hide.application.services.ShaderHistoryService","hide.application.commands.SaveShaderUseCase","hide.application.commands.LoadShaderUseCase","hide.domain.services.ILanguageServer","hide.application.services.ProjectService","hide.application.services.AssetBrowserService"];
+		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.commands.OpenViewUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IFileSystem","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController","hide.presentation.controllers.WindowController","hide.presentation.controllers.ToolbarController","hide.engine.domain.services.ISceneService","hide.application.integration.SceneEditorService","hide.infrastructure.external.SceneViewFactory","hide.engine.infrastructure.ShaderPreviewRenderer","hide.engine.infrastructure.ViewportService","Iterable(hide.application.services.IViewModule)","hide.engine.infrastructure.ShaderNodeRegistry","hide.application.services.ShaderHistoryService","hide.application.commands.SaveShaderUseCase","hide.application.commands.LoadShaderUseCase","hide.domain.services.ILanguageServer","hide.application.services.ProjectService","hide.application.services.AssetBrowserService","hide.application.services.ProjectTreeService"];
 	}
 	,__class__: hide_presentation_Ide
 	,__properties__: {get_currentProjectName:"get_currentProjectName"}
@@ -114840,7 +114873,7 @@ hide_presentation_modules_ProjectModule.__name__ = "hide.presentation.modules.Pr
 hide_presentation_modules_ProjectModule.__interfaces__ = [hide_application_services_IViewModule];
 hide_presentation_modules_ProjectModule.prototype = {
 	getDescriptor: function() {
-		return { dto : { name : "project", label : "Project", description : "Дерево проекта", icon : "folder", defaultState : { }}, factory : new hide_infrastructure_external_StubProjectFactory()};
+		return { dto : { name : "project", label : "Project", description : "Дерево проекта", icon : "folder", defaultState : { }}, factory : new hide_presentation_ui_react_factories_ReactViewFactory().withComponent(hide_presentation_ui_react_components_ProjectPanel)};
 	}
 	,getConstructorArgs: function() {
 		return [];
@@ -115561,7 +115594,7 @@ hide_presentation_ui_react_components_HierarchyPanel.prototype = $extend(hide_pr
 		}},tmp1,tmp2,tmp3),childrenList);
 	}
 	,handleSelect: function(id) {
-		haxe_Log.trace("🎯 [Hierarchy] Selecting object: " + id,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 393, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "handleSelect"});
+		haxe_Log.trace("🎯 [Hierarchy] Selecting object: " + id,{ fileName : "hide/presentation/ui/react/components/HierarchyPanel.hx", lineNumber : 394, className : "hide.presentation.ui.react.components.HierarchyPanel", methodName : "handleSelect"});
 		hide_presentation_ui_react_hooks_UseService.sceneService().select(id);
 	}
 	,__class__: hide_presentation_ui_react_components_HierarchyPanel
@@ -116047,6 +116080,263 @@ hide_presentation_ui_react_components_NodePropertiesPanel.prototype = $extend(hi
 		}
 	}
 	,__class__: hide_presentation_ui_react_components_NodePropertiesPanel
+});
+var hide_presentation_ui_react_components_ProjectPanel = function() {
+	hide_presentation_ui_react_BaseReactComponent.call(this);
+	this.service = hide_presentation_ui_react_hooks_UseService.projectTree();
+	this.state = { rootNodes : [], searchQuery : "", contextMenu : null, expandedFolders : { }, childrenCache : { }};
+};
+$hxClasses["hide.presentation.ui.react.components.ProjectPanel"] = hide_presentation_ui_react_components_ProjectPanel;
+hide_presentation_ui_react_components_ProjectPanel.__name__ = "hide.presentation.ui.react.components.ProjectPanel";
+hide_presentation_ui_react_components_ProjectPanel.__super__ = hide_presentation_ui_react_BaseReactComponent;
+hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_presentation_ui_react_BaseReactComponent.prototype,{
+	service: null
+	,componentDidMount: function() {
+		this.loadRoot();
+	}
+	,loadRoot: function() {
+		var _gthis = this;
+		this.service.readDir(null).handle(function(nodes) {
+			_gthis.setState({ rootNodes : nodes, searchQuery : _gthis.state.searchQuery, contextMenu : _gthis.state.contextMenu, expandedFolders : _gthis.state.expandedFolders, childrenCache : _gthis.state.childrenCache});
+		});
+	}
+	,toggleFolder: function(node) {
+		var _gthis = this;
+		var path = node.relativePath;
+		var isExpanded = Reflect.field(this.state.expandedFolders,path) == true;
+		var newExpanded = Reflect.copy(this.state.expandedFolders);
+		newExpanded[path] = !isExpanded;
+		if(!isExpanded && !Object.prototype.hasOwnProperty.call(this.state.childrenCache,node.path)) {
+			var newCache = Reflect.copy(this.state.childrenCache);
+			newCache[node.path] = [];
+			this.setState({ rootNodes : this.state.rootNodes, searchQuery : this.state.searchQuery, contextMenu : this.state.contextMenu, expandedFolders : newExpanded, childrenCache : newCache});
+			this.service.readDir(node.path).handle(function(children) {
+				var updatedCache = Reflect.copy(newCache);
+				updatedCache[node.path] = children;
+				haxe_Log.trace("📥 [UI] Loaded " + children.length + " children for: " + node.name,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 88, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "toggleFolder"});
+				_gthis.setState({ rootNodes : _gthis.state.rootNodes, searchQuery : _gthis.state.searchQuery, contextMenu : _gthis.state.contextMenu, expandedFolders : newExpanded, childrenCache : updatedCache});
+			});
+		} else {
+			this.setState({ rootNodes : this.state.rootNodes, searchQuery : this.state.searchQuery, contextMenu : this.state.contextMenu, expandedFolders : newExpanded, childrenCache : this.state.childrenCache});
+		}
+	}
+	,handleSearchChange: function(e) {
+		var target = js_Boot.__cast(e.target , HTMLInputElement);
+		this.setState({ rootNodes : this.state.rootNodes, searchQuery : target.value.toLowerCase(), contextMenu : this.state.contextMenu, expandedFolders : this.state.expandedFolders, childrenCache : this.state.childrenCache});
+	}
+	,clearSearch: function() {
+		this.setState({ rootNodes : this.state.rootNodes, searchQuery : "", contextMenu : this.state.contextMenu, expandedFolders : this.state.expandedFolders, childrenCache : this.state.childrenCache});
+	}
+	,matchesSearch: function(node,query) {
+		if(query == "") {
+			return true;
+		}
+		if(node.name.toLowerCase().indexOf(query) != -1) {
+			return true;
+		}
+		return false;
+	}
+	,highlightText: function(text,query) {
+		if(query == "" || text.toLowerCase().indexOf(query) == -1) {
+			return React.createElement("span",{ },text);
+		}
+		var lowerText = text.toLowerCase();
+		var lowerQuery = query.toLowerCase();
+		var parts = [];
+		var lastIndex = 0;
+		var index = 0;
+		while(true) {
+			index = lowerText.indexOf(lowerQuery,lastIndex);
+			if(!(index != -1)) {
+				break;
+			}
+			if(index > lastIndex) {
+				parts.push(React.createElement("span",{ key : "t" + parts.length},text.substring(lastIndex,index)));
+			}
+			parts.push(React.createElement("span",{ key : "h" + parts.length, style : { backgroundColor : "#facc15", color : "#000", borderRadius : "2px", padding : "0 2px", fontWeight : "bold"}},text.substring(index,index + query.length)));
+			lastIndex = index + query.length;
+		}
+		if(lastIndex < text.length) {
+			parts.push(React.createElement("span",{ key : "e" + parts.length},text.substring(lastIndex)));
+		}
+		return React.createElement("span",{ },parts);
+	}
+	,getContextMenuItems: function(node) {
+		var _gthis = this;
+		var closeMenu = function() {
+			_gthis.setState({ rootNodes : _gthis.state.rootNodes, searchQuery : _gthis.state.searchQuery, contextMenu : null, expandedFolders : _gthis.state.expandedFolders, childrenCache : _gthis.state.childrenCache});
+		};
+		var items = [{ label : "Open", icon : "📂", action : function() {
+			hide_presentation_ui_react_hooks_UseService.eventBus().publish(hide_shared_events_ResourceOpened,new hide_shared_events_ResourceOpened(node.path));
+			closeMenu();
+		}}];
+		if(node.isDirectory) {
+			items.push({ separator : true, label : "sep1", action : function() {
+			}});
+			items.push({ label : "Reveal in Explorer", icon : "", action : function() {
+				closeMenu();
+			}});
+		} else {
+			items.push({ separator : true, label : "sep1", action : function() {
+			}});
+			items.push({ label : "Delete", icon : "🗑️", action : function() {
+				if(window.confirm("Delete '" + node.name + "'?")) {
+					haxe_Log.trace("TODO: Delete file " + node.path,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 184, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "getContextMenuItems"});
+				}
+				closeMenu();
+			}});
+		}
+		return items;
+	}
+	,handleContextMenu: function(e,node) {
+		e.preventDefault();
+		e.stopPropagation();
+		var menuWidth = 200;
+		var menuHeight = 300;
+		var winW = window.innerWidth;
+		var winH = window.innerHeight;
+		var x = e.clientX;
+		var y = e.clientY;
+		if(x + menuWidth > winW) {
+			x = winW - menuWidth - 10;
+		}
+		if(y + menuHeight > winH) {
+			y = winH - menuHeight - 10;
+		}
+		this.setState({ rootNodes : this.state.rootNodes, searchQuery : this.state.searchQuery, contextMenu : { x : x, y : y, node : node}, expandedFolders : this.state.expandedFolders, childrenCache : this.state.childrenCache});
+	}
+	,render: function() {
+		var _gthis = this;
+		var hasQuery = this.state.searchQuery.length > 0;
+		var clearIcon;
+		if(hasQuery) {
+			var clearIcon1 = React.createElement("line",{ y2 : "18", y1 : "6", x2 : "6", x1 : "18"});
+			var clearIcon2 = React.createElement("line",{ y2 : "18", y1 : "6", x2 : "18", x1 : "6"});
+			var clearIcon3 = React.createElement("svg",{ width : "14", viewBox : "0 0 24 24", strokeWidth : "2", stroke : "currentColor", height : "14", fill : "none"},clearIcon1,clearIcon2);
+			clearIcon = React.createElement("button",{ title : "Clear search", style : { background : "transparent", border : "none", color : "#888", cursor : "pointer", padding : "2px", display : "flex", alignItems : "center", justifyContent : "center", borderRadius : "3px"}, onMouseOver : function(e) {
+				e.currentTarget.style.color = "#fff";
+			}, onMouseOut : function(e) {
+				e.currentTarget.style.color = "#888";
+			}, onClick : $bind(this,this.clearSearch)},clearIcon3);
+		} else {
+			clearIcon = null;
+		}
+		var ctxMenu = this.state.contextMenu != null ? React.createElement(hide_presentation_ui_react_components_ContextMenu,{ y : this.state.contextMenu.y, x : this.state.contextMenu.x, onClose : function() {
+			_gthis.setState({ rootNodes : _gthis.state.rootNodes, searchQuery : _gthis.state.searchQuery, contextMenu : null, expandedFolders : _gthis.state.expandedFolders, childrenCache : _gthis.state.childrenCache});
+		}, items : this.getContextMenuItems(this.state.contextMenu.node)}) : null;
+		var tmp = React.createElement("circle",{ r : "8", cy : "11", cx : "11"});
+		var tmp1 = React.createElement("line",{ y2 : "16.65", y1 : "21", x2 : "16.65", x1 : "21"});
+		var tmp2 = React.createElement("svg",{ width : "14", viewBox : "0 0 24 24", strokeWidth : "2", stroke : "#888", height : "14", fill : "none"},tmp,tmp1);
+		var tmp = React.createElement("input",{ value : this.state.searchQuery, type : "text", style : { width : "100%", padding : "4px 8px", background : "#2a2a2a", border : "1px solid #444", borderRadius : "3px", color : "#d4d4d4", outline : "none", boxSizing : "border-box"}, placeholder : "Search Assets...", onChange : $bind(this,this.handleSearchChange), id : "project-search-input"});
+		var tmp1 = React.createElement("div",{ style : { padding : "6px", borderBottom : "1px solid #2a2a2a", display : "flex", alignItems : "center", gap : "4px", background : "#2a2a2a"}},tmp2,tmp,clearIcon);
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = this.state.rootNodes;
+		while(_g1 < _g2.length) {
+			var node = _g2[_g1];
+			++_g1;
+			_g.push(this.renderNode(node,0));
+		}
+		var tmp = React.createElement("div",{ style : { flex : 1, overflowY : "auto", padding : "4px 0"}},_g);
+		return React.createElement("div",{ style : { display : "flex", flexDirection : "column", height : "100%", background : "#383838"}},tmp1,tmp,ctxMenu);
+	}
+	,getNodeIcon: function(node) {
+		if(node.isDirectory) {
+			return "";
+		}
+		var _g = node.extension;
+		if(_g == null) {
+			return "📄";
+		} else {
+			switch(_g) {
+			case "hx":
+				return "🟦";
+			case "prefab":case "scene":
+				return "";
+			case "json":case "shadergraph":
+				return "📋";
+			case "jpeg":case "jpg":case "png":case "webp":
+				return "🖼️";
+			default:
+				return "📄";
+			}
+		}
+	}
+	,renderNode: function(node,depth) {
+		var _gthis = this;
+		if(!this.matchesSearch(node,this.state.searchQuery)) {
+			return React.createElement("div",{ key : node.path});
+		}
+		var paddingLeft = depth * 16 + 8;
+		var isExpanded = Reflect.field(this.state.expandedFolders,node.relativePath) == true;
+		var icon;
+		if(node.isDirectory) {
+			icon = isExpanded ? "📂" : "📁";
+		} else if(StringTools.endsWith(node.name,".meta")) {
+			icon = "⚙️";
+		} else {
+			var _g = node.extension;
+			if(_g == null) {
+				icon = "";
+			} else {
+				switch(_g) {
+				case "hx":
+					icon = "🟦";
+					break;
+				case "prefab":case "scene":
+					icon = "🎬";
+					break;
+				case "json":case "shadergraph":
+					icon = "";
+					break;
+				case "jpeg":case "jpg":case "png":case "webp":
+					icon = "🖼️";
+					break;
+				default:
+					icon = "";
+				}
+			}
+		}
+		var arrow = node.isDirectory ? React.createElement("span",{ style : { width : "16px", textAlign : "center", fontSize : "10px", marginRight : "4px", color : "#aaa", cursor : "pointer"}, onClick : function(_) {
+			_gthis.toggleFolder(node);
+		}},isExpanded ? "▼" : "▶") : React.createElement("span",{ style : { width : "16px", display : "inline-block"}});
+		var rowStyle = { padding : "3px 8px", paddingLeft : paddingLeft + "px", cursor : "pointer", borderRadius : "3px", background : "transparent", display : "flex", alignItems : "center", whiteSpace : "nowrap", overflow : "hidden", textOverflow : "ellipsis"};
+		var childrenList;
+		if(node.isDirectory && isExpanded) {
+			var children = Reflect.field(this.state.childrenCache,node.path);
+			if(children == null) {
+				childrenList = React.createElement("div",{ style : { paddingLeft : "16px", color : "#666", fontSize : "11px"}},"Loading...");
+			} else {
+				var _g = [];
+				var _g1 = 0;
+				while(_g1 < children.length) {
+					var child = children[_g1];
+					++_g1;
+					_g.push(this.renderNode(child,depth + 1));
+				}
+				childrenList = React.createElement("div",{ },_g);
+			}
+		} else {
+			childrenList = React.createElement("div",{ });
+		}
+		var tmp = { key : node.path};
+		var tmp1 = React.createElement("span",{ style : { marginRight : "6px"}},icon);
+		var tmp2 = this.highlightText(node.name,this.state.searchQuery);
+		return React.createElement("div",tmp,React.createElement("div",{ style : rowStyle, onMouseOver : function(e) {
+			e.currentTarget.style.background = "#444";
+		}, onMouseOut : function(e) {
+			e.currentTarget.style.background = "transparent";
+		}, onContextMenu : function(e) {
+			_gthis.handleContextMenu(e,node);
+		}, onClick : function(_) {
+			if(node.isDirectory) {
+				_gthis.toggleFolder(node);
+			} else {
+				hide_presentation_ui_react_hooks_UseService.eventBus().publish(hide_shared_events_ResourceOpened,new hide_shared_events_ResourceOpened(node.path));
+			}
+		}},arrow,tmp1,tmp2),childrenList);
+	}
+	,__class__: hide_presentation_ui_react_components_ProjectPanel
 });
 var hide_presentation_ui_react_components_ShaderEditorPanel = function() {
 	this.recompileTimer = null;
@@ -116751,6 +117041,9 @@ hide_presentation_ui_react_hooks_UseService.languageServer = function() {
 };
 hide_presentation_ui_react_hooks_UseService.assetBrowser = function() {
 	return hide_presentation_Ide.inst.get_assetBrowser();
+};
+hide_presentation_ui_react_hooks_UseService.projectTree = function() {
+	return hide_presentation_Ide.inst.get_projectTree();
 };
 var hide_shared_events_ErrorOccurred = function(context,error) {
 	this.context = context;
@@ -180642,6 +180935,7 @@ hide_presentation_ui_react_components_HierarchyPanel.displayName = "HierarchyPan
 hide_presentation_ui_react_components_InspectorPanel.displayName = "InspectorPanel";
 hide_presentation_ui_react_components_MonacoEditorView.displayName = "MonacoEditorView";
 hide_presentation_ui_react_components_NodePropertiesPanel.displayName = "NodePropertiesPanel";
+hide_presentation_ui_react_components_ProjectPanel.displayName = "ProjectPanel";
 hide_presentation_ui_react_components_ShaderEditorPanel.displayName = "ShaderEditorPanel";
 hide_presentation_ui_react_components_ShaderNodePalette.displayName = "ShaderNodePalette";
 hide_presentation_ui_react_components_WelcomePanel.displayName = "WelcomePanel";

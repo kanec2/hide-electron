@@ -327,6 +327,7 @@ class HierarchyPanel extends BaseReactComponent<HierarchyProps, HierarchyState> 
 
         return jsx('<span>{parts}</span>');
     }
+    
     private function renderObject(obj: SceneObject, depth: Int): ReactElement {
         // ✅ Если идет поиск и этот узел (включая всех его потомков) не подходит — скрываем его полностью
         if (!matchesSearch(obj, state.searchQuery)) {

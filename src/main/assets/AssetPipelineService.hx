@@ -46,7 +46,7 @@ class AssetPipelineService {
         trace('📂 [AssetPipeline] Project root set to: $normalizedRoot');
         trace('   Watching: $assetsPath');
     }
-    
+    public function getProjectRoot():String return projectRoot;
     public function getAssetsPath():String {
         return assetsPath;
     }
@@ -156,6 +156,88 @@ class AssetPipelineService {
             watcher.close();
             watcher = null;
             trace('🛑 [AssetPipeline] Watcher stopped');
+        }
+    }
+    /**
+     * Получает список ассетов в указанной папке.
+     * Если folder == null, сканирует корень Assets.
+     */
+    @:keep
+    public function getAssetsList(?folder:String):Array<AssetListItem> {
+        if (projectRoot == "") return [];
+        
+        var fs = js.node.Fs;
+        var pathLib = js.node.Path;
+        
+        var targetDir = folder != null 
+            ? pathLib.join(assetsPath, folder) 
+            : assetsPath;
+        
+        if (!fs.existsSync(targetDir)) {
+            trace('⚠️ [AssetPipeline] Directory not found: $targetDir');
+            return [];
+        }
+
+        try {
+            var entries = fs.readdirSync(targetDir);
+            var result:Array<AssetListItem> = [];
+            
+            for (entry in entries) {
+                // Игнорируем скрытые файлы и .meta
+                if (StringTools.startsWith(entry, ".") || StringTools.endsWith(entry, ".meta")) continue;
+                
+                var fullPath = pathLib.join(targetDir, entry);
+                var stat = fs.statSync(fullPath);
+                var relPath = pathLib.relative(projectRoot, fullPath).split("\\").join("/");
+                
+                if (stat.isDirectory()) {
+                    result.push({
+                        name: entry,
+                        path: fullPath,
+                        relativePath: relPath,
+                        isDirectory: true,
+                        guid: null,
+                        buildPath: null,
+                        type: "folder"
+                    });
+                } else {
+                    // Пытаемся загрузить .meta файл
+                    var metaPath = fullPath + '.meta';
+                    var guid:Null<String> = null;
+                    var buildPath:Null<String> = null;
+                    
+                    if (fs.existsSync(metaPath)) {
+                        try {
+                            var metaContent = fs.readFileSync(metaPath, 'utf-8');
+                            var meta:Dynamic = Json.parse(metaContent);
+                            guid = meta.guid;
+                            buildPath = meta.buildPath;
+                        } catch(_) {}
+                    }
+                    
+                    var ext = entry.split('.').pop().toLowerCase();
+                    var assetType = switch (ext) {
+                        case 'png', 'jpg', 'jpeg', 'webp', 'tga': "image";
+                        case 'mp3', 'wav', 'ogg': "audio";
+                        default: "unknown";
+                    };
+                    
+                    result.push({
+                        name: entry,
+                        path: fullPath,
+                        relativePath: relPath,
+                        isDirectory: false,
+                        guid: guid,
+                        buildPath: buildPath,
+                        type: assetType
+                    });
+                }
+            }
+            
+            return result;
+        } catch (e:Dynamic) {
+            trace('❌ [AssetPipeline] Failed to list assets: ${Std.string(e)}');
+            return [];
         }
     }
     /**

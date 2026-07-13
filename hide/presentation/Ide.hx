@@ -16,6 +16,8 @@ import hide.application.services.PluginManager;
 import hide.application.services.ViewRegistry;
 import hide.application.services.ProjectService;
 import hide.application.services.AssetBrowserService;
+import hide.application.services.ProjectTreeService;
+
 import hide.domain.services.IFileDialog;
 import hide.domain.services.IPlatform;
 import hide.domain.services.IAppInfo;
@@ -100,6 +102,7 @@ class Ide implements Service {
     private var languageServer:ILanguageServer;
     private var projectService:ProjectService;
     private var assetBrowserService:AssetBrowserService;
+    private var projectTreeService:ProjectTreeService;
     public function new(
         windowService:WindowService,
         menuService:MenuService,
@@ -128,7 +131,8 @@ class Ide implements Service {
         loadShader:LoadShaderUseCase,
         languageServer:ILanguageServer,
         projectService:ProjectService,
-        assetBrowserService:AssetBrowserService
+        assetBrowserService:AssetBrowserService,
+        projectTreeService:ProjectTreeService
     ) {
         this.windowService = windowService;
         this.menuService = menuService;
@@ -158,6 +162,7 @@ class Ide implements Service {
         this.loadShader = loadShader;
         this.languageServer = languageServer;
         this.assetBrowserService = assetBrowserService;
+        this.projectTreeService = projectTreeService;
         inst = this;
         
         //views = viewRegistry.all(); 
@@ -393,6 +398,6 @@ class Ide implements Service {
     public function get_saveShader():SaveShaderUseCase return saveShader;
     public function get_loadShader():LoadShaderUseCase return loadShader;
     public function get_assetBrowser():AssetBrowserService return assetBrowserService;
-        
-    
+    public function get_projectTree():ProjectTreeService return projectTreeService;
+
 }

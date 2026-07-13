@@ -39,7 +39,7 @@ import hide.application.services.ViewRegistry;
 import hide.application.services.PluginRegistry;
 import hide.application.services.ProjectService;
 import hide.application.services.AssetBrowserService;
-
+import hide.application.services.ProjectTreeService;
 
 import hide.application.integration.SceneEditorService;
 // Commands (Use Cases)
@@ -94,6 +94,7 @@ class AppModule {
         collection.addSingleton(ShaderHistoryService);
         collection.addSingleton(ProjectService);
         collection.addSingleton(AssetBrowserService);
+        collection.addSingleton(ProjectTreeService);
         // === 6. Мост между IDE и движком ===
         collection.addSingleton(SceneEditorService);
         

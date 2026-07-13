@@ -11,6 +11,8 @@ import hide.application.services.ViewRegistry;
 import hide.application.services.PluginManager;
 import hide.application.services.ShaderHistoryService;
 import hide.application.services.AssetBrowserService;
+import hide.application.services.ProjectTreeService;
+
 import hide.application.commands.SaveShaderUseCase;
 import hide.application.commands.LoadShaderUseCase;
 
@@ -83,5 +85,8 @@ class UseService {
     }
     public static function assetBrowser():AssetBrowserService {
         return Ide.inst.get_assetBrowser(); // Не забудь добавить геттер в Ide.hx
+    }
+    public static function projectTree():ProjectTreeService {
+        return Ide.inst.get_projectTree(); // Не забудь добавить поле и геттер в Ide.hx
     }
 }
