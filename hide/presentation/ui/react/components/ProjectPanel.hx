@@ -3,39 +3,38 @@ package hide.presentation.ui.react.components;
 
 import react.ReactComponent;
 import react.ReactMacro.jsx;
+import react.ReactRef; // ✅ Добавь импорт
 import hide.presentation.ui.react.BaseReactComponent;
 import hide.presentation.ui.react.hooks.UseService;
 import hide.application.services.ProjectTreeService;
-import hide.application.services.ProjectTreeService.TreeNode;
+import hide.infrastructure.external.ProjectTreeAdapter;
+import hide.infrastructure.external.arborist.*;
 import hide.shared.events.ResourceOpened;
-import hide.presentation.ui.react.components.ContextMenu;
 
 typedef ProjectProps = {
     var initialState: Dynamic;
     var onUnmount: Void->Void;
 }
 
-// ✅ ИСПРАВЛЕНО: используем Dynamic вместо Map для совместимости с React
 typedef ProjectState = {
-    var rootNodes: Array<TreeNode>;
-    var searchQuery: String;
-    var contextMenu: Null<{x: Float, y: Float, node: TreeNode}>;
-    var expandedFolders: Dynamic; // key: relativePath, value: Bool
-    var childrenCache: Dynamic;   // key: absolutePath, value: Array<TreeNode>
+    var treeData: Array<ArboristNode>;
+    var isLoading: Bool;
+    var selectedId: Null<String>; // ✅ Храним ID выделения
+    var contextMenu: Null<{x: Float, y: Float, node: Dynamic}>;
 }
 
 class ProjectPanel extends BaseReactComponent<ProjectProps, ProjectState> {
     private var service: ProjectTreeService;
-
+    private var treeRef: ReactRef<Dynamic>; // ✅ Ref для доступа к API дерева
     public function new() {
         super();
         service = UseService.projectTree();
+        treeRef = untyped React.createRef(); // ✅ Создаем ref
         state = { 
-            rootNodes: [], 
-            searchQuery: "",
-            contextMenu: null,
-            expandedFolders: {},      // Пустой JS-объект
-            childrenCache: {}         // Пустой JS-объект
+            treeData: [], 
+            isLoading: true,
+            selectedId: null,
+            contextMenu: null
         };
     }
 
@@ -44,284 +43,588 @@ class ProjectPanel extends BaseReactComponent<ProjectProps, ProjectState> {
     }
 
     private function loadRoot(): Void {
+        setState({ treeData: [], isLoading: true, selectedId: null, contextMenu: state.contextMenu });
         service.readDir(null).handle(function(nodes) {
-            setState({ 
-                rootNodes: nodes, 
-                searchQuery: state.searchQuery,
-                contextMenu: state.contextMenu,
-                expandedFolders: state.expandedFolders,
-                childrenCache: state.childrenCache
-            });
+            var arboristNodes = ProjectTreeAdapter.toArboristNodes(nodes);
+            setState({ treeData: arboristNodes, isLoading: false, selectedId: null, contextMenu: state.contextMenu });
         });
     }
-
-    // ===== Логика раскрытия папок =====
-    private function toggleFolder(node: TreeNode): Void {
-        var path = node.relativePath;
-        
-        // ✅ Читаем состояние из Dynamic через Reflect
-        var isExpanded = Reflect.field(state.expandedFolders, path) == true;
-        
-        // 1. Переключаем состояние раскрытия
-        var newExpanded = Reflect.copy(state.expandedFolders);
-        Reflect.setField(newExpanded, path, !isExpanded);
-
-        // 2. Если раскрываем впервые и детей нет — загружаем их
-        if (!isExpanded && !Reflect.hasField(state.childrenCache, node.path)) {
-            // Ставим заглушку (пустой массив), чтобы UI показал "Loading..."
-            var newCache = Reflect.copy(state.childrenCache);
-            Reflect.setField(newCache, node.path, []); 
-            
-            setState({
-                rootNodes: state.rootNodes,
-                searchQuery: state.searchQuery,
-                contextMenu: state.contextMenu,
-                expandedFolders: newExpanded,
-                childrenCache: newCache
-            });
-
-            // Асинхронная загрузка по АБСОЛЮТНОМУ пути
-            service.readDir(node.path).handle(function(children) {
-                var updatedCache = Reflect.copy(newCache);
-                Reflect.setField(updatedCache, node.path, children);
-                
-                trace('📥 [UI] Loaded ${children.length} children for: ${node.name}');
-                
-                setState({
-                    rootNodes: state.rootNodes,
-                    searchQuery: state.searchQuery,
-                    contextMenu: state.contextMenu,
-                    expandedFolders: newExpanded,
-                    childrenCache: updatedCache
-                });
-            });
-        } else {
-            // Просто обновляем состояние раскрытия
-            setState({
-                rootNodes: state.rootNodes,
-                searchQuery: state.searchQuery,
-                contextMenu: state.contextMenu,
-                expandedFolders: newExpanded,
-                childrenCache: state.childrenCache
-            });
-        }
-    }
-
-    // ===== Поиск =====
-    private function handleSearchChange(e: js.html.Event): Void {
-        var target = cast(e.target, js.html.InputElement);
-        setState({ 
-            rootNodes: state.rootNodes, 
-            searchQuery: target.value.toLowerCase(),
-            contextMenu: state.contextMenu,
-            expandedFolders: state.expandedFolders,
-            childrenCache: state.childrenCache
-        });
-    }
-
-    private function clearSearch(): Void {
-        setState({ 
-            rootNodes: state.rootNodes, 
-            searchQuery: "",
-            contextMenu: state.contextMenu,
-            expandedFolders: state.expandedFolders,
-            childrenCache: state.childrenCache
-        });
-    }
-
-    private function matchesSearch(node: TreeNode, query: String): Bool {
-        if (query == "") return true;
-        if (node.name.toLowerCase().indexOf(query) != -1) return true;
-        return false; 
-    }
-
-    private function highlightText(text: String, query: String): ReactElement {
-        if (query == "" || text.toLowerCase().indexOf(query) == -1) {
-            return jsx('<span>{text}</span>');
-        }
-        var lowerText = text.toLowerCase();
-        var lowerQuery = query.toLowerCase();
-        var parts: Array<ReactElement> = [];
-        var lastIndex = 0;
-        var index = 0;
-        while ((index = lowerText.indexOf(lowerQuery, lastIndex)) != -1) {
-            if (index > lastIndex) parts.push(jsx('<span key={"t" + parts.length}>{text.substring(lastIndex, index)}</span>'));
-            parts.push(jsx('<span key={"h" + parts.length} style={{backgroundColor: "#facc15", color: "#000", borderRadius: "2px", padding: "0 2px", fontWeight: "bold"}}>{text.substring(index, index + query.length)}</span>'));
-            lastIndex = index + query.length;
-        }
-        if (lastIndex < text.length) parts.push(jsx('<span key={"e" + parts.length}>{text.substring(lastIndex)}</span>'));
-        return jsx('<span>{parts}</span>');
-    }
-
-    // ===== Контекстное меню =====
-    private function getContextMenuItems(node: TreeNode): Array<hide.presentation.ui.react.components.ContextMenu.MenuItem> {
-        var closeMenu = function() {
-            setState({
-                rootNodes: state.rootNodes,
-                searchQuery: state.searchQuery,
-                contextMenu: null,
-                expandedFolders: state.expandedFolders,
-                childrenCache: state.childrenCache
-            });
-        };
-
-        var items: Array<hide.presentation.ui.react.components.ContextMenu.MenuItem> = [
-            { label: "Open", icon: "📂", action: function() {
-                UseService.eventBus().publish(ResourceOpened, new ResourceOpened(node.path));
-                closeMenu();
-            }}
-        ];
-
-        if (node.isDirectory) {
-            items.push({ separator: true, label: "sep1", action: function(){} });
-            items.push({ label: "Reveal in Explorer", icon: "", action: function() {
-                closeMenu();
-            }});
-        } else {
-            items.push({ separator: true, label: "sep1", action: function(){} });
-            items.push({ label: "Delete", icon: "🗑️", action: function() {
-                if (js.Browser.window.confirm("Delete '" + node.name + "'?")) {
-                    trace("TODO: Delete file " + node.path);
-                }
-                closeMenu();
-            }});
-        }
-        return items;
-    }
-
-    private function handleContextMenu(e: js.html.MouseEvent, node: TreeNode): Void {
+    private function handleContextMenu(e: js.html.MouseEvent, node: Dynamic): Void {
         e.preventDefault();
         e.stopPropagation();
-        var menuWidth = 200;
-        var menuHeight = 300;
-        var winW = js.Browser.window.innerWidth;
-        var winH = js.Browser.window.innerHeight;
-        var x = e.clientX;
-        var y = e.clientY;
-        if (x + menuWidth > winW) x = winW - menuWidth - 10;
-        if (y + menuHeight > winH) y = winH - menuHeight - 10;
-
+        
         setState({
-            rootNodes: state.rootNodes,
-            searchQuery: state.searchQuery,
-            contextMenu: { x: x, y: y, node: node },
-            expandedFolders: state.expandedFolders,
-            childrenCache: state.childrenCache
+            treeData: state.treeData,
+            isLoading: state.isLoading,
+            selectedId: state.selectedId,
+            contextMenu: { x: e.clientX, y: e.clientY, node: node }
+        });
+    }
+    private function closeContextMenu(): Void {
+        setState({
+            treeData: state.treeData,
+            isLoading: state.isLoading,
+            selectedId: state.selectedId,
+            contextMenu: null
+        });
+    }
+    // Получаем пункты меню:
+    private function getContextMenuItems(node: Dynamic): Array<hide.presentation.ui.react.components.ContextMenu.MenuItem> {
+        var items: Array<hide.presentation.ui.react.components.ContextMenu.MenuItem> = [];
+        
+        if (node == null) {
+            // Меню для пустой области (корня)
+            items.push({ 
+                label: "New Folder", 
+                icon: "📁", 
+                action: function() { 
+                    trace("New Folder in root");
+                    // TODO: handleCreate("", 0, "folder");
+                    closeContextMenu();
+                } 
+            });
+            items.push({ 
+                label: "New File", 
+                icon: "📄", 
+                action: function() { 
+                    trace("New File in root");
+                    closeContextMenu();
+                } 
+            });
+        } else {
+            var nodeName = untyped node.data.name;
+            var isFolder = untyped !node.data.isLeaf;
+            
+            items.push({ 
+                label: "Open", 
+                icon: "📂", 
+                action: function() { 
+                    trace("Open: $nodeName");
+                    closeContextMenu();
+                } 
+            });
+            
+            items.push({ separator: true, label: "sep1", action: function(){} });
+            
+            items.push({ 
+                label: "New Folder", 
+                icon: "📁", 
+                action: function() { 
+                    trace("New Folder in $nodeName");
+                    // TODO: handleCreate(node.id, 0, "folder");
+                    closeContextMenu();
+                } 
+            });
+            
+            items.push({ 
+                label: "Rename", 
+                icon: "✏️", 
+                action: function() { 
+                    trace("Rename: $nodeName");
+                    untyped node.edit();
+                    closeContextMenu();
+                } 
+            });
+            
+            items.push({ 
+                label: "Delete", 
+                icon: "🗑️", 
+                action: function() { 
+                    trace("Delete: $nodeName");
+                    handleDelete(node);
+                    closeContextMenu();
+                } 
+            });
+        }
+        
+        return items;
+    }
+    // ===== РЕКУРСИВНОЕ ОБНОВЛЕНИЕ ДЕРЕВА =====
+    // Создает новую копию дерева с измененным узлом (иммутабельность для React)
+    private function updateNodeInTree(nodes: Array<ArboristNode>, id: String, changes: Dynamic): Array<ArboristNode> {
+        return [for (node in nodes) {
+            if (node.id == id) {
+                // Применяем изменения к найденному узлу
+                untyped Object.assign({}, node, changes);
+            } else if (node.children != null) {
+                // Рекурсивно идем вглубь
+                var newNode = untyped Object.assign({}, node);
+                newNode.children = updateNodeInTree(node.children, id, changes);
+                newNode;
+            } else {
+                node;
+            }
+        }];
+    }
+    // ===== ПОИСК УЗЛА ПО ID =====
+    private function findNodeById(nodes: Array<ArboristNode>, id: String): Null<ArboristNode> {
+        for (node in nodes) {
+            if (node.id == id) return node;
+            if (node.children != null) {
+                var found = findNodeById(node.children, id);
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+    // ===== ЛОГИКА LAZY LOAD (onToggle) =====
+    private function handleToggle(id: String): Void {
+        var node = findNodeById(state.treeData, id);
+        if (node == null) return;
+
+        // Если дети уже загружены, Arborist сам справится с открытием/закрытием
+        if (node.isLoaded == true) return;
+
+        // 1. Включаем индикатор загрузки
+        var loadingData = updateNodeInTree(state.treeData, id, { isLoading: true });
+        setState({
+            treeData: loadingData,
+            isLoading: state.isLoading,
+            selectedId: state.selectedId, 
+            contextMenu: state.contextMenu 
+        });
+
+        // 2. Запрашиваем детей у бэкенда
+        service.readDir(node.path).handle(function(children) {
+            var arboristChildren = ProjectTreeAdapter.toArboristNodes(children);
+            
+            // 3. Обновляем дерево: подставляем детей, выключаем лоадер, помечаем как загруженное
+            var finalData = updateNodeInTree(state.treeData, id, {
+                children: arboristChildren,
+                isLoading: false,
+                isLoaded: true
+            });
+
+            setState({
+                treeData: finalData,
+                isLoading: state.isLoading,
+                selectedId: state.selectedId, 
+                contextMenu: state.contextMenu 
+            });
+
+            // 4. Хак: Принудительно открываем узел через API после обновления стейта
+            // Это нужно, потому что обновление стейта асинхронно, и Arborist мог не успеть открыть папку
+            js.Browser.window.setTimeout(function() {
+                if (treeRef.current != null) {
+                    untyped treeRef.current.open(id);
+                }
+            }, 50);
+        });
+    }
+    // ===== Обработчики событий Arborist =====
+
+    private function handleRename(node: Dynamic, newName: String): Void {
+        var nodeId = untyped node.id;
+        var nodeData = untyped node.data;
+        var oldPath = untyped nodeData.path;
+        
+        trace('✏️ Rename requested: $oldPath -> $newName');
+        
+        // Вычисляем новый путь
+        var parts = oldPath.split("/");
+        parts[parts.length - 1] = newName;
+        var newPath = parts.join("/");
+        
+        // TODO: Вызов IPC для переименования
+        // fs.rename(oldPath, newPath)
+        trace('  -> fs.rename($oldPath, $newPath)');
+        
+        // Обновляем UI
+        refreshParentDirectory(oldPath);
+    }
+    private function handleDelete(node: Dynamic): Void {
+        var nodeId = untyped node.id;
+        var nodeData = untyped node.data;
+        var path = untyped nodeData.path;
+        var name = untyped nodeData.name;
+        
+        if (!js.Browser.window.confirm('Delete "$name"?')) return;
+        
+        trace('🗑️ Delete requested: $path');
+        
+        // TODO: Вызов IPC для удаления
+        // if (nodeData.isLeaf) {
+        //     fs.unlink(path);
+        // } else {
+        //     fs.rmdir(path, {recursive: true});
+        // }
+        
+        // Обновляем родительскую папку
+        var parentPath = path.substring(0, path.lastIndexOf("/"));
+        invalidateChildrenCache(parentPath);
+    }
+    private function handleCreate(parentId: String, index: Int, type: String): Void {
+        trace('📁 Create $type requested in parentId=$parentId at index=$index');
+        
+        // Находим родительский узел
+        var parent = findNodeById(state.treeData, parentId);
+        
+        var parentPath = if (parent != null) {
+            untyped parent.data.path;
+        } else {
+            // Корень проекта
+            var project = UseService.projectService().getCurrentProject();
+            project.rootPath.toString().split("\\").join("/");
+        };
+        
+        // TODO: Показать диалог ввода имени
+        var newName = js.Browser.window.prompt("Enter name:", "New " + type);
+        if (newName == null || newName == "") return;
+        
+        var newPath = parentPath + "/" + newName;
+        
+        if (type == "folder") {
+            trace('  -> Creating folder: $newPath');
+            // fs.mkdir(newPath)
+        } else {
+            trace('  -> Creating file: $newPath');
+            // fs.writeFile(newPath, "")
+        }
+        
+        // Обновляем родительскую папку
+        if (parent != null) {
+            var parentData = untyped parent.data;
+            invalidateChildrenCache(parentData.path);
+        } else {
+            loadRoot();
+        }
+    }
+
+    private function handleMove(event: Dynamic): Void {
+        var dragNodes: Array<Dynamic> = untyped event.dragNodes;
+        var parentNode: Dynamic = untyped event.parentNode;
+        var index: Int = untyped event.index;
+        
+        var targetPath = if (parentNode != null && untyped parentNode.data != null) {
+            untyped parentNode.data.path;
+        } else {
+            // Корень проекта
+            var project = UseService.projectService().getCurrentProject();
+            project.rootPath.toString();
+        };
+        
+        var draggedPaths = [for (n in dragNodes) untyped n.data.path];
+        
+        trace('↔️ Move requested:');
+        trace('  -> Items: ${draggedPaths.join(", ")}');
+        trace('  -> Target: $targetPath');
+        trace('  -> Index: $index');
+        
+        // TODO: Вызов IPC для перемещения
+        // for (srcPath in draggedPaths) {
+        //     var fileName = srcPath.split("/").pop();
+        //     var destPath = targetPath + "/" + fileName;
+        //     fs.move(srcPath, destPath);
+        // }
+        
+        // После перемещения обновляем оба места (откуда и куда)
+        for (srcPath in draggedPaths) {
+            var parentPath = srcPath.substring(0, srcPath.lastIndexOf("/"));
+            invalidateChildrenCache(parentPath);
+        }
+        invalidateChildrenCache(targetPath);
+    }
+    /**
+     * Очищает кэш детей для указанной папки и перезагружает её содержимое.
+     */
+    private function invalidateChildrenCache(folderPath: String): Void {
+        trace(' Invalidating cache for: $folderPath');
+        
+        // Находим узел в дереве и помечаем как не загруженный
+        var newData = updateNodeInTree(state.treeData, folderPath, {
+            children: [],
+            isLoaded: false,
+            isLoading: false
+        });
+        
+        setState({
+            treeData: newData,
+            isLoading: state.isLoading,
+            selectedId: state.selectedId, 
+            contextMenu: state.contextMenu 
+        });
+        
+        // Принудительно запрашиваем детей заново
+        service.readDir(folderPath).handle(function(children) {
+            var arboristChildren = ProjectTreeAdapter.toArboristNodes(children);
+            var finalData = updateNodeInTree(state.treeData, folderPath, {
+                children: arboristChildren,
+                isLoaded: true,
+                isLoading: false
+            });
+            
+            setState({
+                treeData: finalData,
+                isLoading: state.isLoading,
+                selectedId: state.selectedId, 
+                contextMenu: state.contextMenu 
+            });
         });
     }
 
-    // ===== Рендеринг =====
-    override function render(): ReactElement {
-        var hasQuery = state.searchQuery.length > 0;
-        var clearIcon = hasQuery ? jsx('
-            <button onClick={clearSearch} title="Clear search" style={{background: "transparent", border: "none", color: "#888", cursor: "pointer", padding: "2px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "3px"}} onMouseOver={function(e) untyped e.currentTarget.style.color = "#fff"} onMouseOut={function(e) untyped e.currentTarget.style.color = "#888"}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-            </button>
-        ') : null;
+    /**
+     * Находит родительскую папку для пути и обновляет её кэш.
+     */
+    private function refreshParentDirectory(itemPath: String): Void {
+        var parts = itemPath.split("/");
+        if (parts.length > 1) {
+            parts.pop(); // Удаляем имя файла
+            var parentPath = parts.join("/");
+            invalidateChildrenCache(parentPath);
+        } else {
+            loadRoot();
+        }
+    }
+    // ✅ onSelect получает МАССИВ выбранных узлов
+    private function handleSelect(nodes: Array<Dynamic>): Void {
+        if (nodes == null || nodes.length == 0) {
+            setState({
+                treeData: state.treeData,
+                isLoading: state.isLoading,
+                selectedId: null, 
+                contextMenu: state.contextMenu 
+            });
+            return;
+        }
+        
+        var firstNode = nodes[0];
+        var newSelectedId = firstNode.id;
+        
+        trace('✅ Selected: $newSelectedId (${firstNode.data.name})');
+        
+        // Открываем файл при выборе
+        if (firstNode.data.isLeaf == true) {
+            UseService.eventBus().publish(ResourceOpened, new ResourceOpened(firstNode.data.path));
+        }
+        
+        // ✅ Обновляем стейт — это триггерит перерисовку с новым selection
+        setState({
+            treeData: state.treeData,
+            isLoading: state.isLoading,
+            selectedId: newSelectedId, 
+            contextMenu: state.contextMenu 
+        });
+    }
+    // ===== ВЫНЕСЕННЫЙ ОБРАБОТЧИК ЛЕНИВОЙ ЗАГРУЗКИ =====
+    
+    /**
+     * Обработчик onFetchChildren для react-arborist.
+     * Вызывается при раскрытии папки с children=true.
+     */
+    private function handleFetchChildren(node: Dynamic, cb: Array<ArboristNode> -> Void): Void {
+        if (node == null || node.data == null || node.data.path == null) {
+            cb(untyped __js__("[]"));
+            return;
+        }
 
-        var ctxMenu = state.contextMenu != null ? jsx('
-            <ContextMenu x={state.contextMenu.x} y={state.contextMenu.y} 
-                items={getContextMenuItems(state.contextMenu.node)}
-                onClose={function() setState({rootNodes: state.rootNodes, searchQuery: state.searchQuery, contextMenu: null, expandedFolders: state.expandedFolders, childrenCache: state.childrenCache})}
-            />
-        ') : null;
+        service.readDir(node.data.path).handle(function(children) {
+            var result: Array<ArboristNode> = untyped __js__("[]");
+            if (children != null) {
+                for (child in ProjectTreeAdapter.toArboristNodes(children)) {
+                    untyped result.push(child);
+                }
+            }
+            cb(result);
+        });
+    }
+
+    // ===== Рендеринг узла =====
+
+    // hide/presentation/ui/react/components/ProjectPanel.hx
+    private var isDragging: Bool = false;
+    private var dragStartPos: {x: Float, y: Float} = null;
+
+    private function renderNode(api: NodeApi<Dynamic>): ReactElement {
+       // ✅ ЧИТАЕМ ИЗ api.node, А НЕ ИЗ api!
+        var node = untyped api.node;
+        var style = untyped api.style;
+        
+        if (node == null) {
+            trace('❌ api.node is null!');
+            return jsx('<div style={{background:"red"}}>ERROR</div>');
+        }
+        
+        var id: String = node.id;
+        var data: Dynamic = node.data;
+        var level: Int = node.level;
+        var isSelected: Bool = node.isSelected;
+        var isEditing: Bool = node.isEditing;
+        var isOpen: Bool = node.isOpen;
+        var isLeaf: Bool = node.isLeaf;
+        
+        // Проверка на root
+        if (id == "__REACT_ARBORIST_INTERNAL_ROOT__") {
+            return jsx('<div></div>');
+        }
+        
+        if (data == null) {
+            trace('❌ data is null for id=$id');
+            return jsx('<div style={{background:"orange"}}>NO DATA</div>');
+        }
+
+        var name: String = untyped data.name;
+        var extension: String = untyped data.extension;
+        var isLoading: Bool = untyped data.isLoading;
+        var isFolder: Bool = !isLeaf;
+
+
+
+        var icon = if (!isFolder) {
+            switch (extension) {
+                case "hx": "🟦";
+                case "json", "shadergraph": "📋";
+                case "png", "jpg", "jpeg", "webp": "🖼️";
+                case "scene", "prefab": "🎬";
+                default: "📄";
+            }
+        } else {
+            if (isOpen) "📂" else "📁";
+        };
+
+        // ✅ Стрелочка с учетом лоадера
+        var arrow = if (!isFolder) {
+            jsx('<span style={{width:"16px", display:"inline-block", marginRight:"4px", flexShrink: 0}}></span>');
+        } else if (isLoading == true) {
+            jsx('<span style={{width:"16px", textAlign:"center", fontSize:"10px", marginRight:"4px", color:"#facc15", flexShrink: 0}}>⏳</span>');
+        } else {
+            jsx('<span 
+                style={{width:"16px", textAlign:"center", fontSize:"10px", marginRight:"4px", color:"#aaa", cursor:"pointer", flexShrink: 0}}
+                onClick={function(e:js.html.MouseEvent) { e.stopPropagation(); node.toggle(); }}
+            >{api.isOpen ? "▼" : "▶"}</span>');
+        };  
+
+        var rowStyle = {
+            display: "flex", alignItems: "center", padding: "3px 8px",
+            paddingLeft: (level * 16 + 8) + "px",
+            background: isSelected ? "#2d5c8a" : "transparent",
+            cursor: "pointer", borderRadius: "3px", whiteSpace: "nowrap",
+            overflow: "hidden", textOverflow: "ellipsis", height: "24px", userSelect: "none"
+        };
+
+        var textStyle = {
+            color: isSelected ? "#ffffff" : "#cccccc", flex: 1,
+            overflow: "hidden", textOverflow: "ellipsis"
+        };
+        var content = if (isEditing) {
+            jsx('
+                <input 
+                    autoFocus={true}
+                    defaultValue={name}
+                    style={{
+                        background: "#1a1a1a",
+                        border: "1px solid #007acc",
+                        color: "#ffffff",
+                        padding: "2px 6px",
+                        borderRadius: "2px",
+                        outline: "none",
+                        fontSize: "13px",
+                        flex: 1,
+                        width: "100%",
+                        boxSizing: "border-box"
+                    }}
+                    onKeyDown={function(e:js.html.KeyboardEvent) {
+                        if (e.key == "Enter") {
+
+                            untyped node.submit(e.target.value);
+                        }
+                        if (e.key == "Escape") {
+
+                            untyped node.reset();
+                        }
+                    }}
+                    onBlur={function(e:js.html.FocusEvent) {
+
+                        untyped node.submit(e.target.value);
+                    }}
+                />
+            ');
+        } else {
+            jsx('<span style={textStyle}>{name}</span>');
+        };
+
+        
+        return jsx('
+            <div style={rowStyle}
+                onMouseDown={function(e:js.html.MouseEvent) {
+                    dragStartPos = { x: e.clientX, y: e.clientY };
+                    isDragging = false;
+                }}
+                onMouseMove={function(e:js.html.MouseEvent) {
+                    if (dragStartPos != null) {
+                        var dx = e.clientX - dragStartPos.x;
+                        var dy = e.clientY - dragStartPos.y;
+                        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+                            isDragging = true;
+                        }
+                    }
+                }}
+                onClick={function(_:js.html.MouseEvent) {
+                    if (!isDragging) {
+                        untyped node.select();
+                    }
+                    isDragging = false;
+                    dragStartPos = null;
+                }}
+                onContextMenu={function(e:js.html.MouseEvent) {
+                    handleContextMenu(e, node);
+                }}
+            >
+                {arrow}
+                <span style={{marginRight: "6px", fontSize: "14px", flexShrink: 0}}>{icon}</span>
+                {content}
+            </div>
+        ');
+    }
+
+    override function render(): ReactElement {
+        if (state.isLoading) {
+            return jsx('<div style={{padding:"10px", color:"#888"}}>Loading project tree...</div>');
+        }
+
+        var jsRootNodes: Array<ArboristNode> = untyped __js__("[]");
+        for (node in state.treeData) untyped jsRootNodes.push(node);
+
+        var ctxMenu = if (state.contextMenu != null) {
+            jsx('
+                <ContextMenu 
+                    x={state.contextMenu.x} 
+                    y={state.contextMenu.y} 
+                    items={getContextMenuItems(state.contextMenu.node)}
+                    onClose={closeContextMenu}
+                />
+            ');
+        } else null;
 
         return jsx('
             <div style={{display: "flex", flexDirection: "column", height: "100%", background: "#383838"}}>
-                <div style={{padding: "6px", borderBottom: "1px solid #2a2a2a", display: "flex", alignItems: "center", gap: "4px", background: "#2a2a2a"}}>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input id="project-search-input" type="text" placeholder="Search Assets..." value={state.searchQuery} onChange={handleSearchChange} style={{width: "100%", padding: "4px 8px", background: "#2a2a2a", border: "1px solid #444", borderRadius: "3px", color: "#d4d4d4", outline: "none", boxSizing: "border-box"}} />
-                    {clearIcon}
-                </div>
-                <div style={{flex: 1, overflowY: "auto", padding: "4px 0"}}>
-                    {[for (node in state.rootNodes) renderNode(node, 0)]}
+                <div style={{flex: 1, overflowY: "auto"}}>
+                    <ReactArborist
+                        data={jsRootNodes}
+                        ref={treeRef}                 
+                        selection={state.selectedId}
+                        onRename={handleRename}
+                        onCreate={handleCreate}
+                        onDelete={handleDelete}
+                        onMove={handleMove}
+                        onSelect={handleSelect}
+                        onToggle={handleToggle}
+                        onContextMenu={function(e) { 
+                            handleContextMenu(e, null);
+                        }}      
+                        openByDefault={false}
+                        idAccessor="id"
+                        indent={16}
+                        rowHeight={24}
+                        width={400}
+                        height={600}
+                        disableDrag={false}
+                        disableDrop={false}
+                    >
+                        {renderNode}
+                    </ReactArborist>
                 </div>
                 {ctxMenu}
             </div>
         ');
     }
-
-    private function getNodeIcon(node: TreeNode): String {
-        if (node.isDirectory) return "";
-        return switch (node.extension) {
-            case "hx": "🟦";
-            case "json", "shadergraph": "📋";
-            case "png", "jpg", "jpeg", "webp": "🖼️";
-            case "scene", "prefab": "";
-            default: "📄";
-        };
-    }
-
-    private function renderNode(node: TreeNode, depth: Int): ReactElement {
-    if (!matchesSearch(node, state.searchQuery)) {
-        return jsx('<div key={node.path}></div>'); 
-    }
-
-    var paddingLeft = depth * 16 + 8;
-    var isExpanded = Reflect.field(state.expandedFolders, node.relativePath) == true;
-    
-    // ✅ ИСПРАВЛЕНИЕ: Логика выбора иконки теперь едина для всех типов
-    var icon = if (node.isDirectory) {
-        isExpanded ? "📂" : "📁";
-    } else if (StringTools.endsWith(node.name, ".meta")) {
-        "⚙️"; // Иконка шестеренки для мета-файлов
-    } else {
-        switch (node.extension) {
-            case "hx": "🟦";
-            case "json", "shadergraph": "";
-            case "png", "jpg", "jpeg", "webp": "🖼️";
-            case "scene", "prefab": "🎬";
-            default: "";
-        }
-    };
-
-    // Стрелочка раскрытия
-    var arrow = if (node.isDirectory) {
-        jsx('<span style={{width:"16px", textAlign:"center", fontSize:"10px", marginRight:"4px", color:"#aaa", cursor:"pointer"}} onClick={function(_) toggleFolder(node)}>{isExpanded ? "▼" : "▶"}</span>');
-    } else {
-        jsx('<span style={{width:"16px", display:"inline-block"}}></span>');
-    };
-
-    var rowStyle = {
-        padding: "3px 8px", paddingLeft: paddingLeft + "px", cursor: "pointer", borderRadius: "3px",
-        background: "transparent", display: "flex", alignItems: "center",
-        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
-    };
-
-    // Получаем детей из кэша
-    var childrenList: ReactElement = if (node.isDirectory && isExpanded) {
-        var children:Null<Array<TreeNode>> = Reflect.field(state.childrenCache, node.path);
-        
-        if (children == null) {
-            jsx('<div style={{paddingLeft: "16px", color: "#666", fontSize: "11px"}}>Loading...</div>');
-        } else {
-            jsx('<div>{[for (child in children) renderNode(child, depth + 1)]}</div>');
-        }
-    } else {
-        jsx('<div></div>');
-    };
-
-    return jsx('
-        <div key={node.path}>
-            <div style={rowStyle}
-                onClick={function(_) {
-                    if (node.isDirectory) {
-                        toggleFolder(node);
-                    } else {
-                        UseService.eventBus().publish(ResourceOpened, new ResourceOpened(node.path));
-                    }
-                }}
-                onContextMenu={function(e:js.html.MouseEvent) handleContextMenu(e, node)}
-                onMouseOver={function(e) untyped e.currentTarget.style.background = "#444"}
-                onMouseOut={function(e) untyped e.currentTarget.style.background = "transparent"}
-            >
-                {arrow}
-                <span style={{marginRight: "6px"}}>{icon}</span>
-                {highlightText(node.name, state.searchQuery)}
-            </div>
-            
-            {childrenList}
-        </div>
-    ');
-}
 }

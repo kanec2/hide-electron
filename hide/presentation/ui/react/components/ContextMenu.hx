@@ -34,9 +34,12 @@ class ContextMenu extends ReactComponentOfProps<ContextMenuProps> {
     private function handleGlobalClick(e:js.html.MouseEvent): Void {
         // Проверяем, был ли клик внутри самого меню
         var target = cast(e.target, js.html.Element);
-        if (target != null && target.closest(".context-menu-root") == null) {
-            props.onClose();
+        // Проверяем, находится ли цель ВНУТРИ нашего меню
+        if (target != null && target.closest(".context-menu-root") != null) {
+            return; // Клик внутри меню — игнорируем, пусть React обработает
         }
+        // Клик снаружи — закрываем
+        props.onClose();
     }
 
     private function handleKeyDown(e:js.html.KeyboardEvent): Void {
@@ -80,7 +83,11 @@ class ContextMenu extends ReactComponentOfProps<ContextMenuProps> {
             <div 
                 key={item.label}
                 className={isDisabled ? "context-item disabled" : "context-item"}
-                onClick={!isDisabled ? item.action : null}
+                onClick={!isDisabled ? function(e) {
+                    e.stopPropagation(); // ⚠️ ВАЖНО: не даем клику закрыть меню раньше времени
+                    item.action();       // Сначала выполняем действие
+                    props.onClose();     // Потом закрываем меню
+                } : null}
                 style={{
                     padding: "4px 12px",
                     cursor: isDisabled ? "default" : "pointer",

@@ -38,6 +38,7 @@
     "mime-types": "^3.0.2",
     "path-browserify": "^1.0.1",
     "react": "^17.0.0",
+    "react-arborist": "^3.13.2",
     "react-dom": "^17.0.0",
     "sharp": "^0.35.3",
     "uuid": "^14.0.1"

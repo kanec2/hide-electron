@@ -46,7 +46,7 @@ class ProjectTreeService implements Service {
                 return [];
             });
     }
-
+    
     public function invalidateCache():Void {
         //cache = new Map();
     }

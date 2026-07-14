@@ -399,5 +399,6 @@ class Ide implements Service {
     public function get_loadShader():LoadShaderUseCase return loadShader;
     public function get_assetBrowser():AssetBrowserService return assetBrowserService;
     public function get_projectTree():ProjectTreeService return projectTreeService;
+    public function get_projectService():ProjectService return projectService;
 
 }

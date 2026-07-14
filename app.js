@@ -113655,6 +113655,19 @@ hide_infrastructure_external_MonacoEditorAdapter.prototype = {
 	}
 	,__class__: hide_infrastructure_external_MonacoEditorAdapter
 };
+var hide_infrastructure_external_ProjectTreeAdapter = function() { };
+$hxClasses["hide.infrastructure.external.ProjectTreeAdapter"] = hide_infrastructure_external_ProjectTreeAdapter;
+hide_infrastructure_external_ProjectTreeAdapter.__name__ = "hide.infrastructure.external.ProjectTreeAdapter";
+hide_infrastructure_external_ProjectTreeAdapter.toArboristNodes = function(nodes) {
+	var _g = [];
+	var _g1 = 0;
+	while(_g1 < nodes.length) {
+		var node = nodes[_g1];
+		++_g1;
+		_g.push({ id : node.path, name : node.name, isLeaf : !node.isDirectory, children : node.isDirectory ? [] : null, isLoading : false, isLoaded : false, path : node.path, relativePath : node.relativePath, extension : node.extension});
+	}
+	return _g;
+};
 var hide_infrastructure_external_SceneViewFactory = function(sceneViewportController) {
 	this.sceneViewportController = sceneViewportController;
 };
@@ -113735,13 +113748,14 @@ hide_infrastructure_external_StubPropertiesFactory.prototype = {
 	}
 	,__class__: hide_infrastructure_external_StubPropertiesFactory
 };
+var React_Component = require("react").Component;
+var hide_infrastructure_external_arborist_ReactArborist = require("react-arborist").Tree;
 var hide_infrastructure_external_litegraph_LGraph = require("litegraph.js").LGraph;
 var hide_infrastructure_external_litegraph_LGraphCanvas = require("litegraph.js").LGraphCanvas;
 var hide_infrastructure_external_litegraph_LGraphGroup = require("litegraph.js").LGraphGroup;
 var hide_infrastructure_external_litegraph_LGraphLink = require("litegraph.js").LGraphLink;
 var hide_infrastructure_external_litegraph_LGraphNode = require("litegraph.js").LGraphNode;
 var hide_infrastructure_external_litegraph_LiteGraph = require("litegraph.js").LiteGraph;
-var React_Component = require("react").Component;
 var hide_infrastructure_external_monaco_MonacoEditor = require("@monaco-editor/react").default;
 var hide_infrastructure_external_monaco_MonacoLoader = require("@monaco-editor/react").loader;
 var hide_infrastructure_platform_electron_ElectronFileDialogAdapter = function(ipcBridge) {
@@ -114494,6 +114508,9 @@ hide_presentation_Ide.prototype = {
 	,get_projectTree: function() {
 		return this.projectTreeService;
 	}
+	,get_projectService: function() {
+		return this.projectService;
+	}
 	,getConstructorArgs: function() {
 		return ["hide.application.services.WindowService","hide.application.services.MenuService","hide.application.commands.LoadProjectUseCase","hide.application.commands.SetFullscreenUseCase","hide.application.commands.OpenViewUseCase","hide.application.services.ViewRegistry","hide.application.services.PluginManager","hide.shared.types.IEventBus","hide.domain.services.IFileDialog","hide.domain.services.IFileSystem","hide.domain.services.IPlatform","hide.domain.services.ILayoutEngine","hide.presentation.controllers.MenuController","hide.presentation.controllers.WindowController","hide.presentation.controllers.ToolbarController","hide.engine.domain.services.ISceneService","hide.application.integration.SceneEditorService","hide.infrastructure.external.SceneViewFactory","hide.engine.infrastructure.ShaderPreviewRenderer","hide.engine.infrastructure.ViewportService","Iterable(hide.application.services.IViewModule)","hide.engine.infrastructure.ShaderNodeRegistry","hide.application.services.ShaderHistoryService","hide.application.commands.SaveShaderUseCase","hide.application.commands.LoadShaderUseCase","hide.domain.services.ILanguageServer","hide.application.services.ProjectService","hide.application.services.AssetBrowserService","hide.application.services.ProjectTreeService"];
 	}
@@ -115152,9 +115169,10 @@ hide_presentation_ui_react_components_ContextMenu.prototype = $extend(React_Comp
 	}
 	,handleGlobalClick: function(e) {
 		var target = js_Boot.__cast(e.target , HTMLElement);
-		if(target != null && target.closest(".context-menu-root") == null) {
-			this.props.onClose();
+		if(target != null && target.closest(".context-menu-root") != null) {
+			return;
 		}
+		this.props.onClose();
 	}
 	,handleKeyDown: function(e) {
 		if(e.key == "Escape") {
@@ -115174,6 +115192,7 @@ hide_presentation_ui_react_components_ContextMenu.prototype = $extend(React_Comp
 		return React.createElement("div",tmp,_g);
 	}
 	,renderItem: function(item) {
+		var _gthis = this;
 		if(item.separator) {
 			return React.createElement("div",{ key : "sep-" + item.label, style : { height : "1px", background : "#454545", margin : "4px 0"}});
 		}
@@ -115185,7 +115204,12 @@ hide_presentation_ui_react_components_ContextMenu.prototype = $extend(React_Comp
 		var tmp1 = !isDisabled ? function(e) {
 			e.currentTarget.style.background = "transparent";
 		} : null;
-		return React.createElement("div",{ key : item.label, style : { padding : "4px 12px", cursor : isDisabled ? "default" : "pointer", display : "flex", alignItems : "center", gap : "8px", opacity : isDisabled ? 0.5 : 1, transition : "background 0.1s"}, onMouseOver : tmp, onMouseOut : tmp1, onClick : !isDisabled ? item.action : null, className : isDisabled ? "context-item disabled" : "context-item"},innerElement,React.createElement("span",{ },item.label));
+		var tmp2 = !isDisabled ? function(e) {
+			e.stopPropagation();
+			item.action();
+			_gthis.props.onClose();
+		} : null;
+		return React.createElement("div",{ key : item.label, style : { padding : "4px 12px", cursor : isDisabled ? "default" : "pointer", display : "flex", alignItems : "center", gap : "8px", opacity : isDisabled ? 0.5 : 1, transition : "background 0.1s"}, onMouseOver : tmp, onMouseOut : tmp1, onClick : tmp2, className : isDisabled ? "context-item disabled" : "context-item"},innerElement,React.createElement("span",{ },item.label));
 	}
 	,__class__: hide_presentation_ui_react_components_ContextMenu
 });
@@ -116082,259 +116106,375 @@ hide_presentation_ui_react_components_NodePropertiesPanel.prototype = $extend(hi
 	,__class__: hide_presentation_ui_react_components_NodePropertiesPanel
 });
 var hide_presentation_ui_react_components_ProjectPanel = function() {
+	this.dragStartPos = null;
+	this.isDragging = false;
 	hide_presentation_ui_react_BaseReactComponent.call(this);
 	this.service = hide_presentation_ui_react_hooks_UseService.projectTree();
-	this.state = { rootNodes : [], searchQuery : "", contextMenu : null, expandedFolders : { }, childrenCache : { }};
+	this.treeRef = React.createRef();
+	this.state = { treeData : [], isLoading : true, selectedId : null, contextMenu : null};
 };
 $hxClasses["hide.presentation.ui.react.components.ProjectPanel"] = hide_presentation_ui_react_components_ProjectPanel;
 hide_presentation_ui_react_components_ProjectPanel.__name__ = "hide.presentation.ui.react.components.ProjectPanel";
 hide_presentation_ui_react_components_ProjectPanel.__super__ = hide_presentation_ui_react_BaseReactComponent;
 hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_presentation_ui_react_BaseReactComponent.prototype,{
 	service: null
+	,treeRef: null
 	,componentDidMount: function() {
 		this.loadRoot();
 	}
 	,loadRoot: function() {
 		var _gthis = this;
+		this.setState({ treeData : [], isLoading : true, selectedId : null, contextMenu : this.state.contextMenu});
 		this.service.readDir(null).handle(function(nodes) {
-			_gthis.setState({ rootNodes : nodes, searchQuery : _gthis.state.searchQuery, contextMenu : _gthis.state.contextMenu, expandedFolders : _gthis.state.expandedFolders, childrenCache : _gthis.state.childrenCache});
+			var arboristNodes = hide_infrastructure_external_ProjectTreeAdapter.toArboristNodes(nodes);
+			_gthis.setState({ treeData : arboristNodes, isLoading : false, selectedId : null, contextMenu : _gthis.state.contextMenu});
 		});
-	}
-	,toggleFolder: function(node) {
-		var _gthis = this;
-		var path = node.relativePath;
-		var isExpanded = Reflect.field(this.state.expandedFolders,path) == true;
-		var newExpanded = Reflect.copy(this.state.expandedFolders);
-		newExpanded[path] = !isExpanded;
-		if(!isExpanded && !Object.prototype.hasOwnProperty.call(this.state.childrenCache,node.path)) {
-			var newCache = Reflect.copy(this.state.childrenCache);
-			newCache[node.path] = [];
-			this.setState({ rootNodes : this.state.rootNodes, searchQuery : this.state.searchQuery, contextMenu : this.state.contextMenu, expandedFolders : newExpanded, childrenCache : newCache});
-			this.service.readDir(node.path).handle(function(children) {
-				var updatedCache = Reflect.copy(newCache);
-				updatedCache[node.path] = children;
-				haxe_Log.trace("📥 [UI] Loaded " + children.length + " children for: " + node.name,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 88, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "toggleFolder"});
-				_gthis.setState({ rootNodes : _gthis.state.rootNodes, searchQuery : _gthis.state.searchQuery, contextMenu : _gthis.state.contextMenu, expandedFolders : newExpanded, childrenCache : updatedCache});
-			});
-		} else {
-			this.setState({ rootNodes : this.state.rootNodes, searchQuery : this.state.searchQuery, contextMenu : this.state.contextMenu, expandedFolders : newExpanded, childrenCache : this.state.childrenCache});
-		}
-	}
-	,handleSearchChange: function(e) {
-		var target = js_Boot.__cast(e.target , HTMLInputElement);
-		this.setState({ rootNodes : this.state.rootNodes, searchQuery : target.value.toLowerCase(), contextMenu : this.state.contextMenu, expandedFolders : this.state.expandedFolders, childrenCache : this.state.childrenCache});
-	}
-	,clearSearch: function() {
-		this.setState({ rootNodes : this.state.rootNodes, searchQuery : "", contextMenu : this.state.contextMenu, expandedFolders : this.state.expandedFolders, childrenCache : this.state.childrenCache});
-	}
-	,matchesSearch: function(node,query) {
-		if(query == "") {
-			return true;
-		}
-		if(node.name.toLowerCase().indexOf(query) != -1) {
-			return true;
-		}
-		return false;
-	}
-	,highlightText: function(text,query) {
-		if(query == "" || text.toLowerCase().indexOf(query) == -1) {
-			return React.createElement("span",{ },text);
-		}
-		var lowerText = text.toLowerCase();
-		var lowerQuery = query.toLowerCase();
-		var parts = [];
-		var lastIndex = 0;
-		var index = 0;
-		while(true) {
-			index = lowerText.indexOf(lowerQuery,lastIndex);
-			if(!(index != -1)) {
-				break;
-			}
-			if(index > lastIndex) {
-				parts.push(React.createElement("span",{ key : "t" + parts.length},text.substring(lastIndex,index)));
-			}
-			parts.push(React.createElement("span",{ key : "h" + parts.length, style : { backgroundColor : "#facc15", color : "#000", borderRadius : "2px", padding : "0 2px", fontWeight : "bold"}},text.substring(index,index + query.length)));
-			lastIndex = index + query.length;
-		}
-		if(lastIndex < text.length) {
-			parts.push(React.createElement("span",{ key : "e" + parts.length},text.substring(lastIndex)));
-		}
-		return React.createElement("span",{ },parts);
-	}
-	,getContextMenuItems: function(node) {
-		var _gthis = this;
-		var closeMenu = function() {
-			_gthis.setState({ rootNodes : _gthis.state.rootNodes, searchQuery : _gthis.state.searchQuery, contextMenu : null, expandedFolders : _gthis.state.expandedFolders, childrenCache : _gthis.state.childrenCache});
-		};
-		var items = [{ label : "Open", icon : "📂", action : function() {
-			hide_presentation_ui_react_hooks_UseService.eventBus().publish(hide_shared_events_ResourceOpened,new hide_shared_events_ResourceOpened(node.path));
-			closeMenu();
-		}}];
-		if(node.isDirectory) {
-			items.push({ separator : true, label : "sep1", action : function() {
-			}});
-			items.push({ label : "Reveal in Explorer", icon : "", action : function() {
-				closeMenu();
-			}});
-		} else {
-			items.push({ separator : true, label : "sep1", action : function() {
-			}});
-			items.push({ label : "Delete", icon : "🗑️", action : function() {
-				if(window.confirm("Delete '" + node.name + "'?")) {
-					haxe_Log.trace("TODO: Delete file " + node.path,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 184, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "getContextMenuItems"});
-				}
-				closeMenu();
-			}});
-		}
-		return items;
 	}
 	,handleContextMenu: function(e,node) {
 		e.preventDefault();
 		e.stopPropagation();
-		var menuWidth = 200;
-		var menuHeight = 300;
-		var winW = window.innerWidth;
-		var winH = window.innerHeight;
-		var x = e.clientX;
-		var y = e.clientY;
-		if(x + menuWidth > winW) {
-			x = winW - menuWidth - 10;
-		}
-		if(y + menuHeight > winH) {
-			y = winH - menuHeight - 10;
-		}
-		this.setState({ rootNodes : this.state.rootNodes, searchQuery : this.state.searchQuery, contextMenu : { x : x, y : y, node : node}, expandedFolders : this.state.expandedFolders, childrenCache : this.state.childrenCache});
+		this.setState({ treeData : this.state.treeData, isLoading : this.state.isLoading, selectedId : this.state.selectedId, contextMenu : { x : e.clientX, y : e.clientY, node : node}});
 	}
-	,render: function() {
+	,closeContextMenu: function() {
+		this.setState({ treeData : this.state.treeData, isLoading : this.state.isLoading, selectedId : this.state.selectedId, contextMenu : null});
+	}
+	,getContextMenuItems: function(node) {
 		var _gthis = this;
-		var hasQuery = this.state.searchQuery.length > 0;
-		var clearIcon;
-		if(hasQuery) {
-			var clearIcon1 = React.createElement("line",{ y2 : "18", y1 : "6", x2 : "6", x1 : "18"});
-			var clearIcon2 = React.createElement("line",{ y2 : "18", y1 : "6", x2 : "18", x1 : "6"});
-			var clearIcon3 = React.createElement("svg",{ width : "14", viewBox : "0 0 24 24", strokeWidth : "2", stroke : "currentColor", height : "14", fill : "none"},clearIcon1,clearIcon2);
-			clearIcon = React.createElement("button",{ title : "Clear search", style : { background : "transparent", border : "none", color : "#888", cursor : "pointer", padding : "2px", display : "flex", alignItems : "center", justifyContent : "center", borderRadius : "3px"}, onMouseOver : function(e) {
-				e.currentTarget.style.color = "#fff";
-			}, onMouseOut : function(e) {
-				e.currentTarget.style.color = "#888";
-			}, onClick : $bind(this,this.clearSearch)},clearIcon3);
+		var items = [];
+		if(node == null) {
+			items.push({ label : "New Folder", icon : "📁", action : function() {
+				haxe_Log.trace("New Folder in root",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 81, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "getContextMenuItems"});
+				_gthis.closeContextMenu();
+			}});
+			items.push({ label : "New File", icon : "📄", action : function() {
+				haxe_Log.trace("New File in root",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 90, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "getContextMenuItems"});
+				_gthis.closeContextMenu();
+			}});
 		} else {
-			clearIcon = null;
+			var nodeName = node.data.name;
+			var isFolder = !node.data.isLeaf;
+			items.push({ label : "Open", icon : "📂", action : function() {
+				haxe_Log.trace("Open: $nodeName",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 102, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "getContextMenuItems"});
+				_gthis.closeContextMenu();
+			}});
+			items.push({ separator : true, label : "sep1", action : function() {
+			}});
+			items.push({ label : "New Folder", icon : "📁", action : function() {
+				haxe_Log.trace("New Folder in $nodeName",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 113, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "getContextMenuItems"});
+				_gthis.closeContextMenu();
+			}});
+			items.push({ label : "Rename", icon : "✏️", action : function() {
+				haxe_Log.trace("Rename: $nodeName",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 123, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "getContextMenuItems"});
+				node.edit();
+				_gthis.closeContextMenu();
+			}});
+			items.push({ label : "Delete", icon : "🗑️", action : function() {
+				haxe_Log.trace("Delete: $nodeName",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 133, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "getContextMenuItems"});
+				_gthis.handleDelete(node);
+				_gthis.closeContextMenu();
+			}});
 		}
-		var ctxMenu = this.state.contextMenu != null ? React.createElement(hide_presentation_ui_react_components_ContextMenu,{ y : this.state.contextMenu.y, x : this.state.contextMenu.x, onClose : function() {
-			_gthis.setState({ rootNodes : _gthis.state.rootNodes, searchQuery : _gthis.state.searchQuery, contextMenu : null, expandedFolders : _gthis.state.expandedFolders, childrenCache : _gthis.state.childrenCache});
-		}, items : this.getContextMenuItems(this.state.contextMenu.node)}) : null;
-		var tmp = React.createElement("circle",{ r : "8", cy : "11", cx : "11"});
-		var tmp1 = React.createElement("line",{ y2 : "16.65", y1 : "21", x2 : "16.65", x1 : "21"});
-		var tmp2 = React.createElement("svg",{ width : "14", viewBox : "0 0 24 24", strokeWidth : "2", stroke : "#888", height : "14", fill : "none"},tmp,tmp1);
-		var tmp = React.createElement("input",{ value : this.state.searchQuery, type : "text", style : { width : "100%", padding : "4px 8px", background : "#2a2a2a", border : "1px solid #444", borderRadius : "3px", color : "#d4d4d4", outline : "none", boxSizing : "border-box"}, placeholder : "Search Assets...", onChange : $bind(this,this.handleSearchChange), id : "project-search-input"});
-		var tmp1 = React.createElement("div",{ style : { padding : "6px", borderBottom : "1px solid #2a2a2a", display : "flex", alignItems : "center", gap : "4px", background : "#2a2a2a"}},tmp2,tmp,clearIcon);
+		return items;
+	}
+	,updateNodeInTree: function(nodes,id,changes) {
 		var _g = [];
 		var _g1 = 0;
-		var _g2 = this.state.rootNodes;
-		while(_g1 < _g2.length) {
-			var node = _g2[_g1];
+		while(_g1 < nodes.length) {
+			var node = nodes[_g1];
 			++_g1;
-			_g.push(this.renderNode(node,0));
-		}
-		var tmp = React.createElement("div",{ style : { flex : 1, overflowY : "auto", padding : "4px 0"}},_g);
-		return React.createElement("div",{ style : { display : "flex", flexDirection : "column", height : "100%", background : "#383838"}},tmp1,tmp,ctxMenu);
-	}
-	,getNodeIcon: function(node) {
-		if(node.isDirectory) {
-			return "";
-		}
-		var _g = node.extension;
-		if(_g == null) {
-			return "📄";
-		} else {
-			switch(_g) {
-			case "hx":
-				return "🟦";
-			case "prefab":case "scene":
-				return "";
-			case "json":case "shadergraph":
-				return "📋";
-			case "jpeg":case "jpg":case "png":case "webp":
-				return "🖼️";
-			default:
-				return "📄";
+			if(node.id == id) {
+				_g.push(Object.assign({ },node,changes));
+			} else if(node.children != null) {
+				var newNode = Object.assign({ },node);
+				newNode.children = this.updateNodeInTree(node.children,id,changes);
+				_g.push(newNode);
+			} else {
+				_g.push(node);
 			}
 		}
+		return _g;
 	}
-	,renderNode: function(node,depth) {
+	,findNodeById: function(nodes,id) {
+		var _g = 0;
+		while(_g < nodes.length) {
+			var node = nodes[_g];
+			++_g;
+			if(node.id == id) {
+				return node;
+			}
+			if(node.children != null) {
+				var found = this.findNodeById(node.children,id);
+				if(found != null) {
+					return found;
+				}
+			}
+		}
+		return null;
+	}
+	,handleToggle: function(id) {
 		var _gthis = this;
-		if(!this.matchesSearch(node,this.state.searchQuery)) {
-			return React.createElement("div",{ key : node.path});
+		var node = this.findNodeById(this.state.treeData,id);
+		if(node == null) {
+			return;
 		}
-		var paddingLeft = depth * 16 + 8;
-		var isExpanded = Reflect.field(this.state.expandedFolders,node.relativePath) == true;
+		if(node.isLoaded == true) {
+			return;
+		}
+		var loadingData = this.updateNodeInTree(this.state.treeData,id,{ isLoading : true});
+		this.setState({ treeData : loadingData, isLoading : this.state.isLoading, selectedId : this.state.selectedId, contextMenu : this.state.contextMenu});
+		this.service.readDir(node.path).handle(function(children) {
+			var arboristChildren = hide_infrastructure_external_ProjectTreeAdapter.toArboristNodes(children);
+			var finalData = _gthis.updateNodeInTree(_gthis.state.treeData,id,{ children : arboristChildren, isLoading : false, isLoaded : true});
+			_gthis.setState({ treeData : finalData, isLoading : _gthis.state.isLoading, selectedId : _gthis.state.selectedId, contextMenu : _gthis.state.contextMenu});
+			window.setTimeout(function() {
+				if(react_ReactRef.get_current(_gthis.treeRef) != null) {
+					react_ReactRef.get_current(_gthis.treeRef).open(id);
+				}
+			},50);
+		});
+	}
+	,handleRename: function(node,newName) {
+		var nodeId = node.id;
+		var nodeData = node.data;
+		var oldPath = nodeData.path;
+		haxe_Log.trace("✏️ Rename requested: " + oldPath + " -> " + newName,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 221, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleRename"});
+		var parts = oldPath.split("/");
+		parts[parts.length - 1] = newName;
+		var newPath = parts.join("/");
+		haxe_Log.trace("  -> fs.rename(" + oldPath + ", " + newPath + ")",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 230, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleRename"});
+		this.refreshParentDirectory(oldPath);
+	}
+	,handleDelete: function(node) {
+		var nodeId = node.id;
+		var nodeData = node.data;
+		var path = nodeData.path;
+		var name = nodeData.name;
+		if(!window.confirm("Delete \"" + name + "\"?")) {
+			return;
+		}
+		haxe_Log.trace("🗑️ Delete requested: " + path,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 243, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleDelete"});
+		var parentPath = path.substring(0,path.lastIndexOf("/"));
+		this.invalidateChildrenCache(parentPath);
+	}
+	,handleCreate: function(parentId,index,type) {
+		haxe_Log.trace("📁 Create " + type + " requested in parentId=" + parentId + " at index=" + index,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 257, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
+		var parent = this.findNodeById(this.state.treeData,parentId);
+		var parentPath;
+		if(parent != null) {
+			parentPath = parent.data.path;
+		} else {
+			var project = hide_presentation_ui_react_hooks_UseService.projectService().getCurrentProject();
+			parentPath = project.rootPath.toString().split("\\").join("/");
+		}
+		var newName = window.prompt("Enter name:","New " + type);
+		if(newName == null || newName == "") {
+			return;
+		}
+		var newPath = parentPath + "/" + newName;
+		if(type == "folder") {
+			haxe_Log.trace("  -> Creating folder: " + newPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 277, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
+		} else {
+			haxe_Log.trace("  -> Creating file: " + newPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 280, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
+		}
+		if(parent != null) {
+			var parentData = parent.data;
+			this.invalidateChildrenCache(parentData.path);
+		} else {
+			this.loadRoot();
+		}
+	}
+	,handleMove: function(event) {
+		var dragNodes = event.dragNodes;
+		var parentNode = event.parentNode;
+		var index = event.index;
+		var targetPath;
+		if(parentNode != null && parentNode.data != null) {
+			targetPath = parentNode.data.path;
+		} else {
+			var project = hide_presentation_ui_react_hooks_UseService.projectService().getCurrentProject();
+			targetPath = project.rootPath.toString();
+		}
+		var _g = [];
+		var _g1 = 0;
+		while(_g1 < dragNodes.length) {
+			var n = dragNodes[_g1];
+			++_g1;
+			_g.push(n.data.path);
+		}
+		var draggedPaths = _g;
+		haxe_Log.trace("↔️ Move requested:",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 308, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
+		haxe_Log.trace("  -> Items: " + draggedPaths.join(", "),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 309, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
+		haxe_Log.trace("  -> Target: " + targetPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 310, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
+		haxe_Log.trace("  -> Index: " + index,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 311, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
+		var _g = 0;
+		while(_g < draggedPaths.length) {
+			var srcPath = draggedPaths[_g];
+			++_g;
+			var parentPath = srcPath.lastIndexOf("/");
+			var parentPath1 = srcPath.substring(0,parentPath);
+			this.invalidateChildrenCache(parentPath1);
+		}
+		this.invalidateChildrenCache(targetPath);
+	}
+	,invalidateChildrenCache: function(folderPath) {
+		var _gthis = this;
+		haxe_Log.trace(" Invalidating cache for: " + folderPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 331, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "invalidateChildrenCache"});
+		var newData = this.updateNodeInTree(this.state.treeData,folderPath,{ children : [], isLoaded : false, isLoading : false});
+		this.setState({ treeData : newData, isLoading : this.state.isLoading, selectedId : this.state.selectedId, contextMenu : this.state.contextMenu});
+		this.service.readDir(folderPath).handle(function(children) {
+			var arboristChildren = hide_infrastructure_external_ProjectTreeAdapter.toArboristNodes(children);
+			var finalData = _gthis.updateNodeInTree(_gthis.state.treeData,folderPath,{ children : arboristChildren, isLoaded : true, isLoading : false});
+			_gthis.setState({ treeData : finalData, isLoading : _gthis.state.isLoading, selectedId : _gthis.state.selectedId, contextMenu : _gthis.state.contextMenu});
+		});
+	}
+	,refreshParentDirectory: function(itemPath) {
+		var parts = itemPath.split("/");
+		if(parts.length > 1) {
+			parts.pop();
+			var parentPath = parts.join("/");
+			this.invalidateChildrenCache(parentPath);
+		} else {
+			this.loadRoot();
+		}
+	}
+	,handleSelect: function(nodes) {
+		if(nodes == null || nodes.length == 0) {
+			this.setState({ treeData : this.state.treeData, isLoading : this.state.isLoading, selectedId : null, contextMenu : this.state.contextMenu});
+			return;
+		}
+		var firstNode = nodes[0];
+		var newSelectedId = firstNode.id;
+		haxe_Log.trace("✅ Selected: " + newSelectedId + " (" + firstNode.data.name + ")",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 393, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleSelect"});
+		if(firstNode.data.isLeaf == true) {
+			hide_presentation_ui_react_hooks_UseService.eventBus().publish(hide_shared_events_ResourceOpened,new hide_shared_events_ResourceOpened(firstNode.data.path));
+		}
+		this.setState({ treeData : this.state.treeData, isLoading : this.state.isLoading, selectedId : newSelectedId, contextMenu : this.state.contextMenu});
+	}
+	,handleFetchChildren: function(node,cb) {
+		if(node == null || node.data == null || node.data.path == null) {
+			cb([]);
+			return;
+		}
+		this.service.readDir(node.data.path).handle(function(children) {
+			var result = [];
+			if(children != null) {
+				var _g = 0;
+				var _g1 = hide_infrastructure_external_ProjectTreeAdapter.toArboristNodes(children);
+				while(_g < _g1.length) {
+					var child = _g1[_g];
+					++_g;
+					result.push(child);
+				}
+			}
+			cb(result);
+		});
+	}
+	,isDragging: null
+	,dragStartPos: null
+	,renderNode: function(api) {
+		var _gthis = this;
+		var node = api.node;
+		var style = api.style;
+		if(node == null) {
+			haxe_Log.trace("❌ api.node is null!",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 443, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "renderNode"});
+			return React.createElement("div",{ style : { background : "red"}},"ERROR");
+		}
+		var id = node.id;
+		var data = node.data;
+		var level = node.level;
+		var isSelected = node.isSelected;
+		var isEditing = node.isEditing;
+		var isOpen = node.isOpen;
+		var isLeaf = node.isLeaf;
+		if(id == "__REACT_ARBORIST_INTERNAL_ROOT__") {
+			return React.createElement("div",{ });
+		}
+		if(data == null) {
+			haxe_Log.trace("❌ data is null for id=" + id,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 461, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "renderNode"});
+			return React.createElement("div",{ style : { background : "orange"}},"NO DATA");
+		}
+		var name = data.name;
+		var extension = data.extension;
+		var isLoading = data.isLoading;
+		var isFolder = !isLeaf;
 		var icon;
-		if(node.isDirectory) {
-			icon = isExpanded ? "📂" : "📁";
-		} else if(StringTools.endsWith(node.name,".meta")) {
-			icon = "⚙️";
-		} else {
-			var _g = node.extension;
-			if(_g == null) {
-				icon = "";
-			} else {
-				switch(_g) {
-				case "hx":
-					icon = "🟦";
-					break;
-				case "prefab":case "scene":
-					icon = "🎬";
-					break;
-				case "json":case "shadergraph":
-					icon = "";
-					break;
-				case "jpeg":case "jpg":case "png":case "webp":
-					icon = "🖼️";
-					break;
-				default:
-					icon = "";
-				}
-			}
-		}
-		var arrow = node.isDirectory ? React.createElement("span",{ style : { width : "16px", textAlign : "center", fontSize : "10px", marginRight : "4px", color : "#aaa", cursor : "pointer"}, onClick : function(_) {
-			_gthis.toggleFolder(node);
-		}},isExpanded ? "▼" : "▶") : React.createElement("span",{ style : { width : "16px", display : "inline-block"}});
-		var rowStyle = { padding : "3px 8px", paddingLeft : paddingLeft + "px", cursor : "pointer", borderRadius : "3px", background : "transparent", display : "flex", alignItems : "center", whiteSpace : "nowrap", overflow : "hidden", textOverflow : "ellipsis"};
-		var childrenList;
-		if(node.isDirectory && isExpanded) {
-			var children = Reflect.field(this.state.childrenCache,node.path);
-			if(children == null) {
-				childrenList = React.createElement("div",{ style : { paddingLeft : "16px", color : "#666", fontSize : "11px"}},"Loading...");
-			} else {
-				var _g = [];
-				var _g1 = 0;
-				while(_g1 < children.length) {
-					var child = children[_g1];
-					++_g1;
-					_g.push(this.renderNode(child,depth + 1));
-				}
-				childrenList = React.createElement("div",{ },_g);
+		if(!isFolder) {
+			switch(extension) {
+			case "hx":
+				icon = "🟦";
+				break;
+			case "prefab":case "scene":
+				icon = "🎬";
+				break;
+			case "json":case "shadergraph":
+				icon = "📋";
+				break;
+			case "jpeg":case "jpg":case "png":case "webp":
+				icon = "🖼️";
+				break;
+			default:
+				icon = "📄";
 			}
 		} else {
-			childrenList = React.createElement("div",{ });
+			icon = isOpen ? "📂" : "📁";
 		}
-		var tmp = { key : node.path};
-		var tmp1 = React.createElement("span",{ style : { marginRight : "6px"}},icon);
-		var tmp2 = this.highlightText(node.name,this.state.searchQuery);
-		return React.createElement("div",tmp,React.createElement("div",{ style : rowStyle, onMouseOver : function(e) {
-			e.currentTarget.style.background = "#444";
-		}, onMouseOut : function(e) {
-			e.currentTarget.style.background = "transparent";
+		var arrow = !isFolder ? React.createElement("span",{ style : { width : "16px", display : "inline-block", marginRight : "4px", flexShrink : 0}}) : isLoading == true ? React.createElement("span",{ style : { width : "16px", textAlign : "center", fontSize : "10px", marginRight : "4px", color : "#facc15", flexShrink : 0}},"⏳") : React.createElement("span",{ style : { width : "16px", textAlign : "center", fontSize : "10px", marginRight : "4px", color : "#aaa", cursor : "pointer", flexShrink : 0}, onClick : function(e) {
+			e.stopPropagation();
+			node.toggle();
+		}},api.isOpen ? "▼" : "▶");
+		var rowStyle = { display : "flex", alignItems : "center", padding : "3px 8px", paddingLeft : level * 16 + 8 + "px", background : isSelected ? "#2d5c8a" : "transparent", cursor : "pointer", borderRadius : "3px", whiteSpace : "nowrap", overflow : "hidden", textOverflow : "ellipsis", height : "24px", userSelect : "none"};
+		var textStyle = { color : isSelected ? "#ffffff" : "#cccccc", flex : 1, overflow : "hidden", textOverflow : "ellipsis"};
+		var content = isEditing ? React.createElement("input",{ style : { background : "#1a1a1a", border : "1px solid #007acc", color : "#ffffff", padding : "2px 6px", borderRadius : "2px", outline : "none", fontSize : "13px", flex : 1, width : "100%", boxSizing : "border-box"}, onKeyDown : function(e) {
+			if(e.key == "Enter") {
+				node.submit(e.target.value);
+			}
+			if(e.key == "Escape") {
+				node.reset();
+			}
+		}, onBlur : function(e) {
+			node.submit(e.target.value);
+		}, defaultValue : name, autoFocus : true}) : React.createElement("span",{ style : textStyle},name);
+		var tmp = React.createElement("span",{ style : { marginRight : "6px", fontSize : "14px", flexShrink : 0}},icon);
+		return React.createElement("div",{ style : rowStyle, onMouseMove : function(e) {
+			if(_gthis.dragStartPos != null) {
+				var dx = e.clientX - _gthis.dragStartPos.x;
+				var dy = e.clientY - _gthis.dragStartPos.y;
+				if(Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+					_gthis.isDragging = true;
+				}
+			}
+		}, onMouseDown : function(e) {
+			_gthis.dragStartPos = { x : e.clientX, y : e.clientY};
+			_gthis.isDragging = false;
 		}, onContextMenu : function(e) {
 			_gthis.handleContextMenu(e,node);
 		}, onClick : function(_) {
-			if(node.isDirectory) {
-				_gthis.toggleFolder(node);
-			} else {
-				hide_presentation_ui_react_hooks_UseService.eventBus().publish(hide_shared_events_ResourceOpened,new hide_shared_events_ResourceOpened(node.path));
+			if(!_gthis.isDragging) {
+				node.select();
 			}
-		}},arrow,tmp1,tmp2),childrenList);
+			_gthis.isDragging = false;
+			_gthis.dragStartPos = null;
+		}},arrow,tmp,content);
+	}
+	,render: function() {
+		var _gthis = this;
+		if(this.state.isLoading) {
+			return React.createElement("div",{ style : { padding : "10px", color : "#888"}},"Loading project tree...");
+		}
+		var jsRootNodes = [];
+		var _g = 0;
+		var _g1 = this.state.treeData;
+		while(_g < _g1.length) {
+			var node = _g1[_g];
+			++_g;
+			jsRootNodes.push(node);
+		}
+		var ctxMenu = this.state.contextMenu != null ? React.createElement(hide_presentation_ui_react_components_ContextMenu,{ y : this.state.contextMenu.y, x : this.state.contextMenu.x, onClose : $bind(this,this.closeContextMenu), items : this.getContextMenuItems(this.state.contextMenu.node)}) : null;
+		var tmp = React.createElement(hide_infrastructure_external_arborist_ReactArborist,{ ref : this.treeRef, width : 400, selection : this.state.selectedId, rowHeight : 24, openByDefault : false, onToggle : $bind(this,this.handleToggle), onSelect : $bind(this,this.handleSelect), onRename : $bind(this,this.handleRename), onMove : $bind(this,this.handleMove), onDelete : $bind(this,this.handleDelete), onCreate : $bind(this,this.handleCreate), onContextMenu : function(e) {
+			_gthis.handleContextMenu(e,null);
+		}, indent : 16, idAccessor : "id", height : 600, disableDrop : false, disableDrag : false, data : jsRootNodes},$bind(this,this.renderNode));
+		var tmp1 = React.createElement("div",{ style : { flex : 1, overflowY : "auto"}},tmp);
+		return React.createElement("div",{ style : { display : "flex", flexDirection : "column", height : "100%", background : "#383838"}},tmp1,ctxMenu);
 	}
 	,__class__: hide_presentation_ui_react_components_ProjectPanel
 });
@@ -117044,6 +117184,9 @@ hide_presentation_ui_react_hooks_UseService.assetBrowser = function() {
 };
 hide_presentation_ui_react_hooks_UseService.projectTree = function() {
 	return hide_presentation_Ide.inst.get_projectTree();
+};
+hide_presentation_ui_react_hooks_UseService.projectService = function() {
+	return hide_presentation_Ide.inst.get_projectService();
 };
 var hide_shared_events_ErrorOccurred = function(context,error) {
 	this.context = context;
