@@ -116233,36 +116233,51 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 			},50);
 		});
 	}
-	,handleRename: function(node,newName) {
-		var nodeId = node.id;
-		var nodeData = node.data;
-		var oldPath = nodeData.path;
-		haxe_Log.trace("✏️ Rename requested: " + oldPath + " -> " + newName,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 221, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleRename"});
+	,handleRename: function(args) {
+		var id = args.id;
+		var newName = args.name;
+		var nodeApi = args.node;
+		var data = nodeApi.data;
+		haxe_Log.trace("✏️ Rename: id=" + id + " -> newName=" + newName,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 223, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleRename"});
+		if(data == null) {
+			haxe_Log.trace("❌ data is null",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 226, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleRename"});
+			return;
+		}
+		var oldPath = data.path;
+		haxe_Log.trace("  -> Old path: " + oldPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 231, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleRename"});
 		var parts = oldPath.split("/");
 		parts[parts.length - 1] = newName;
 		var newPath = parts.join("/");
-		haxe_Log.trace("  -> fs.rename(" + oldPath + ", " + newPath + ")",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 230, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleRename"});
+		haxe_Log.trace("  -> New path: " + newPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 238, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleRename"});
 		this.refreshParentDirectory(oldPath);
 	}
-	,handleDelete: function(node) {
-		var nodeId = node.id;
-		var nodeData = node.data;
-		var path = nodeData.path;
-		var name = nodeData.name;
-		if(!window.confirm("Delete \"" + name + "\"?")) {
-			return;
+	,handleDelete: function(args) {
+		var ids = args.ids;
+		var nodes = args.nodes;
+		haxe_Log.trace("🗑️ Delete requested: " + ids.join(", "),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 251, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleDelete"});
+		var _g = 0;
+		while(_g < nodes.length) {
+			var nodeApi = nodes[_g];
+			++_g;
+			var data = nodeApi.data;
+			if(data != null) {
+				var path = data.path;
+				var parentPath = path.substring(0,path.lastIndexOf("/"));
+				this.invalidateChildrenCache(parentPath);
+			}
 		}
-		haxe_Log.trace("🗑️ Delete requested: " + path,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 243, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleDelete"});
-		var parentPath = path.substring(0,path.lastIndexOf("/"));
-		this.invalidateChildrenCache(parentPath);
 	}
 	,handleCreate: function(parentId,index,type) {
-		haxe_Log.trace("📁 Create " + type + " requested in parentId=" + parentId + " at index=" + index,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 257, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
+		haxe_Log.trace("📁 Create " + type + " at index=" + index + " in parentId=" + parentId,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 264, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
 		var parent = this.findNodeById(this.state.treeData,parentId);
 		var parentPath;
 		if(parent != null) {
-			parentPath = parent.data.path;
+			var parentData = parent.data;
+			parentPath = parentData != null ? parentData.path : null;
 		} else {
+			parentPath = null;
+		}
+		if(parentPath == null) {
 			var project = hide_presentation_ui_react_hooks_UseService.projectService().getCurrentProject();
 			parentPath = project.rootPath.toString().split("\\").join("/");
 		}
@@ -116272,9 +116287,9 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 		}
 		var newPath = parentPath + "/" + newName;
 		if(type == "folder") {
-			haxe_Log.trace("  -> Creating folder: " + newPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 277, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
+			haxe_Log.trace("  -> Creating folder: " + newPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 288, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
 		} else {
-			haxe_Log.trace("  -> Creating file: " + newPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 280, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
+			haxe_Log.trace("  -> Creating file: " + newPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 290, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
 		}
 		if(parent != null) {
 			var parentData = parent.data;
@@ -116283,29 +116298,31 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 			this.loadRoot();
 		}
 	}
-	,handleMove: function(event) {
-		var dragNodes = event.dragNodes;
-		var parentNode = event.parentNode;
-		var index = event.index;
-		var targetPath;
-		if(parentNode != null && parentNode.data != null) {
-			targetPath = parentNode.data.path;
-		} else {
-			var project = hide_presentation_ui_react_hooks_UseService.projectService().getCurrentProject();
-			targetPath = project.rootPath.toString();
-		}
+	,handleMove: function(args) {
+		var dragIds = args.dragIds;
+		var dragNodes = args.dragNodes;
+		var parentNode = args.parentNode;
+		var index = args.index;
+		haxe_Log.trace("↔️ Move: " + dragIds.length + " items -> parentId=" + (parentNode != null ? parentNode.id : "ROOT") + " at index=" + index,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 310, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
 		var _g = [];
 		var _g1 = 0;
 		while(_g1 < dragNodes.length) {
 			var n = dragNodes[_g1];
 			++_g1;
-			_g.push(n.data.path);
+			var d = n.data;
+			_g.push(d.path);
 		}
 		var draggedPaths = _g;
-		haxe_Log.trace("↔️ Move requested:",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 308, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
-		haxe_Log.trace("  -> Items: " + draggedPaths.join(", "),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 309, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
-		haxe_Log.trace("  -> Target: " + targetPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 310, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
-		haxe_Log.trace("  -> Index: " + index,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 311, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
+		var targetPath;
+		if(parentNode != null) {
+			var d = parentNode.data;
+			targetPath = d.path;
+		} else {
+			var project = hide_presentation_ui_react_hooks_UseService.projectService().getCurrentProject();
+			targetPath = project.rootPath.toString().split("\\").join("/");
+		}
+		haxe_Log.trace("  -> Paths: " + draggedPaths.join(", "),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 327, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
+		haxe_Log.trace("  -> Target: " + targetPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 328, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
 		var _g = 0;
 		while(_g < draggedPaths.length) {
 			var srcPath = draggedPaths[_g];
@@ -116318,7 +116335,7 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 	}
 	,invalidateChildrenCache: function(folderPath) {
 		var _gthis = this;
-		haxe_Log.trace(" Invalidating cache for: " + folderPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 331, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "invalidateChildrenCache"});
+		haxe_Log.trace(" Invalidating cache for: " + folderPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 343, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "invalidateChildrenCache"});
 		var newData = this.updateNodeInTree(this.state.treeData,folderPath,{ children : [], isLoaded : false, isLoading : false});
 		this.setState({ treeData : newData, isLoading : this.state.isLoading, selectedId : this.state.selectedId, contextMenu : this.state.contextMenu});
 		this.service.readDir(folderPath).handle(function(children) {
@@ -116344,7 +116361,7 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 		}
 		var firstNode = nodes[0];
 		var newSelectedId = firstNode.id;
-		haxe_Log.trace("✅ Selected: " + newSelectedId + " (" + firstNode.data.name + ")",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 393, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleSelect"});
+		haxe_Log.trace("✅ Selected: " + newSelectedId + " (" + firstNode.data.name + ")",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 405, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleSelect"});
 		if(firstNode.data.isLeaf == true) {
 			hide_presentation_ui_react_hooks_UseService.eventBus().publish(hide_shared_events_ResourceOpened,new hide_shared_events_ResourceOpened(firstNode.data.path));
 		}
@@ -116376,7 +116393,7 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 		var node = api.node;
 		var style = api.style;
 		if(node == null) {
-			haxe_Log.trace("❌ api.node is null!",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 443, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "renderNode"});
+			haxe_Log.trace("❌ api.node is null!",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 455, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "renderNode"});
 			return React.createElement("div",{ style : { background : "red"}},"ERROR");
 		}
 		var id = node.id;
@@ -116390,7 +116407,7 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 			return React.createElement("div",{ });
 		}
 		if(data == null) {
-			haxe_Log.trace("❌ data is null for id=" + id,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 461, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "renderNode"});
+			haxe_Log.trace("❌ data is null for id=" + id,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 473, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "renderNode"});
 			return React.createElement("div",{ style : { background : "orange"}},"NO DATA");
 		}
 		var name = data.name;

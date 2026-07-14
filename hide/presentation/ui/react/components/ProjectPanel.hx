@@ -213,61 +213,72 @@ class ProjectPanel extends BaseReactComponent<ProjectProps, ProjectState> {
     }
     // ===== Обработчики событий Arborist =====
 
-    private function handleRename(node: Dynamic, newName: String): Void {
-        var nodeId = untyped node.id;
-        var nodeData = untyped node.data;
-        var oldPath = untyped nodeData.path;
+    private function handleRename(args: Dynamic): Void {
+        // ✅ Берём данные напрямую из args.node.data
+        var id: String = untyped args.id;
+        var newName: String = untyped args.name;
+        var nodeApi = untyped args.node;  // Это NodeApi
+        var data = untyped nodeApi.data;  // ← ДАННЫЕ ЗДЕСЬ!
         
-        trace('✏️ Rename requested: $oldPath -> $newName');
+        trace('✏️ Rename: id=$id -> newName=$newName');
+        
+        if (data == null) {
+            trace('❌ data is null');
+            return;
+        }
+        
+        var oldPath: String = untyped data.path;
+        trace('  -> Old path: $oldPath');
         
         // Вычисляем новый путь
         var parts = oldPath.split("/");
         parts[parts.length - 1] = newName;
         var newPath = parts.join("/");
         
-        // TODO: Вызов IPC для переименования
+        trace('  -> New path: $newPath');
+        
+        // TODO: IPC для переименования
         // fs.rename(oldPath, newPath)
-        trace('  -> fs.rename($oldPath, $newPath)');
         
         // Обновляем UI
         refreshParentDirectory(oldPath);
     }
-    private function handleDelete(node: Dynamic): Void {
-        var nodeId = untyped node.id;
-        var nodeData = untyped node.data;
-        var path = untyped nodeData.path;
-        var name = untyped nodeData.name;
+
+    private function handleDelete(args: Dynamic): Void {
+        var ids: Array<String> = untyped args.ids;
+        var nodes: Array<Dynamic> = untyped args.nodes;  // ← Массив NodeApi
         
-        if (!js.Browser.window.confirm('Delete "$name"?')) return;
+        trace('🗑️ Delete requested: ${ids.join(", ")}');
         
-        trace('🗑️ Delete requested: $path');
-        
-        // TODO: Вызов IPC для удаления
-        // if (nodeData.isLeaf) {
-        //     fs.unlink(path);
-        // } else {
-        //     fs.rmdir(path, {recursive: true});
-        // }
-        
-        // Обновляем родительскую папку
-        var parentPath = path.substring(0, path.lastIndexOf("/"));
-        invalidateChildrenCache(parentPath);
+        for (nodeApi in nodes) {
+            var data = untyped nodeApi.data;
+            if (data != null) {
+                var path: String = untyped data.path;
+                var parentPath = path.substring(0, path.lastIndexOf("/"));
+                invalidateChildrenCache(parentPath);
+            }
+        }
     }
+
     private function handleCreate(parentId: String, index: Int, type: String): Void {
-        trace('📁 Create $type requested in parentId=$parentId at index=$index');
+        trace('📁 Create $type at index=$index in parentId=$parentId');
         
         // Находим родительский узел
         var parent = findNodeById(state.treeData, parentId);
         
         var parentPath = if (parent != null) {
-            untyped parent.data.path;
+            var parentData = untyped parent.data;
+            if (parentData != null) untyped parentData.path else null;
         } else {
-            // Корень проекта
-            var project = UseService.projectService().getCurrentProject();
-            project.rootPath.toString().split("\\").join("/");
+            null;
         };
         
-        // TODO: Показать диалог ввода имени
+        if (parentPath == null) {
+            // Корень проекта
+            var project = UseService.projectService().getCurrentProject();
+            parentPath = project.rootPath.toString().split("\\").join("/");
+        }
+        
         var newName = js.Browser.window.prompt("Enter name:", "New " + type);
         if (newName == null || newName == "") return;
         
@@ -275,49 +286,50 @@ class ProjectPanel extends BaseReactComponent<ProjectProps, ProjectState> {
         
         if (type == "folder") {
             trace('  -> Creating folder: $newPath');
-            // fs.mkdir(newPath)
         } else {
             trace('  -> Creating file: $newPath');
-            // fs.writeFile(newPath, "")
         }
         
-        // Обновляем родительскую папку
+        // TODO: IPC create
+        
+        // Обновляем
         if (parent != null) {
             var parentData = untyped parent.data;
-            invalidateChildrenCache(parentData.path);
+            invalidateChildrenCache(untyped parentData.path);
         } else {
             loadRoot();
         }
     }
 
-    private function handleMove(event: Dynamic): Void {
-        var dragNodes: Array<Dynamic> = untyped event.dragNodes;
-        var parentNode: Dynamic = untyped event.parentNode;
-        var index: Int = untyped event.index;
+    private function handleMove(args: Dynamic): Void {
+        var dragIds: Array<String> = untyped args.dragIds;
+        var dragNodes: Array<Dynamic> = untyped args.dragNodes;  // ← Массив NodeApi
+        var parentNode: Dynamic = untyped args.parentNode;  // ← NodeApi или null
+        var index: Int = untyped args.index;
         
-        var targetPath = if (parentNode != null && untyped parentNode.data != null) {
-            untyped parentNode.data.path;
+        trace('↔️ Move: ${dragIds.length} items -> parentId=${if (parentNode != null) untyped parentNode.id else "ROOT"} at index=$index');
+        
+        // Получаем пути
+        var draggedPaths = [for (n in dragNodes) {
+            var d = untyped n.data;
+            untyped d.path;
+        }];
+        
+        var targetPath = if (parentNode != null) {
+            var d = untyped parentNode.data;
+            untyped d.path;
         } else {
             // Корень проекта
             var project = UseService.projectService().getCurrentProject();
-            project.rootPath.toString();
+            project.rootPath.toString().split("\\").join("/");
         };
         
-        var draggedPaths = [for (n in dragNodes) untyped n.data.path];
-        
-        trace('↔️ Move requested:');
-        trace('  -> Items: ${draggedPaths.join(", ")}');
+        trace('  -> Paths: ${draggedPaths.join(", ")}');
         trace('  -> Target: $targetPath');
-        trace('  -> Index: $index');
         
-        // TODO: Вызов IPC для перемещения
-        // for (srcPath in draggedPaths) {
-        //     var fileName = srcPath.split("/").pop();
-        //     var destPath = targetPath + "/" + fileName;
-        //     fs.move(srcPath, destPath);
-        // }
+        // TODO: IPC для перемещения
         
-        // После перемещения обновляем оба места (откуда и куда)
+        // Обновляем UI
         for (srcPath in draggedPaths) {
             var parentPath = srcPath.substring(0, srcPath.lastIndexOf("/"));
             invalidateChildrenCache(parentPath);
