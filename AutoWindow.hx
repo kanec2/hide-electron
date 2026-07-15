@@ -293,6 +293,104 @@ class AutoWindow {
             });
         });
         */
+        // === Файловая система: Модификации (синхронные вызовы) ===
+        
+                IpcMain.on("fs:rename", function(event:IpcMainEvent, data:Dynamic) {
+            try {
+                var oldPath:String = data.oldPath;
+                var newPath:String = data.newPath;
+                var oldMetaPath = oldPath + '.meta';
+                var newMetaPath = newPath + '.meta';
+
+                // 1. Переименовываем основной файл
+                Fs.renameSync(oldPath, newPath);
+
+                // 2. Если у файла есть .meta, переименовываем его и его build-версию
+                if (Fs.existsSync(oldMetaPath)) {
+                    try {
+                        // Читаем старый .meta, чтобы узнать путь к скомпилированному файлу
+                        var metaContent = Fs.readFileSync(oldMetaPath, { encoding: "utf-8" });
+                        var meta:Dynamic = haxe.Json.parse(metaContent);
+                        var oldBuildPath:String = meta.buildPath;
+
+                        // Переименовываем сам .meta файл
+                        Fs.renameSync(oldMetaPath, newMetaPath);
+
+                        // Переименовываем скомпилированный файл в папке Build (если он существует)
+                        if (oldBuildPath != null && Fs.existsSync(oldBuildPath)) {
+                            // Формируем новый путь: берем директорию старого билда и новое имя с старым расширением
+                            var oldExt = js.node.Path.extname(oldBuildPath); // например, ".webp"
+                            var newBaseName = js.node.Path.basename(newPath, js.node.Path.extname(newPath)); // новое имя без расширения
+                            var newBuildPath = js.node.Path.join(js.node.Path.dirname(oldBuildPath), newBaseName + oldExt);
+
+                            Fs.renameSync(oldBuildPath, newBuildPath);
+
+                            // Обновляем путь buildPath внутри переименованного .meta файла!
+                            meta.buildPath = newBuildPath.split("\\").join("/");
+                            Fs.writeFileSync(newMetaPath, haxe.Json.stringify(meta, null, "  "), { encoding: "utf-8" });
+                            
+                            trace('✅ [Backend] Renamed build file: $oldBuildPath -> $newBuildPath');
+                        }
+                    } catch (e:Dynamic) {
+                        trace('⚠️ [Backend] Warning during meta/build rename: ${Std.string(e)}');
+                        // Не прерываем операцию, если с .meta что-то пошло не так, 
+                        // главный файл уже переименован.
+                    }
+                }
+
+                event.returnValue = {}; // Успех
+            } catch (e:Dynamic) {
+                var errCode = untyped e.code;
+                if (errCode == "EBUSY" || errCode == "EPERM") {
+                    event.returnValue = { error: "File is currently in use by another program. Please close it and try again." };
+                } else {
+                    event.returnValue = { error: Std.string(e) };
+                }
+            }
+        });
+
+        IpcMain.on("fs:delete", function(event:IpcMainEvent, path:String) {
+            try {
+                // Используем untyped, так как hxnodejs может не иметь точных тайпингов 
+                // для новых опций rmSync, но Node.js 14.14+ их поддерживает.
+                untyped Fs.rmSync(path, { recursive: true, force: true });
+                event.returnValue = {};
+            } catch (e:Dynamic) {
+                // Fallback для очень старых версий Node.js или hxnodejs
+                try {
+                    var stat = Fs.statSync(path);
+                    if (stat.isDirectory()) {
+                        untyped Fs.rmdirSync(path, { recursive: true });
+                    } else {
+                        Fs.unlinkSync(path);
+                    }
+                    event.returnValue = {};
+                } catch (e2:Dynamic) {
+                    event.returnValue = { error: Std.string(e2) };
+                }
+            }
+        });
+
+        IpcMain.on("fs:createDirectory", function(event:IpcMainEvent, path:String) {
+            try {
+                // Используем твою уже готовую и отлично написанную функцию!
+                ensureDirectoryExists(path);
+                event.returnValue = {};
+            } catch (e:Dynamic) {
+                event.returnValue = { error: Std.string(e) };
+            }
+        });
+
+        IpcMain.on("fs:move", function(event:IpcMainEvent, data:Dynamic) {
+            try {
+                // В Node.js fs.renameSync отлично работает для перемещения 
+                // файлов и папок в пределах одного диска/раздела.
+                Fs.renameSync(data.sourcePath, data.destPath);
+                event.returnValue = {};
+            } catch (e:Dynamic) {
+                event.returnValue = { error: Std.string(e) };
+            }
+        });
 
         IpcMain.handle("asset:getList", function(event:Dynamic, data:Dynamic):IpcResponse<Dynamic> {
             var pipeline = ServiceLocator.get().assetPipeline;
@@ -509,7 +607,7 @@ class AutoWindow {
                 event.returnValue = { error: Std.string(e) };
             }
         });
-
+        
         IpcMain.on("app:getAppDataPath", function(event:IpcMainEvent) {
             event.returnValue = App.getPath("userData");
         });

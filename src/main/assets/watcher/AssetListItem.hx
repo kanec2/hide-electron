@@ -1,4 +1,4 @@
-package src.main.assets;
+package src.main.assets.watcher;
 
 typedef AssetListItem = {
     var name:String;

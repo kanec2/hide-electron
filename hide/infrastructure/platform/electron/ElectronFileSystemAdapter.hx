@@ -70,4 +70,38 @@ class ElectronFileSystemAdapter implements IFileSystem implements Service {
         var base64:String = result.data;
         return haxe.crypto.Base64.decode(base64);
     }
+    
+    public function rename(oldPath: FilePath, newPath: FilePath): Void {
+        var result = ipcBridge.invokeSync("fs:rename", {
+            oldPath: oldPath.toString(),
+            newPath: newPath.toString()
+        });
+        if (result.error != null) {
+            throw 'Failed to rename: ${result.error}';
+        }
+    }
+
+    public function delete(path: FilePath): Void {
+        var result = ipcBridge.invokeSync("fs:delete", path.toString());
+        if (result.error != null) {
+            throw 'Failed to delete: ${result.error}';
+        }
+    }
+
+    public function createDirectory(path: FilePath): Void {
+        var result = ipcBridge.invokeSync("fs:createDirectory", path.toString());
+        if (result.error != null) {
+            throw 'Failed to create directory: ${result.error}';
+        }
+    }
+
+    public function move(sourcePath: FilePath, destPath: FilePath): Void {
+        var result = ipcBridge.invokeSync("fs:move", {
+            sourcePath: sourcePath.toString(),
+            destPath: destPath.toString()
+        });
+        if (result.error != null) {
+            throw 'Failed to move: ${result.error}';
+        }
+    }
 }

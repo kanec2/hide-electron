@@ -2101,7 +2101,12 @@ lm.utils.copy( lm.controls.DragProxy.prototype, {
 		var x = event.pageX,
 			y = event.pageY,
 			isWithinContainer = x > this._minX && x < this._maxX && y > this._minY && y < this._maxY,
+			isWithinHeader = false;
+
+		// ✅ ПРОВЕРКА: this._area может быть null, если нет валидной области для дропа
+		if (this._area !== null) {
 			isWithinHeader = x > this._area.x1 && x < this._area.x2 && y > this._area.y1 && y < this._area.y2;
+		}
 
 		if( !isWithinContainer && this._layoutManager.config.settings.constrainDragToContainer === true ) {
 			return;

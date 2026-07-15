@@ -1,6 +1,5 @@
 package src.main.assets;
 
-import src.main.assets.ConversionResult;
 import js.lib.Promise;
 import js.node.Fs;
 import js.node.Path;
@@ -8,11 +7,16 @@ import haxe.Json;
 import src.main.assets.IAssetConverter;
 import src.main.assets.AssetMeta;
 import src.main.assets.ConversionResult;
+import src.main.assets.registry.AssetTypeRegistry;
+import src.main.assets.watcher.AssetListItem;
 import chokidar.Chokidar; // <-- Импортируем из библиотеки
 import chokidar.WatchOptions;
 import chokidar.FSWatcher;
 import chokidar.AwaitWriteFinishOptions;
 import haxe.ds.Either; // <-- Добавь этот импорт
+import src.main.external.Lowdb.JSONFileSync;
+import src.main.external.Lowdb.LowSync;
+
 using StringTools;
 /**
  * Главный сервис управления ассетами.
@@ -23,7 +27,8 @@ class AssetPipelineService {
     private var projectRoot:String;
     private var assetsPath:String;
     private var watcher:FSWatcher; // Chokidar instance
-    
+    private var db:LowSync<AssetIndex>; // ✅ Lowdb база данных
+
     public function new(registry:AssetTypeRegistry) {
         this.registry = registry;
         this.projectRoot = "";
@@ -39,13 +44,105 @@ class AssetPipelineService {
         // ✅ Принудительно заменяем слеши на прямые для Chokidar
         var normalizedRoot = root.split("\\").join("/");
         this.assetsPath = js.node.Path.join(normalizedRoot, "Assets");
-        
+        // ✅ Инициализируем Lowdb
+        initDatabase(normalizedRoot);
+
         stopWatching();
         startWatching();
         
         trace('📂 [AssetPipeline] Project root set to: $normalizedRoot');
         trace('   Watching: $assetsPath');
     }
+
+    /**
+     * Инициализация Lowdb базы данных.
+     */
+    private function initDatabase(projectRoot:String):Void {
+        var hideDir = js.node.Path.join(projectRoot, ".hide");
+        if (!js.node.Fs.existsSync(hideDir)) {
+            js.node.Fs.mkdirSync(hideDir, { recursive: true });
+        }
+        
+        var dbPath = js.node.Path.join(hideDir, "asset-index.json");
+        
+        // ✅ Создаем адаптер и базу
+        var adapter = new JSONFileSync<AssetIndex>(dbPath);
+        this.db = new LowSync<AssetIndex>(adapter);
+        
+        // ✅ В v5 данные инициализируются напрямую через db.data
+        if (this.db.data == null) {
+            this.db.data = { assets: [], version: 1 };
+            this.db.write();
+        }
+        
+        trace('✅ [AssetPipeline] Database initialized at: $dbPath');
+    }
+    /**
+     * Получает метаданные ассета по GUID (нативный Haxe поиск).
+     */
+    public function getMeta(guid:String):Null<AssetMeta> {
+        if (db == null || db.data == null || guid == null) return null;
+        
+        for (asset in db.data.assets) {
+            if (asset.guid == guid) return asset;
+        }
+        return null;
+    }
+
+    /**
+     * Получает метаданные ассета по пути к файлу.
+     */
+    public function getMetaByPath(filePath:String):Null<AssetMeta> {
+        if (db == null || db.data == null || filePath == null) return null;
+        
+        var normalizedPath = filePath.split("\\").join("/");
+        for (asset in db.data.assets) {
+            if (asset.sourcePath == normalizedPath) return asset;
+        }
+        return null;
+    }
+
+    /**
+     * Добавляет или обновляет ассет в индексе.
+     */
+    private function upsertAsset(meta:AssetMeta):Void {
+        if (db == null || db.data == null || meta == null) return;
+        
+        var found = false;
+        for (i in 0...db.data.assets.length) {
+            if (db.data.assets[i].guid == meta.guid) {
+                db.data.assets[i] = meta; // Обновляем
+                found = true;
+                trace('🔄 [AssetPipeline] Updated asset in index: ${meta.sourcePath}');
+                break;
+            }
+        }
+        
+        if (!found) {
+            db.data.assets.push(meta); // Добавляем новый
+            trace('➕ [AssetPipeline] Added asset to index: ${meta.sourcePath}');
+        }
+        
+        db.write(); // Сохраняем на диск
+    }
+
+    /**
+     * Удаляет ассет из индекса по пути.
+     */
+    private function removeAssetByPath(filePath:String):Void {
+        if (db == null || db.data == null || filePath == null) return;
+        
+        var normalizedPath = filePath.split("\\").join("/");
+        var initialLength = db.data.assets.length;
+        
+        db.data.assets = [for (asset in db.data.assets) if (asset.sourcePath != normalizedPath) asset];
+        
+        if (db.data.assets.length < initialLength) {
+            db.write();
+            trace('🗑️ [AssetPipeline] Removed asset from index: $normalizedPath');
+        }
+    }
+    
     public function getProjectRoot():String return projectRoot;
     public function getAssetsPath():String {
         return assetsPath;
@@ -78,29 +175,21 @@ class AssetPipelineService {
             resolve(results);
         })");
     }
-    
-    /**
-     * Получает метаданные ассета по GUID.
-     */
-    public function getMeta(guid:String):Null<AssetMeta> {
-        if (projectRoot == "") return null;
-        
-        // В реальном проекте здесь будет поиск в asset-index.json
-        // Для MVP ищем .meta файл рекурсивно (медленно, но работает)
-        return findMetaByGuid(assetsPath, guid);
-    }
-    
-    // === PRIVATE METHODS ===
-    
-    // hide/main/assets/AssetPipelineService.hx
 
-    // hide/main/assets/AssetPipelineService.hx
+    public function getAllAssets():Array<AssetMeta> {
+        if (db == null) return [];
+        
+        var result = db.data.assets;
+        return cast result;
+    }
+
+    // === PRIVATE METHODS ===
 
     private function startWatching():Void {
         if (assetsPath == "" || !Fs.existsSync(assetsPath)) {
             trace('⚠️ [AssetPipeline] Assets folder does not exist yet: $assetsPath');
             try {
-                untyped __js__("require('fs').mkdirSync(this.assetsPath, { recursive: true })");
+                Fs.mkdirSync(this.assetsPath, { recursive: true });
                 trace('✅ [AssetPipeline] Created missing Assets folder');
             } catch (e:Dynamic) {
                 trace('❌ [AssetPipeline] Failed to create Assets folder: ${Std.string(e)}');
@@ -146,9 +235,6 @@ class AssetPipelineService {
             trace('✅ [Chokidar] Initial scan complete. Watching for changes...');
             onInitialScanComplete();
         });
-        this.watcher.on('all', function(event, path) {
-            trace('🔍 [Chokidar ALL] Event: ' + event + ' | Path: ' + path);
-        });
     }
     
     private function stopWatching():Void {
@@ -161,6 +247,7 @@ class AssetPipelineService {
     /**
      * Получает список ассетов в указанной папке.
      * Если folder == null, сканирует корень Assets.
+     * ✅ ИСПОЛЬЗУЕТ LOWDB ВМЕСТО ЧТЕНИЯ .meta ФАЙЛОВ
      */
     @:keep
     public function getAssetsList(?folder:String):Array<AssetListItem> {
@@ -174,7 +261,7 @@ class AssetPipelineService {
             : assetsPath;
         
         if (!fs.existsSync(targetDir)) {
-            trace('⚠️ [AssetPipeline] Directory not found: $targetDir');
+            trace('️ [AssetPipeline] Directory not found: $targetDir');
             return [];
         }
 
@@ -201,19 +288,8 @@ class AssetPipelineService {
                         type: "folder"
                     });
                 } else {
-                    // Пытаемся загрузить .meta файл
-                    var metaPath = fullPath + '.meta';
-                    var guid:Null<String> = null;
-                    var buildPath:Null<String> = null;
-                    
-                    if (fs.existsSync(metaPath)) {
-                        try {
-                            var metaContent = fs.readFileSync(metaPath, 'utf-8');
-                            var meta:Dynamic = Json.parse(metaContent);
-                            guid = meta.guid;
-                            buildPath = meta.buildPath;
-                        } catch(_) {}
-                    }
+                    // ✅ ИСПОЛЬЗУЕМ LOWDB ВМЕСТО ЧТЕНИЯ .meta ФАЙЛА!
+                    var meta = getMetaByPath(fullPath);
                     
                     var ext = entry.split('.').pop().toLowerCase();
                     var assetType = switch (ext) {
@@ -227,8 +303,8 @@ class AssetPipelineService {
                         path: fullPath,
                         relativePath: relPath,
                         isDirectory: false,
-                        guid: guid,
-                        buildPath: buildPath,
+                        guid: meta != null ? meta.guid : null,
+                        buildPath: meta != null ? meta.buildPath : null,
                         type: assetType
                     });
                 }
@@ -248,6 +324,10 @@ class AssetPipelineService {
         // Ручная индексация больше не нужна.
         // Chokidar с ignoreInitial: false уже выдал события 'add' для всех существующих файлов.
         trace('✅ [AssetPipeline] Initial scan complete. System ready.');
+        trace(db);
+        trace(db.data);
+        trace(db.data.assets);
+        trace('   Total assets in index: ${db.data.assets.length}');
     }
 
     
@@ -267,57 +347,55 @@ class AssetPipelineService {
         trace('🔄 [AssetPipeline] File changed: $path');
         reimportAsset(path);
     }
+
     @:keep
     private function onFileDeleted(path:String):Void {
         trace('🗑️ [AssetPipeline] File deleted: $path');
         cleanupBuildFiles(path);
     }
     
+    
     /**
      * Импортирует один ассет: создает .meta → конвертирует → обновляет индекс.
+     * ✅ ПОЛНОСТЬЮ НА ЧИСТОМ HAXE (без untyped __js__ строк)
      */
     @:keep
     public function importSingleAsset(sourcePath:String):Void {
         var metaPath = sourcePath + '.meta';
-        var fs = untyped __js__("require('fs')");
-        
-        //var pathLib = untyped __js__("require('path')");
-        
         var ext = js.node.Path.extname(sourcePath).toLowerCase();
         var relativeSource = js.node.Path.relative(this.projectRoot, sourcePath);
         
-        // Определяем путь для сборки
+        // Определяем путь для сборки (всегда используем прямые слеши для кросс-платформенности)
         var buildDir = js.node.Path.join(this.projectRoot, 'Build', js.node.Path.dirname(relativeSource));
         var baseName = js.node.Path.basename(sourcePath, ext);
-        var buildPath = js.node.Path.join(buildDir, baseName + '.webp');
+        var buildPath = js.node.Path.join(buildDir, baseName + '.webp').split("\\").join("/");
 
         var meta:Dynamic = null;
 
-        // 1. Работа с файловой системой и .meta (в JS блоке)
-        untyped __js__("
-            if (fs.existsSync(metaPath)) {
-                meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
-            } else {
-                meta = {
-                    guid: require('uuid').v4(),
-                    type: 'texture',
-                    sourcePath: relativeSource,
-                    buildPath: buildPath.replace(/\\\\\\\\/g, '/'),
-                    settings: {},
-                    lastModified: fs.statSync(sourcePath).mtimeMs,
-                    version: 1
-                };
-                
-                if (!fs.existsSync(buildDir)) {
-                    fs.mkdirSync(buildDir, { recursive: true });
-                }
-                
-                fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
-                console.log(' [AssetPipeline] Created .meta for: ' + relativeSource);
+        // 1. Работа с файловой системой и .meta на чистом Haxe
+        if (Fs.existsSync(metaPath)) {
+            var metaContent = Fs.readFileSync(metaPath, 'utf-8');
+            meta = haxe.Json.parse(metaContent);
+        } else {
+            meta = {
+                guid: untyped __js__("require('uuid').v4()"),
+                type: 'texture',
+                sourcePath: relativeSource,
+                buildPath: buildPath,
+                settings: {},
+                lastModified: Fs.statSync(sourcePath).mtimeMs,
+                version: 1
+            };
+            
+            if (!Fs.existsSync(buildDir)) {
+                Fs.mkdirSync(buildDir, { recursive: true });
             }
-        ");
+            
+            Fs.writeFileSync(metaPath, haxe.Json.stringify(meta, null, "  "), 'utf-8');
+            trace('✅ [AssetPipeline] Created .meta for: $relativeSource');
+        }
 
-        // 2. Вызов конвертера на чистом Haxe
+        // 2. Вызов конвертера
         var converter = registry.getConverter(sourcePath);
         
         if (converter == null) {
@@ -326,77 +404,76 @@ class AssetPipelineService {
         }
 
         // Обновляем тип в мета-данных
-        meta.type = "texture"; 
+        meta.type = "texture";
         
-        // Запускаем конвертацию. 
-        // ВАЖНО: Если converter.convert возвращает Promise, нам нужно его обработать.
-        // Предположим, что он возвращает Future<ConversionResult> или Promise.
-        
-        var resultPromise = converter.convert(sourcePath, meta);
-        
-        // Обрабатываем результат асинхронно
-        untyped __js__("
-            resultPromise.then(function(res) {
-                // Проверяем, что вернул конвертер
-                var finalSource = res.sourcePath != null ? res.sourcePath : sourcePath;
-                var finalBuild = res.buildPath != null ? res.buildPath : res; // Если вернул просто строку
+        // 3. Запускаем конвертацию и обрабатываем результат НА ЧИСТОМ HAXE!
+        try {
+            converter.convert(sourcePath, meta).then(function(res:ConversionResult) {
+                trace('✅ [AssetPipeline] Converted: $sourcePath → ${res.buildPath}');
                 
-                console.log('✅ [AssetPipeline] Converted: ' + finalSource + ' → ' + finalBuild);
+                // Обновляем метаданные времени изменения
+                meta.lastModified = Fs.statSync(sourcePath).mtimeMs;
+                Fs.writeFileSync(metaPath, haxe.Json.stringify(meta, null, "  "), 'utf-8');
                 
-                meta.lastModified = fs.statSync(sourcePath).mtimeMs;
-                fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
-            }).catch(function(err) {
-                console.error('❌ [AssetPipeline] Conversion failed:', err);
+                // ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: Мы в контексте класса, this доступен!
+                this.upsertAsset(cast meta);
+                
             });
-        ");
+        } catch(err:Dynamic) {
+            trace('❌ [AssetPipeline] Conversion failed: $err');
+        }
     }
 
     @:keep
     private function reimportAsset(sourcePath:String):Void {
         importSingleAsset(sourcePath);
     }
-    
+
+    @:keep
     private function cleanupBuildFiles(sourcePath:String):Void {
-        untyped __js__("
-            const fs = require('fs');
-            const path = require('path');
-            
-            const metaPath = sourcePath + '.meta';
-            if (fs.existsSync(metaPath)) {
-                const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
-                if (meta.buildPath && fs.existsSync(meta.buildPath)) {
-                    fs.unlinkSync(meta.buildPath);
-                    console.log('️ [AssetPipeline] Cleaned up build file: ' + meta.buildPath);
-                }
-                fs.unlinkSync(metaPath);
-            }
-        ");
-    }
-    
-    /**
-     * Рекурсивный поиск .meta файла по GUID (для MVP).
-     * В продакшене заменить на загрузку asset-index.json в RAM.
-     */
-    private function findMetaByGuid(dir:String, guid:String):Null<AssetMeta> {
-        if (!Fs.existsSync(dir)) return null;
+        var metaPath = sourcePath + '.meta';
         
-        var entries = Fs.readdirSync(dir);
-        for (entry in entries) {
-            var fullPath = Path.join(dir, entry);
-            var stat = Fs.statSync(fullPath);
+        // ✅ Удаляем ассет из индекса Lowdb
+        removeAssetByPath(sourcePath);
+        // Если .meta файла нет, удалять нечего
+        if (!js.node.Fs.existsSync(metaPath)) return;
+
+        try {
+            // 1. Читаем и парсим .meta файл
+            var metaContent = js.node.Fs.readFileSync(metaPath, 'utf-8');
+            var meta:Dynamic = haxe.Json.parse(metaContent);
             
-            if (stat.isDirectory() && entry != "node_modules" && entry != ".git") {
-                var result = findMetaByGuid(fullPath, guid);
-                if (result != null) return result;
-            } else if (entry.endsWith('.meta')) {
+            // 2. Пытаемся удалить скомпилированный файл (buildPath)
+            if (meta.buildPath != null && js.node.Fs.existsSync(meta.buildPath)) {
                 try {
-                    var content = Fs.readFileSync(fullPath, { encoding: "utf-8" });
-                    var meta:AssetMeta = Json.parse(content);
-                    if (meta.guid == guid) return meta;
-                } catch (_) {}
+                    // rmSync с force:true игнорирует отсутствие файла, а recursive:true удаляет папки
+                    untyped js.node.Fs.rmSync(meta.buildPath, { recursive: true, force: true });
+                    trace('🗑️ [AssetPipeline] Cleaned up build file: ${meta.buildPath}');
+                } catch (e:Dynamic) {
+                    var errCode = untyped e.code;
+                    if (errCode == "EBUSY" || errCode == "EPERM") {
+                        // ⚠️ Файл заблокирован ОС. Не крашим приложение, просто логируем.
+                        trace('⚠️ [AssetPipeline] Cannot delete build file (locked/busy): ${meta.buildPath}. Skipping cleanup.');
+                    } else {
+                        trace('❌ [AssetPipeline] Error deleting build file ${meta.buildPath}: ${Std.string(e)}');
+                    }
+                }
             }
+            
+            // 3. Пытаемся удалить сам .meta файл
+            try {
+                js.node.Fs.unlinkSync(metaPath);
+                trace('🗑️ [AssetPipeline] Deleted meta file: $metaPath');
+            } catch (e:Dynamic) {
+                var errCode = untyped e.code;
+                if (errCode != "EBUSY" && errCode != "EPERM") {
+                    trace('❌ [AssetPipeline] Error deleting meta file $metaPath: ${Std.string(e)}');
+                }
+            }
+            
+        } catch (e:Dynamic) {
+            // Если не удалось прочитать или распарсить .meta, просто логируем и выходим
+            trace('❌ [AssetPipeline] Failed to read/parse meta file for cleanup: $metaPath. Error: ${Std.string(e)}');
         }
-        
-        return null;
     }
 }

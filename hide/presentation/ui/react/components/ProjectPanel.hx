@@ -10,6 +10,8 @@ import hide.application.services.ProjectTreeService;
 import hide.infrastructure.external.ProjectTreeAdapter;
 import hide.infrastructure.external.arborist.*;
 import hide.shared.events.ResourceOpened;
+import hide.domain.services.IFileSystem;       // ✅ Импортируем интерфейс
+import hide.domain.valueobjects.FilePath;      // ✅ Импортируем Value Object
 
 typedef ProjectProps = {
     var initialState: Dynamic;
@@ -25,10 +27,12 @@ typedef ProjectState = {
 
 class ProjectPanel extends BaseReactComponent<ProjectProps, ProjectState> {
     private var service: ProjectTreeService;
+    private var fs: IFileSystem;
     private var treeRef: ReactRef<Dynamic>; // ✅ Ref для доступа к API дерева
     public function new() {
         super();
         service = UseService.projectTree();
+        fs = UseService.fileSystem();
         treeRef = untyped React.createRef(); // ✅ Создаем ref
         state = { 
             treeData: [], 
@@ -214,34 +218,24 @@ class ProjectPanel extends BaseReactComponent<ProjectProps, ProjectState> {
     // ===== Обработчики событий Arborist =====
 
     private function handleRename(args: Dynamic): Void {
-        // ✅ Берём данные напрямую из args.node.data
-        var id: String = untyped args.id;
         var newName: String = untyped args.name;
-        var nodeApi = untyped args.node;  // Это NodeApi
-        var data = untyped nodeApi.data;  // ← ДАННЫЕ ЗДЕСЬ!
+        var data = untyped args.node.data;
+        if (data == null) return;
         
-        trace('✏️ Rename: id=$id -> newName=$newName');
+        var oldPathStr: String = untyped data.path;
+        var newPathStr = ProjectPanel.replaceNameInPath(oldPathStr, newName);
         
-        if (data == null) {
-            trace('❌ data is null');
-            return;
+        try {
+            // ✅ Чистый вызов доменного сервиса!
+            fs.rename(new FilePath(oldPathStr), new FilePath(newPathStr));
+            trace('✅ Renamed successfully');
+            refreshParentDirectory(oldPathStr);
+        } catch (e: Dynamic) {
+            trace('❌ Failed to rename: $e');
+            js.Browser.window.alert('Failed to rename: $e');
+            // Откат UI в случае ошибки
+            invalidateChildrenCache(ProjectPanel.getParentPath(oldPathStr));
         }
-        
-        var oldPath: String = untyped data.path;
-        trace('  -> Old path: $oldPath');
-        
-        // Вычисляем новый путь
-        var parts = oldPath.split("/");
-        parts[parts.length - 1] = newName;
-        var newPath = parts.join("/");
-        
-        trace('  -> New path: $newPath');
-        
-        // TODO: IPC для переименования
-        // fs.rename(oldPath, newPath)
-        
-        // Обновляем UI
-        refreshParentDirectory(oldPath);
     }
 
     private function handleDelete(args: Dynamic): Void {
@@ -253,124 +247,159 @@ class ProjectPanel extends BaseReactComponent<ProjectProps, ProjectState> {
         for (nodeApi in nodes) {
             var data = untyped nodeApi.data;
             if (data != null) {
-                var path: String = untyped data.path;
-                var parentPath = path.substring(0, path.lastIndexOf("/"));
-                invalidateChildrenCache(parentPath);
+                var pathStr: String = untyped data.path;
+                var parentPathStr = ProjectPanel.getParentPath(pathStr);
+                
+                try {
+                    // ✅ Чистый вызов доменного сервиса!
+                    fs.delete(new FilePath(pathStr));
+                    trace('✅ Deleted: $pathStr');
+                    invalidateChildrenCache(parentPathStr);
+                } catch (e: Dynamic) {
+                    trace('❌ Failed to delete: $e');
+                    js.Browser.window.alert('Failed to delete: $e');
+                }
             }
         }
     }
 
     private function handleCreate(parentId: String, index: Int, type: String): Void {
-        trace('📁 Create $type at index=$index in parentId=$parentId');
-        
-        // Находим родительский узел
         var parent = findNodeById(state.treeData, parentId);
+        var parentPathStr = if (parent != null) {
+            var pd = untyped parent.data;
+            pd != null ? untyped pd.path : null;
+        } else null;
         
-        var parentPath = if (parent != null) {
-            var parentData = untyped parent.data;
-            if (parentData != null) untyped parentData.path else null;
-        } else {
-            null;
-        };
-        
-        if (parentPath == null) {
-            // Корень проекта
+        if (parentPathStr == null) {
             var project = UseService.projectService().getCurrentProject();
-            parentPath = project.rootPath.toString().split("\\").join("/");
+            parentPathStr = project.rootPath.toString().split("\\").join("/");
         }
         
         var newName = js.Browser.window.prompt("Enter name:", "New " + type);
         if (newName == null || newName == "") return;
         
-        var newPath = parentPath + "/" + newName;
+        var newPathStr = parentPathStr + "/" + newName;
         
-        if (type == "folder") {
-            trace('  -> Creating folder: $newPath');
-        } else {
-            trace('  -> Creating file: $newPath');
-        }
-        
-        // TODO: IPC create
-        
-        // Обновляем
-        if (parent != null) {
-            var parentData = untyped parent.data;
-            invalidateChildrenCache(untyped parentData.path);
-        } else {
-            loadRoot();
+        try {
+            if (type == "folder") {
+                fs.createDirectory(new FilePath(newPathStr));
+            } else {
+                // Для создания пустого файла можно использовать writeText
+                fs.writeText(new FilePath(newPathStr), "");
+            }
+            trace('✅ Created: $newPathStr');
+            invalidateChildrenCache(parentPathStr);
+        } catch (e: Dynamic) {
+            trace('❌ Failed to create: $e');
+            js.Browser.window.alert('Failed to create: $e');
         }
     }
 
     private function handleMove(args: Dynamic): Void {
-        var dragIds: Array<String> = untyped args.dragIds;
-        var dragNodes: Array<Dynamic> = untyped args.dragNodes;  // ← Массив NodeApi
-        var parentNode: Dynamic = untyped args.parentNode;  // ← NodeApi или null
-        var index: Int = untyped args.index;
+        var dragNodes: Array<Dynamic> = untyped args.dragNodes;
+        var parentNode: Dynamic = untyped args.parentNode;
         
-        trace('↔️ Move: ${dragIds.length} items -> parentId=${if (parentNode != null) untyped parentNode.id else "ROOT"} at index=$index');
-        
-        // Получаем пути
-        var draggedPaths = [for (n in dragNodes) {
-            var d = untyped n.data;
-            untyped d.path;
-        }];
-        
-        var targetPath = if (parentNode != null) {
+        var targetPathStr = if (parentNode != null) {
             var d = untyped parentNode.data;
             untyped d.path;
         } else {
-            // Корень проекта
             var project = UseService.projectService().getCurrentProject();
             project.rootPath.toString().split("\\").join("/");
         };
         
-        trace('  -> Paths: ${draggedPaths.join(", ")}');
-        trace('  -> Target: $targetPath');
-        
-        // TODO: IPC для перемещения
-        
-        // Обновляем UI
-        for (srcPath in draggedPaths) {
-            var parentPath = srcPath.substring(0, srcPath.lastIndexOf("/"));
-            invalidateChildrenCache(parentPath);
+        for (n in dragNodes) {
+            var d = untyped n.data;
+            var srcPathStr: String = untyped d.path;
+            var fileName = srcPathStr.split("/").pop();
+            var destPathStr = targetPathStr + "/" + fileName;
+            
+            try {
+                // ✅ Чистый вызов доменного сервиса!
+                fs.move(new FilePath(srcPathStr), new FilePath(destPathStr));
+                trace('✅ Moved: $srcPathStr -> $destPathStr');
+                
+                var srcParent = ProjectPanel.getParentPath(srcPathStr);
+                invalidateChildrenCache(srcParent);
+            } catch (e: Dynamic) {
+                trace('❌ Failed to move: $e');
+                js.Browser.window.alert('Failed to move: $e');
+            }
         }
-        invalidateChildrenCache(targetPath);
+        invalidateChildrenCache(targetPathStr);
     }
+
+    /**
+    * Заменяет имя файла/папки в пути на новое.
+    * Работает с обоими типами слэшей (Windows/Linux).
+    */
+    private static function replaceNameInPath(oldPath: String, newName: String): String {
+        var lastSlashPos = Math.round(Math.max(oldPath.lastIndexOf("/"), oldPath.lastIndexOf("\\")));
+        return if (lastSlashPos >= 0) {
+            oldPath.substring(0, lastSlashPos + 1) + newName;
+        } else {
+            newName;
+        }
+    }
+
+    /**
+     * Возвращает родительский путь.
+     */
+    private static function getParentPath(path: String): Null<String> {
+        var lastSlashPos = Math.round(Math.max(path.lastIndexOf("/"), path.lastIndexOf("\\")));
+        return if (lastSlashPos >= 0) path.substring(0, lastSlashPos) else null;
+    }
+
     /**
      * Очищает кэш детей для указанной папки и перезагружает её содержимое.
      */
-    private function invalidateChildrenCache(folderPath: String): Void {
-        trace(' Invalidating cache for: $folderPath');
+     
+   private function invalidateChildrenCache(folderPath: String): Void {
+        trace('🔄 Invalidating cache for: $folderPath');
         
-        // Находим узел в дереве и помечаем как не загруженный
-        var newData = updateNodeInTree(state.treeData, folderPath, {
-            children: [],
-            isLoaded: false,
-            isLoading: false
+        // ✅ Запоминаем, была ли папка открыта
+        var node = findNodeById(state.treeData, folderPath);
+        var wasOpen = false;
+        if (node != null) {
+            wasOpen = untyped node.isOpen == true;
+        }
+        
+        // ✅ НЕ сбрасываем isLoaded — просто помечаем как "загружается"
+        var loadingData = updateNodeInTree(state.treeData, folderPath, {
+            isLoading: true
         });
         
         setState({
-            treeData: newData,
+            treeData: loadingData,
             isLoading: state.isLoading,
-            selectedId: state.selectedId, 
-            contextMenu: state.contextMenu 
+            selectedId: state.selectedId,
+            contextMenu: state.contextMenu
         });
         
-        // Принудительно запрашиваем детей заново
+        // Запрашиваем детей заново
         service.readDir(folderPath).handle(function(children) {
             var arboristChildren = ProjectTreeAdapter.toArboristNodes(children);
+            
+            // ✅ Обновляем children, но НЕ трогаем isLoaded и isOpen
             var finalData = updateNodeInTree(state.treeData, folderPath, {
                 children: arboristChildren,
-                isLoaded: true,
                 isLoading: false
             });
             
             setState({
                 treeData: finalData,
                 isLoading: state.isLoading,
-                selectedId: state.selectedId, 
-                contextMenu: state.contextMenu 
+                selectedId: state.selectedId,
+                contextMenu: state.contextMenu
             });
+            
+            // ✅ Если папка была открыта — принудительно открываем через API
+            if (wasOpen) {
+                js.Browser.window.setTimeout(function() {
+                    if (treeRef.current != null) {
+                        untyped treeRef.current.open(folderPath);
+                    }
+                }, 50);
+            }
         });
     }
 
@@ -378,15 +407,14 @@ class ProjectPanel extends BaseReactComponent<ProjectProps, ProjectState> {
      * Находит родительскую папку для пути и обновляет её кэш.
      */
     private function refreshParentDirectory(itemPath: String): Void {
-        var parts = itemPath.split("/");
-        if (parts.length > 1) {
-            parts.pop(); // Удаляем имя файла
-            var parentPath = parts.join("/");
+        var parentPath = ProjectPanel.getParentPath(itemPath);
+        if (parentPath != null) {
             invalidateChildrenCache(parentPath);
         } else {
             loadRoot();
         }
     }
+
     // ✅ onSelect получает МАССИВ выбранных узлов
     private function handleSelect(nodes: Array<Dynamic>): Void {
         if (nodes == null || nodes.length == 0) {

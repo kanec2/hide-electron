@@ -12,4 +12,10 @@ interface IFileSystem extends Service {
     
     // ✅ НОВОЕ: для бинарных файлов (текстуры, меши)
     function readBinary(path:FilePath):haxe.io.Bytes;
+
+    // ✅ ДОБАВЛЯЕМ методы для Project Tree:
+    function rename(oldPath: FilePath, newPath: FilePath): Void;
+    function delete(path: FilePath): Void;
+    function createDirectory(path: FilePath): Void;
+    function move(sourcePath: FilePath, destPath: FilePath): Void;
 }

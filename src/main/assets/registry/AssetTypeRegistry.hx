@@ -1,4 +1,4 @@
-package src.main.assets;
+package src.main.assets.registry;
 
 import js.node.Path;
 using StringTools;

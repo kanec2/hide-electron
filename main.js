@@ -141,6 +141,81 @@ AutoWindow.ensureDirectoryExists = function(dir) {
 	js_node_Fs.mkdirSync(dir);
 };
 AutoWindow.setupIpc = function() {
+	electron_main_IpcMain.on("fs:rename",function(event,data) {
+		try {
+			var oldPath = data.oldPath;
+			var newPath = data.newPath;
+			var oldMetaPath = oldPath + ".meta";
+			var newMetaPath = newPath + ".meta";
+			js_node_Fs.renameSync(oldPath,newPath);
+			if(js_node_Fs.existsSync(oldMetaPath)) {
+				try {
+					var metaContent = js_node_Fs.readFileSync(oldMetaPath,{ encoding : "utf-8"});
+					var meta = JSON.parse(metaContent);
+					var oldBuildPath = meta.buildPath;
+					js_node_Fs.renameSync(oldMetaPath,newMetaPath);
+					if(oldBuildPath != null && js_node_Fs.existsSync(oldBuildPath)) {
+						var oldExt = js_node_Path.extname(oldBuildPath);
+						var newBaseName = js_node_Path.basename(newPath,js_node_Path.extname(newPath));
+						var newBuildPath = js_node_Path.join(js_node_Path.dirname(oldBuildPath),newBaseName + oldExt);
+						js_node_Fs.renameSync(oldBuildPath,newBuildPath);
+						meta.buildPath = newBuildPath.split("\\").join("/");
+						js_node_Fs.writeFileSync(newMetaPath,JSON.stringify(meta,null,"  "),{ encoding : "utf-8"});
+						console.log("AutoWindow.hx:332:","✅ [Backend] Renamed build file: " + oldBuildPath + " -> " + newBuildPath);
+					}
+				} catch( _g ) {
+					var e = haxe_Exception.caught(_g).unwrap();
+					console.log("AutoWindow.hx:335:","⚠️ [Backend] Warning during meta/build rename: " + Std.string(e));
+				}
+			}
+			event.returnValue = { };
+		} catch( _g ) {
+			var e = haxe_Exception.caught(_g).unwrap();
+			var errCode = e.code;
+			if(errCode == "EBUSY" || errCode == "EPERM") {
+				event.returnValue = { error : "File is currently in use by another program. Please close it and try again."};
+			} else {
+				event.returnValue = { error : Std.string(e)};
+			}
+		}
+	});
+	electron_main_IpcMain.on("fs:delete",function(event,path) {
+		try {
+			js_node_Fs.rmSync(path,{ recursive : true, force : true});
+			event.returnValue = { };
+		} catch( _g ) {
+			try {
+				var stat = js_node_Fs.statSync(path);
+				if(stat.isDirectory()) {
+					js_node_Fs.rmdirSync(path,{ recursive : true});
+				} else {
+					js_node_Fs.unlinkSync(path);
+				}
+				event.returnValue = { };
+			} catch( _g1 ) {
+				var e2 = haxe_Exception.caught(_g1).unwrap();
+				event.returnValue = { error : Std.string(e2)};
+			}
+		}
+	});
+	electron_main_IpcMain.on("fs:createDirectory",function(event,path) {
+		try {
+			AutoWindow.ensureDirectoryExists(path);
+			event.returnValue = { };
+		} catch( _g ) {
+			var e = haxe_Exception.caught(_g).unwrap();
+			event.returnValue = { error : Std.string(e)};
+		}
+	});
+	electron_main_IpcMain.on("fs:move",function(event,data) {
+		try {
+			js_node_Fs.renameSync(data.sourcePath,data.destPath);
+			event.returnValue = { };
+		} catch( _g ) {
+			var e = haxe_Exception.caught(_g).unwrap();
+			event.returnValue = { error : Std.string(e)};
+		}
+	});
 	electron_main_IpcMain.handle("asset:getList",function(event,data) {
 		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
 		if(pipeline == null) {
@@ -164,15 +239,15 @@ AutoWindow.setupIpc = function() {
 		}
 		var root = pipeline.getProjectRoot();
 		var targetDir = data.path != null ? data.path : root;
-		console.log("AutoWindow.hx:322:","🔍 [Backend] readDir requested for: " + targetDir);
-		console.log("AutoWindow.hx:323:","   Project Root: " + root);
+		console.log("AutoWindow.hx:420:","🔍 [Backend] readDir requested for: " + targetDir);
+		console.log("AutoWindow.hx:421:","   Project Root: " + root);
 		if(!StringTools.startsWith(targetDir,root)) {
-			console.log("AutoWindow.hx:327:","❌ [Backend] Access denied: " + targetDir + " is outside " + root);
+			console.log("AutoWindow.hx:425:","❌ [Backend] Access denied: " + targetDir + " is outside " + root);
 			return { success : false, error : "Access denied: path outside project root"};
 		}
 		try {
 			if(!fs.existsSync(targetDir)) {
-				console.log("AutoWindow.hx:333:","⚠️ [Backend] Directory not found: " + targetDir);
+				console.log("AutoWindow.hx:431:","⚠️ [Backend] Directory not found: " + targetDir);
 				return { success : true, data : []};
 			}
 			var entries = fs.readdirSync(targetDir);
@@ -202,11 +277,11 @@ AutoWindow.setupIpc = function() {
 					return 1;
 				}
 			});
-			console.log("AutoWindow.hx:363:","✅ [Backend] Listed " + result.length + " items in: " + targetDir);
+			console.log("AutoWindow.hx:461:","✅ [Backend] Listed " + result.length + " items in: " + targetDir);
 			return { success : true, data : result};
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			console.log("AutoWindow.hx:366:","❌ [Backend] Error reading dir: " + Std.string(e));
+			console.log("AutoWindow.hx:464:","❌ [Backend] Error reading dir: " + Std.string(e));
 			return { success : false, error : Std.string(e)};
 		}
 	});
@@ -217,13 +292,13 @@ AutoWindow.setupIpc = function() {
 		}
 		try {
 			pipeline.setProjectRoot(data.projectRoot);
-			console.log("AutoWindow.hx:382:","✅ [Main] Asset Pipeline initialized for: " + Std.string(data.projectRoot));
-			console.log("AutoWindow.hx:383:","   Assets folder: " + Std.string(data.assetsFolder));
-			console.log("AutoWindow.hx:384:","   Build folder: " + Std.string(data.buildFolder));
+			console.log("AutoWindow.hx:480:","✅ [Main] Asset Pipeline initialized for: " + Std.string(data.projectRoot));
+			console.log("AutoWindow.hx:481:","   Assets folder: " + Std.string(data.assetsFolder));
+			console.log("AutoWindow.hx:482:","   Build folder: " + Std.string(data.buildFolder));
 			return { success : true, data : { assetsPath : pipeline.getAssetsPath(), supportedExtensions : pipeline.getSupportedExtensions()}};
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			console.log("AutoWindow.hx:394:","❌ [Main] Failed to init Asset Pipeline: " + Std.string(e));
+			console.log("AutoWindow.hx:492:","❌ [Main] Failed to init Asset Pipeline: " + Std.string(e));
 			return { success : false, error : Std.string(e)};
 		}
 	});
@@ -385,12 +460,12 @@ AutoWindow.setupIpc = function() {
 		event.returnValue = null;
 	});
 	electron_main_IpcMain.on("menu:build",function(event,menuData) {
-		console.log("AutoWindow.hx:564:","[AutoWindow] 📥 Received menu data");
+		console.log("AutoWindow.hx:662:","[AutoWindow] 📥 Received menu data");
 	});
 	electron_main_IpcMain.on("window:open",function(event,data) {
 		var url = data.url;
 		if(url.indexOf("?subView=") != -1) {
-			console.log("AutoWindow.hx:605:","[AutoWindow] ⚠️ Sub-view request: " + url);
+			console.log("AutoWindow.hx:703:","[AutoWindow] ⚠️ Sub-view request: " + url);
 			event.sender.send("window:open:subview",{ url : url});
 			return;
 		}
@@ -621,10 +696,100 @@ src_main_assets_AssetPipelineService.prototype = {
 		this.projectRoot = root;
 		var normalizedRoot = root.split("\\").join("/");
 		this.assetsPath = js_node_Path.join(normalizedRoot,"Assets");
+		this.initDatabase(normalizedRoot);
 		this.stopWatching();
 		this.startWatching();
-		console.log("src/main/assets/AssetPipelineService.hx:46:","📂 [AssetPipeline] Project root set to: " + normalizedRoot);
-		console.log("src/main/assets/AssetPipelineService.hx:47:","   Watching: " + this.assetsPath);
+		console.log("src/main/assets/AssetPipelineService.hx:53:","📂 [AssetPipeline] Project root set to: " + normalizedRoot);
+		console.log("src/main/assets/AssetPipelineService.hx:54:","   Watching: " + this.assetsPath);
+	}
+	,initDatabase: function(projectRoot) {
+		var hideDir = js_node_Path.join(projectRoot,".hide");
+		if(!js_node_Fs.existsSync(hideDir)) {
+			js_node_Fs.mkdirSync(hideDir,{ recursive : true});
+		}
+		var dbPath = js_node_Path.join(hideDir,"asset-index.json");
+		var adapter = new src_main_external_JSONFileSync(dbPath);
+		this.db = new src_main_external_LowSync(adapter);
+		if(this.db.data == null) {
+			this.db.data = { assets : [], version : 1};
+			this.db.write();
+		}
+		console.log("src/main/assets/AssetPipelineService.hx:78:","✅ [AssetPipeline] Database initialized at: " + dbPath);
+	}
+	,getMeta: function(guid) {
+		if(this.db == null || this.db.data == null || guid == null) {
+			return null;
+		}
+		var _g = 0;
+		var _g1 = this.db.data.assets;
+		while(_g < _g1.length) {
+			var asset = _g1[_g];
+			++_g;
+			if(asset.guid == guid) {
+				return asset;
+			}
+		}
+		return null;
+	}
+	,getMetaByPath: function(filePath) {
+		if(this.db == null || this.db.data == null || filePath == null) {
+			return null;
+		}
+		var normalizedPath = filePath.split("\\").join("/");
+		var _g = 0;
+		var _g1 = this.db.data.assets;
+		while(_g < _g1.length) {
+			var asset = _g1[_g];
+			++_g;
+			if(asset.sourcePath == normalizedPath) {
+				return asset;
+			}
+		}
+		return null;
+	}
+	,upsertAsset: function(meta) {
+		if(this.db == null || this.db.data == null || meta == null) {
+			return;
+		}
+		var found = false;
+		var _g = 0;
+		var _g1 = this.db.data.assets.length;
+		while(_g < _g1) {
+			var i = _g++;
+			if(this.db.data.assets[i].guid == meta.guid) {
+				this.db.data.assets[i] = meta;
+				found = true;
+				console.log("src/main/assets/AssetPipelineService.hx:116:","🔄 [AssetPipeline] Updated asset in index: " + meta.sourcePath);
+				break;
+			}
+		}
+		if(!found) {
+			this.db.data.assets.push(meta);
+			console.log("src/main/assets/AssetPipelineService.hx:123:","➕ [AssetPipeline] Added asset to index: " + meta.sourcePath);
+		}
+		this.db.write();
+	}
+	,removeAssetByPath: function(filePath) {
+		if(this.db == null || this.db.data == null || filePath == null) {
+			return;
+		}
+		var normalizedPath = filePath.split("\\").join("/");
+		var initialLength = this.db.data.assets.length;
+		var _g = [];
+		var _g1 = 0;
+		var _g2 = this.db.data.assets;
+		while(_g1 < _g2.length) {
+			var asset = _g2[_g1];
+			++_g1;
+			if(asset.sourcePath != normalizedPath) {
+				_g.push(asset);
+			}
+		}
+		this.db.data.assets = _g;
+		if(this.db.data.assets.length < initialLength) {
+			this.db.write();
+			console.log("src/main/assets/AssetPipelineService.hx:142:","🗑️ [AssetPipeline] Removed asset from index: " + normalizedPath);
+		}
 	}
 	,getProjectRoot: function() {
 		return this.projectRoot;
@@ -635,53 +800,44 @@ src_main_assets_AssetPipelineService.prototype = {
 	,getSupportedExtensions: function() {
 		return this.registry.getAllSupportedExtensions();
 	}
-	,getMeta: function(guid) {
-		if(this.projectRoot == "") {
-			return null;
-		}
-		return this.findMetaByGuid(this.assetsPath,guid);
-	}
 	,startWatching: function() {
 		var _gthis = this;
 		if(this.assetsPath == "" || !js_node_Fs.existsSync(this.assetsPath)) {
-			console.log("src/main/assets/AssetPipelineService.hx:101:","⚠️ [AssetPipeline] Assets folder does not exist yet: " + this.assetsPath);
+			console.log("src/main/assets/AssetPipelineService.hx:190:","⚠️ [AssetPipeline] Assets folder does not exist yet: " + this.assetsPath);
 			try {
-				require('fs').mkdirSync(this.assetsPath, { recursive: true });
-				console.log("src/main/assets/AssetPipelineService.hx:104:","✅ [AssetPipeline] Created missing Assets folder");
+				js_node_Fs.mkdirSync(this.assetsPath,{ recursive : true});
+				console.log("src/main/assets/AssetPipelineService.hx:193:","✅ [AssetPipeline] Created missing Assets folder");
 			} catch( _g ) {
 				var e = haxe_Exception.caught(_g).unwrap();
-				console.log("src/main/assets/AssetPipelineService.hx:106:","❌ [AssetPipeline] Failed to create Assets folder: " + Std.string(e));
+				console.log("src/main/assets/AssetPipelineService.hx:195:","❌ [AssetPipeline] Failed to create Assets folder: " + Std.string(e));
 				return;
 			}
 		}
 		var awfOptions = { stabilityThreshold : 1000, pollInterval : 500};
-		console.log("src/main/assets/AssetPipelineService.hx:115:","👀 [AssetPipeline] Starting Chokidar watcher on: " + this.assetsPath);
+		console.log("src/main/assets/AssetPipelineService.hx:204:","👀 [AssetPipeline] Starting Chokidar watcher on: " + this.assetsPath);
 		var options = { ignored : [new EReg("(\\^|[/\\\\])\\..",""),"**/*.meta"], persistent : true, awaitWriteFinish : haxe_ds_Either.Right(awfOptions), ignoreInitial : false, usePolling : true};
 		this.watcher = chokidar_Chokidar.watch(this.assetsPath + "/**/*",options);
 		this.watcher.on("add",function(path) {
-			console.log("src/main/assets/AssetPipelineService.hx:131:","📥 [Chokidar] File ADDED: " + path);
+			console.log("src/main/assets/AssetPipelineService.hx:220:","📥 [Chokidar] File ADDED: " + path);
 			_gthis.onFileAdded(path);
 		}).on("change",function(path) {
-			console.log("src/main/assets/AssetPipelineService.hx:135:","🔄 [Chokidar] File CHANGED: " + path);
+			console.log("src/main/assets/AssetPipelineService.hx:224:","🔄 [Chokidar] File CHANGED: " + path);
 			_gthis.onFileChanged(path);
 		}).on("unlink",function(path) {
-			console.log("src/main/assets/AssetPipelineService.hx:139:","🗑️ [Chokidar] File DELETED: " + path);
+			console.log("src/main/assets/AssetPipelineService.hx:228:","🗑️ [Chokidar] File DELETED: " + path);
 			_gthis.onFileDeleted(path);
 		}).on("error",function(error) {
-			console.log("src/main/assets/AssetPipelineService.hx:143:","❌ [Chokidar] Error: " + Std.string(error));
+			console.log("src/main/assets/AssetPipelineService.hx:232:","❌ [Chokidar] Error: " + Std.string(error));
 		}).on("ready",function() {
-			console.log("src/main/assets/AssetPipelineService.hx:146:","✅ [Chokidar] Initial scan complete. Watching for changes...");
+			console.log("src/main/assets/AssetPipelineService.hx:235:","✅ [Chokidar] Initial scan complete. Watching for changes...");
 			_gthis.onInitialScanComplete();
-		});
-		this.watcher.on("all",function(event,path) {
-			console.log("src/main/assets/AssetPipelineService.hx:150:","🔍 [Chokidar ALL] Event: " + event + " | Path: " + Std.string(path));
 		});
 	}
 	,stopWatching: function() {
 		if(this.watcher != null) {
 			this.watcher.close();
 			this.watcher = null;
-			console.log("src/main/assets/AssetPipelineService.hx:158:","🛑 [AssetPipeline] Watcher stopped");
+			console.log("src/main/assets/AssetPipelineService.hx:244:","🛑 [AssetPipeline] Watcher stopped");
 		}
 	}
 	,getAssetsList: function(folder) {
@@ -692,7 +848,7 @@ src_main_assets_AssetPipelineService.prototype = {
 		var pathLib = js_node_Path;
 		var targetDir = folder != null ? pathLib.join(this.assetsPath,folder) : this.assetsPath;
 		if(!fs.existsSync(targetDir)) {
-			console.log("src/main/assets/AssetPipelineService.hx:177:","⚠️ [AssetPipeline] Directory not found: " + targetDir);
+			console.log("src/main/assets/AssetPipelineService.hx:264:","️ [AssetPipeline] Directory not found: " + targetDir);
 			return [];
 		}
 		try {
@@ -711,18 +867,7 @@ src_main_assets_AssetPipelineService.prototype = {
 				if(stat.isDirectory()) {
 					result.push({ name : entry, path : fullPath, relativePath : relPath, isDirectory : true, guid : null, buildPath : null, type : "folder"});
 				} else {
-					var metaPath = fullPath + ".meta";
-					var guid = null;
-					var buildPath = null;
-					if(fs.existsSync(metaPath)) {
-						try {
-							var metaContent = fs.readFileSync(metaPath,"utf-8");
-							var meta = JSON.parse(metaContent);
-							guid = meta.guid;
-							buildPath = meta.buildPath;
-						} catch( _g1 ) {
-						}
-					}
+					var meta = this.getMetaByPath(fullPath);
 					var ext = entry.split(".").pop().toLowerCase();
 					var assetType;
 					switch(ext) {
@@ -735,144 +880,197 @@ src_main_assets_AssetPipelineService.prototype = {
 					default:
 						assetType = "unknown";
 					}
-					result.push({ name : entry, path : fullPath, relativePath : relPath, isDirectory : false, guid : guid, buildPath : buildPath, type : assetType});
+					result.push({ name : entry, path : fullPath, relativePath : relPath, isDirectory : false, guid : meta != null ? meta.guid : null, buildPath : meta != null ? meta.buildPath : null, type : assetType});
 				}
 			}
 			return result;
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			console.log("src/main/assets/AssetPipelineService.hx:239:","❌ [AssetPipeline] Failed to list assets: " + Std.string(e));
+			console.log("src/main/assets/AssetPipelineService.hx:315:","❌ [AssetPipeline] Failed to list assets: " + Std.string(e));
 			return [];
 		}
 	}
 	,onInitialScanComplete: function() {
-		console.log("src/main/assets/AssetPipelineService.hx:250:","✅ [AssetPipeline] Initial scan complete. System ready.");
+		console.log("src/main/assets/AssetPipelineService.hx:326:","✅ [AssetPipeline] Initial scan complete. System ready.");
+		console.log("src/main/assets/AssetPipelineService.hx:327:",this.db);
+		console.log("src/main/assets/AssetPipelineService.hx:328:",this.db.data);
+		console.log("src/main/assets/AssetPipelineService.hx:329:",this.db.data.assets);
+		console.log("src/main/assets/AssetPipelineService.hx:330:","   Total assets in index: " + this.db.data.assets.length);
 	}
 	,onFileAdded: function(path) {
 		if(StringTools.endsWith(path,".meta")) {
 			return;
 		}
-		console.log("src/main/assets/AssetPipelineService.hx:260:","📥 [AssetPipeline] New file detected: " + path);
+		console.log("src/main/assets/AssetPipelineService.hx:340:","📥 [AssetPipeline] New file detected: " + path);
 		this.importSingleAsset(path);
 	}
 	,onFileChanged: function(path) {
 		if(StringTools.endsWith(path,".meta")) {
 			return;
 		}
-		console.log("src/main/assets/AssetPipelineService.hx:267:","🔄 [AssetPipeline] File changed: " + path);
+		console.log("src/main/assets/AssetPipelineService.hx:347:","🔄 [AssetPipeline] File changed: " + path);
 		this.reimportAsset(path);
 	}
 	,onFileDeleted: function(path) {
-		console.log("src/main/assets/AssetPipelineService.hx:272:","🗑️ [AssetPipeline] File deleted: " + path);
+		console.log("src/main/assets/AssetPipelineService.hx:353:","🗑️ [AssetPipeline] File deleted: " + path);
 		this.cleanupBuildFiles(path);
 	}
 	,importSingleAsset: function(sourcePath) {
+		var _gthis = this;
 		var metaPath = sourcePath + ".meta";
-		var fs = require('fs');
 		var ext = js_node_Path.extname(sourcePath).toLowerCase();
 		var relativeSource = js_node_Path.relative(this.projectRoot,sourcePath);
 		var buildDir = js_node_Path.join(this.projectRoot,"Build",js_node_Path.dirname(relativeSource));
 		var baseName = js_node_Path.basename(sourcePath,ext);
-		var buildPath = js_node_Path.join(buildDir,baseName + ".webp");
+		var buildPath = js_node_Path.join(buildDir,baseName + ".webp").split("\\").join("/");
 		var meta = null;
-		
-            if (fs.existsSync(metaPath)) {
-                meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
-            } else {
-                meta = {
-                    guid: require('uuid').v4(),
-                    type: 'texture',
-                    sourcePath: relativeSource,
-                    buildPath: buildPath.replace(/\\\\/g, '/'),
-                    settings: {},
-                    lastModified: fs.statSync(sourcePath).mtimeMs,
-                    version: 1
-                };
-                
-                if (!fs.existsSync(buildDir)) {
-                    fs.mkdirSync(buildDir, { recursive: true });
-                }
-                
-                fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
-                console.log(' [AssetPipeline] Created .meta for: ' + relativeSource);
-            }
-        ;
+		if(js_node_Fs.existsSync(metaPath)) {
+			var metaContent = js_node_Fs.readFileSync(metaPath,"utf-8");
+			meta = JSON.parse(metaContent);
+		} else {
+			meta = { guid : require('uuid').v4(), type : "texture", sourcePath : relativeSource, buildPath : buildPath, settings : { }, lastModified : js_node_Fs.statSync(sourcePath).mtimeMs, version : 1};
+			if(!js_node_Fs.existsSync(buildDir)) {
+				js_node_Fs.mkdirSync(buildDir,{ recursive : true});
+			}
+			js_node_Fs.writeFileSync(metaPath,JSON.stringify(meta,null,"  "),"utf-8");
+			console.log("src/main/assets/AssetPipelineService.hx:395:","✅ [AssetPipeline] Created .meta for: " + relativeSource);
+		}
 		var converter = this.registry.getConverter(sourcePath);
 		if(converter == null) {
-			console.log("src/main/assets/AssetPipelineService.hx:324:","⚠️ [AssetPipeline] No converter found for: " + sourcePath);
+			console.log("src/main/assets/AssetPipelineService.hx:402:","⚠️ [AssetPipeline] No converter found for: " + sourcePath);
 			return;
 		}
 		meta.type = "texture";
-		var resultPromise = converter.convert(sourcePath,meta);
-		
-            resultPromise.then(function(res) {
-                // Проверяем, что вернул конвертер
-                var finalSource = res.sourcePath != null ? res.sourcePath : sourcePath;
-                var finalBuild = res.buildPath != null ? res.buildPath : res; // Если вернул просто строку
-                
-                console.log('✅ [AssetPipeline] Converted: ' + finalSource + ' → ' + finalBuild);
-                
-                meta.lastModified = fs.statSync(sourcePath).mtimeMs;
-                fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
-            }).catch(function(err) {
-                console.error('❌ [AssetPipeline] Conversion failed:', err);
-            });
-        ;
+		try {
+			converter.convert(sourcePath,meta).then(function(res) {
+				console.log("src/main/assets/AssetPipelineService.hx:412:","✅ [AssetPipeline] Converted: " + sourcePath + " → " + res.buildPath);
+				meta.lastModified = js_node_Fs.statSync(sourcePath).mtimeMs;
+				js_node_Fs.writeFileSync(metaPath,JSON.stringify(meta,null,"  "),"utf-8");
+				_gthis.upsertAsset(meta);
+			});
+		} catch( _g ) {
+			var err = haxe_Exception.caught(_g).unwrap();
+			console.log("src/main/assets/AssetPipelineService.hx:423:","❌ [AssetPipeline] Conversion failed: " + Std.string(err));
+		}
 	}
 	,reimportAsset: function(sourcePath) {
 		this.importSingleAsset(sourcePath);
 	}
 	,cleanupBuildFiles: function(sourcePath) {
-		
-            const fs = require('fs');
-            const path = require('path');
-            
-            const metaPath = sourcePath + '.meta';
-            if (fs.existsSync(metaPath)) {
-                const meta = JSON.parse(fs.readFileSync(metaPath, 'utf-8'));
-                if (meta.buildPath && fs.existsSync(meta.buildPath)) {
-                    fs.unlinkSync(meta.buildPath);
-                    console.log('️ [AssetPipeline] Cleaned up build file: ' + meta.buildPath);
-                }
-                fs.unlinkSync(metaPath);
-            }
-        ;
-	}
-	,findMetaByGuid: function(dir,guid) {
-		if(!js_node_Fs.existsSync(dir)) {
-			return null;
+		var metaPath = sourcePath + ".meta";
+		this.removeAssetByPath(sourcePath);
+		if(!js_node_Fs.existsSync(metaPath)) {
+			return;
 		}
-		var entries = js_node_Fs.readdirSync(dir);
-		var _g = 0;
-		while(_g < entries.length) {
-			var entry = entries[_g];
-			++_g;
-			var fullPath = js_node_Path.join(dir,entry);
-			var stat = js_node_Fs.statSync(fullPath);
-			if(stat.isDirectory() && entry != "node_modules" && entry != ".git") {
-				var result = this.findMetaByGuid(fullPath,guid);
-				if(result != null) {
-					return result;
-				}
-			} else if(StringTools.endsWith(entry,".meta")) {
+		try {
+			var metaContent = js_node_Fs.readFileSync(metaPath,"utf-8");
+			var meta = JSON.parse(metaContent);
+			if(meta.buildPath != null && js_node_Fs.existsSync(meta.buildPath)) {
 				try {
-					var content = js_node_Fs.readFileSync(fullPath,{ encoding : "utf-8"});
-					var meta = JSON.parse(content);
-					if(meta.guid == guid) {
-						return meta;
+					js_node_Fs.rmSync(meta.buildPath,{ recursive : true, force : true});
+					console.log("src/main/assets/AssetPipelineService.hx:451:","🗑️ [AssetPipeline] Cleaned up build file: " + Std.string(meta.buildPath));
+				} catch( _g ) {
+					var e = haxe_Exception.caught(_g).unwrap();
+					var errCode = e.code;
+					if(errCode == "EBUSY" || errCode == "EPERM") {
+						console.log("src/main/assets/AssetPipelineService.hx:456:","⚠️ [AssetPipeline] Cannot delete build file (locked/busy): " + Std.string(meta.buildPath) + ". Skipping cleanup.");
+					} else {
+						console.log("src/main/assets/AssetPipelineService.hx:458:","❌ [AssetPipeline] Error deleting build file " + Std.string(meta.buildPath) + ": " + Std.string(e));
 					}
-				} catch( _g1 ) {
 				}
 			}
+			try {
+				js_node_Fs.unlinkSync(metaPath);
+				console.log("src/main/assets/AssetPipelineService.hx:466:","🗑️ [AssetPipeline] Deleted meta file: " + metaPath);
+			} catch( _g ) {
+				var e = haxe_Exception.caught(_g).unwrap();
+				var errCode = e.code;
+				if(errCode != "EBUSY" && errCode != "EPERM") {
+					console.log("src/main/assets/AssetPipelineService.hx:470:","❌ [AssetPipeline] Error deleting meta file " + metaPath + ": " + Std.string(e));
+				}
+			}
+		} catch( _g ) {
+			var e = haxe_Exception.caught(_g).unwrap();
+			console.log("src/main/assets/AssetPipelineService.hx:476:","❌ [AssetPipeline] Failed to read/parse meta file for cleanup: " + metaPath + ". Error: " + Std.string(e));
 		}
-		return null;
 	}
 };
-var src_main_assets_AssetTypeRegistry = function() {
+var src_main_assets_converters_ImageConverter = function() {
+	this.supportedExtensions = [".png",".jpg",".jpeg",".webp",".tga",".bmp"];
+};
+src_main_assets_converters_ImageConverter.__name__ = true;
+src_main_assets_converters_ImageConverter.prototype = {
+	convert: function(sourcePath,meta) {
+		return new Promise(function(resolve,reject) {
+			
+                const sharp = require('sharp');
+                const fs = require('fs');
+                const path = require('path');
+
+                const buildDir = path.dirname(meta.buildPath);
+                if (!fs.existsSync(buildDir)) {
+                    fs.mkdirSync(buildDir, { recursive: true });
+                }
+
+                let pipeline = sharp(sourcePath);
+                const settings = meta.settings || {};
+
+                if (settings.maxSize) {
+                    pipeline = pipeline.resize(settings.maxSize, settings.maxSize, { 
+                        fit: 'inside', 
+                        withoutEnlargement: true 
+                    });
+                }
+
+                const format = settings.format || 'webp';
+                const quality = settings.quality || 80;
+
+                if (format === 'webp') {
+                    pipeline = pipeline.webp({ quality: quality });
+                } else if (format === 'png') {
+                    pipeline = pipeline.png({ compressionLevel: 9 });
+                } else if (format === 'jpeg' || format === 'jpg') {
+                    pipeline = pipeline.jpeg({ quality: quality });
+                }
+
+                // ✅ Цепочка Promise вместо async/await для совместимости с Haxe
+                pipeline.toFile(meta.buildPath)
+                    .then(function() {
+                        return sharp(meta.buildPath).metadata();
+                    })
+                    .then(function(outputMeta) {
+                        // ✅ УСПЕХ: передаем данные в Haxe через resolve
+                        resolve({
+                            buildPath: meta.buildPath,
+                            metadata: {
+                                width: outputMeta.width,
+                                height: outputMeta.height,
+                                format: outputMeta.format,
+                                size: fs.statSync(meta.buildPath).size,
+                                channels: outputMeta.channels
+                            }
+                        });
+                    })
+                    .catch(function(err) {
+                        console.error('❌ [Sharp] Conversion failed for', sourcePath, ':', err.message);
+                        
+                        // ✅ МЯГКАЯ ОШИБКА: не делаем reject, а resolve с полем error.
+                        // Это предотвращает UnhandledPromiseRejectionWarning в Node.js
+                        resolve({
+                            buildPath: meta.buildPath,
+                            metadata: {},
+                            error: err.message || String(err)
+                        });
+                    });
+            ;
+		});
+	}
+};
+var src_main_assets_registry_AssetTypeRegistry = function() {
 	this.converters = new haxe_ds_StringMap();
 };
-src_main_assets_AssetTypeRegistry.__name__ = true;
-src_main_assets_AssetTypeRegistry.prototype = {
+src_main_assets_registry_AssetTypeRegistry.__name__ = true;
+src_main_assets_registry_AssetTypeRegistry.prototype = {
 	register: function(converter) {
 		var _g = 0;
 		var _g1 = converter.supportedExtensions;
@@ -904,72 +1102,8 @@ src_main_assets_AssetTypeRegistry.prototype = {
 		return extensions;
 	}
 };
-var src_main_assets_converters_ImageConverter = function() {
-	this.supportedExtensions = [".png",".jpg",".jpeg",".webp",".tga",".bmp"];
-};
-src_main_assets_converters_ImageConverter.__name__ = true;
-src_main_assets_converters_ImageConverter.prototype = {
-	convert: function(sourcePath,meta) {
-		return new Promise(async (resolve, reject) => {
-            try {
-                const sharp = require('sharp');
-                const fs = require('fs');
-                const path = require('path');
-                
-                // Убеждаемся, что папка Build существует
-                const buildDir = path.dirname(meta.buildPath);
-                if (!fs.existsSync(buildDir)) {
-                    fs.mkdirSync(buildDir, { recursive: true });
-                }
-                
-                let pipeline = sharp(sourcePath);
-                
-                // Применяем настройки из .meta
-                const settings = meta.settings || {};
-                
-                // Resize если указан maxSize
-                if (settings.maxSize) {
-                    pipeline = pipeline.resize(settings.maxSize, settings.maxSize, { 
-                        fit: 'inside', 
-                        withoutEnlargement: true 
-                    });
-                }
-                
-                // Формат вывода (по умолчанию webp)
-                const format = settings.format || 'webp';
-                const quality = settings.quality || 80;
-                
-                if (format === 'webp') {
-                    pipeline = pipeline.webp({ quality: quality });
-                } else if (format === 'png') {
-                    pipeline = pipeline.png({ compressionLevel: 9 });
-                } else if (format === 'jpeg' || format === 'jpg') {
-                    pipeline = pipeline.jpeg({ quality: quality });
-                }
-                
-                // Сохраняем результат
-                await pipeline.toFile(meta.buildPath);
-                
-                // Получаем метаданные выходного файла
-                const outputMeta = await sharp(meta.buildPath).metadata();
-                
-                resolve({
-                    buildPath: meta.buildPath,
-                    metadata: {
-                        width: outputMeta.width,
-                        height: outputMeta.height,
-                        format: outputMeta.format,
-                        size: fs.statSync(meta.buildPath).size,
-                        channels: outputMeta.channels
-                    }
-                });
-                
-            } catch (err) {
-                reject(err);
-            }
-        });
-	}
-};
+var src_main_external_JSONFileSync = require("lowdb/node").JSONFileSync;
+var src_main_external_LowSync = require("lowdb").LowSync;
 var src_main_lsp_HaxeLanguageServerManager = function() {
 };
 src_main_lsp_HaxeLanguageServerManager.__name__ = true;
@@ -984,11 +1118,11 @@ src_main_services_ServiceLocator.get = function() {
 };
 src_main_services_ServiceLocator.init = function() {
 	var loc = src_main_services_ServiceLocator.get();
-	var registry = new src_main_assets_AssetTypeRegistry();
+	var registry = new src_main_assets_registry_AssetTypeRegistry();
 	registry.register(new src_main_assets_converters_ImageConverter());
 	loc.assetPipeline = new src_main_assets_AssetPipelineService(registry);
 	loc.lspManager = new src_main_lsp_HaxeLanguageServerManager();
-	console.log("src/main/services/ServiceLocator.hx:31:","✅ [ServiceLocator] Main Process services ready");
+	console.log("src/main/services/ServiceLocator.hx:32:","✅ [ServiceLocator] Main Process services ready");
 };
 String.__name__ = true;
 Array.__name__ = true;

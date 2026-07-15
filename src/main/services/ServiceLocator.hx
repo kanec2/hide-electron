@@ -1,5 +1,6 @@
 package src.main.services;
 import src.main.assets.*;
+import src.main.assets.registry.*;
 import src.main.assets.converters.ImageConverter;
 import src.main.lsp.HaxeLanguageServerManager;
 // hide/main/services/ServiceLocator.hx
