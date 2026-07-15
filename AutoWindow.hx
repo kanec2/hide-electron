@@ -295,57 +295,60 @@ class AutoWindow {
         */
         // === Файловая система: Модификации (синхронные вызовы) ===
         
-                IpcMain.on("fs:rename", function(event:IpcMainEvent, data:Dynamic) {
+            IpcMain.on("fs:rename", function(event:IpcMainEvent, data:Dynamic) {
             try {
                 var oldPath:String = data.oldPath;
                 var newPath:String = data.newPath;
                 var oldMetaPath = oldPath + '.meta';
                 var newMetaPath = newPath + '.meta';
+                
+                trace('🔄 [RENAME] Started: $oldPath -> $newPath');
 
                 // 1. Переименовываем основной файл
                 Fs.renameSync(oldPath, newPath);
+                trace('  ✅ [RENAME] Source file renamed.');
 
-                // 2. Если у файла есть .meta, переименовываем его и его build-версию
+                // 2. Работа с .meta и build файлами
                 if (Fs.existsSync(oldMetaPath)) {
                     try {
-                        // Читаем старый .meta, чтобы узнать путь к скомпилированному файлу
                         var metaContent = Fs.readFileSync(oldMetaPath, { encoding: "utf-8" });
                         var meta:Dynamic = haxe.Json.parse(metaContent);
                         var oldBuildPath:String = meta.buildPath;
-
-                        // Переименовываем сам .meta файл
+                        
+                        // Переименовываем .meta
                         Fs.renameSync(oldMetaPath, newMetaPath);
+                        trace('  ✅ [RENAME] Meta file renamed.');
 
-                        // Переименовываем скомпилированный файл в папке Build (если он существует)
                         if (oldBuildPath != null && Fs.existsSync(oldBuildPath)) {
-                            // Формируем новый путь: берем директорию старого билда и новое имя с старым расширением
-                            var oldExt = js.node.Path.extname(oldBuildPath); // например, ".webp"
-                            var newBaseName = js.node.Path.basename(newPath, js.node.Path.extname(newPath)); // новое имя без расширения
+                            var oldExt = js.node.Path.extname(oldBuildPath);
+                            var newBaseName = js.node.Path.basename(newPath, js.node.Path.extname(newPath));
                             var newBuildPath = js.node.Path.join(js.node.Path.dirname(oldBuildPath), newBaseName + oldExt);
-
-                            Fs.renameSync(oldBuildPath, newBuildPath);
-
-                            // Обновляем путь buildPath внутри переименованного .meta файла!
+                            if (oldBuildPath != newBuildPath) {
+                                try {
+                                    Fs.renameSync(oldBuildPath, newBuildPath);
+                                    trace('  ✅ [RENAME] Build file renamed: $oldBuildPath -> $newBuildPath');
+                                } catch (e:Dynamic) {
+                                    var errCode = untyped e.code;
+                                    trace('  ⚠️ [RENAME] Build file rename FAILED (Code: $errCode). File might be locked by OS/Chokidar.');
+                                    trace('  💡 [RENAME] Forcing meta.buildPath update to NEW path anyway to prevent pipeline corruption.');
+                                }
+                            } else {
+                                trace('  ℹ️ [RENAME] Build path unchanged ($newBuildPath). Skipping rename to avoid EBUSY.');
+                            }
+                            // ВСЕГДА обновляем путь в meta на новый, даже если физическое переименование не удалось
                             meta.buildPath = newBuildPath.split("\\").join("/");
                             Fs.writeFileSync(newMetaPath, haxe.Json.stringify(meta, null, "  "), { encoding: "utf-8" });
-                            
-                            trace('✅ [Backend] Renamed build file: $oldBuildPath -> $newBuildPath');
+                            trace('  ✅ [RENAME] Meta file updated with new buildPath: ${meta.buildPath}');
                         }
                     } catch (e:Dynamic) {
-                        trace('⚠️ [Backend] Warning during meta/build rename: ${Std.string(e)}');
-                        // Не прерываем операцию, если с .meta что-то пошло не так, 
-                        // главный файл уже переименован.
+                        trace('  ❌ [RENAME] Critical error processing meta: ${Std.string(e)}');
                     }
                 }
-
-                event.returnValue = {}; // Успех
+                event.returnValue = {};
             } catch (e:Dynamic) {
                 var errCode = untyped e.code;
-                if (errCode == "EBUSY" || errCode == "EPERM") {
-                    event.returnValue = { error: "File is currently in use by another program. Please close it and try again." };
-                } else {
-                    event.returnValue = { error: Std.string(e) };
-                }
+                trace('  ❌ [RENAME] Fatal error: $errCode - ${Std.string(e)}');
+                event.returnValue = { error: "File is currently in use. Error: " + Std.string(e) };
             }
         });
 

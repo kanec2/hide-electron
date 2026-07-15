@@ -27,8 +27,8 @@ class ImageConverter implements IAssetConverter {
      * ✅ ИСПОЛЬЗУЕТ НАТИВНЫЙ js.lib.Promise ВМЕСТО untyped __js__ СТРОК
      */
     public function convert(sourcePath:String, meta:AssetMeta):Promise<ConversionResult> {
-        return new Promise(function(resolve, reject) {
-            untyped __js__("
+        return untyped __js__("new Promise(async (resolve, reject) => {
+            try {
                 const sharp = require('sharp');
                 const fs = require('fs');
                 const path = require('path');
@@ -37,6 +37,9 @@ class ImageConverter implements IAssetConverter {
                 if (!fs.existsSync(buildDir)) {
                     fs.mkdirSync(buildDir, { recursive: true });
                 }
+
+                console.log('  ⚙️ [SHARP] Preparing pipeline for: ' + sourcePath);
+                console.log('  ⚙️ [SHARP] Target output path: ' + meta.buildPath);
 
                 let pipeline = sharp(sourcePath);
                 const settings = meta.settings || {};
@@ -59,37 +62,36 @@ class ImageConverter implements IAssetConverter {
                     pipeline = pipeline.jpeg({ quality: quality });
                 }
 
-                // ✅ Цепочка Promise вместо async/await для совместимости с Haxe
-                pipeline.toFile(meta.buildPath)
-                    .then(function() {
-                        return sharp(meta.buildPath).metadata();
-                    })
-                    .then(function(outputMeta) {
-                        // ✅ УСПЕХ: передаем данные в Haxe через resolve
-                        resolve({
-                            buildPath: meta.buildPath,
-                            metadata: {
-                                width: outputMeta.width,
-                                height: outputMeta.height,
-                                format: outputMeta.format,
-                                size: fs.statSync(meta.buildPath).size,
-                                channels: outputMeta.channels
-                            }
-                        });
-                    })
-                    .catch(function(err) {
-                        console.error('❌ [Sharp] Conversion failed for', sourcePath, ':', err.message);
-                        
-                        // ✅ МЯГКАЯ ОШИБКА: не делаем reject, а resolve с полем error.
-                        // Это предотвращает UnhandledPromiseRejectionWarning в Node.js
-                        resolve({
-                            buildPath: meta.buildPath,
-                            metadata: {},
-                            error: err.message || String(err)
-                        });
-                    });
-            ");
-        });
+                // 🚨 Попытка записи
+                await pipeline.toFile(meta.buildPath);
+                
+                const outputMeta = await sharp(meta.buildPath).metadata();
+                console.log('  ✅ [SHARP] File written successfully to: ' + meta.buildPath);
+
+                resolve({
+                    buildPath: meta.buildPath,
+                    metadata: {
+                        width: outputMeta.width,
+                        height: outputMeta.height,
+                        format: outputMeta.format,
+                        size: fs.statSync(meta.buildPath).size,
+                        channels: outputMeta.channels
+                    }
+                });
+            } catch (err) {
+                console.error('  ❌ [SHARP] Exception caught during toFile():');
+                console.error('  ❌ [SHARP] Target path was: ' + meta.buildPath);
+                console.error('  ❌ [SHARP] Error message: ' + err.message);
+                console.error('  ❌ [SHARP] Error code: ' + (err.code || 'N/A'));
+                
+                // Мягкий возврат ошибки вместо краша Promise
+                resolve({
+                    buildPath: meta.buildPath,
+                    metadata: {},
+                    error: err.message + ' (Code: ' + (err.code || 'UNKNOWN') + ')'
+                });
+            }
+        })");
     }
 
     /**

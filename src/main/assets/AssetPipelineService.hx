@@ -334,10 +334,8 @@ class AssetPipelineService {
 
     @:keep
     private function onFileAdded(path:String):Void {
-        // Игнорируем .meta файлы — они не импортируются
         if (path.endsWith('.meta')) return;
-        
-        trace('📥 [AssetPipeline] New file detected: $path');
+        trace('📥 [CHOKIDAR] ADD event at ${Date.now().toString()}: $path');
         importSingleAsset(path);
     }
     @:keep
@@ -350,7 +348,7 @@ class AssetPipelineService {
 
     @:keep
     private function onFileDeleted(path:String):Void {
-        trace('🗑️ [AssetPipeline] File deleted: $path');
+        trace('🗑️ [CHOKIDAR] UNLINK event at ${Date.now().toString()}: $path');
         cleanupBuildFiles(path);
     }
     
@@ -365,63 +363,83 @@ class AssetPipelineService {
         var ext = js.node.Path.extname(sourcePath).toLowerCase();
         var relativeSource = js.node.Path.relative(this.projectRoot, sourcePath);
         
-        // Определяем путь для сборки (всегда используем прямые слеши для кросс-платформенности)
         var buildDir = js.node.Path.join(this.projectRoot, 'Build', js.node.Path.dirname(relativeSource));
         var baseName = js.node.Path.basename(sourcePath, ext);
-        var buildPath = js.node.Path.join(buildDir, baseName + '.webp').split("\\").join("/");
+        var defaultBuildPath = js.node.Path.join(buildDir, baseName + '.webp').split("\\").join("/");
 
         var meta:Dynamic = null;
 
-        // 1. Работа с файловой системой и .meta на чистом Haxe
         if (Fs.existsSync(metaPath)) {
             var metaContent = Fs.readFileSync(metaPath, 'utf-8');
             meta = haxe.Json.parse(metaContent);
+            // ✅ КРИТИЧЕСКАЯ ПОПРАВКА: Гарантируем, что sourcePath всегда актуален, 
+            // даже если файл был переименован вне IDE или логика переименования что-то упустила.
+            meta.sourcePath = relativeSource; 
+            
+            trace('  📖 [PIPELINE] Read existing meta for: $sourcePath');
+            trace('  🔍 [PIPELINE] Meta says buildPath is: ${meta.buildPath}');
         } else {
             meta = {
                 guid: untyped __js__("require('uuid').v4()"),
                 type: 'texture',
                 sourcePath: relativeSource,
-                buildPath: buildPath,
+                buildPath: defaultBuildPath,
                 settings: {},
-                lastModified: Fs.statSync(sourcePath).mtimeMs,
+                lastModified: Std.int(Fs.statSync(sourcePath).mtimeMs),
                 version: 1
             };
-            
-            if (!Fs.existsSync(buildDir)) {
-                Fs.mkdirSync(buildDir, { recursive: true });
-            }
-            
+            if (!Fs.existsSync(buildDir)) Fs.mkdirSync(buildDir, { recursive: true });
             Fs.writeFileSync(metaPath, haxe.Json.stringify(meta, null, "  "), 'utf-8');
-            trace('✅ [AssetPipeline] Created .meta for: $relativeSource');
+            trace('  📝 [PIPELINE] Created NEW meta for: $sourcePath');
         }
 
-        // 2. Вызов конвертера
         var converter = registry.getConverter(sourcePath);
-        
         if (converter == null) {
-            trace('⚠️ [AssetPipeline] No converter found for: $sourcePath');
+            trace('⚠️ [PIPELINE] No converter found for: $sourcePath');
             return;
         }
 
-        // Обновляем тип в мета-данных
         meta.type = "texture";
         
-        // 3. Запускаем конвертацию и обрабатываем результат НА ЧИСТОМ HAXE!
+        // 🚨 ПРОВЕРКА АКТУАЛЬНОСТИ: Нужно ли вообще конвертировать?
+        var sourceStat = Fs.statSync(sourcePath);
+        var sourceMtime = Std.int(sourceStat.mtimeMs);
+        
+        if (Fs.existsSync(meta.buildPath)) {
+            var buildStat = Fs.statSync(meta.buildPath);
+            var buildMtime = Std.int(buildStat.mtimeMs);
+            
+            // Если исходник не новее билда, пропускаем конвертацию!
+            if (sourceMtime <= buildMtime) {
+                trace('  ⏭️ [PIPELINE] Build is up-to-date. Skipping conversion for: $sourcePath');
+                meta.lastModified = sourceMtime;
+                this.upsertAsset(cast meta);
+                return; // 🛑 ВЫХОДИМ, не запуская Sharp
+            }
+        }
+
+        trace('  🚀 [PIPELINE] Starting conversion. Target buildPath: ${meta.buildPath}');
         try {
             converter.convert(sourcePath, meta).then(function(res:ConversionResult) {
-                trace('✅ [AssetPipeline] Converted: $sourcePath → ${res.buildPath}');
-                
-                // Обновляем метаданные времени изменения
-                meta.lastModified = Fs.statSync(sourcePath).mtimeMs;
+                if (res.error != null) {
+                    trace('  ❌ [PIPELINE] Conversion FAILED for: $sourcePath');
+                    trace('  ❌ [PIPELINE] Error details: ${res.error}');
+                    trace('  💡 [PIPELINE] Check if target file is locked by Chokidar polling or another process.');
+                    return;
+                }
+
+                trace('  ✅ [PIPELINE] Conversion SUCCESS: $sourcePath → ${res.buildPath}');
+                meta.lastModified = Std.int(Fs.statSync(sourcePath).mtimeMs);
                 Fs.writeFileSync(metaPath, haxe.Json.stringify(meta, null, "  "), 'utf-8');
-                
-                // ✅ ГЛАВНОЕ ИСПРАВЛЕНИЕ: Мы в контексте класса, this доступен!
                 this.upsertAsset(cast meta);
                 
             });
-        } catch(err:Dynamic) {
-            trace('❌ [AssetPipeline] Conversion failed: $err');
         }
+        catch(err:Dynamic) {
+            trace('  💥 [PIPELINE] Unhandled Promise Rejection in converter for: $sourcePath');
+            trace('  💥 [PIPELINE] Error: ${Std.string(err)}');
+        };
+    
     }
 
     @:keep
