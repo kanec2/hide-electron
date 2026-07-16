@@ -28,7 +28,7 @@ class AssetPipelineService {
     private var assetsPath:String;
     private var watcher:FSWatcher; // Chokidar instance
     private var db:LowSync<AssetIndex>; // ✅ Lowdb база данных
-
+    public static var onAssetsChanged:Null<Void->Void> = null;
     public function new(registry:AssetTypeRegistry) {
         this.registry = registry;
         this.projectRoot = "";

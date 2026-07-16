@@ -11,9 +11,9 @@ var AutoWindow = function() { };
 AutoWindow.__name__ = true;
 AutoWindow.start = function(overrides) {
 	AutoWindow.cfg = AutoWindow.loadPackageConfig();
-	console.log("AutoWindow.hx:44:",AutoWindow.cfg);
-	AutoWindow.applyDefaults();
 	console.log("AutoWindow.hx:47:",AutoWindow.cfg);
+	AutoWindow.applyDefaults();
+	console.log("AutoWindow.hx:50:",AutoWindow.cfg);
 	if(overrides != null) {
 		if(overrides.width != null) {
 			AutoWindow.cfg.width = overrides.width;
@@ -55,11 +55,11 @@ AutoWindow.start = function(overrides) {
 			AutoWindow.cfg.onClose = overrides.onClose;
 		}
 	}
-	console.log("AutoWindow.hx:64:",AutoWindow.cfg);
+	console.log("AutoWindow.hx:67:",AutoWindow.cfg);
 	electron_main_App.whenReady().then(function(_) {
 		AutoWindow.createWindow();
 		AutoWindow.setupLifecycle();
-		AutoWindow.setupIpc();
+		AutoWindow.setupIpc2();
 		if(AutoWindow.cfg.onReady != null) {
 			AutoWindow.cfg.onReady();
 		}
@@ -140,23 +140,23 @@ AutoWindow.ensureDirectoryExists = function(dir) {
 	AutoWindow.ensureDirectoryExists(js_node_Path.dirname(dir));
 	js_node_Fs.mkdirSync(dir);
 };
-AutoWindow.setupIpc = function() {
+AutoWindow.setupIpc2 = function() {
 	electron_main_IpcMain.on("fs:rename",function(event,data) {
 		try {
 			var oldPath = data.oldPath;
 			var newPath = data.newPath;
 			var oldMetaPath = oldPath + ".meta";
 			var newMetaPath = newPath + ".meta";
-			console.log("AutoWindow.hx:305:","🔄 [RENAME] Started: " + oldPath + " -> " + newPath);
+			console.log("AutoWindow.hx:316:","🔄 [RENAME] Started: " + oldPath + " -> " + newPath);
 			js_node_Fs.renameSync(oldPath,newPath);
-			console.log("AutoWindow.hx:309:","  ✅ [RENAME] Source file renamed.");
+			console.log("AutoWindow.hx:320:","  ✅ [RENAME] Source file renamed.");
 			if(js_node_Fs.existsSync(oldMetaPath)) {
 				try {
 					var metaContent = js_node_Fs.readFileSync(oldMetaPath,{ encoding : "utf-8"});
 					var meta = JSON.parse(metaContent);
 					var oldBuildPath = meta.buildPath;
 					js_node_Fs.renameSync(oldMetaPath,newMetaPath);
-					console.log("AutoWindow.hx:320:","  ✅ [RENAME] Meta file renamed.");
+					console.log("AutoWindow.hx:331:","  ✅ [RENAME] Meta file renamed.");
 					if(oldBuildPath != null && js_node_Fs.existsSync(oldBuildPath)) {
 						var oldExt = js_node_Path.extname(oldBuildPath);
 						var newBaseName = js_node_Path.basename(newPath,js_node_Path.extname(newPath));
@@ -164,30 +164,30 @@ AutoWindow.setupIpc = function() {
 						if(oldBuildPath != newBuildPath) {
 							try {
 								js_node_Fs.renameSync(oldBuildPath,newBuildPath);
-								console.log("AutoWindow.hx:329:","  ✅ [RENAME] Build file renamed: " + oldBuildPath + " -> " + newBuildPath);
+								console.log("AutoWindow.hx:340:","  ✅ [RENAME] Build file renamed: " + oldBuildPath + " -> " + newBuildPath);
 							} catch( _g ) {
 								var e = haxe_Exception.caught(_g).unwrap();
 								var errCode = e.code;
-								console.log("AutoWindow.hx:332:","  ⚠️ [RENAME] Build file rename FAILED (Code: " + errCode + "). File might be locked by OS/Chokidar.");
-								console.log("AutoWindow.hx:333:","  💡 [RENAME] Forcing meta.buildPath update to NEW path anyway to prevent pipeline corruption.");
+								console.log("AutoWindow.hx:343:","  ⚠️ [RENAME] Build file rename FAILED (Code: " + errCode + "). File might be locked by OS/Chokidar.");
+								console.log("AutoWindow.hx:344:","  💡 [RENAME] Forcing meta.buildPath update to NEW path anyway to prevent pipeline corruption.");
 							}
 						} else {
-							console.log("AutoWindow.hx:336:","  ℹ️ [RENAME] Build path unchanged (" + newBuildPath + "). Skipping rename to avoid EBUSY.");
+							console.log("AutoWindow.hx:347:","  ℹ️ [RENAME] Build path unchanged (" + newBuildPath + "). Skipping rename to avoid EBUSY.");
 						}
 						meta.buildPath = newBuildPath.split("\\").join("/");
 						js_node_Fs.writeFileSync(newMetaPath,JSON.stringify(meta,null,"  "),{ encoding : "utf-8"});
-						console.log("AutoWindow.hx:341:","  ✅ [RENAME] Meta file updated with new buildPath: " + Std.string(meta.buildPath));
+						console.log("AutoWindow.hx:352:","  ✅ [RENAME] Meta file updated with new buildPath: " + Std.string(meta.buildPath));
 					}
 				} catch( _g ) {
 					var e = haxe_Exception.caught(_g).unwrap();
-					console.log("AutoWindow.hx:344:","  ❌ [RENAME] Critical error processing meta: " + Std.string(e));
+					console.log("AutoWindow.hx:355:","  ❌ [RENAME] Critical error processing meta: " + Std.string(e));
 				}
 			}
 			event.returnValue = { };
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
 			var errCode = e.code;
-			console.log("AutoWindow.hx:350:","  ❌ [RENAME] Fatal error: " + errCode + " - " + Std.string(e));
+			console.log("AutoWindow.hx:361:","  ❌ [RENAME] Fatal error: " + errCode + " - " + Std.string(e));
 			event.returnValue = { error : "File is currently in use. Error: " + Std.string(e)};
 		}
 	});
@@ -251,15 +251,15 @@ AutoWindow.setupIpc = function() {
 		}
 		var root = pipeline.getProjectRoot();
 		var targetDir = data.path != null ? data.path : root;
-		console.log("AutoWindow.hx:423:","🔍 [Backend] readDir requested for: " + targetDir);
-		console.log("AutoWindow.hx:424:","   Project Root: " + root);
+		console.log("AutoWindow.hx:434:","🔍 [Backend] readDir requested for: " + targetDir);
+		console.log("AutoWindow.hx:435:","   Project Root: " + root);
 		if(!StringTools.startsWith(targetDir,root)) {
-			console.log("AutoWindow.hx:428:","❌ [Backend] Access denied: " + targetDir + " is outside " + root);
+			console.log("AutoWindow.hx:439:","❌ [Backend] Access denied: " + targetDir + " is outside " + root);
 			return { success : false, error : "Access denied: path outside project root"};
 		}
 		try {
 			if(!fs.existsSync(targetDir)) {
-				console.log("AutoWindow.hx:434:","⚠️ [Backend] Directory not found: " + targetDir);
+				console.log("AutoWindow.hx:445:","⚠️ [Backend] Directory not found: " + targetDir);
 				return { success : true, data : []};
 			}
 			var entries = fs.readdirSync(targetDir);
@@ -289,11 +289,11 @@ AutoWindow.setupIpc = function() {
 					return 1;
 				}
 			});
-			console.log("AutoWindow.hx:464:","✅ [Backend] Listed " + result.length + " items in: " + targetDir);
+			console.log("AutoWindow.hx:475:","✅ [Backend] Listed " + result.length + " items in: " + targetDir);
 			return { success : true, data : result};
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			console.log("AutoWindow.hx:467:","❌ [Backend] Error reading dir: " + Std.string(e));
+			console.log("AutoWindow.hx:478:","❌ [Backend] Error reading dir: " + Std.string(e));
 			return { success : false, error : Std.string(e)};
 		}
 	});
@@ -304,13 +304,13 @@ AutoWindow.setupIpc = function() {
 		}
 		try {
 			pipeline.setProjectRoot(data.projectRoot);
-			console.log("AutoWindow.hx:483:","✅ [Main] Asset Pipeline initialized for: " + Std.string(data.projectRoot));
-			console.log("AutoWindow.hx:484:","   Assets folder: " + Std.string(data.assetsFolder));
-			console.log("AutoWindow.hx:485:","   Build folder: " + Std.string(data.buildFolder));
+			console.log("AutoWindow.hx:494:","✅ [Main] Asset Pipeline initialized for: " + Std.string(data.projectRoot));
+			console.log("AutoWindow.hx:495:","   Assets folder: " + Std.string(data.assetsFolder));
+			console.log("AutoWindow.hx:496:","   Build folder: " + Std.string(data.buildFolder));
 			return { success : true, data : { assetsPath : pipeline.getAssetsPath(), supportedExtensions : pipeline.getSupportedExtensions()}};
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			console.log("AutoWindow.hx:495:","❌ [Main] Failed to init Asset Pipeline: " + Std.string(e));
+			console.log("AutoWindow.hx:506:","❌ [Main] Failed to init Asset Pipeline: " + Std.string(e));
 			return { success : false, error : Std.string(e)};
 		}
 	});
@@ -472,12 +472,12 @@ AutoWindow.setupIpc = function() {
 		event.returnValue = null;
 	});
 	electron_main_IpcMain.on("menu:build",function(event,menuData) {
-		console.log("AutoWindow.hx:665:","[AutoWindow] 📥 Received menu data");
+		console.log("AutoWindow.hx:676:","[AutoWindow] 📥 Received menu data");
 	});
 	electron_main_IpcMain.on("window:open",function(event,data) {
 		var url = data.url;
 		if(url.indexOf("?subView=") != -1) {
-			console.log("AutoWindow.hx:706:","[AutoWindow] ⚠️ Sub-view request: " + url);
+			console.log("AutoWindow.hx:717:","[AutoWindow] ⚠️ Sub-view request: " + url);
 			event.sender.send("window:open:subview",{ url : url});
 			return;
 		}
