@@ -59,7 +59,7 @@ AutoWindow.start = function(overrides) {
 	electron_main_App.whenReady().then(function(_) {
 		AutoWindow.createWindow();
 		AutoWindow.setupLifecycle();
-		AutoWindow.setupIpc2();
+		AutoWindow.setupIpc();
 		if(AutoWindow.cfg.onReady != null) {
 			AutoWindow.cfg.onReady();
 		}
@@ -130,361 +130,11 @@ AutoWindow.setupLifecycle = function() {
 		}
 	});
 };
-AutoWindow.ensureDirectoryExists = function(dir) {
-	if(dir == null || dir == "") {
-		return;
-	}
-	if(js_node_Fs.existsSync(dir)) {
-		return;
-	}
-	AutoWindow.ensureDirectoryExists(js_node_Path.dirname(dir));
-	js_node_Fs.mkdirSync(dir);
-};
-AutoWindow.setupIpc2 = function() {
-	electron_main_IpcMain.on("fs:rename",function(event,data) {
-		try {
-			var oldPath = data.oldPath;
-			var newPath = data.newPath;
-			var oldMetaPath = oldPath + ".meta";
-			var newMetaPath = newPath + ".meta";
-			console.log("AutoWindow.hx:316:","🔄 [RENAME] Started: " + oldPath + " -> " + newPath);
-			js_node_Fs.renameSync(oldPath,newPath);
-			console.log("AutoWindow.hx:320:","  ✅ [RENAME] Source file renamed.");
-			if(js_node_Fs.existsSync(oldMetaPath)) {
-				try {
-					var metaContent = js_node_Fs.readFileSync(oldMetaPath,{ encoding : "utf-8"});
-					var meta = JSON.parse(metaContent);
-					var oldBuildPath = meta.buildPath;
-					js_node_Fs.renameSync(oldMetaPath,newMetaPath);
-					console.log("AutoWindow.hx:331:","  ✅ [RENAME] Meta file renamed.");
-					if(oldBuildPath != null && js_node_Fs.existsSync(oldBuildPath)) {
-						var oldExt = js_node_Path.extname(oldBuildPath);
-						var newBaseName = js_node_Path.basename(newPath,js_node_Path.extname(newPath));
-						var newBuildPath = js_node_Path.join(js_node_Path.dirname(oldBuildPath),newBaseName + oldExt);
-						if(oldBuildPath != newBuildPath) {
-							try {
-								js_node_Fs.renameSync(oldBuildPath,newBuildPath);
-								console.log("AutoWindow.hx:340:","  ✅ [RENAME] Build file renamed: " + oldBuildPath + " -> " + newBuildPath);
-							} catch( _g ) {
-								var e = haxe_Exception.caught(_g).unwrap();
-								var errCode = e.code;
-								console.log("AutoWindow.hx:343:","  ⚠️ [RENAME] Build file rename FAILED (Code: " + errCode + "). File might be locked by OS/Chokidar.");
-								console.log("AutoWindow.hx:344:","  💡 [RENAME] Forcing meta.buildPath update to NEW path anyway to prevent pipeline corruption.");
-							}
-						} else {
-							console.log("AutoWindow.hx:347:","  ℹ️ [RENAME] Build path unchanged (" + newBuildPath + "). Skipping rename to avoid EBUSY.");
-						}
-						meta.buildPath = newBuildPath.split("\\").join("/");
-						js_node_Fs.writeFileSync(newMetaPath,JSON.stringify(meta,null,"  "),{ encoding : "utf-8"});
-						console.log("AutoWindow.hx:352:","  ✅ [RENAME] Meta file updated with new buildPath: " + Std.string(meta.buildPath));
-					}
-				} catch( _g ) {
-					var e = haxe_Exception.caught(_g).unwrap();
-					console.log("AutoWindow.hx:355:","  ❌ [RENAME] Critical error processing meta: " + Std.string(e));
-				}
-			}
-			event.returnValue = { };
-		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			var errCode = e.code;
-			console.log("AutoWindow.hx:361:","  ❌ [RENAME] Fatal error: " + errCode + " - " + Std.string(e));
-			event.returnValue = { error : "File is currently in use. Error: " + Std.string(e)};
-		}
-	});
-	electron_main_IpcMain.on("fs:delete",function(event,path) {
-		try {
-			js_node_Fs.rmSync(path,{ recursive : true, force : true});
-			event.returnValue = { };
-		} catch( _g ) {
-			try {
-				var stat = js_node_Fs.statSync(path);
-				if(stat.isDirectory()) {
-					js_node_Fs.rmdirSync(path,{ recursive : true});
-				} else {
-					js_node_Fs.unlinkSync(path);
-				}
-				event.returnValue = { };
-			} catch( _g1 ) {
-				var e2 = haxe_Exception.caught(_g1).unwrap();
-				event.returnValue = { error : Std.string(e2)};
-			}
-		}
-	});
-	electron_main_IpcMain.on("fs:createDirectory",function(event,path) {
-		try {
-			AutoWindow.ensureDirectoryExists(path);
-			event.returnValue = { };
-		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			event.returnValue = { error : Std.string(e)};
-		}
-	});
-	electron_main_IpcMain.on("fs:move",function(event,data) {
-		try {
-			js_node_Fs.renameSync(data.sourcePath,data.destPath);
-			event.returnValue = { };
-		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			event.returnValue = { error : Std.string(e)};
-		}
-	});
-	electron_main_IpcMain.handle("asset:getList",function(event,data) {
-		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
-		if(pipeline == null) {
-			return { success : false, error : "AssetPipeline not initialized"};
-		}
-		try {
-			var folder = data.folder != null ? data.folder : null;
-			var items = pipeline.getAssetsList(folder);
-			return { success : true, data : items};
-		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			return { success : false, error : Std.string(e)};
-		}
-	});
-	electron_main_IpcMain.handle("project:readDir",function(event,data) {
-		var fs = js_node_Fs;
-		var pathLib = js_node_Path;
-		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
-		if(pipeline == null) {
-			return { success : false, error : "No project loaded"};
-		}
-		var root = pipeline.getProjectRoot();
-		var targetDir = data.path != null ? data.path : root;
-		console.log("AutoWindow.hx:434:","🔍 [Backend] readDir requested for: " + targetDir);
-		console.log("AutoWindow.hx:435:","   Project Root: " + root);
-		if(!StringTools.startsWith(targetDir,root)) {
-			console.log("AutoWindow.hx:439:","❌ [Backend] Access denied: " + targetDir + " is outside " + root);
-			return { success : false, error : "Access denied: path outside project root"};
-		}
-		try {
-			if(!fs.existsSync(targetDir)) {
-				console.log("AutoWindow.hx:445:","⚠️ [Backend] Directory not found: " + targetDir);
-				return { success : true, data : []};
-			}
-			var entries = fs.readdirSync(targetDir);
-			var result = [];
-			var _g = 0;
-			while(_g < entries.length) {
-				var entry = entries[_g];
-				++_g;
-				if(StringTools.startsWith(entry,".") || entry == "node_modules") {
-					continue;
-				}
-				var fullPath = pathLib.join(targetDir,entry);
-				var stat = fs.statSync(fullPath);
-				var relPath = pathLib.relative(root,fullPath).split("\\").join("/");
-				result.push({ name : entry, path : fullPath, relativePath : relPath, isDirectory : stat.isDirectory(), extension : stat.isFile() ? entry.split(".").pop().toLowerCase() : null});
-			}
-			result.sort(function(a,b) {
-				if(a.isDirectory && !b.isDirectory) {
-					return -1;
-				}
-				if(!a.isDirectory && b.isDirectory) {
-					return 1;
-				}
-				if(a.name.toLowerCase() < b.name.toLowerCase()) {
-					return -1;
-				} else {
-					return 1;
-				}
-			});
-			console.log("AutoWindow.hx:475:","✅ [Backend] Listed " + result.length + " items in: " + targetDir);
-			return { success : true, data : result};
-		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			console.log("AutoWindow.hx:478:","❌ [Backend] Error reading dir: " + Std.string(e));
-			return { success : false, error : Std.string(e)};
-		}
-	});
-	electron_main_IpcMain.handle("asset:init",function(event,data) {
-		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
-		if(pipeline == null) {
-			return { success : false, error : "AssetPipeline not initialized in ServiceLocator"};
-		}
-		try {
-			pipeline.setProjectRoot(data.projectRoot);
-			console.log("AutoWindow.hx:494:","✅ [Main] Asset Pipeline initialized for: " + Std.string(data.projectRoot));
-			console.log("AutoWindow.hx:495:","   Assets folder: " + Std.string(data.assetsFolder));
-			console.log("AutoWindow.hx:496:","   Build folder: " + Std.string(data.buildFolder));
-			return { success : true, data : { assetsPath : pipeline.getAssetsPath(), supportedExtensions : pipeline.getSupportedExtensions()}};
-		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			console.log("AutoWindow.hx:506:","❌ [Main] Failed to init Asset Pipeline: " + Std.string(e));
-			return { success : false, error : Std.string(e)};
-		}
-	});
-	electron_main_IpcMain.handle("asset:getMeta",function(event,guid) {
-		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
-		if(pipeline == null) {
-			return { success : false, error : "Pipeline not ready"};
-		}
-		var meta = pipeline.getMeta(guid);
-		if(meta != null) {
-			return { success : true, data : meta};
-		} else {
-			return { success : false, error : "Meta not found for GUID: " + guid};
-		}
-	});
-	electron_main_IpcMain.handle("asset:import",function(event,paths) {
-		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
-		if(pipeline == null) {
-			return { success : false, error : "Pipeline not ready"};
-		}
-		return new Promise((resolve) => {
-                pipeline.importAssets(paths).then(function(results) {
-                    resolve({ success: true, data: results });
-                }).catch(function(err) {
-                    resolve({ success: false, error: err.message || String(err) });
-                });
-            });
-	});
-	electron_main_IpcMain.on("app:quit",function(event) {
-		electron_main_App.quit();
-	});
-	electron_main_IpcMain.on("app:reload",function(event) {
-		if(AutoWindow.window != null) {
-			AutoWindow.window.reload();
-		}
-	});
-	electron_main_IpcMain.on("fs:exists",function(event,filePath) {
-		try {
-			event.returnValue = js_node_Fs.existsSync(filePath);
-		} catch( _g ) {
-			event.returnValue = false;
-		}
-	});
-	electron_main_IpcMain.on("fs:readText",function(event,filePath) {
-		try {
-			if(!js_node_Fs.existsSync(filePath)) {
-				event.returnValue = { error : "File not found"};
-			} else {
-				var content = js_node_Fs.readFileSync(filePath,{ encoding : "utf-8"});
-				event.returnValue = { content : content};
-			}
-		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			event.returnValue = { error : Std.string(e)};
-		}
-	});
-	electron_main_IpcMain.on("fs:readBinary",function(event,filePath) {
-		try {
-			if(!js_node_Fs.existsSync(filePath)) {
-				event.returnValue = { error : "File not found"};
-			} else {
-				var buffer = js_node_Fs.readFileSync(filePath);
-				var base64 = buffer.toString("base64");
-				event.returnValue = { data : base64};
-			}
-		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			event.returnValue = { error : Std.string(e)};
-		}
-	});
-	electron_main_IpcMain.on("fs:writeText",function(event,data) {
-		try {
-			var dir = js_node_Path.dirname(data.path);
-			if(!js_node_Fs.existsSync(dir)) {
-				AutoWindow.ensureDirectoryExists(dir);
-			}
-			js_node_Fs.writeFileSync(data.path,data.content,{ encoding : "utf-8"});
-			event.returnValue = { };
-		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			event.returnValue = { error : Std.string(e)};
-		}
-	});
-	electron_main_IpcMain.on("fs:listFiles",function(event,data) {
-		try {
-			var files = [];
-			var scan = null;
-			scan = function(dir) {
-				var entries = js_node_Fs.readdirSync(dir);
-				var _g = 0;
-				while(_g < entries.length) {
-					var entry = entries[_g];
-					++_g;
-					var fullPath = js_node_Path.join(dir,entry);
-					var stat = js_node_Fs.statSync(fullPath);
-					if(stat.isDirectory() && data.recursive) {
-						scan(fullPath);
-					} else if(stat.isFile()) {
-						files.push(fullPath);
-					}
-				}
-			};
-			if(js_node_Fs.existsSync(data.path)) {
-				scan(data.path);
-			}
-			event.returnValue = { files : files};
-		} catch( _g ) {
-			var e = haxe_Exception.caught(_g).unwrap();
-			event.returnValue = { error : Std.string(e)};
-		}
-	});
-	electron_main_IpcMain.on("app:getAppDataPath",function(event) {
-		event.returnValue = electron_main_App.getPath("userData");
-	});
-	electron_main_IpcMain.handle("dialog:showOpen",function(event,options) {
-		return electron_main_Dialog.showOpenDialog(AutoWindow.window,options);
-	});
-	electron_main_IpcMain.handle("dialog:showSave",function(event,options) {
-		return electron_main_Dialog.showSaveDialog(AutoWindow.window,options);
-	});
-	electron_main_IpcMain.handle("dialog:showDirectory",function(event,options) {
-		options.properties = ["openDirectory","createDirectory"];
-		return electron_main_Dialog.showOpenDialog(AutoWindow.window,options);
-	});
-	electron_main_IpcMain.on("window:setTitle",function(event,title) {
-		if(AutoWindow.window != null) {
-			AutoWindow.window.setTitle(title);
-		}
-		event.returnValue = null;
-	});
-	electron_main_IpcMain.on("window:enterFullscreen",function(event) {
-		if(AutoWindow.window != null) {
-			AutoWindow.window.setFullScreen(true);
-		}
-		event.returnValue = null;
-	});
-	electron_main_IpcMain.on("window:maximize",function(event) {
-		if(AutoWindow.window != null) {
-			AutoWindow.window.maximize();
-		}
-		event.returnValue = null;
-	});
-	electron_main_IpcMain.on("window:minimize",function(event) {
-		if(AutoWindow.window != null) {
-			AutoWindow.window.minimize();
-		}
-		event.returnValue = null;
-	});
-	electron_main_IpcMain.on("window:unmaximize",function(event) {
-		if(AutoWindow.window != null) {
-			AutoWindow.window.unmaximize();
-		}
-		event.returnValue = null;
-	});
-	electron_main_IpcMain.on("window:leaveFullscreen",function(event) {
-		if(AutoWindow.window != null) {
-			AutoWindow.window.setFullScreen(false);
-		}
-		event.returnValue = null;
-	});
-	electron_main_IpcMain.on("menu:build",function(event,menuData) {
-		console.log("AutoWindow.hx:676:","[AutoWindow] 📥 Received menu data");
-	});
-	electron_main_IpcMain.on("window:open",function(event,data) {
-		var url = data.url;
-		if(url.indexOf("?subView=") != -1) {
-			console.log("AutoWindow.hx:717:","[AutoWindow] ⚠️ Sub-view request: " + url);
-			event.sender.send("window:open:subview",{ url : url});
-			return;
-		}
-		var opts = { width : data.options.width != null ? data.options.width : 800, height : data.options.height != null ? data.options.height : 600, title : data.options.title != null ? data.options.title : "Hide", parent : AutoWindow.window, webPreferences : { nodeIntegration : true, contextIsolation : false}};
-		var child = new electron_main_BrowserWindow(opts);
-		child.loadFile(url);
-	});
+AutoWindow.setupIpc = function() {
+	src_main_ipc_FileSystemHandlers.setup();
+	src_main_ipc_AssetHandlers.setup();
+	src_main_ipc_AppWindowHandlers.setup(AutoWindow.window);
+	console.log("AutoWindow.hx:193:","✅ [AutoWindow] All IPC handlers registered successfully.");
 };
 var EReg = function(r,opt) {
 	this.r = new RegExp(r,opt.split("u").join(""));
@@ -940,6 +590,13 @@ src_main_assets_AssetPipelineService.prototype = {
 		console.log("src/main/assets/AssetPipelineService.hx:351:","🗑️ [CHOKIDAR] UNLINK event at " + HxOverrides.dateStr(new Date()) + ": " + path);
 		this.cleanupBuildFiles(path);
 	}
+	,getAssetPreview: function(filePath,size) {
+		var converter = this.registry.getConverter(filePath);
+		if(converter != null) {
+			return converter.getPreview(filePath,size);
+		}
+		return Promise.reject("No converter found for this file type");
+	}
 	,importSingleAsset: function(sourcePath) {
 		var _gthis = this;
 		var metaPath = sourcePath + ".meta";
@@ -953,8 +610,8 @@ src_main_assets_AssetPipelineService.prototype = {
 			var metaContent = js_node_Fs.readFileSync(metaPath,"utf-8");
 			meta = JSON.parse(metaContent);
 			meta.sourcePath = relativeSource;
-			console.log("src/main/assets/AssetPipelineService.hx:379:","  📖 [PIPELINE] Read existing meta for: " + sourcePath);
-			console.log("src/main/assets/AssetPipelineService.hx:380:","  🔍 [PIPELINE] Meta says buildPath is: " + Std.string(meta.buildPath));
+			console.log("src/main/assets/AssetPipelineService.hx:390:","  📖 [PIPELINE] Read existing meta for: " + sourcePath);
+			console.log("src/main/assets/AssetPipelineService.hx:391:","  🔍 [PIPELINE] Meta says buildPath is: " + Std.string(meta.buildPath));
 		} else {
 			var meta1 = require('uuid').v4();
 			var meta2 = js_node_Fs.statSync(sourcePath).mtimeMs | 0;
@@ -963,11 +620,11 @@ src_main_assets_AssetPipelineService.prototype = {
 				js_node_Fs.mkdirSync(buildDir,{ recursive : true});
 			}
 			js_node_Fs.writeFileSync(metaPath,JSON.stringify(meta,null,"  "),"utf-8");
-			console.log("src/main/assets/AssetPipelineService.hx:393:","  📝 [PIPELINE] Created NEW meta for: " + sourcePath);
+			console.log("src/main/assets/AssetPipelineService.hx:404:","  📝 [PIPELINE] Created NEW meta for: " + sourcePath);
 		}
 		var converter = this.registry.getConverter(sourcePath);
 		if(converter == null) {
-			console.log("src/main/assets/AssetPipelineService.hx:398:","⚠️ [PIPELINE] No converter found for: " + sourcePath);
+			console.log("src/main/assets/AssetPipelineService.hx:409:","⚠️ [PIPELINE] No converter found for: " + sourcePath);
 			return;
 		}
 		meta.type = "texture";
@@ -977,22 +634,22 @@ src_main_assets_AssetPipelineService.prototype = {
 			var buildStat = js_node_Fs.statSync(meta.buildPath);
 			var buildMtime = buildStat.mtimeMs | 0;
 			if(sourceMtime <= buildMtime) {
-				console.log("src/main/assets/AssetPipelineService.hx:414:","  ⏭️ [PIPELINE] Build is up-to-date. Skipping conversion for: " + sourcePath);
+				console.log("src/main/assets/AssetPipelineService.hx:425:","  ⏭️ [PIPELINE] Build is up-to-date. Skipping conversion for: " + sourcePath);
 				meta.lastModified = sourceMtime;
 				this.upsertAsset(meta);
 				return;
 			}
 		}
-		console.log("src/main/assets/AssetPipelineService.hx:421:","  🚀 [PIPELINE] Starting conversion. Target buildPath: " + Std.string(meta.buildPath));
+		console.log("src/main/assets/AssetPipelineService.hx:432:","  🚀 [PIPELINE] Starting conversion. Target buildPath: " + Std.string(meta.buildPath));
 		try {
 			converter.convert(sourcePath,meta).then(function(res) {
 				if(res.error != null) {
-					console.log("src/main/assets/AssetPipelineService.hx:425:","  ❌ [PIPELINE] Conversion FAILED for: " + sourcePath);
-					console.log("src/main/assets/AssetPipelineService.hx:426:","  ❌ [PIPELINE] Error details: " + res.error);
-					console.log("src/main/assets/AssetPipelineService.hx:427:","  💡 [PIPELINE] Check if target file is locked by Chokidar polling or another process.");
+					console.log("src/main/assets/AssetPipelineService.hx:436:","  ❌ [PIPELINE] Conversion FAILED for: " + sourcePath);
+					console.log("src/main/assets/AssetPipelineService.hx:437:","  ❌ [PIPELINE] Error details: " + res.error);
+					console.log("src/main/assets/AssetPipelineService.hx:438:","  💡 [PIPELINE] Check if target file is locked by Chokidar polling or another process.");
 					return;
 				}
-				console.log("src/main/assets/AssetPipelineService.hx:431:","  ✅ [PIPELINE] Conversion SUCCESS: " + sourcePath + " → " + res.buildPath);
+				console.log("src/main/assets/AssetPipelineService.hx:442:","  ✅ [PIPELINE] Conversion SUCCESS: " + sourcePath + " → " + res.buildPath);
 				var tmp = js_node_Fs.statSync(sourcePath).mtimeMs | 0;
 				meta.lastModified = tmp;
 				js_node_Fs.writeFileSync(metaPath,JSON.stringify(meta,null,"  "),"utf-8");
@@ -1000,8 +657,8 @@ src_main_assets_AssetPipelineService.prototype = {
 			});
 		} catch( _g ) {
 			var err = haxe_Exception.caught(_g).unwrap();
-			console.log("src/main/assets/AssetPipelineService.hx:439:","  💥 [PIPELINE] Unhandled Promise Rejection in converter for: " + sourcePath);
-			console.log("src/main/assets/AssetPipelineService.hx:440:","  💥 [PIPELINE] Error: " + Std.string(err));
+			console.log("src/main/assets/AssetPipelineService.hx:450:","  💥 [PIPELINE] Unhandled Promise Rejection in converter for: " + sourcePath);
+			console.log("src/main/assets/AssetPipelineService.hx:451:","  💥 [PIPELINE] Error: " + Std.string(err));
 		}
 	}
 	,reimportAsset: function(sourcePath) {
@@ -1019,30 +676,46 @@ src_main_assets_AssetPipelineService.prototype = {
 			if(meta.buildPath != null && js_node_Fs.existsSync(meta.buildPath)) {
 				try {
 					js_node_Fs.rmSync(meta.buildPath,{ recursive : true, force : true});
-					console.log("src/main/assets/AssetPipelineService.hx:469:","🗑️ [AssetPipeline] Cleaned up build file: " + Std.string(meta.buildPath));
+					console.log("src/main/assets/AssetPipelineService.hx:480:","🗑️ [AssetPipeline] Cleaned up build file: " + Std.string(meta.buildPath));
 				} catch( _g ) {
 					var e = haxe_Exception.caught(_g).unwrap();
 					var errCode = e.code;
 					if(errCode == "EBUSY" || errCode == "EPERM") {
-						console.log("src/main/assets/AssetPipelineService.hx:474:","⚠️ [AssetPipeline] Cannot delete build file (locked/busy): " + Std.string(meta.buildPath) + ". Skipping cleanup.");
+						console.log("src/main/assets/AssetPipelineService.hx:485:","⚠️ [AssetPipeline] Cannot delete build file (locked/busy): " + Std.string(meta.buildPath) + ". Skipping cleanup.");
 					} else {
-						console.log("src/main/assets/AssetPipelineService.hx:476:","❌ [AssetPipeline] Error deleting build file " + Std.string(meta.buildPath) + ": " + Std.string(e));
+						console.log("src/main/assets/AssetPipelineService.hx:487:","❌ [AssetPipeline] Error deleting build file " + Std.string(meta.buildPath) + ": " + Std.string(e));
 					}
 				}
 			}
 			try {
 				js_node_Fs.unlinkSync(metaPath);
-				console.log("src/main/assets/AssetPipelineService.hx:484:","🗑️ [AssetPipeline] Deleted meta file: " + metaPath);
+				console.log("src/main/assets/AssetPipelineService.hx:495:","🗑️ [AssetPipeline] Deleted meta file: " + metaPath);
 			} catch( _g ) {
 				var e = haxe_Exception.caught(_g).unwrap();
 				var errCode = e.code;
 				if(errCode != "EBUSY" && errCode != "EPERM") {
-					console.log("src/main/assets/AssetPipelineService.hx:488:","❌ [AssetPipeline] Error deleting meta file " + metaPath + ": " + Std.string(e));
+					console.log("src/main/assets/AssetPipelineService.hx:499:","❌ [AssetPipeline] Error deleting meta file " + metaPath + ": " + Std.string(e));
 				}
 			}
 		} catch( _g ) {
 			var e = haxe_Exception.caught(_g).unwrap();
-			console.log("src/main/assets/AssetPipelineService.hx:494:","❌ [AssetPipeline] Failed to read/parse meta file for cleanup: " + metaPath + ". Error: " + Std.string(e));
+			console.log("src/main/assets/AssetPipelineService.hx:505:","❌ [AssetPipeline] Failed to read/parse meta file for cleanup: " + metaPath + ". Error: " + Std.string(e));
+		}
+	}
+	,onFileRenamed: function(oldPath,newPath) {
+		console.log("src/main/assets/AssetPipelineService.hx:515:","🔄 [AssetPipeline] File renamed: " + oldPath + " -> " + newPath);
+		var normalizedOld = oldPath.split("\\").join("/");
+		var normalizedNew = newPath.split("\\").join("/");
+		var meta = this.getMetaByPath(normalizedOld);
+		if(meta != null) {
+			meta.sourcePath = js_node_Path.relative(this.projectRoot,normalizedNew);
+			this.upsertAsset(meta);
+			console.log("src/main/assets/AssetPipelineService.hx:533:","✅ [AssetPipeline] Index updated for GUID: " + meta.guid);
+		} else {
+			console.log("src/main/assets/AssetPipelineService.hx:535:","⚠️ [AssetPipeline] Meta not found for old path: " + normalizedOld + ". It might be a new file or non-asset.");
+			if(js_node_Fs.existsSync(newPath)) {
+				this.importSingleAsset(newPath);
+			}
 		}
 	}
 };
@@ -1118,6 +791,28 @@ src_main_assets_converters_ImageConverter.prototype = {
             }
         });
 	}
+	,getPreview: function(sourcePath,size) {
+		var previewSize = size != null ? size : 128;
+		return new Promise(function(resolve,reject) {
+			
+                const sharp = require('sharp');
+                
+                sharp(sourcePath)
+                    .resize(previewSize, previewSize, { 
+                        fit: 'inside', 
+                        withoutEnlargement: true 
+                    })
+                    .toBuffer()
+                    .then(function(buffer) {
+                        const base64 = buffer.toString('base64');
+                        resolve('data:image/webp;base64,' + base64);
+                    })
+                    .catch(function(err) {
+                        reject(err);
+                    });
+            ;
+		});
+	}
 };
 var src_main_assets_registry_AssetTypeRegistry = function() {
 	this.converters = new haxe_ds_StringMap();
@@ -1157,6 +852,366 @@ src_main_assets_registry_AssetTypeRegistry.prototype = {
 };
 var src_main_external_JSONFileSync = require("lowdb/node").JSONFileSync;
 var src_main_external_LowSync = require("lowdb").LowSync;
+var src_main_ipc_AppWindowHandlers = function() { };
+src_main_ipc_AppWindowHandlers.__name__ = true;
+src_main_ipc_AppWindowHandlers.setup = function(mainWindow) {
+	electron_main_IpcMain.on("app:quit",function(event) {
+		electron_main_App.quit();
+	});
+	electron_main_IpcMain.on("app:reload",function(event) {
+		if(mainWindow != null) {
+			mainWindow.reload();
+		}
+	});
+	electron_main_IpcMain.on("app:getAppDataPath",function(event) {
+		event.returnValue = electron_main_App.getPath("userData");
+	});
+	electron_main_IpcMain.on("window:setTitle",function(event,title) {
+		if(mainWindow != null) {
+			mainWindow.setTitle(title);
+		}
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.on("window:maximize",function(event) {
+		if(mainWindow != null) {
+			mainWindow.maximize();
+		}
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.on("window:minimize",function(event) {
+		if(mainWindow != null) {
+			mainWindow.minimize();
+		}
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.on("window:unmaximize",function(event) {
+		if(mainWindow != null) {
+			mainWindow.unmaximize();
+		}
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.on("window:enterFullscreen",function(event) {
+		if(mainWindow != null) {
+			mainWindow.setFullScreen(true);
+		}
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.on("window:leaveFullscreen",function(event) {
+		if(mainWindow != null) {
+			mainWindow.setFullScreen(false);
+		}
+		event.returnValue = null;
+	});
+	electron_main_IpcMain.on("window:open",function(event,data) {
+		var url = data.url;
+		if(url.indexOf("?subView=") != -1) {
+			event.sender.send("window:open:subview",{ url : url});
+			return;
+		}
+		var child = new electron_main_BrowserWindow({ width : data.options.width != null ? data.options.width : 800, height : data.options.height != null ? data.options.height : 600, title : data.options.title != null ? data.options.title : "Hide", parent : mainWindow, webPreferences : { nodeIntegration : true, contextIsolation : false}});
+		child.loadFile(url);
+	});
+	electron_main_IpcMain.handle("dialog:showOpen",function(event,options) {
+		return electron_main_Dialog.showOpenDialog(mainWindow,options);
+	});
+	electron_main_IpcMain.handle("dialog:showSave",function(event,options) {
+		return electron_main_Dialog.showSaveDialog(mainWindow,options);
+	});
+	electron_main_IpcMain.handle("dialog:showDirectory",function(event,options) {
+		options.properties = ["openDirectory","createDirectory"];
+		return electron_main_Dialog.showOpenDialog(mainWindow,options);
+	});
+	electron_main_IpcMain.on("menu:build",function(event,menuData) {
+		console.log("src/main/ipc/AppWindowHandlers.hx:71:","[AppWindow] 📥 Received menu data (placeholder)");
+	});
+};
+var src_main_ipc_AssetHandlers = function() { };
+src_main_ipc_AssetHandlers.__name__ = true;
+src_main_ipc_AssetHandlers.setup = function() {
+	electron_main_IpcMain.handle("asset:getList",src_main_ipc_AssetHandlers.onGetList);
+	electron_main_IpcMain.handle("asset:init",src_main_ipc_AssetHandlers.onInit);
+	electron_main_IpcMain.handle("asset:getMeta",src_main_ipc_AssetHandlers.onGetMeta);
+	electron_main_IpcMain.handle("asset:import",src_main_ipc_AssetHandlers.onImport);
+	electron_main_IpcMain.handle("asset:getPreview",src_main_ipc_AssetHandlers.onGetPreview);
+};
+src_main_ipc_AssetHandlers.onGetPreview = function(event,data) {
+	var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+	if(pipeline == null) {
+		return { success : false, error : "Pipeline not ready"};
+	}
+	var filePath = data.path;
+	var size = data.size != null ? data.size : 128;
+	return new Promise((resolve) => {
+            pipeline.getAssetPreview(filePath, size).then(function(previewBase64) {
+                resolve({ success: true, data: previewBase64 });
+            }).catch(function(err) {
+                resolve({ success: false, error: String(err) });
+            });
+        });
+};
+src_main_ipc_AssetHandlers.onGetList = function(event,data) {
+	var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+	if(pipeline == null) {
+		return { success : false, error : "AssetPipeline not initialized"};
+	}
+	try {
+		var folder = data.folder != null ? data.folder : null;
+		var items = pipeline.getAssetsList(folder);
+		return { success : true, data : items};
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g).unwrap();
+		return { success : false, error : Std.string(e)};
+	}
+};
+src_main_ipc_AssetHandlers.onInit = function(event,data) {
+	var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+	if(pipeline == null) {
+		return { success : false, error : "AssetPipeline not initialized"};
+	}
+	try {
+		pipeline.setProjectRoot(data.projectRoot);
+		console.log("src/main/ipc/AssetHandlers.hx:88:","✅ [Main] Asset Pipeline initialized for: " + Std.string(data.projectRoot));
+		console.log("src/main/ipc/AssetHandlers.hx:89:","   Assets folder: " + Std.string(data.assetsFolder));
+		console.log("src/main/ipc/AssetHandlers.hx:90:","   Build folder: " + Std.string(data.buildFolder));
+		return { success : true, data : { assetsPath : pipeline.getAssetsPath(), supportedExtensions : pipeline.getSupportedExtensions()}};
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g).unwrap();
+		return { success : false, error : Std.string(e)};
+	}
+};
+src_main_ipc_AssetHandlers.onGetMeta = function(event,guid) {
+	var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+	if(pipeline == null) {
+		return { success : false, error : "Pipeline not ready"};
+	}
+	var meta = pipeline.getMeta(guid);
+	if(meta != null) {
+		return { success : true, data : meta};
+	} else {
+		return { success : false, error : "Meta not found for GUID: " + guid};
+	}
+};
+src_main_ipc_AssetHandlers.onImport = function(event,paths) {
+	var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+	if(pipeline == null) {
+		return { success : false, error : "Pipeline not ready"};
+	}
+	return new Promise((resolve) => {
+            pipeline.importAssets(paths).then(function(results) {
+                resolve({ success: true, data: results });
+            }).catch(function(err) {
+                resolve({ success: false, error: err.message || String(err) });
+            });
+        });
+};
+var src_main_ipc_FileSystemHandlers = function() { };
+src_main_ipc_FileSystemHandlers.__name__ = true;
+src_main_ipc_FileSystemHandlers.setup = function() {
+	electron_main_IpcMain.on("fs:rename",src_main_ipc_FileSystemHandlers.onRename);
+	electron_main_IpcMain.on("fs:delete",src_main_ipc_FileSystemHandlers.onDelete);
+	electron_main_IpcMain.on("fs:createDirectory",src_main_ipc_FileSystemHandlers.onCreateDirectory);
+	electron_main_IpcMain.on("fs:move",src_main_ipc_FileSystemHandlers.onMove);
+	electron_main_IpcMain.on("fs:exists",src_main_ipc_FileSystemHandlers.onExists);
+	electron_main_IpcMain.on("fs:readText",src_main_ipc_FileSystemHandlers.onReadText);
+	electron_main_IpcMain.on("fs:readBinary",src_main_ipc_FileSystemHandlers.onReadBinary);
+	electron_main_IpcMain.on("fs:writeText",src_main_ipc_FileSystemHandlers.onWriteText);
+	electron_main_IpcMain.on("fs:listFiles",src_main_ipc_FileSystemHandlers.onListFiles);
+	electron_main_IpcMain.handle("project:readDir",src_main_ipc_FileSystemHandlers.onProjectReadDir);
+};
+src_main_ipc_FileSystemHandlers.onProjectReadDir = function(event,data) {
+	var fs = js_node_Fs;
+	var pathLib = js_node_Path;
+	var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+	if(pipeline == null) {
+		return { success : false, error : "No project loaded"};
+	}
+	var root = pipeline.getProjectRoot();
+	var targetDir = data.path != null ? data.path : root;
+	if(!StringTools.startsWith(targetDir,root)) {
+		return { success : false, error : "Access denied: path outside project root"};
+	}
+	try {
+		if(!fs.existsSync(targetDir)) {
+			return { success : true, data : []};
+		}
+		var entries = fs.readdirSync(targetDir);
+		var result = [];
+		var _g = 0;
+		while(_g < entries.length) {
+			var entry = entries[_g];
+			++_g;
+			if(StringTools.startsWith(entry,".") || entry == "node_modules") {
+				continue;
+			}
+			var fullPath = pathLib.join(targetDir,entry);
+			var stat = fs.statSync(fullPath);
+			var relPath = pathLib.relative(root,fullPath).split("\\").join("/");
+			result.push({ name : entry, path : fullPath, relativePath : relPath, isDirectory : stat.isDirectory(), extension : stat.isFile() ? entry.split(".").pop().toLowerCase() : null});
+		}
+		result.sort(function(a,b) {
+			if(a.isDirectory && !b.isDirectory) {
+				return -1;
+			}
+			if(!a.isDirectory && b.isDirectory) {
+				return 1;
+			}
+			if(a.name.toLowerCase() < b.name.toLowerCase()) {
+				return -1;
+			} else {
+				return 1;
+			}
+		});
+		return { success : true, data : result};
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g).unwrap();
+		return { success : false, error : Std.string(e)};
+	}
+};
+src_main_ipc_FileSystemHandlers.onRename = function(event,data) {
+	try {
+		var oldPath = data.oldPath;
+		var newPath = data.newPath;
+		var oldMetaPath = oldPath + ".meta";
+		var newMetaPath = newPath + ".meta";
+		js_node_Fs.renameSync(oldPath,newPath);
+		if(js_node_Fs.existsSync(oldMetaPath)) {
+			try {
+				var metaContent = js_node_Fs.readFileSync(oldMetaPath,{ encoding : "utf-8"});
+				var meta = JSON.parse(metaContent);
+				var oldBuildPath = meta.buildPath;
+				js_node_Fs.renameSync(oldMetaPath,newMetaPath);
+				if(oldBuildPath != null && js_node_Fs.existsSync(oldBuildPath)) {
+					var oldExt = js_node_Path.extname(oldBuildPath);
+					var newBaseName = js_node_Path.basename(newPath,js_node_Path.extname(newPath));
+					var newBuildPath = js_node_Path.join(js_node_Path.dirname(oldBuildPath),newBaseName + oldExt);
+					if(oldBuildPath != newBuildPath) {
+						try {
+							js_node_Fs.renameSync(oldBuildPath,newBuildPath);
+						} catch( _g ) {
+							console.log("src/main/ipc/FileSystemHandlers.hx:106:","⚠️ [FS] Build file rename skipped (locked?): " + oldBuildPath);
+						}
+					}
+					meta.buildPath = newBuildPath.split("\\").join("/");
+					js_node_Fs.writeFileSync(newMetaPath,JSON.stringify(meta,null,"  "),{ encoding : "utf-8"});
+				}
+			} catch( _g ) {
+				var e = haxe_Exception.caught(_g).unwrap();
+				console.log("src/main/ipc/FileSystemHandlers.hx:113:","⚠️ [FS] Warning during meta/build rename: " + Std.string(e));
+			}
+		}
+		var pipeline = src_main_services_ServiceLocator.get().assetPipeline;
+		if(pipeline != null) {
+			pipeline.onFileRenamed(oldPath,newPath);
+		}
+		event.returnValue = { };
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g).unwrap();
+		var errCode = e.code;
+		event.returnValue = { error : errCode == "EBUSY" || errCode == "EPERM" ? "File is in use." : Std.string(e)};
+	}
+};
+src_main_ipc_FileSystemHandlers.onDelete = function(event,path) {
+	try {
+		js_node_Fs.rmSync(path,{ recursive : true, force : true});
+		event.returnValue = { };
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g).unwrap();
+		event.returnValue = { error : Std.string(e)};
+	}
+};
+src_main_ipc_FileSystemHandlers.onCreateDirectory = function(event,path) {
+	try {
+		src_main_ipc_FileSystemHandlers.ensureDirectoryExists(path);
+		event.returnValue = { };
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g).unwrap();
+		event.returnValue = { error : Std.string(e)};
+	}
+};
+src_main_ipc_FileSystemHandlers.onMove = function(event,data) {
+	try {
+		js_node_Fs.renameSync(data.sourcePath,data.destPath);
+		event.returnValue = { };
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g).unwrap();
+		event.returnValue = { error : Std.string(e)};
+	}
+};
+src_main_ipc_FileSystemHandlers.onExists = function(event,filePath) {
+	event.returnValue = js_node_Fs.existsSync(filePath);
+};
+src_main_ipc_FileSystemHandlers.onReadText = function(event,filePath) {
+	try {
+		if(!js_node_Fs.existsSync(filePath)) {
+			event.returnValue = { error : "File not found"};
+		} else {
+			event.returnValue = { content : js_node_Fs.readFileSync(filePath,{ encoding : "utf-8"})};
+		}
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g).unwrap();
+		event.returnValue = { error : Std.string(e)};
+	}
+};
+src_main_ipc_FileSystemHandlers.onReadBinary = function(event,filePath) {
+	try {
+		if(!js_node_Fs.existsSync(filePath)) {
+			event.returnValue = { error : "File not found"};
+		} else {
+			event.returnValue = { data : js_node_Fs.readFileSync(filePath).toString("base64")};
+		}
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g).unwrap();
+		event.returnValue = { error : Std.string(e)};
+	}
+};
+src_main_ipc_FileSystemHandlers.onWriteText = function(event,data) {
+	try {
+		var dir = js_node_Path.dirname(data.path);
+		if(!js_node_Fs.existsSync(dir)) {
+			src_main_ipc_FileSystemHandlers.ensureDirectoryExists(dir);
+		}
+		js_node_Fs.writeFileSync(data.path,data.content,{ encoding : "utf-8"});
+		event.returnValue = { };
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g).unwrap();
+		event.returnValue = { error : Std.string(e)};
+	}
+};
+src_main_ipc_FileSystemHandlers.onListFiles = function(event,data) {
+	try {
+		var files = [];
+		var scan = null;
+		scan = function(dir) {
+			var entries = js_node_Fs.readdirSync(dir);
+			var _g = 0;
+			while(_g < entries.length) {
+				var entry = entries[_g];
+				++_g;
+				var fullPath = js_node_Path.join(dir,entry);
+				var stat = js_node_Fs.statSync(fullPath);
+				if(stat.isDirectory() && data.recursive) {
+					scan(fullPath);
+				} else if(stat.isFile()) {
+					files.push(fullPath);
+				}
+			}
+		};
+		if(js_node_Fs.existsSync(data.path)) {
+			scan(data.path);
+		}
+		event.returnValue = { files : files};
+	} catch( _g ) {
+		var e = haxe_Exception.caught(_g).unwrap();
+		event.returnValue = { error : Std.string(e)};
+	}
+};
+src_main_ipc_FileSystemHandlers.ensureDirectoryExists = function(dir) {
+	if(dir == null || dir == "" || js_node_Fs.existsSync(dir)) {
+		return;
+	}
+	src_main_ipc_FileSystemHandlers.ensureDirectoryExists(js_node_Path.dirname(dir));
+	js_node_Fs.mkdirSync(dir);
+};
 var src_main_lsp_HaxeLanguageServerManager = function() {
 };
 src_main_lsp_HaxeLanguageServerManager.__name__ = true;

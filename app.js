@@ -109163,6 +109163,7 @@ hide_application_services_AssetBrowserService.prototype = {
 	}
 	,invalidateCache: function() {
 		this.cache = new haxe_ds_StringMap();
+		haxe_Log.trace("🗑️ [AssetBrowserService] Cache invalidated",{ fileName : "hide/application/services/AssetBrowserService.hx", lineNumber : 56, className : "hide.application.services.AssetBrowserService", methodName : "invalidateCache"});
 	}
 	,getConstructorArgs: function() {
 		return ["hide.infrastructure.platform.electron.ElectronIpcBridge"];
@@ -116290,11 +116291,15 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 		try {
 			this.fs.rename(hide_domain_valueobjects_FilePath._new(oldPathStr),hide_domain_valueobjects_FilePath._new(newPathStr));
 			haxe_Log.trace("✅ Renamed successfully",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 231, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleRename"});
+			var assetBrowser = hide_presentation_ui_react_hooks_UseService.assetBrowser();
+			if(assetBrowser != null) {
+				assetBrowser.invalidateCache();
+			}
 			this.refreshParentDirectory(oldPathStr);
 		} catch( _g ) {
 			haxe_NativeStackTrace.lastError = _g;
 			var e = haxe_Exception.caught(_g).unwrap();
-			haxe_Log.trace("❌ Failed to rename: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 234, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleRename"});
+			haxe_Log.trace("❌ Failed to rename: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 239, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleRename"});
 			window.alert("Failed to rename: " + Std.string(e));
 			this.invalidateChildrenCache(hide_presentation_ui_react_components_ProjectPanel.getParentPath(oldPathStr));
 		}
@@ -116302,7 +116307,7 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 	,handleDelete: function(args) {
 		var ids = args.ids;
 		var nodes = args.nodes;
-		haxe_Log.trace("🗑️ Delete requested: " + ids.join(", "),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 245, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleDelete"});
+		haxe_Log.trace("🗑️ Delete requested: " + ids.join(", "),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 250, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleDelete"});
 		var _g = 0;
 		while(_g < nodes.length) {
 			var nodeApi = nodes[_g];
@@ -116313,12 +116318,12 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 				var parentPathStr = hide_presentation_ui_react_components_ProjectPanel.getParentPath(pathStr);
 				try {
 					this.fs.delete(hide_domain_valueobjects_FilePath._new(pathStr));
-					haxe_Log.trace("✅ Deleted: " + pathStr,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 256, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleDelete"});
+					haxe_Log.trace("✅ Deleted: " + pathStr,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 261, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleDelete"});
 					this.invalidateChildrenCache(parentPathStr);
 				} catch( _g1 ) {
 					haxe_NativeStackTrace.lastError = _g1;
 					var e = haxe_Exception.caught(_g1).unwrap();
-					haxe_Log.trace("❌ Failed to delete: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 259, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleDelete"});
+					haxe_Log.trace("❌ Failed to delete: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 264, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleDelete"});
 					window.alert("Failed to delete: " + Std.string(e));
 				}
 			}
@@ -116348,12 +116353,12 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 			} else {
 				this.fs.writeText(hide_domain_valueobjects_FilePath._new(newPathStr),"");
 			}
-			haxe_Log.trace("✅ Created: " + newPathStr,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 290, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
+			haxe_Log.trace("✅ Created: " + newPathStr,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 295, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
 			this.invalidateChildrenCache(parentPathStr);
 		} catch( _g ) {
 			haxe_NativeStackTrace.lastError = _g;
 			var e = haxe_Exception.caught(_g).unwrap();
-			haxe_Log.trace("❌ Failed to create: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 293, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
+			haxe_Log.trace("❌ Failed to create: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 298, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleCreate"});
 			window.alert("Failed to create: " + Std.string(e));
 		}
 	}
@@ -116378,13 +116383,13 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 			var destPathStr = targetPathStr + "/" + fileName;
 			try {
 				this.fs.move(hide_domain_valueobjects_FilePath._new(srcPathStr),hide_domain_valueobjects_FilePath._new(destPathStr));
-				haxe_Log.trace("✅ Moved: " + srcPathStr + " -> " + destPathStr,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 319, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
+				haxe_Log.trace("✅ Moved: " + srcPathStr + " -> " + destPathStr,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 324, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
 				var srcParent = hide_presentation_ui_react_components_ProjectPanel.getParentPath(srcPathStr);
 				this.invalidateChildrenCache(srcParent);
 			} catch( _g1 ) {
 				haxe_NativeStackTrace.lastError = _g1;
 				var e = haxe_Exception.caught(_g1).unwrap();
-				haxe_Log.trace("❌ Failed to move: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 324, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
+				haxe_Log.trace("❌ Failed to move: " + Std.string(e),{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 329, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleMove"});
 				window.alert("Failed to move: " + Std.string(e));
 			}
 		}
@@ -116392,7 +116397,7 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 	}
 	,invalidateChildrenCache: function(folderPath) {
 		var _gthis = this;
-		haxe_Log.trace("🔄 Invalidating cache for: " + folderPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 357, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "invalidateChildrenCache"});
+		haxe_Log.trace("🔄 Invalidating cache for: " + folderPath,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 362, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "invalidateChildrenCache"});
 		var node = this.findNodeById(this.state.treeData,folderPath);
 		var wasOpen = false;
 		if(node != null) {
@@ -116428,7 +116433,7 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 		}
 		var firstNode = nodes[0];
 		var newSelectedId = firstNode.id;
-		haxe_Log.trace("✅ Selected: " + newSelectedId + " (" + firstNode.data.name + ")",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 433, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleSelect"});
+		haxe_Log.trace("✅ Selected: " + newSelectedId + " (" + firstNode.data.name + ")",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 438, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "handleSelect"});
 		if(firstNode.data.isLeaf == true) {
 			hide_presentation_ui_react_hooks_UseService.eventBus().publish(hide_shared_events_ResourceOpened,new hide_shared_events_ResourceOpened(firstNode.data.path));
 		}
@@ -116460,7 +116465,7 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 		var node = api.node;
 		var style = api.style;
 		if(node == null) {
-			haxe_Log.trace("❌ api.node is null!",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 483, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "renderNode"});
+			haxe_Log.trace("❌ api.node is null!",{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 488, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "renderNode"});
 			return React.createElement("div",{ style : { background : "red"}},"ERROR");
 		}
 		var id = node.id;
@@ -116474,7 +116479,7 @@ hide_presentation_ui_react_components_ProjectPanel.prototype = $extend(hide_pres
 			return React.createElement("div",{ });
 		}
 		if(data == null) {
-			haxe_Log.trace("❌ data is null for id=" + id,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 501, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "renderNode"});
+			haxe_Log.trace("❌ data is null for id=" + id,{ fileName : "hide/presentation/ui/react/components/ProjectPanel.hx", lineNumber : 506, className : "hide.presentation.ui.react.components.ProjectPanel", methodName : "renderNode"});
 			return React.createElement("div",{ style : { background : "orange"}},"NO DATA");
 		}
 		var name = data.name;

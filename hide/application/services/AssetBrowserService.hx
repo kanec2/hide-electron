@@ -53,5 +53,6 @@ class AssetBrowserService implements Service {
     
     public function invalidateCache():Void {
         cache = new Map();
+        trace('🗑️ [AssetBrowserService] Cache invalidated');
     }
 }

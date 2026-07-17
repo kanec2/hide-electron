@@ -28,7 +28,7 @@ class AssetPipelineService {
     private var assetsPath:String;
     private var watcher:FSWatcher; // Chokidar instance
     private var db:LowSync<AssetIndex>; // ✅ Lowdb база данных
-    public static var onAssetsChanged:Null<Void->Void> = null;
+
     public function new(registry:AssetTypeRegistry) {
         this.registry = registry;
         this.projectRoot = "";
@@ -352,6 +352,17 @@ class AssetPipelineService {
         cleanupBuildFiles(path);
     }
     
+    /**
+     * Генерирует base64 превью для указанного файла.
+     */
+     @:keep
+    public function getAssetPreview(filePath:String, ?size:Int):js.lib.Promise<String> {
+        var converter = registry.getConverter(filePath);
+        if (converter != null) {
+            return converter.getPreview(filePath, size);
+        }
+        return js.lib.Promise.reject("No converter found for this file type");
+    }
     
     /**
      * Импортирует один ассет: создает .meta → конвертирует → обновляет индекс.
@@ -492,6 +503,41 @@ class AssetPipelineService {
         } catch (e:Dynamic) {
             // Если не удалось прочитать или распарсить .meta, просто логируем и выходим
             trace('❌ [AssetPipeline] Failed to read/parse meta file for cleanup: $metaPath. Error: ${Std.string(e)}');
+        }
+    }
+
+    /**
+     * Вызывается при переименовании файла.
+     * Обновляет путь в индексе Lowdb.
+     */
+    @:keep
+    public function onFileRenamed(oldPath:String, newPath:String):Void {
+        trace('🔄 [AssetPipeline] File renamed: $oldPath -> $newPath');
+        
+        var normalizedOld = oldPath.split("\\").join("/");
+        var normalizedNew = newPath.split("\\").join("/");
+        
+        // Находим мету по старому пути
+        var meta = getMetaByPath(normalizedOld);
+        
+        if (meta != null) {
+            // Обновляем путь в мете
+            meta.sourcePath = js.node.Path.relative(this.projectRoot, normalizedNew);
+            
+            // Если изменился путь билда (например, расширение другое), можно обновить и его, 
+            // но обычно при простом переименовании расширения сохраняются.
+            
+            // Сохраняем обновленную мету в индекс
+            upsertAsset(meta);
+            
+            trace('✅ [AssetPipeline] Index updated for GUID: ${meta.guid}');
+        } else {
+            trace('⚠️ [AssetPipeline] Meta not found for old path: $normalizedOld. It might be a new file or non-asset.');
+            // Если меты нет, возможно, это новый файл, который еще не импортирован.
+            // Можно попробовать импортировать его как новый.
+            if (js.node.Fs.existsSync(newPath)) {
+                importSingleAsset(newPath);
+            }
         }
     }
 }

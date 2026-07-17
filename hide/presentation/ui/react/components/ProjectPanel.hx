@@ -229,6 +229,11 @@ class ProjectPanel extends BaseReactComponent<ProjectProps, ProjectState> {
             // ✅ Чистый вызов доменного сервиса!
             fs.rename(new FilePath(oldPathStr), new FilePath(newPathStr));
             trace('✅ Renamed successfully');
+            // ✅ НОВОЕ: Инвалидируем кэш Asset Browser
+            var assetBrowser = UseService.assetBrowser();
+            if (assetBrowser != null) {
+                assetBrowser.invalidateCache();
+            }
             refreshParentDirectory(oldPathStr);
         } catch (e: Dynamic) {
             trace('❌ Failed to rename: $e');

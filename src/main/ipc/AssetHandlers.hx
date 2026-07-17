@@ -6,11 +6,33 @@ import src.main.services.ServiceLocator;
 import hide.shared.types.IpcResponse;
 
 class AssetHandlers {
+
     public static function setup():Void {
         IpcMain.handle("asset:getList", onGetList);
         IpcMain.handle("asset:init", onInit);
         IpcMain.handle("asset:getMeta", onGetMeta);
         IpcMain.handle("asset:import", onImport);
+        // ✅ НОВОЕ: Обработчик для получения base64 превью
+        IpcMain.handle("asset:getPreview", onGetPreview);
+    }
+
+    /**
+     * Генерирует и возвращает base64 превью для Asset Browser.
+     */
+    private static function onGetPreview(event:Dynamic, data:Dynamic):IpcResponse<Dynamic> {
+        var pipeline = ServiceLocator.get().assetPipeline;
+        if (pipeline == null) return { success: false, error: "Pipeline not ready" };
+        
+        var filePath:String = data.path;
+        var size:Int = data.size != null ? data.size : 128;
+        
+        return untyped __js__("new Promise((resolve) => {
+            pipeline.getAssetPreview(filePath, size).then(function(previewBase64) {
+                resolve({ success: true, data: previewBase64 });
+            }).catch(function(err) {
+                resolve({ success: false, error: String(err) });
+            });
+        })");
     }
 
     private static function onGetList(event:Dynamic, data:Dynamic):IpcResponse<Dynamic> {

@@ -186,6 +186,7 @@ class AutoWindow {
     }
     // ✅ ВОТ МАГИЯ: Вместо 400 строк IPC-кода, всего 3 вызова!
     static function setupIpc():Void {
+
         FileSystemHandlers.setup();
         AssetHandlers.setup();
         AppWindowHandlers.setup(window);

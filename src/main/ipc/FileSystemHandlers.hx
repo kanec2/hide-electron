@@ -113,6 +113,11 @@ class FileSystemHandlers {
                     trace('⚠️ [FS] Warning during meta/build rename: ${Std.string(e)}');
                 }
             }
+            // ✅ НОВОЕ: Уведомляем AssetPipeline о переименовании
+            var pipeline = ServiceLocator.get().assetPipeline;
+            if (pipeline != null) {
+                pipeline.onFileRenamed(oldPath, newPath);
+            }
             event.returnValue = {};
         } catch (e:Dynamic) {
             var errCode = untyped e.code;
